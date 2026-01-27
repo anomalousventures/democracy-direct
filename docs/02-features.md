@@ -44,10 +44,10 @@
 - Vitest: Can insert and query test ZIP mapping
 
 ### 0.4 Database Schema - User Tables
-- [ ] `users` table created (id, email_hash, trust_level, approved_templates_count, saved_zip, saved_district, timestamps)
-- [ ] `email_otps` table created (id, email_hash, otp_hash, expires_at, used_at, created_at)
-- [ ] `sessions` table created (id, user_id FK, expires_at, created_at)
-- [ ] Indexes on `users(email_hash)`, `sessions(user_id)`
+- [x] `users` table created (id, email_hash, trust_level, approved_templates_count, saved_zip, saved_district, timestamps)
+- [x] `email_otps` table created (id, email_hash, otp_hash, expires_at, used_at, created_at)
+- [x] `sessions` table created (id, user_id FK, expires_at, created_at)
+- [x] Indexes on `users(email_hash)`, `sessions(user_id)`
 
 **Tests:**
 - Vitest: Tables exist with correct columns and constraints
@@ -66,6 +66,17 @@
 - Vitest: Can create template with all fields
 - Vitest: Can flag a template
 - Vitest: Cascade delete works (user deletion removes their templates)
+
+### 0.6 CI/CD Pipeline
+- [ ] GitHub Actions workflow for CI
+- [ ] Run tests on PR and push to main
+- [ ] Run linting on PR and push to main
+- [ ] Run build on PR and push to main
+- [ ] TypeScript type checking
+
+**Tests:**
+- Workflow file exists at `.github/workflows/ci.yml`
+- All jobs pass on current codebase
 
 ---
 
