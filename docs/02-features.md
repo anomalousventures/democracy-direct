@@ -95,11 +95,11 @@
 
 ### 1.1 Legislator Data Import
 
-- [ ] Script to fetch legislators from unitedstates/congress-legislators GitHub
-- [ ] Parse YAML files (legislators-current.yaml)
-- [ ] Transform to database schema
-- [ ] Upsert legislators to database
-- [ ] Script runnable via `pnpm run import:legislators`
+- [x] Script to fetch legislators from unitedstates/congress-legislators GitHub
+- [x] Parse YAML files (legislators-current.yaml)
+- [x] Transform to database schema
+- [x] Upsert legislators to database
+- [x] Script runnable via `pnpm run import:legislators`
 
 **Tests:**
 

@@ -25,7 +25,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "import:legislators": "npx tsx src/scripts/import-legislators.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
@@ -58,6 +59,7 @@
     "playwright": "^1.58.0",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
+    "tsx": "^4.21.0",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18",
     "wrangler": "^4.61.0",
