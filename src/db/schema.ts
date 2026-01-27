@@ -105,9 +105,7 @@ export const templates = pgTable(
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     isPublic: boolean("is_public").notNull().default(false),
     forkedFrom: uuid("forked_from"),
-    moderationStatus: varchar("moderation_status", { length: 20 })
-      .notNull()
-      .default("pending"),
+    moderationStatus: varchar("moderation_status", { length: 20 }).notNull().default("pending"),
     moderationScores: json("moderation_scores").$type<Record<string, number>>(),
     viewCount: integer("view_count").notNull().default(0),
     useCount: integer("use_count").notNull().default(0),
