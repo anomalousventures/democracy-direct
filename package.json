@@ -2,6 +2,13 @@
   "name": "democracy-direct",
   "type": "module",
   "version": "0.1.0",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
