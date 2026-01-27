@@ -110,11 +110,11 @@
 
 ### 1.2 ZIP-to-District Data Import
 
-- [ ] Script to download Census ZCTA-to-CD relationship file
-- [ ] Parse CSV format
-- [ ] Calculate proportion of ZIP in each district
-- [ ] Insert into `zip_districts` table
-- [ ] Script runnable via `pnpm run import:zips`
+- [x] Script to download Census ZCTA-to-CD relationship file
+- [x] Parse CSV format
+- [x] Calculate proportion of ZIP in each district
+- [x] Insert into `zip_districts` table
+- [x] Script runnable via `pnpm run import:zips`
 
 **Tests:**
 
