@@ -55,11 +55,11 @@
 - Vitest: Can create user with hashed email
 
 ### 0.5 Database Schema - Template Tables
-- [ ] `templates` table created (id, slug, title, body, issue_tags, user_id FK, is_public, forked_from, moderation fields, counters, timestamps)
-- [ ] `template_flags` table created (id, template_id FK, user_id, reason, details, timestamps)
-- [ ] `moderation_log` table created (id, template_id FK, action, admin_id, reason, scores, timestamp)
-- [ ] `user_templates` table created (user_id, template_id, bookmarked_at) for bookmarks
-- [ ] Indexes for common queries (public templates, moderation queue)
+- [x] `templates` table created (id, slug, title, body, issue_tags, user_id FK, is_public, forked_from, moderation fields, counters, timestamps)
+- [x] `template_flags` table created (id, template_id FK, user_id, reason, details, timestamps)
+- [x] `moderation_log` table created (id, template_id FK, action, admin_id, reason, scores, timestamp)
+- [x] `user_templates` table created (user_id, template_id, bookmarked_at) for bookmarks
+- [x] Indexes for common queries (public templates, moderation queue)
 
 **Tests:**
 - Vitest: All tables exist with correct schema

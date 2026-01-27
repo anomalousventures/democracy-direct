@@ -8,6 +8,8 @@ import {
   primaryKey,
   timestamp,
   uuid,
+  boolean,
+  json,
 } from "drizzle-orm/pg-core";
 
 export const legislators = pgTable(
@@ -92,6 +94,72 @@ export const sessions = pgTable(
   (table) => [index("sessions_user_id_idx").on(table.userId)]
 );
 
+export const templates = pgTable(
+  "templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
+    title: varchar("title", { length: 200 }).notNull(),
+    body: text("body").notNull(),
+    issueTags: json("issue_tags").$type<string[]>().default([]),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    isPublic: boolean("is_public").notNull().default(false),
+    forkedFrom: uuid("forked_from"),
+    moderationStatus: varchar("moderation_status", { length: 20 })
+      .notNull()
+      .default("pending"),
+    moderationScores: json("moderation_scores").$type<Record<string, number>>(),
+    viewCount: integer("view_count").notNull().default(0),
+    useCount: integer("use_count").notNull().default(0),
+    flagCount: integer("flag_count").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("templates_slug_idx").on(table.slug),
+    index("templates_public_idx").on(table.isPublic, table.moderationStatus),
+    index("templates_user_id_idx").on(table.userId),
+    index("templates_moderation_idx").on(table.moderationStatus),
+  ]
+);
+
+export const templateFlags = pgTable("template_flags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => templates.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  reason: varchar("reason", { length: 50 }).notNull(),
+  details: text("details"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const moderationLog = pgTable("moderation_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => templates.id, { onDelete: "cascade" }),
+  action: varchar("action", { length: 20 }).notNull(),
+  adminId: uuid("admin_id").references(() => users.id, { onDelete: "set null" }),
+  reason: text("reason"),
+  scores: json("scores").$type<Record<string, number>>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userTemplates = pgTable(
+  "user_templates",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => templates.id, { onDelete: "cascade" }),
+    bookmarkedAt: timestamp("bookmarked_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.templateId] })]
+);
+
 export type Legislator = typeof legislators.$inferSelect;
 export type NewLegislator = typeof legislators.$inferInsert;
 export type ZipDistrict = typeof zipDistricts.$inferSelect;
@@ -102,3 +170,11 @@ export type EmailOtp = typeof emailOtps.$inferSelect;
 export type NewEmailOtp = typeof emailOtps.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+export type Template = typeof templates.$inferSelect;
+export type NewTemplate = typeof templates.$inferInsert;
+export type TemplateFlag = typeof templateFlags.$inferSelect;
+export type NewTemplateFlag = typeof templateFlags.$inferInsert;
+export type ModerationLogEntry = typeof moderationLog.$inferSelect;
+export type NewModerationLogEntry = typeof moderationLog.$inferInsert;
+export type UserTemplate = typeof userTemplates.$inferSelect;
+export type NewUserTemplate = typeof userTemplates.$inferInsert;
