@@ -152,11 +152,11 @@
 
 ### 1.5 About Page
 
-- [ ] Static Astro page at `/about`
-- [ ] Mission statement
-- [ ] Privacy explanation
-- [ ] Data sources listed
-- [ ] Contact information
+- [x] Static Astro page at `/about`
+- [x] Mission statement
+- [x] Privacy explanation
+- [x] Data sources listed
+- [x] Contact information
 
 **Tests:**
 
@@ -166,10 +166,10 @@
 
 ### 1.6 Privacy Policy Page
 
-- [ ] Static Astro page at `/privacy`
-- [ ] Full privacy policy text
-- [ ] Explains what we do and don't collect
-- [ ] Last updated date
+- [x] Static Astro page at `/privacy`
+- [x] Full privacy policy text
+- [x] Explains what we do and don't collect
+- [x] Last updated date
 
 **Tests:**
 
