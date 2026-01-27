@@ -24,10 +24,10 @@
 - Playwright: Dev server starts and renders homepage
 
 ### 0.2 Database Connection
-- [ ] Neon Postgres connection via `@neondatabase/serverless`
-- [ ] Database client singleton with connection pooling
-- [ ] Environment variable for `DATABASE_URL`
-- [ ] Health check endpoint `/api/health` returns DB status
+- [x] Neon Postgres connection via `@neondatabase/serverless`
+- [x] Database client singleton with connection pooling
+- [x] Environment variable for `DATABASE_URL`
+- [x] Health check endpoint `/api/health` returns DB status
 
 **Tests:**
 - Vitest: Database client connects successfully
