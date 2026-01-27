@@ -125,10 +125,10 @@
 
 ### 1.3 ZIP Data JSON Export
 
-- [ ] Script to export `zip_districts` to static JSON file
-- [ ] Output to `public/data/zip-districts.json`
-- [ ] Compressed/minified for production
-- [ ] Script runnable via `pnpm run export:zips`
+- [x] Script to export `zip_districts` to static JSON file
+- [x] Output to `public/data/zip-districts.json`
+- [x] Compressed/minified for production
+- [x] Script runnable via `pnpm run export:zips`
 
 **Tests:**
 
