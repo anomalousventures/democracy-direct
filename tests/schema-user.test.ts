@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "fs";
-import { resolve } from "path";
 import { getTableColumns } from "drizzle-orm";
 import { users, emailOtps, sessions } from "../src/db/schema";
-
-const rootDir = resolve(__dirname, "..");
 
 describe("Phase 0.4: Database Schema - User Tables", () => {
   describe("Users table schema", () => {

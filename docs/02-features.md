@@ -68,11 +68,11 @@
 - Vitest: Cascade delete works (user deletion removes their templates)
 
 ### 0.6 CI/CD Pipeline
-- [ ] GitHub Actions workflow for CI
-- [ ] Run tests on PR and push to main
-- [ ] Run linting on PR and push to main
-- [ ] Run build on PR and push to main
-- [ ] TypeScript type checking
+- [x] GitHub Actions workflow for CI
+- [x] Run tests on PR and push to main
+- [x] Run linting on PR and push to main
+- [x] Run build on PR and push to main
+- [x] TypeScript type checking
 
 **Tests:**
 - Workflow file exists at `.github/workflows/ci.yml`
