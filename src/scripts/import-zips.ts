@@ -36,9 +36,7 @@ export function parseZctaCdCsv(csvContent: string): ZctaCdRecord[] {
   return records;
 }
 
-export function calculateProportions(
-  records: ZctaCdRecord[]
-): ZipDistrictRecord[] {
+export function calculateProportions(records: ZctaCdRecord[]): ZipDistrictRecord[] {
   const results: ZipDistrictRecord[] = [];
 
   for (const record of records) {
@@ -47,10 +45,7 @@ export function calculateProportions(
       district = "0";
     }
 
-    const proportion =
-      record.arealandZcta > 0
-        ? record.arealandPart / record.arealandZcta
-        : 1.0;
+    const proportion = record.arealandZcta > 0 ? record.arealandPart / record.arealandZcta : 1.0;
 
     results.push({
       zip: record.zcta5,

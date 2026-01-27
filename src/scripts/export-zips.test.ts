@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  transformToClientFormat,
-  type ZipDistrictDb,
-  type ClientZipData,
-} from "./export-zips";
+import { transformToClientFormat, type ZipDistrictDb } from "./export-zips";
 
 describe("transformToClientFormat", () => {
   it("groups districts by ZIP code", () => {

@@ -10,8 +10,8 @@ import Layout from "../layouts/Layout.astro";
     <div class="prose prose-lg max-w-3xl">
       <h2>Overview</h2>
       <p>
-        Democracy Direct is designed with privacy as a core principle. We minimize data
-        collection and never sell or share your information with third parties.
+        Democracy Direct is designed with privacy as a core principle. We minimize data collection
+        and never sell or share your information with third parties.
       </p>
 
       <h2>Data Collection</h2>
@@ -20,46 +20,41 @@ import Layout from "../layouts/Layout.astro";
       <h3>Information We Do NOT Collect</h3>
       <ul>
         <li>
-          <strong>Email addresses:</strong> We never store your email address. When you
-          log in, we hash it using SHA-256 and store only the hash. We cannot recover
-          your email from this hash.
+          <strong>Email addresses:</strong> We never store your email address. When you log in, we hash
+          it using SHA-256 and store only the hash. We cannot recover your email from this hash.
         </li>
         <li>
-          <strong>ZIP code lookups:</strong> ZIP code lookups happen entirely in your
-          browser using pre-loaded data. We have no way to know what ZIP codes you've
-          searched.
+          <strong>ZIP code lookups:</strong> ZIP code lookups happen entirely in your browser using pre-loaded
+          data. We have no way to know what ZIP codes you've searched.
         </li>
         <li>
-          <strong>Your letters:</strong> When you copy a letter to send to your
-          representative, the content never touches our servers. It goes directly to
-          your clipboard.
+          <strong>Your letters:</strong> When you copy a letter to send to your representative, the content
+          never touches our servers. It goes directly to your clipboard.
         </li>
         <li>
-          <strong>Tracking data:</strong> We do not use cookies for tracking. We do not
-          use third-party analytics that identify users.
+          <strong>Tracking data:</strong> We do not use cookies for tracking. We do not use third-party
+          analytics that identify users.
         </li>
       </ul>
 
       <h3>Information We DO Collect</h3>
       <ul>
         <li>
-          <strong>Email hash (optional):</strong> If you create an account, we store a
-          SHA-256 hash of your email for authentication.
+          <strong>Email hash (optional):</strong> If you create an account, we store a SHA-256 hash of
+          your email for authentication.
         </li>
         <li>
-          <strong>Templates you create:</strong> If you contribute templates, we store
-          the template content and associate it with your account.
+          <strong>Templates you create:</strong> If you contribute templates, we store the template content
+          and associate it with your account.
         </li>
         <li>
-          <strong>Aggregate statistics:</strong> We count total page views and template
-          usage, but these are not tied to individual users.
+          <strong>Aggregate statistics:</strong> We count total page views and template usage, but these
+          are not tied to individual users.
         </li>
       </ul>
 
       <h2>Data Retention</h2>
-      <p>
-        We retain data only as long as necessary to provide our services:
-      </p>
+      <p>We retain data only as long as necessary to provide our services:</p>
       <ul>
         <li>Account data is retained until you delete your account</li>
         <li>Templates are retained until deleted by you or removed for policy violations</li>
@@ -76,9 +71,7 @@ import Layout from "../layouts/Layout.astro";
       </ul>
 
       <h2>Security</h2>
-      <p>
-        We use industry-standard security practices including:
-      </p>
+      <p>We use industry-standard security practices including:</p>
       <ul>
         <li>HTTPS encryption for all connections</li>
         <li>Secure password hashing (SHA-256 for email, bcrypt for OTPs)</li>
@@ -87,22 +80,24 @@ import Layout from "../layouts/Layout.astro";
       </ul>
 
       <h2>Third-Party Services</h2>
-      <p>
-        We use the following third-party services:
-      </p>
+      <p>We use the following third-party services:</p>
       <ul>
         <li><strong>Cloudflare:</strong> For hosting and DDoS protection</li>
         <li><strong>Neon:</strong> For database hosting (PostgreSQL)</li>
       </ul>
       <p>
-        We do not use advertising networks, social media trackers, or analytics
-        platforms that identify individual users.
+        We do not use advertising networks, social media trackers, or analytics platforms that
+        identify individual users.
       </p>
 
       <h2>Contact</h2>
       <p>
         For privacy-related questions, open an issue on our
-        <a href="https://github.com/anomalousventures/democracy-direct" target="_blank" rel="noopener">
+        <a
+          href="https://github.com/anomalousventures/democracy-direct"
+          target="_blank"
+          rel="noopener"
+        >
           GitHub repository
         </a>.
       </p>
@@ -119,7 +114,10 @@ import Layout from "../layouts/Layout.astro";
           <a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Home
           </a>
-          <a href="/about" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <a
+            href="/about"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
             About
           </a>
         </nav>

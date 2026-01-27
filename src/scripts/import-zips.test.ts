@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseZctaCdCsv,
-  calculateProportions,
-  type ZctaCdRecord,
-} from "./import-zips";
+import { parseZctaCdCsv, calculateProportions, type ZctaCdRecord } from "./import-zips";
 
 const sampleCsv = `ZCTA5,STATE,CD,AREALAND_ZCTA,AREALAND_PART
 90210,CA,37,1000000,1000000

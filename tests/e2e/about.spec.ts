@@ -25,9 +25,7 @@ test.describe("About Page", () => {
 
   test("contains data sources section", async ({ page }) => {
     await page.goto("/about");
-    const dataSourcesSection = page.locator(
-      "#data-sources, h2:has-text('Data Sources')"
-    );
+    const dataSourcesSection = page.locator("#data-sources, h2:has-text('Data Sources')");
     await expect(dataSourcesSection).toBeVisible();
   });
 

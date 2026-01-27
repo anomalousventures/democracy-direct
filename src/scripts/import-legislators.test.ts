@@ -1,9 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  parseLegislatorYaml,
-  transformLegislator,
-  type RawLegislator,
-} from "./import-legislators";
+import { describe, it, expect } from "vitest";
+import { parseLegislatorYaml, transformLegislator, type RawLegislator } from "./import-legislators";
 
 const sampleYaml = `
 - id:
@@ -160,9 +156,7 @@ describe("transformLegislator", () => {
     expect(result.phoneCapitol).toBe("202-555-0100");
     expect(result.contactFormUrl).toBe("https://doe.senate.gov/contact");
     expect(result.website).toBe("https://doe.senate.gov");
-    expect(result.addressCapitol).toBe(
-      "123 Hart Senate Office Building Washington DC 20510"
-    );
+    expect(result.addressCapitol).toBe("123 Hart Senate Office Building Washington DC 20510");
     expect(result.termStart).toBe("2019-01-03");
     expect(result.termEnd).toBe("2025-01-03");
   });

@@ -20,9 +20,7 @@ export interface ClientZipEntry {
 
 export type ClientZipData = Record<string, ClientZipEntry>;
 
-export function transformToClientFormat(
-  records: ZipDistrictDb[]
-): ClientZipData {
+export function transformToClientFormat(records: ZipDistrictDb[]): ClientZipData {
   const grouped = new Map<string, ZipDistrictDb[]>();
 
   for (const record of records) {
@@ -89,9 +87,7 @@ export async function exportZipData(outputPath: string): Promise<{
   await writeFile(outputPath, jsonContent, "utf-8");
 
   const fileSize = Buffer.byteLength(jsonContent, "utf-8");
-  console.log(
-    `Wrote ${(fileSize / 1024 / 1024).toFixed(2)} MB to ${outputPath}`
-  );
+  console.log(`Wrote ${(fileSize / 1024 / 1024).toFixed(2)} MB to ${outputPath}`);
 
   return { zipCount, fileSize };
 }
