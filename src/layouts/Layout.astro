@@ -18,7 +18,7 @@ const { title, description = "Direct access to your democracy." } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | Democracy Direct</title>
   </head>
-  <body class="min-h-screen bg-background font-sans antialiased">
+  <body class="min-h-screen bg-background font-sans antialiased flex flex-col">
     <slot />
   </body>
 </html>

@@ -1,0 +1,69 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="About" description="Learn about Democracy Direct and our mission.">
+  <main class="container mx-auto px-4 py-8 flex-1">
+    <h1 class="text-4xl font-bold mb-8">About Democracy Direct</h1>
+
+    <section class="prose prose-lg max-w-3xl">
+      <h2>Our Mission</h2>
+      <p>
+        Make civic engagement effortless, private, and accessible to everyone.
+      </p>
+
+      <h2>The Problem</h2>
+      <p>
+        Contacting elected representatives is unnecessarily difficult. Finding who
+        represents you requires navigating multiple government websites. Representatives
+        don't publish email addresses. Most people don't know how to write an effective
+        letter. Existing tools require accounts and track usage.
+      </p>
+
+      <h2 id="privacy">Privacy</h2>
+      <p>
+        We believe civic participation should not require surveillance. We don't store
+        your email address—when you log in, we hash it using SHA-256 and store only the
+        hash. We don't log your ZIP code lookups. We never see your letters.
+      </p>
+
+      <h2 id="data-sources">Data Sources</h2>
+      <p>All representative data comes from public sources:</p>
+      <ul>
+        <li>
+          <a href="https://github.com/unitedstates/congress-legislators" target="_blank" rel="noopener">
+            unitedstates/congress-legislators
+          </a> - Legislator information
+        </li>
+        <li>Census Bureau - ZIP-to-district mapping</li>
+        <li>Congress.gov - Voting records (coming soon)</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        Have questions or feedback? Open an issue on our
+        <a href="https://github.com/anomalousventures/democracy-direct" target="_blank" rel="noopener">
+          GitHub repository
+        </a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="border-t border-border py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-muted-foreground text-sm">
+          © {new Date().getFullYear()} Democracy Direct
+        </p>
+        <nav class="flex gap-6">
+          <a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Home
+          </a>
+          <a href="/privacy" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Privacy
+          </a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+</Layout>

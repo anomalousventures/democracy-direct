@@ -138,11 +138,11 @@
 
 ### 1.4 Homepage
 
-- [ ] Static Astro page at `/`
-- [ ] Hero section with tagline
-- [ ] ZIP code input form (client-side, no server submission)
-- [ ] Brief explanation of what the site does
-- [ ] Footer with links
+- [x] Static Astro page at `/`
+- [x] Hero section with tagline
+- [x] ZIP code input form (client-side, no server submission)
+- [x] Brief explanation of what the site does
+- [x] Footer with links
 
 **Tests:**
 
