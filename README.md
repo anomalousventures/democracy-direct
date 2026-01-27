@@ -42,6 +42,7 @@ We facilitate contact but never touch the actual communication:
 - Print option → user prints, signs, and mails
 
 This means:
+
 - We can't be subpoenaed for message content (we don't have it)
 - Users maintain full control over what they send
 - No risk of us being used as a spam vector
@@ -49,6 +50,7 @@ This means:
 ### 3. Transparent Data
 
 All representative data comes from public sources:
+
 - Congress.gov API (federal legislators, voting records)
 - unitedstates/congress-legislators GitHub repo
 - Open States API (state legislators)
@@ -59,6 +61,7 @@ Data is cached locally with stale-while-revalidate pattern. Users can audit exac
 ### 4. Community-Driven Templates
 
 Templates are the heart of the platform:
+
 - Anyone can contribute (with bot protection and moderation)
 - Templates are forkable - customize for your situation
 - No political bias in moderation - we only filter harmful content, not viewpoints
@@ -91,13 +94,13 @@ Templates are the heart of the platform:
 
 ### For All Generations
 
-| Generation | What they need |
-|------------|----------------|
-| Boomers | Clear navigation, readable text, phone-friendly |
-| Gen X | Efficiency, no BS, works on first try |
-| Millennials | Modern design, mobile-first, shareable |
-| Zoomers | Fast, clean, doesn't feel like a government site |
-| Gen Alpha | Simple, visual, works on any device |
+| Generation  | What they need                                   |
+| ----------- | ------------------------------------------------ |
+| Boomers     | Clear navigation, readable text, phone-friendly  |
+| Gen X       | Efficiency, no BS, works on first try            |
+| Millennials | Modern design, mobile-first, shareable           |
+| Zoomers     | Fast, clean, doesn't feel like a government site |
+| Gen Alpha   | Simple, visual, works on any device              |
 
 ### Accessibility
 
@@ -127,6 +130,7 @@ We believe civic participation should not require surveillance.
 > "We never see your letters. When you click 'Send via Contact Form,' your letter is copied to your clipboard and we open your representative's contact form. The letter content never touches our servers."
 
 **Threat model we address:**
+
 - Government subpoena for user emails → We don't have them
 - Data breach exposing user activity → Minimal data to expose
 - Third-party tracking → No third-party scripts
@@ -136,12 +140,14 @@ We believe civic participation should not require surveillance.
 Templates are moderated for safety, not viewpoint:
 
 **We reject:**
+
 - Hate speech, slurs, calls for violence
 - Harassment or threats
 - Spam or commercial content
 - Illegal content
 
 **We allow:**
+
 - Strong political opinions (left, right, or otherwise)
 - Criticism of any politician or party
 - Controversial but legal viewpoints
@@ -160,6 +166,7 @@ We measure success by:
 5. **Sustainability** - Running costs covered by donations
 
 We do NOT measure:
+
 - User retention/engagement metrics
 - Time on site
 - Social shares

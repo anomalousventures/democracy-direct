@@ -18,8 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true",
-            "statusMessage": "Running ESLint..."
+            "command": "pnpm eslint --fix \"$CLAUDE_FILE_PATH\" && pnpm prettier --write \"$CLAUDE_FILE_PATH\" 2>/dev/null || true",
+            "statusMessage": "Running lint and format..."
           }
         ]
       }
