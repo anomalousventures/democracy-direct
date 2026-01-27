@@ -34,9 +34,9 @@
 - Vitest: Health endpoint returns `{ status: 'ok', db: 'connected' }`
 
 ### 0.3 Database Schema - Core Tables
-- [ ] `legislators` table created (bioguide_id PK, name, party, state, district, chamber, contact info, social links)
-- [ ] `zip_districts` table created (zip, state, district, proportion)
-- [ ] Indexes on `legislators(state, district)` and `zip_districts(zip)`
+- [x] `legislators` table created (bioguide_id PK, name, party, state, district, chamber, contact info, social links)
+- [x] `zip_districts` table created (zip, state, district, proportion)
+- [x] Indexes on `legislators(state, district)` and `zip_districts(zip)`
 
 **Tests:**
 - Vitest: Tables exist with correct columns
