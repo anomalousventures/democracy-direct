@@ -182,11 +182,11 @@
 
 ### 2.1 Client-Side ZIP Lookup Logic
 
-- [ ] TypeScript module for ZIP lookup
-- [ ] Loads JSON data once, caches in memory
-- [ ] Returns single district if unambiguous (>95% proportion)
-- [ ] Returns multiple options if ambiguous
-- [ ] Returns error for invalid/unknown ZIP
+- [x] TypeScript module for ZIP lookup
+- [x] Loads JSON data once, caches in memory
+- [x] Returns single district if unambiguous (>95% proportion)
+- [x] Returns multiple options if ambiguous
+- [x] Returns error for invalid/unknown ZIP
 
 **Tests:**
 
@@ -197,12 +197,12 @@
 
 ### 2.2 ZIP Lookup React Component
 
-- [ ] `ZipLookup` React component (island)
-- [ ] Input field with 5-digit validation
-- [ ] Loading state while fetching JSON
-- [ ] Error state for invalid ZIP
-- [ ] Disambiguation UI for split ZIPs
-- [ ] Redirects to results page on success
+- [x] `ZipLookup` React component (island)
+- [x] Input field with 5-digit validation
+- [x] Loading state while fetching JSON
+- [x] Error state for invalid ZIP
+- [x] Disambiguation UI for split ZIPs
+- [x] Redirects to results page on success
 
 **Tests:**
 
@@ -213,11 +213,11 @@
 
 ### 2.3 Representatives Results Page
 
-- [ ] Dynamic Astro page at `/zip/[zip]`
-- [ ] Fetches legislators for state/district from database
-- [ ] Displays 2 senators + 1 representative
-- [ ] Each rep shows: photo, name, party, title
-- [ ] Link to individual rep profile page
+- [x] Dynamic Astro page at `/zip/[zip]`
+- [x] Fetches legislators for state/district from database
+- [x] Displays 2 senators + 1 representative
+- [x] Each rep shows: photo, name, party, title
+- [x] Link to individual rep profile page
 
 **Tests:**
 
@@ -228,10 +228,10 @@
 
 ### 2.4 Ambiguous ZIP Handler
 
-- [ ] Page handles ZIPs that span multiple districts
-- [ ] Shows district options with context (e.g., "District 5 - 60% of ZIP")
-- [ ] User selection updates results
-- [ ] Selection persisted in URL params or session
+- [x] Page handles ZIPs that span multiple districts
+- [x] Shows district options with context (e.g., "District 5 - 60% of ZIP")
+- [x] User selection updates results
+- [x] Selection persisted in URL params or session
 
 **Tests:**
 
@@ -241,12 +241,12 @@
 
 ### 2.5 Representative Profile Page
 
-- [ ] Dynamic Astro page at `/rep/[bioguideId]`
-- [ ] Full legislator details from database
-- [ ] Photo (from bioguide/GPO)
-- [ ] Name, party, state, district, title
-- [ ] Term start date
-- [ ] All contact options displayed
+- [x] Dynamic Astro page at `/rep/[bioguideId]`
+- [x] Full legislator details from database
+- [x] Photo (from bioguide/GPO)
+- [x] Name, party, state, district, title
+- [x] Term start date
+- [x] All contact options displayed
 
 **Tests:**
 
@@ -256,11 +256,11 @@
 
 ### 2.6 Contact Options Display
 
-- [ ] Phone numbers displayed (DC office, district office if available)
-- [ ] Phone numbers are clickable `tel:` links
-- [ ] Contact form URL displayed as button
-- [ ] Social media links (Twitter, Facebook) if available
-- [ ] Mailing address displayed
+- [x] Phone numbers displayed (DC office, district office if available)
+- [x] Phone numbers are clickable `tel:` links
+- [x] Contact form URL displayed as button
+- [x] Social media links (Twitter, Facebook) if available
+- [x] Mailing address displayed
 
 **Tests:**
 
