@@ -1,3 +1,4 @@
+import "dotenv/config";
 import YAML from "yaml";
 
 export interface RawLegislatorId {
@@ -85,8 +86,65 @@ export interface TransformedLegislator {
   youtubeId: string | null;
 }
 
+export function validateRawLegislator(data: unknown, index: number): data is RawLegislator {
+  const leg = data as RawLegislator;
+  const errors: string[] = [];
+
+  if (!leg.id?.bioguide || typeof leg.id.bioguide !== "string") {
+    errors.push("missing or invalid id.bioguide");
+  }
+  if (!leg.name?.first || typeof leg.name.first !== "string") {
+    errors.push("missing or invalid name.first");
+  }
+  if (!leg.name?.last || typeof leg.name.last !== "string") {
+    errors.push("missing or invalid name.last");
+  }
+  if (!Array.isArray(leg.terms) || leg.terms.length === 0) {
+    errors.push("missing or empty terms array");
+  } else {
+    const currentTerm = leg.terms[leg.terms.length - 1];
+    if (!currentTerm.type || !["sen", "rep"].includes(currentTerm.type)) {
+      errors.push("invalid term type");
+    }
+    if (!currentTerm.state || typeof currentTerm.state !== "string") {
+      errors.push("missing term state");
+    }
+    if (!currentTerm.party || typeof currentTerm.party !== "string") {
+      errors.push("missing term party");
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn(
+      `Validation warnings for legislator at index ${index} (${leg.id?.bioguide || "unknown"}): ${errors.join(", ")}`
+    );
+    return false;
+  }
+  return true;
+}
+
 export function parseLegislatorYaml(yamlContent: string): RawLegislator[] {
-  return YAML.parse(yamlContent) as RawLegislator[];
+  const parsed = YAML.parse(yamlContent);
+  if (!Array.isArray(parsed)) {
+    throw new Error("Expected YAML to parse to an array");
+  }
+
+  const valid: RawLegislator[] = [];
+  const invalid: number[] = [];
+
+  for (let i = 0; i < parsed.length; i++) {
+    if (validateRawLegislator(parsed[i], i)) {
+      valid.push(parsed[i]);
+    } else {
+      invalid.push(i);
+    }
+  }
+
+  if (invalid.length > 0) {
+    console.warn(`Skipped ${invalid.length} invalid entries`);
+  }
+
+  return valid;
 }
 
 export function transformLegislator(raw: RawLegislator): TransformedLegislator {

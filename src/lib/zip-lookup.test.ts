@@ -1,27 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { lookupZip, getZipData, clearCache, type ZipLookupResult } from "./zip-lookup";
+import { readFileSync } from "fs";
+import { join } from "path";
+import {
+  lookupZip,
+  getZipData,
+  clearCache,
+  type ZipLookupResult,
+  type ZipData,
+} from "./zip-lookup";
 
-const mockZipData = {
-  "10001": [{ s: "NY", d: "12", p: 1.0 }],
-  "10002": [
-    { s: "NY", d: "7", p: 0.6 },
-    { s: "NY", d: "12", p: 0.4 },
-  ],
-  "90210": [{ s: "CA", d: "36", p: 0.98 }],
-  "85001": [
-    { s: "AZ", d: "3", p: 0.45 },
-    { s: "AZ", d: "7", p: 0.35 },
-    { s: "AZ", d: "9", p: 0.2 },
-  ],
-  "59001": [{ s: "MT", d: "0", p: 1.0 }],
-};
+const zipDataPath = join(process.cwd(), "public/data/zip-districts.json");
+const realZipData: ZipData = JSON.parse(readFileSync(zipDataPath, "utf-8"));
 
 describe("ZIP Lookup", () => {
   beforeEach(() => {
     clearCache();
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockZipData),
+      json: () => Promise.resolve(realZipData),
     });
   });
 
@@ -33,7 +29,7 @@ describe("ZIP Lookup", () => {
     it("fetches ZIP data from JSON file", async () => {
       const data = await getZipData();
       expect(global.fetch).toHaveBeenCalledWith("/data/zip-districts.json");
-      expect(data).toEqual(mockZipData);
+      expect(data).toEqual(realZipData);
     });
 
     it("caches data after first fetch", async () => {
@@ -66,35 +62,33 @@ describe("ZIP Lookup", () => {
     });
 
     it("returns single district for ZIP with >95% proportion", async () => {
-      const result = await lookupZip("90210");
+      const result = await lookupZip("10128");
 
       expect(result).toEqual<ZipLookupResult>({
         type: "single",
-        state: "CA",
-        district: "36",
+        state: "NY",
+        district: "12",
       });
     });
 
     it("returns multiple options for ambiguous ZIP (<95% top proportion)", async () => {
-      const result = await lookupZip("10002");
-
-      expect(result).toEqual<ZipLookupResult>({
-        type: "ambiguous",
-        options: [
-          { state: "NY", district: "7", proportion: 0.6 },
-          { state: "NY", district: "12", proportion: 0.4 },
-        ],
-      });
-    });
-
-    it("sorts ambiguous options by proportion descending", async () => {
-      const result = await lookupZip("85001");
+      const result = await lookupZip("10003");
 
       expect(result.type).toBe("ambiguous");
       if (result.type === "ambiguous") {
-        expect(result.options[0].proportion).toBe(0.45);
-        expect(result.options[1].proportion).toBe(0.35);
-        expect(result.options[2].proportion).toBe(0.2);
+        expect(result.options).toHaveLength(2);
+        expect(result.options[0].state).toBe("NY");
+        expect(result.options[0].district).toBe("10");
+        expect(result.options[1].district).toBe("12");
+      }
+    });
+
+    it("sorts ambiguous options by proportion descending", async () => {
+      const result = await lookupZip("10003");
+
+      expect(result.type).toBe("ambiguous");
+      if (result.type === "ambiguous") {
+        expect(result.options[0].proportion).toBeGreaterThan(result.options[1].proportion);
       }
     });
 
@@ -125,12 +119,12 @@ describe("ZIP Lookup", () => {
       });
     });
 
-    it("handles at-large districts correctly", async () => {
-      const result = await lookupZip("59001");
+    it("handles at-large state districts correctly", async () => {
+      const result = await lookupZip("82001");
 
       expect(result).toEqual<ZipLookupResult>({
         type: "single",
-        state: "MT",
+        state: "WY",
         district: "0",
       });
     });

@@ -1,10 +1,14 @@
-export interface ZipDistrictEntry {
-  s: string;
+export interface DistrictEntry {
   d: string;
   p: number;
 }
 
-export type ZipData = Record<string, ZipDistrictEntry[]>;
+export interface ZipEntry {
+  s: string;
+  d: DistrictEntry[];
+}
+
+export type ZipData = Record<string, ZipEntry>;
 
 export type ZipLookupResult =
   | { type: "single"; state: string; district: string }
@@ -48,29 +52,30 @@ export async function lookupZip(zip: string): Promise<ZipLookupResult> {
   }
 
   const data = await getZipData();
-  const entries = data[normalizedZip];
+  const zipEntry = data[normalizedZip];
 
-  if (!entries || entries.length === 0) {
+  if (!zipEntry || !zipEntry.d || zipEntry.d.length === 0) {
     return {
       type: "error",
       message: "ZIP code not found. Please check the ZIP code and try again.",
     };
   }
 
-  const sortedEntries = [...entries].sort((a, b) => b.p - a.p);
+  const state = zipEntry.s;
+  const sortedDistricts = [...zipEntry.d].sort((a, b) => b.p - a.p);
 
-  if (sortedEntries[0].p >= UNAMBIGUOUS_THRESHOLD) {
+  if (sortedDistricts[0].p >= UNAMBIGUOUS_THRESHOLD) {
     return {
       type: "single",
-      state: sortedEntries[0].s,
-      district: sortedEntries[0].d,
+      state,
+      district: sortedDistricts[0].d,
     };
   }
 
   return {
     type: "ambiguous",
-    options: sortedEntries.map((entry) => ({
-      state: entry.s,
+    options: sortedDistricts.map((entry) => ({
+      state,
       district: entry.d,
       proportion: entry.p,
     })),

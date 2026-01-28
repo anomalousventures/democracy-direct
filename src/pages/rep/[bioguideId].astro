@@ -2,114 +2,51 @@
 export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
-import { neon } from "@neondatabase/serverless";
+import { createDb } from "../../db/client";
+import { getLegislatorByBioguideId } from "../../db/queries/legislators";
+import { ContactFlow } from "../../components/ContactFlow";
+import type { Legislator } from "../../db/schema";
+import {
+  getPhotoUrl,
+  getPartyColor,
+  getPartyLabel,
+  getRepTitle,
+  formatDate,
+} from "../../lib/legislator-utils";
 
 const { bioguideId } = Astro.params;
-
-interface Legislator {
-  bioguide_id: string;
-  first_name: string;
-  last_name: string;
-  party: string;
-  state: string;
-  district: string | null;
-  chamber: string;
-  phone: string | null;
-  contact_form: string | null;
-  twitter: string | null;
-  facebook: string | null;
-  office_address: string | null;
-  term_start: string | null;
-  term_end: string | null;
-}
 
 let rep: Legislator | null = null;
 let error: string | null = null;
 
-if (!bioguideId || !/^[A-Z]\d{6}$/.test(bioguideId)) {
+const isInvalidId = !bioguideId || !/^[A-Z]\d{6}$/.test(bioguideId);
+if (isInvalidId) {
   error = "Invalid representative ID.";
-} else {
-  try {
-    const sql = neon(import.meta.env.DATABASE_URL);
-
-    const results = await sql`
-      SELECT
-        bioguide_id, first_name, last_name, party, state, district,
-        chamber, phone, contact_form, twitter, facebook, office_address,
-        term_start, term_end
-      FROM legislators
-      WHERE bioguide_id = ${bioguideId}
-      LIMIT 1
-    `;
-
-    if (results.length === 0) {
-      Astro.response.status = 404;
-      error = "Representative not found.";
-    } else {
-      rep = results[0] as Legislator;
-    }
-  } catch (e) {
-    console.error("Database error:", e);
-    error = "Failed to load representative details.";
-  }
 }
 
-const getPhotoUrl = (id: string) =>
-  `https://bioguide.congress.gov/bioguide/photo/${id[0]}/${id}.jpg`;
+if (!error) {
+  const db = createDb(import.meta.env.DATABASE_URL);
+  const [loadedRep, dbError] = await getLegislatorByBioguideId(db, bioguideId!)
+    .then((result) => [result, null] as const)
+    .catch((e) => {
+      console.error("Database error:", e);
+      return [null, "Failed to load representative details."] as const;
+    });
 
-const getPartyColor = (party: string) => {
-  switch (party) {
-    case "Democrat":
-      return "bg-blue-600";
-    case "Republican":
-      return "bg-red-600";
-    default:
-      return "bg-gray-600";
+  rep = loadedRep;
+  error = dbError;
+
+  if (!error && !rep) {
+    Astro.response.status = 404;
+    error = "Representative not found.";
   }
-};
-
-const getPartyLabel = (party: string) => {
-  switch (party) {
-    case "Democrat":
-      return "Democrat";
-    case "Republican":
-      return "Republican";
-    default:
-      return "Independent";
-  }
-};
-
-const getTitle = (chamber: string, state: string, district: string | null) => {
-  if (chamber === "senate") {
-    return `U.S. Senator from ${state}`;
-  }
-  if (district === "0") {
-    return `U.S. Representative At-Large from ${state}`;
-  }
-  return `U.S. Representative from ${state}'s ${district}${getOrdinalSuffix(parseInt(district || "0"))} Congressional District`;
-};
-
-const getOrdinalSuffix = (n: number) => {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return s[(v - 20) % 10] || s[v] || s[0];
-};
-
-const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
+}
 ---
 
 <Layout
-  title={rep ? `${rep.first_name} ${rep.last_name}` : "Representative Not Found"}
+  title={rep ? `${rep.firstName} ${rep.lastName}` : "Representative Not Found"}
   description={rep
-    ? `Contact information and details for ${rep.first_name} ${rep.last_name}, ${rep.chamber === "senate" ? "Senator" : "Representative"} from ${rep.state}`
+    ? `Contact information and details for ${rep.firstName} ${rep.lastName}, ${rep.chamber === "senate" ? "Senator" : "Representative"} from ${rep.state}`
     : "Representative not found"}
 >
   <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -182,8 +119,8 @@ const formatDate = (dateStr: string | null) => {
                   <div class="flex-shrink-0">
                     <div class="relative w-48 h-60 mx-auto md:mx-0 bg-[var(--color-secondary)] overflow-hidden shadow-lg">
                       <img
-                        src={getPhotoUrl(rep.bioguide_id)}
-                        alt={`${rep.first_name} ${rep.last_name}`}
+                        src={getPhotoUrl(rep.bioguideId)}
+                        alt={`${rep.firstName} ${rep.lastName}`}
                         class="w-full h-full object-cover object-top"
                         onerror="this.style.display='none'"
                       />
@@ -191,8 +128,8 @@ const formatDate = (dateStr: string | null) => {
                         class="absolute inset-0 flex items-center justify-center text-6xl font-bold text-[var(--color-muted-foreground)]/30"
                         style="font-family: var(--font-display)"
                       >
-                        {rep.first_name[0]}
-                        {rep.last_name[0]}
+                        {rep.firstName[0]}
+                        {rep.lastName[0]}
                       </div>
                     </div>
                   </div>
@@ -201,10 +138,10 @@ const formatDate = (dateStr: string | null) => {
                     <div class="flex items-start justify-between gap-4 mb-4">
                       <div>
                         <h1 class="text-3xl sm:text-4xl font-bold mb-2">
-                          {rep.first_name} {rep.last_name}
+                          {rep.firstName} {rep.lastName}
                         </h1>
                         <p class="text-lg text-muted-foreground">
-                          {getTitle(rep.chamber, rep.state, rep.district)}
+                          {getRepTitle(rep.chamber, rep.state, rep.district)}
                         </p>
                       </div>
                       <span
@@ -214,12 +151,11 @@ const formatDate = (dateStr: string | null) => {
                       </span>
                     </div>
 
-                    {rep.term_start && (
+                    {rep.termStart && (
                       <div class="mb-6 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                         <p class="text-sm text-muted-foreground">
-                          <span class="font-medium">Current Term:</span>{" "}
-                          {formatDate(rep.term_start)}
-                          {rep.term_end && ` — ${formatDate(rep.term_end)}`}
+                          <span class="font-medium">Current Term:</span> {formatDate(rep.termStart)}
+                          {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
                         </p>
                       </div>
                     )}
@@ -227,7 +163,7 @@ const formatDate = (dateStr: string | null) => {
                     <div class="space-y-4">
                       <h2 class="text-xl font-semibold">Contact Information</h2>
 
-                      {rep.phone && (
+                      {rep.phoneCapitol && (
                         <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                           <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
                             <svg
@@ -247,16 +183,16 @@ const formatDate = (dateStr: string | null) => {
                           <div>
                             <p class="font-medium">DC Office Phone</p>
                             <a
-                              href={`tel:${rep.phone}`}
+                              href={`tel:${rep.phoneCapitol}`}
                               class="text-[var(--color-civic-navy)] hover:underline text-lg"
                             >
-                              {rep.phone}
+                              {rep.phoneCapitol}
                             </a>
                           </div>
                         </div>
                       )}
 
-                      {rep.contact_form && (
+                      {rep.contactFormUrl && (
                         <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                           <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
                             <svg
@@ -276,7 +212,7 @@ const formatDate = (dateStr: string | null) => {
                           <div>
                             <p class="font-medium">Online Contact Form</p>
                             <a
-                              href={rep.contact_form}
+                              href={rep.contactFormUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline-flex items-center gap-1 text-[var(--color-civic-navy)] hover:underline"
@@ -300,7 +236,7 @@ const formatDate = (dateStr: string | null) => {
                         </div>
                       )}
 
-                      {rep.office_address && (
+                      {rep.addressCapitol && (
                         <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                           <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
                             <svg
@@ -326,13 +262,13 @@ const formatDate = (dateStr: string | null) => {
                           <div>
                             <p class="font-medium">DC Office Address</p>
                             <p class="text-muted-foreground whitespace-pre-line">
-                              {rep.office_address}
+                              {rep.addressCapitol}
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {(rep.twitter || rep.facebook) && (
+                      {(rep.twitterHandle || rep.facebookId) && (
                         <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                           <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
                             <svg
@@ -352,9 +288,9 @@ const formatDate = (dateStr: string | null) => {
                           <div>
                             <p class="font-medium">Social Media</p>
                             <div class="flex gap-4 mt-2">
-                              {rep.twitter && (
+                              {rep.twitterHandle && (
                                 <a
-                                  href={`https://twitter.com/${rep.twitter}`}
+                                  href={`https://twitter.com/${rep.twitterHandle}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
@@ -362,12 +298,12 @@ const formatDate = (dateStr: string | null) => {
                                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                   </svg>
-                                  <span>@{rep.twitter}</span>
+                                  <span>@{rep.twitterHandle}</span>
                                 </a>
                               )}
-                              {rep.facebook && (
+                              {rep.facebookId && (
                                 <a
-                                  href={`https://facebook.com/${rep.facebook}`}
+                                  href={`https://facebook.com/${rep.facebookId}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
@@ -386,6 +322,23 @@ const formatDate = (dateStr: string | null) => {
                   </div>
                 </div>
               </article>
+
+              <div class="mt-8 animate-fade-up-delay-1">
+                <ContactFlow
+                  client:load
+                  representative={{
+                    first_name: rep.firstName,
+                    last_name: rep.lastName,
+                    party: rep.party,
+                    state: rep.state,
+                    district: rep.district,
+                    chamber: rep.chamber as "senate" | "house",
+                    contact_form: rep.contactFormUrl || undefined,
+                    phone: rep.phoneCapitol || undefined,
+                    office_address: rep.addressCapitol || undefined,
+                  }}
+                />
+              </div>
 
               <div class="text-center mt-12">
                 <a

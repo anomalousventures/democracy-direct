@@ -274,76 +274,76 @@
 
 ### 3.1 Letter Composer Component
 
-- [ ] `LetterComposer` React component (island)
-- [ ] Textarea for letter body
-- [ ] Character count display
-- [ ] Template variable substitution preview ({{REP_NAME}}, etc.)
-- [ ] "Use Template" button to load from template
+- [x] `LetterComposer` React component (island)
+- [x] Textarea for letter body
+- [x] Character count display
+- [x] Template variable substitution preview ({{REP_NAME}}, etc.)
+- [x] "Use Template" button to load from template
 
 **Tests:**
 
-- Playwright: Can type in composer
-- Playwright: Character count updates
-- Playwright: Variable substitution shows preview
+- Vitest: Can type in composer
+- Vitest: Character count updates
+- Vitest: Variable substitution shows preview
 
 ### 3.2 Clipboard Copy Functionality
 
-- [ ] "Copy to Clipboard" button
-- [ ] Uses Clipboard API with fallback
-- [ ] Toast notification on success
-- [ ] Error handling for clipboard failures
+- [x] "Copy to Clipboard" button
+- [x] Uses Clipboard API with fallback
+- [x] Toast notification on success
+- [x] Error handling for clipboard failures
 
 **Tests:**
 
-- Playwright: Copy button exists
-- Playwright: Clicking copy shows success toast
+- Vitest: Copy button exists
+- Vitest: Clicking copy shows success toast
 - Vitest: Clipboard API called with correct content
 
 ### 3.3 Contact Form Flow
 
-- [ ] "Send via Contact Form" button
-- [ ] Copies letter to clipboard
-- [ ] Opens rep's contact form in new tab
-- [ ] Shows instruction toast: "Letter copied! Paste into the form."
+- [x] "Send via Contact Form" button
+- [x] Copies letter to clipboard
+- [x] Opens rep's contact form in new tab
+- [x] Shows instruction toast: "Letter copied! Paste into the form."
 
 **Tests:**
 
-- Playwright: Button triggers copy + new tab
-- Playwright: Toast message appears
-- Playwright: New tab opens correct URL
+- Vitest: Button triggers copy + new tab
+- Vitest: Toast message appears
+- Vitest: New tab opens correct URL
 
 ### 3.4 Print Letter Feature
 
-- [ ] "Print & Mail" button
-- [ ] Print-optimized CSS (`@media print`)
-- [ ] Letter formatted with:
+- [x] "Print & Mail" button
+- [x] Print-optimized CSS (`@media print`)
+- [x] Letter formatted with:
   - User's return address fields (editable, client-side only)
   - Date
   - Rep's mailing address
   - Salutation
   - Letter body
   - Signature line
-- [ ] `window.print()` triggered
+- [x] `window.print()` triggered
 
 **Tests:**
 
-- Playwright: Print button exists
-- Playwright: Print preview contains all sections
-- Playwright: Return address fields are editable
+- Vitest: Print button exists
+- Vitest: Print preview contains all sections
+- Vitest: Return address fields are editable
 - Vitest: Print styles hide non-letter elements
 
 ### 3.5 Print Address Form
 
-- [ ] Form fields for user's return address (name, street, city, state, ZIP)
-- [ ] Fields stored in localStorage (never sent to server)
-- [ ] Pre-fills on subsequent visits
-- [ ] Clear button to reset
+- [x] Form fields for user's return address (name, street, city, state, ZIP)
+- [x] Fields stored in localStorage (never sent to server)
+- [x] Pre-fills on subsequent visits
+- [x] Clear button to reset
 
 **Tests:**
 
-- Playwright: Address fields exist and are editable
-- Playwright: Values persist after page reload (localStorage)
-- Playwright: Clear button removes stored values
+- Vitest: Address fields exist and are editable
+- Vitest: Values persist (localStorage)
+- Vitest: Clear button removes stored values
 
 ---
 
@@ -648,22 +648,9 @@
 - Vitest: Response parsed correctly
 - Vitest: Error handling works (mock failure)
 
-### 6.2 Perspective API Integration
-
-- [ ] Function to call Perspective API
-- [ ] Requests TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK, INSULT, THREAT scores
-- [ ] Returns normalized scores
-- [ ] Handles API errors gracefully
-
-**Tests:**
-
-- Vitest: API called with correct parameters
-- Vitest: Response parsed correctly
-- Vitest: Error handling works
-
 ### 6.3 Moderation Decision Logic
 
-- [ ] Function that takes both API responses
+- [ ] Function that takes API response
 - [ ] Returns decision: 'approve', 'reject', or 'review'
 - [ ] Rejection thresholds configurable
 - [ ] Review thresholds configurable

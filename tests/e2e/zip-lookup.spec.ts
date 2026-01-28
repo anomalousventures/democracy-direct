@@ -3,6 +3,27 @@ import { test, expect } from "@playwright/test";
 test.describe("ZIP Lookup Component", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
+  });
+
+  test("navigates to ZIP results page for valid ZIP using real data", async ({ page }) => {
+    const zipInput = page.getByPlaceholder(/zip/i);
+    await zipInput.fill("10001");
+    await page.getByRole("button", { name: /find/i }).click();
+
+    await page.waitForURL("**/zip/10001**");
+    await expect(page.getByText(/your representatives/i)).toBeVisible();
+  });
+
+  test("shows disambiguation for ambiguous ZIP using real data", async ({ page }) => {
+    const zipInput = page.getByPlaceholder(/zip/i);
+    await zipInput.fill("10003");
+    await page.getByRole("button", { name: /find/i }).click();
+
+    const disambiguationHeading = page.getByRole("heading", {
+      name: /multiple districts/i,
+    });
+    await expect(disambiguationHeading).toBeVisible();
   });
 
   test("can enter ZIP and submit button exists", async ({ page }) => {
@@ -56,7 +77,7 @@ test.describe("ZIP Lookup Component", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          "10001": [{ s: "NY", d: "12", p: 1.0 }],
+          "10001": { s: "NY", d: [{ d: "12", p: 1.0 }] },
         }),
       });
     });
@@ -75,10 +96,13 @@ test.describe("ZIP Lookup Component", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          "10002": [
-            { s: "NY", d: "7", p: 0.6 },
-            { s: "NY", d: "12", p: 0.4 },
-          ],
+          "10002": {
+            s: "NY",
+            d: [
+              { d: "7", p: 0.6 },
+              { d: "12", p: 0.4 },
+            ],
+          },
         }),
       });
     });
