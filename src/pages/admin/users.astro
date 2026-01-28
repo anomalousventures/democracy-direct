@@ -6,7 +6,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { users, templates } from "@/db/schema";
-import { desc, count } from "drizzle-orm";
+import { desc, count, inArray } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
 import { isAdmin } from "@/lib/admin";
 import { TRUST_LEVELS } from "@/lib/trust-level";
@@ -45,16 +45,25 @@ try {
     .orderBy(desc(users.createdAt))
     .limit(100);
 
-  // Get template counts for each user
-  const templateCounts = await db
-    .select({
-      userId: templates.userId,
-      count: count(),
-    })
-    .from(templates)
-    .groupBy(templates.userId);
+  const userIds = userRows.map((u) => u.id);
+  let countMap = new Map<string, number>();
 
-  const countMap = new Map(templateCounts.map((tc) => [tc.userId, tc.count]));
+  if (userIds.length > 0) {
+    const templateCounts = await db
+      .select({
+        userId: templates.userId,
+        count: count(),
+      })
+      .from(templates)
+      .where(inArray(templates.userId, userIds))
+      .groupBy(templates.userId);
+
+    countMap = new Map(
+      templateCounts
+        .filter((tc): tc is { userId: string; count: number } => tc.userId !== null)
+        .map((tc) => [tc.userId, tc.count])
+    );
+  }
 
   userItems = userRows.map((u) => ({
     ...u,
@@ -105,10 +114,12 @@ function truncateId(id: string): string {
         </div>
 
         <div class="mb-6">
+          <label for="user-search" class="sr-only">Search users by ID</label>
           <input
             type="text"
             id="user-search"
             placeholder="Search by user ID..."
+            aria-label="Search users by ID"
             class="w-full max-w-md px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[var(--color-civic-navy)] focus:border-transparent"
           />
         </div>
@@ -149,9 +160,9 @@ function truncateId(id: string): string {
                       </td>
                       <td class="px-4 py-3">
                         <select
-                          class="text-sm border border-border rounded px-2 py-1 focus:ring-2 focus:ring-[var(--color-civic-navy)]"
+                          class="text-sm border border-border rounded px-2 py-1 focus:ring-2 focus:ring-[var(--color-civic-navy)] trust-select"
                           data-testid="trust-select"
-                          onchange={`window.updateTrustLevel('${u.id}', this.value)`}
+                          aria-label={`Change trust level for user ${truncateId(u.id)}`}
                         >
                           <option
                             value={TRUST_LEVELS.BANNED}
@@ -202,7 +213,6 @@ function truncateId(id: string): string {
 </Layout>
 
 <script is:inline>
-  // Search functionality
   document.getElementById("user-search")?.addEventListener("input", function (e) {
     const search = e.target.value.toLowerCase();
     document.querySelectorAll('[data-testid="user-row"]').forEach((row) => {
@@ -211,29 +221,26 @@ function truncateId(id: string): string {
     });
   });
 
-  window.updateTrustLevel = async function (userId, newLevel) {
+  document.addEventListener("change", async function (e) {
+    const select = e.target.closest(".trust-select");
+    if (!select) return;
+
+    const row = select.closest("[data-user-id]");
+    if (!row) return;
+
+    const userId = row.getAttribute("data-user-id");
+    const newLevel = select.value;
+    if (!userId) return;
+
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trustLevel: parseInt(newLevel, 10) }),
       });
 
       if (response.ok) {
-        // Update badge
-        const row = document.querySelector(`[data-user-id="${userId}"]`);
-        const badge = row?.querySelector('[data-testid="trust-badge"]');
-        if (badge) {
-          const labels = { "-1": "Banned", "0": "New User", "1": "Trusted", "2": "Admin" };
-          const colors = {
-            "-1": "bg-red-100 text-red-700",
-            "0": "bg-gray-100 text-gray-700",
-            "1": "bg-blue-100 text-blue-700",
-            "2": "bg-purple-100 text-purple-700",
-          };
-          badge.textContent = labels[newLevel] || `Level ${newLevel}`;
-          badge.className = `px-2 py-1 text-xs rounded ${colors[newLevel] || "bg-gray-100 text-gray-700"}`;
-        }
+        window.location.reload();
       } else {
         const data = await response.json();
         alert(data.error || "Failed to update trust level");
@@ -243,5 +250,5 @@ function truncateId(id: string): string {
       alert("Failed to update trust level");
       window.location.reload();
     }
-  };
+  });
 </script>

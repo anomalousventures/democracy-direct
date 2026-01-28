@@ -31,6 +31,14 @@ export async function incrementApprovedTemplatesCount(db: Database, userId: stri
 }
 
 export async function handleTemplateRejection(db: Database, userId: string): Promise<void> {
+  const [currentUser] = await db
+    .select({ trustLevel: users.trustLevel })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!currentUser || currentUser.trustLevel === TRUST_LEVELS.BANNED) return;
+
   await db
     .update(users)
     .set({

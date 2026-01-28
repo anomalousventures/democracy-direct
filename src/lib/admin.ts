@@ -1,6 +1,7 @@
 import { unauthorized, forbidden } from "./api-response";
+import { TRUST_LEVELS } from "./trust-level";
 
-export const ADMIN_TRUST_LEVEL = 2;
+export const ADMIN_TRUST_LEVEL = TRUST_LEVELS.ADMIN;
 
 type UserWithTrustLevel = { trustLevel: number } | null | undefined;
 type UserWithIdAndTrustLevel = { id: string; trustLevel: number } | null | undefined;

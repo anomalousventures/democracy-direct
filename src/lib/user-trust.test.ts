@@ -6,15 +6,24 @@ const mockReturning = vi.fn();
 const mockUpdateWhere = vi.fn();
 const mockSet = vi.fn();
 const mockUpdate = vi.fn();
+const mockSelectLimit = vi.fn();
+const mockSelectWhere = vi.fn();
+const mockSelectFrom = vi.fn();
+const mockSelect = vi.fn();
 
 const mockDb = {
   update: mockUpdate,
+  select: mockSelect,
 };
 
 function setupMockChain() {
   mockUpdate.mockReturnValue({ set: mockSet });
   mockSet.mockReturnValue({ where: mockUpdateWhere });
   mockUpdateWhere.mockReturnValue({ returning: mockReturning });
+
+  mockSelect.mockReturnValue({ from: mockSelectFrom });
+  mockSelectFrom.mockReturnValue({ where: mockSelectWhere });
+  mockSelectWhere.mockReturnValue({ limit: mockSelectLimit });
 }
 
 describe("user-trust", () => {
@@ -76,10 +85,31 @@ describe("user-trust", () => {
 
   describe("handleTemplateRejection", () => {
     it("resets trust level to NEW_USER", async () => {
+      mockSelectLimit.mockResolvedValueOnce([{ trustLevel: TRUST_LEVELS.TRUSTED }]);
+
       await handleTemplateRejection(mockDb as never, "user-123");
 
+      expect(mockSelect).toHaveBeenCalled();
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockSet).toHaveBeenCalledWith({ trustLevel: TRUST_LEVELS.NEW_USER });
+    });
+
+    it("does not reset trust level for banned users", async () => {
+      mockSelectLimit.mockResolvedValueOnce([{ trustLevel: TRUST_LEVELS.BANNED }]);
+
+      await handleTemplateRejection(mockDb as never, "user-123");
+
+      expect(mockSelect).toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("does nothing if user not found", async () => {
+      mockSelectLimit.mockResolvedValueOnce([]);
+
+      await handleTemplateRejection(mockDb as never, "user-123");
+
+      expect(mockSelect).toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

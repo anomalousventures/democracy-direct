@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { Toaster } from "@/components/ui/sonner";
 
 interface Props {
   title: string;
@@ -26,5 +27,6 @@ const { title, description = "Direct access to your democracy." } = Astro.props;
   </head>
   <body class="min-h-screen bg-background antialiased flex flex-col">
     <slot />
+    <Toaster client:load position="top-right" duration={5000} />
   </body>
 </html>
