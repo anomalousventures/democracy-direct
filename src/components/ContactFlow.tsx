@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { LetterComposer } from "./LetterComposer";
 import { ContactActions } from "./ContactActions";
 import { AddressForm } from "./AddressForm";
@@ -7,15 +7,16 @@ import { type Representative, type Address, createEmptyAddress } from "../types/
 
 interface ContactFlowProps {
   representative: Representative;
+  initialTemplate?: string;
 }
 
-export function ContactFlow({ representative }: ContactFlowProps) {
-  const [letterContent, setLetterContent] = useState("");
+export function ContactFlow({ representative, initialTemplate = "" }: ContactFlowProps) {
+  const [letterContent, setLetterContent] = useState(initialTemplate);
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
 
-  const handlePrint = useCallback(() => {
+  function handlePrint(): void {
     window.print();
-  }, []);
+  }
 
   return (
     <div className="space-y-8">
@@ -24,7 +25,11 @@ export function ContactFlow({ representative }: ContactFlowProps) {
           Write Your Letter
         </h2>
 
-        <LetterComposer representative={representative} onContentChange={setLetterContent} />
+        <LetterComposer
+          representative={representative}
+          initialContent={initialTemplate}
+          onContentChange={setLetterContent}
+        />
 
         {letterContent && (
           <div className="mt-6 pt-6 border-t border-[var(--color-border)]">

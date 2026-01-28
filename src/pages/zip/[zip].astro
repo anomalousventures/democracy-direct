@@ -21,6 +21,10 @@ interface ClientZipEntry {
 
 const { zip } = Astro.params;
 const district = Astro.url.searchParams.get("district");
+const rawTemplateSlug = Astro.url.searchParams.get("template");
+const templateSlug =
+  rawTemplateSlug && /^[a-z0-9-]{1,100}$/.test(rawTemplateSlug) ? rawTemplateSlug : null;
+const templateQueryParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
 
 let reps: Legislator[] = [];
 let zipInfo: { state: string; district: string } | null = null;
@@ -158,7 +162,7 @@ if (!error && zipEntry) {
                           <div>
                             <h2 class="text-xl sm:text-2xl font-bold">
                               <a
-                                href={`/rep/${rep.bioguideId}`}
+                                href={`/rep/${rep.bioguideId}${templateQueryParam}`}
                                 class="hover:text-[var(--color-civic-gold)] transition-colors"
                               >
                                 {rep.firstName} {rep.lastName}
@@ -236,7 +240,7 @@ if (!error && zipEntry) {
                           )}
 
                           <a
-                            href={`/rep/${rep.bioguideId}`}
+                            href={`/rep/${rep.bioguideId}${templateQueryParam}`}
                             class="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-civic-navy)] text-[var(--color-civic-navy)] text-sm font-medium transition-colors hover:bg-[var(--color-civic-navy)] hover:text-[var(--color-civic-cream)]"
                           >
                             <span>Full Profile</span>
