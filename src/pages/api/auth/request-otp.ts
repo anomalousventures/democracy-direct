@@ -1,10 +1,13 @@
 import type { APIRoute } from "astro";
-import { createDb } from "../../../db/client";
-import { emailOtps } from "../../../db/schema";
-import { hashEmail } from "../../../lib/auth/hash-email";
-import { generateOTP } from "../../../lib/auth/otp";
+import { createDb } from "@/db/client";
+import { emailOtps } from "@/db/schema";
+import { hashEmail } from "@/lib/auth/hash-email";
+import { generateOTP } from "@/lib/auth/otp";
+import { sendEmail } from "@/lib/email";
+import { createOtpEmail } from "@/lib/email/templates/otp";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_EXPIRY_MINUTES = 10;
 
 export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
@@ -12,7 +15,8 @@ export function validateEmail(email: string): boolean {
 
 export async function requestOTP(
   email: string,
-  db?: ReturnType<typeof createDb>
+  db?: ReturnType<typeof createDb>,
+  emailSender: typeof sendEmail = sendEmail
 ): Promise<{ success: boolean; error?: string }> {
   if (!validateEmail(email)) {
     return { success: false, error: "Invalid email format" };
@@ -20,7 +24,7 @@ export async function requestOTP(
 
   const emailHash = hashEmail(email);
   const { otp, otpHash } = generateOTP();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
   if (db) {
     await db.insert(emailOtps).values({
@@ -29,11 +33,13 @@ export async function requestOTP(
       expiresAt,
     });
 
-    // In production, send email via SES
-    // For now, log in development
-    if (import.meta.env.DEV) {
-      console.log(`[DEV] OTP for ${email}: ${otp}`);
-    }
+    const emailMessage = createOtpEmail({
+      to: email,
+      otp,
+      expiresInMinutes: OTP_EXPIRY_MINUTES,
+    });
+
+    await emailSender(emailMessage);
   }
 
   // Always return success to prevent email enumeration

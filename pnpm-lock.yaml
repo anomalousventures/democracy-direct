@@ -52,6 +52,9 @@ importers:
       lucide-react:
         specifier: 0.563.0
         version: 0.563.0(react@19.2.4)
+      nodemailer:
+        specifier: ^7.0.13
+        version: 7.0.13
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -83,6 +86,9 @@ importers:
       "@types/node":
         specifier: 25.0.10
         version: 25.0.10
+      "@types/nodemailer":
+        specifier: ^7.0.9
+        version: 7.0.9
       "@vitejs/plugin-react":
         specifier: 5.1.2
         version: 5.1.2(vite@6.4.1(@types/node@25.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -2899,6 +2905,12 @@ packages:
     resolution:
       {
         integrity: sha512-zWW5KPngR/yvakJgGOmZ5vTBemDoSqF3AcV/LrO5u5wTWyEAVVh+IT39G4gtyAkh3CtTZs8aX/yRM82OfzHJRg==,
+      }
+
+  "@types/nodemailer@7.0.9":
+    resolution:
+      {
+        integrity: sha512-vI8oF1M+8JvQhsId0Pc38BdUP2evenIIys7c7p+9OZXSPOH5c1dyINP1jT8xQ2xPuBUXmIC87s+91IZMDjH8Ow==,
       }
 
   "@types/pg@8.16.0":
@@ -5788,6 +5800,13 @@ packages:
       {
         integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==,
       }
+
+  nodemailer@7.0.13:
+    resolution:
+      {
+        integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==,
+      }
+    engines: { node: ">=6.0.0" }
 
   normalize-path@3.0.0:
     resolution:
@@ -9065,6 +9084,10 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
+  "@types/nodemailer@7.0.9":
+    dependencies:
+      "@types/node": 25.0.10
+
   "@types/pg@8.16.0":
     dependencies:
       "@types/node": 25.0.10
@@ -11234,6 +11257,8 @@ snapshots:
   node-mock-http@1.0.4: {}
 
   node-releases@2.0.27: {}
+
+  nodemailer@7.0.13: {}
 
   normalize-path@3.0.0: {}
 
