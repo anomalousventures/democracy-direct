@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -65,8 +67,10 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       }
 
       setStep("otp");
+      toast.info("Verification code sent to your email");
     } catch {
       setError("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -91,10 +95,12 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
         return;
       }
 
+      toast.success("Successfully signed in!");
       onSuccess();
       onOpenChange(false);
     } catch {
       setError("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -140,9 +146,14 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               </p>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send Code"}
-            </Button>
+            <LoadingButton
+              type="submit"
+              className="w-full"
+              loading={isLoading}
+              loadingText="Sending..."
+            >
+              Send Code
+            </LoadingButton>
 
             <p className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
               <svg
@@ -192,9 +203,15 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
                 Back
               </Button>
-              <Button type="submit" className="flex-1" disabled={isLoading || otp.length !== 6}>
-                {isLoading ? "Verifying..." : "Verify"}
-              </Button>
+              <LoadingButton
+                type="submit"
+                className="flex-1"
+                loading={isLoading}
+                loadingText="Verifying..."
+                disabled={otp.length !== 6}
+              >
+                Verify
+              </LoadingButton>
             </div>
           </form>
         )}

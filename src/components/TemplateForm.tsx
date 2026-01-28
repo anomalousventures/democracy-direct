@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { LoadingButton } from "./ui/loading-button";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
@@ -187,14 +187,15 @@ export function TemplateForm({
       )}
 
       <div className="pt-4">
-        <Button
+        <LoadingButton
           type="submit"
-          disabled={isSubmitting}
+          loading={isSubmitting}
+          loadingText="Saving..."
           className="btn-primary w-full sm:w-auto"
           data-testid="submit-template-button"
         >
-          {isSubmitting ? "Saving..." : submitLabel}
-        </Button>
+          {submitLabel}
+        </LoadingButton>
       </div>
     </form>
   );

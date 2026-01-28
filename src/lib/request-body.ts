@@ -35,7 +35,7 @@ export type TemplateBody = z.infer<typeof templateBodySchema>;
 
 export const flagBodySchema = z.object({
   reason: z.string().min(1),
-  details: z.string().optional(),
+  details: z.string().max(2000).optional(),
 });
 
 export type FlagBody = z.infer<typeof flagBodySchema>;

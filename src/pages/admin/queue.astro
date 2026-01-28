@@ -149,17 +149,17 @@ function formatScores(scores: Record<string, number> | null): string {
                       <div class="flex gap-2">
                         <button
                           type="button"
-                          class="btn-primary text-sm bg-green-600 hover:bg-green-700"
+                          class="btn-primary text-sm bg-green-600 hover:bg-green-700 moderation-btn"
                           data-testid="approve-button"
-                          onclick={`window.moderateTemplate('${item.id}', 'approve')`}
+                          data-action="approve"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
-                          class="btn-secondary text-sm text-red-600 hover:bg-red-50"
+                          class="btn-secondary text-sm text-red-600 hover:bg-red-50 moderation-btn"
                           data-testid="reject-button"
-                          onclick={`window.moderateTemplate('${item.id}', 'reject')`}
+                          data-action="reject"
                         >
                           Reject
                         </button>
@@ -198,23 +198,28 @@ function formatScores(scores: Record<string, number> | null): string {
 </Layout>
 
 <script is:inline>
-  window.moderateTemplate = async function (templateId, action) {
+  document.addEventListener("click", async function (e) {
+    const button = e.target.closest(".moderation-btn");
+    if (!button) return;
+
+    const article = button.closest("[data-template-id]");
+    if (!article) return;
+
+    const templateId = article.getAttribute("data-template-id");
+    const action = button.getAttribute("data-action");
+    if (!templateId || !action) return;
+
     const reason = action === "reject" ? prompt("Reason for rejection (optional):") : null;
 
     try {
-      const response = await fetch(`/api/admin/moderate/${templateId}`, {
+      const response = await fetch(`/api/admin/moderate/${encodeURIComponent(templateId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, reason }),
       });
 
       if (response.ok) {
-        // Remove the item from the page
-        const item = document.querySelector(`[data-template-id="${templateId}"]`);
-        if (item) {
-          item.remove();
-        }
-        // Update the count in the header
+        article.remove();
         const countEl = document.querySelector('[data-testid="queue-items"]');
         const remaining = countEl?.querySelectorAll('[data-testid="queue-item"]').length ?? 0;
         const headerP = document.querySelector("main h1 + p");
@@ -228,5 +233,5 @@ function formatScores(scores: Record<string, number> | null): string {
     } catch {
       alert(`Failed to ${action} template`);
     }
-  };
+  });
 </script>

@@ -28,6 +28,16 @@ export function makeModerationDecision(
 ): DecisionResult {
   const { category, score } = getHighestCategoryScore(result.categoryScores);
 
+  if (userTrustLevel < 0) {
+    return {
+      decision: "reject",
+      reason: "User is banned",
+      highestCategory: category,
+      highestScore: score,
+      flagged: false,
+    };
+  }
+
   if (result.flagged || score >= thresholds.rejectThreshold) {
     return {
       decision: "reject",
@@ -78,5 +88,5 @@ export function makeModerationDecision(
 }
 
 export function scoresToRecord(scores: ModerationCategory): Record<string, number> {
-  return scores as unknown as Record<string, number>;
+  return Object.fromEntries(Object.entries(scores)) as Record<string, number>;
 }

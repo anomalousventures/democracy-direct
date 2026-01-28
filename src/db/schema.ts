@@ -121,16 +121,20 @@ export const templates = pgTable(
   ]
 );
 
-export const templateFlags = pgTable("template_flags", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  templateId: uuid("template_id")
-    .notNull()
-    .references(() => templates.id, { onDelete: "cascade" }),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
-  reason: varchar("reason", { length: 50 }).notNull(),
-  details: text("details"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const templateFlags = pgTable(
+  "template_flags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => templates.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    reason: varchar("reason", { length: 50 }).notNull(),
+    details: text("details"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("template_flags_template_user_idx").on(table.templateId, table.userId)]
+);
 
 export const moderationLog = pgTable("moderation_log", {
   id: uuid("id").primaryKey().defaultRandom(),

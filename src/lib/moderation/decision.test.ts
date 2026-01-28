@@ -108,5 +108,13 @@ describe("Moderation Decision Logic", () => {
 
       expect(decision.decision).toBe("approve");
     });
+
+    it("rejects content from banned users regardless of score", () => {
+      const result = createModerationResult(false, { harassment: 0.01 });
+      const decision = makeModerationDecision(result, DEFAULT_THRESHOLDS, -1);
+
+      expect(decision.decision).toBe("reject");
+      expect(decision.reason).toBe("User is banned");
+    });
   });
 });

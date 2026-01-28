@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { TemplateForm } from "./TemplateForm";
 
 interface TemplateEditClientProps {
@@ -34,11 +35,14 @@ export function TemplateEditClient({ slug, initialData }: TemplateEditClientProp
         }
 
         setSuccess(true);
+        toast.success("Template updated successfully!");
         setTimeout(() => {
           window.location.href = `/templates/mine`;
         }, 1500);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        const message = err instanceof Error ? err.message : "An error occurred";
+        setError(message);
+        toast.error(message);
       } finally {
         setIsSubmitting(false);
       }

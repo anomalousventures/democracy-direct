@@ -542,35 +542,38 @@
 
 ### 5.6 Template Creation Form
 
-- [x] Page at `/templates/new` (requires auth)
+- [ ] Page at `/templates/new` (no auth required)
 - [x] Title input (required, 5-100 chars)
 - [x] Body textarea (required, 50-10000 chars)
 - [x] Issue tags multi-select
 - [x] Turnstile widget (when configured)
 - [x] Submit button
+- [ ] Anonymous templates treated as NEW_USER for moderation
 
 **Tests:**
 
-- Playwright: Redirects to login if not authenticated
+- Playwright: Anonymous user can access form
 - Playwright: Form validates required fields
 - Playwright: Can submit valid form
 
 ### 5.7 Template Creation Endpoint
 
 - [x] POST `/api/templates`
-- [x] Requires authentication
+- [ ] Allows anonymous users (creates template without userId)
 - [x] Validates Turnstile token (when configured)
 - [x] Validates input (length, format, spam patterns)
 - [x] Generates unique slug
 - [ ] Runs content moderation (Phase 6)
 - [x] Saves with pending moderation_status
+- [ ] Anonymous templates use NEW_USER trust level for moderation
 - [x] Returns created template
 
 **Tests:**
 
-- Vitest: Unauthenticated returns 401
+- Vitest: Anonymous user can create template
 - Vitest: Valid input creates template
 - Vitest: Slug is unique
+- Vitest: Anonymous template has null userId
 
 ### 5.8 Template Fork Feature
 
@@ -587,6 +590,7 @@
 ### 5.9 My Templates Page
 
 - [x] Page at `/templates/mine` (requires auth)
+- [ ] Auth only required for viewing own templates, not creating
 - [x] Lists user's own templates
 - [x] Shows moderation status for each
 - [x] Edit and delete actions
@@ -717,9 +721,9 @@
 
 ### 7.1 Admin Authentication Check
 
-- [ ] Middleware/utility to check admin status
-- [ ] Admin users identified by trust_level = 2 or admin flag
-- [ ] Returns 403 for non-admins on admin routes
+- [x] Middleware/utility to check admin status
+- [x] Admin users identified by trust_level = 2 or admin flag
+- [x] Returns 403 for non-admins on admin routes
 
 **Tests:**
 
@@ -729,9 +733,9 @@
 
 ### 7.2 Admin Dashboard Page
 
-- [ ] Page at `/admin` (requires admin)
-- [ ] Summary stats: pending reviews, flagged items, users
-- [ ] Quick links to queues
+- [x] Page at `/admin` (requires admin)
+- [x] Summary stats: pending reviews, flagged items, users
+- [x] Quick links to queues
 
 **Tests:**
 
@@ -741,10 +745,10 @@
 
 ### 7.3 Moderation Queue Page
 
-- [ ] Page at `/admin/queue`
-- [ ] Lists templates with status 'pending_review' or 'flagged'
-- [ ] Shows template content, moderation scores, flags
-- [ ] Approve/Reject buttons
+- [x] Page at `/admin/queue`
+- [x] Lists templates with status 'pending_review' or 'flagged'
+- [x] Shows template content, moderation scores, flags
+- [x] Approve/Reject buttons
 
 **Tests:**
 
@@ -755,11 +759,11 @@
 
 ### 7.4 Moderation Actions Endpoint
 
-- [ ] POST `/api/admin/moderate/[templateId]`
-- [ ] Accepts `{ action: 'approve' | 'reject', reason?: string }`
-- [ ] Updates template status
-- [ ] Creates moderation_log entry
-- [ ] Updates user trust level
+- [x] POST `/api/admin/moderate/[templateId]`
+- [x] Accepts `{ action: 'approve' | 'reject', reason?: string }`
+- [x] Updates template status
+- [x] Creates moderation_log entry
+- [x] Updates user trust level
 
 **Tests:**
 
@@ -770,10 +774,10 @@
 
 ### 7.5 User Management Page
 
-- [ ] Page at `/admin/users`
-- [ ] List users with search
-- [ ] Shows trust level, template count, created date
-- [ ] Actions: adjust trust level, ban
+- [x] Page at `/admin/users`
+- [x] List users with search
+- [x] Shows trust level, template count, created date
+- [x] Actions: adjust trust level, ban
 
 **Tests:**
 
@@ -805,9 +809,9 @@
 
 ### 8.1 Error Pages
 
-- [ ] Custom 404 page
-- [ ] Custom 500 page
-- [ ] Consistent styling with main site
+- [x] Custom 404 page
+- [x] Custom 500 page
+- [x] Consistent styling with main site
 
 **Tests:**
 
@@ -816,9 +820,9 @@
 
 ### 8.2 Loading States
 
-- [ ] Skeleton loaders for async content
-- [ ] Loading spinners on buttons during submission
-- [ ] Consistent loading patterns across site
+- [x] Skeleton loaders for async content
+- [x] Loading spinners on buttons during submission
+- [x] Consistent loading patterns across site
 
 **Tests:**
 
@@ -827,10 +831,10 @@
 
 ### 8.3 Toast Notifications
 
-- [ ] Toast component (shadcn Sonner or similar)
-- [ ] Success, error, info variants
-- [ ] Auto-dismiss after 5 seconds
-- [ ] Used consistently for user feedback
+- [x] Toast component (shadcn Sonner or similar)
+- [x] Success, error, info variants
+- [x] Auto-dismiss after 5 seconds
+- [x] Used consistently for user feedback
 
 **Tests:**
 
@@ -839,12 +843,12 @@
 
 ### 8.4 SEO & Meta Tags
 
-- [ ] Title tags on all pages
-- [ ] Meta descriptions
-- [ ] Open Graph tags for sharing
-- [ ] Canonical URLs
-- [ ] robots.txt
-- [ ] sitemap.xml
+- [x] Title tags on all pages
+- [x] Meta descriptions
+- [x] Open Graph tags for sharing
+- [x] Canonical URLs
+- [x] robots.txt
+- [x] sitemap.xml
 
 **Tests:**
 
@@ -887,10 +891,10 @@
 
 ### 8.8 Production Build
 
-- [ ] Build succeeds without errors
-- [ ] All static assets optimized
-- [ ] Environment variables validated at build time
-- [ ] Cloudflare Pages deployment works
+- [x] Build succeeds without errors
+- [x] All static assets optimized
+- [x] Environment variables validated at build time
+- [x] Cloudflare Pages deployment works
 
 **Tests:**
 
