@@ -1,12 +1,15 @@
 ---
 import { AuthButton } from "./AuthButton";
+import { TRUST_LEVELS } from "@/lib/trust-level";
 
 interface Props {
   currentPath?: string;
-  user: { id: string } | null;
+  user: { id: string; trustLevel?: number } | null;
 }
 
 const { currentPath = "/", user } = Astro.props;
+
+const isAdmin = user?.trustLevel === TRUST_LEVELS.ADMIN;
 
 const navLinks = [
   { href: "/about", label: "About" },
@@ -43,6 +46,21 @@ const navLinks = [
               {link.label}
             </a>
           ))
+        }
+        {
+          isAdmin && (
+            <a
+              href="/admin"
+              class:list={[
+                "text-sm transition-colors",
+                currentPath.startsWith("/admin")
+                  ? "text-[var(--color-civic-navy)] font-medium"
+                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
+              ]}
+            >
+              Admin
+            </a>
+          )
         }
         <AuthButton isLoggedIn={!!user} client:load />
       </div>
