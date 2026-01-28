@@ -61,7 +61,7 @@ describe("OTP Request Endpoint", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rate limits after 5 requests per email per hour", async () => {
+    it("rate limits after 5 requests per email per hour (silently succeeds to prevent enumeration)", async () => {
       const mockDb = {
         insert: vi.fn().mockReturnThis(),
         values: vi.fn().mockResolvedValue(undefined),
@@ -80,8 +80,9 @@ describe("OTP Request Endpoint", () => {
         mockEmailSender
       );
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Too many requests. Please try again later.");
+      // Returns success to prevent email enumeration
+      expect(result.success).toBe(true);
+      // But no OTP is created or sent
       expect(mockDb.insert).not.toHaveBeenCalled();
       expect(mockEmailSender).not.toHaveBeenCalled();
     });

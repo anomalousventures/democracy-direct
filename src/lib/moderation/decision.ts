@@ -29,7 +29,7 @@ export function makeModerationDecision(
 ): DecisionResult {
   const { category, score } = getHighestCategoryScore(result.categoryScores);
 
-  if (userTrustLevel === TRUST_LEVELS.BANNED) {
+  if (userTrustLevel < TRUST_LEVELS.NEW_USER) {
     return {
       decision: "reject",
       reason: "User is banned",
