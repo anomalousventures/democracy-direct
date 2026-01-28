@@ -1,8 +1,9 @@
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import type { EmailConfig, EmailMessage, EmailProvider } from "../types";
 
 export class SesEmailProvider implements EmailProvider {
+  private client: SESClient;
   private from: string;
-  private region: string;
 
   constructor(config: EmailConfig) {
     if (!config.ses) {
@@ -10,14 +11,45 @@ export class SesEmailProvider implements EmailProvider {
     }
 
     this.from = config.from;
-    this.region = config.ses.region;
+    this.client = new SESClient({
+      region: config.ses.region,
+    });
   }
 
   async send(message: EmailMessage): Promise<boolean> {
-    // TODO: Implement AWS SES sending
-    // Will need @aws-sdk/client-ses when ready for production
-    console.warn("SES provider not yet implemented, falling back to console");
-    console.log(`Would send to ${message.to}: ${message.subject}`);
-    return true;
+    try {
+      const command = new SendEmailCommand({
+        Source: this.from,
+        Destination: {
+          ToAddresses: [message.to],
+        },
+        Message: {
+          Subject: {
+            Data: message.subject,
+            Charset: "UTF-8",
+          },
+          Body: {
+            Text: message.text
+              ? {
+                  Data: message.text,
+                  Charset: "UTF-8",
+                }
+              : undefined,
+            Html: message.html
+              ? {
+                  Data: message.html,
+                  Charset: "UTF-8",
+                }
+              : undefined,
+          },
+        },
+      });
+
+      await this.client.send(command);
+      return true;
+    } catch (error) {
+      console.error("SES send error:", error);
+      return false;
+    }
   }
 }
