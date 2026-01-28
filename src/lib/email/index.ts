@@ -21,7 +21,7 @@ export function getEmailConfig(locals: App.Locals): EmailConfig {
 
   return {
     provider,
-    from: getEnv(locals, "EMAIL_FROM") || "noreply@democracy-direct.com",
+    from: getEnv(locals, "EMAIL_FROM") || "no-reply@democracy-direct.com",
     smtp:
       provider === "smtp"
         ? {
