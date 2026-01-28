@@ -704,15 +704,22 @@
 
 - [x] New users: trust_level = 0
 - [x] After 2 approved templates: trust_level = 1
-- [x] Admin-verified users: trust_level = 2
-- [x] Rejected template: trust_level = -1
+- [x] Admin users: trust_level = 2 (set manually in database)
+- [x] Banned users: trust_level = -1 (manual admin action via `/admin/users` only - NOT automatic on template rejection)
 - [x] Trust level affects auto-publish threshold
+
+**Trust Level Values:**
+
+- `-1` = BANNED (manual admin action only, cannot create templates)
+- `0` = NEW_USER (templates require moderation)
+- `1` = TRUSTED (templates auto-approved if not flagged by AI)
+- `2` = ADMIN (full access to admin features)
 
 **Tests:**
 
 - Vitest: New user has trust_level 0
 - Vitest: Trust level increases after approvals
-- Vitest: Trust level decreases after rejection
+- Vitest: Banned user cannot create templates
 - Vitest: Auto-publish logic respects trust level
 
 ---
@@ -722,7 +729,7 @@
 ### 7.1 Admin Authentication Check
 
 - [x] Middleware/utility to check admin status
-- [x] Admin users identified by trust_level = 2 or admin flag
+- [x] Admin users identified by trust_level = 2 (set manually in database, no self-service admin creation)
 - [x] Returns 403 for non-admins on admin routes
 
 **Tests:**
