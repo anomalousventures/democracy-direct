@@ -1,0 +1,237 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { createDb } from "@/db/client";
+import { templates } from "@/db/schema";
+import { eq, sql, and } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+
+const user = Astro.locals.user;
+const { slug } = Astro.params;
+
+let template: {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  issueTags: string[] | null;
+  viewCount: number;
+  useCount: number;
+  userId: string | null;
+  forkedFrom: string | null;
+  createdAt: Date;
+} | null = null;
+
+let error: string | null = null;
+
+if (!slug) {
+  Astro.response.status = 404;
+  error = "Template not found.";
+} else {
+  try {
+    const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+    const results = await db
+      .select({
+        id: templates.id,
+        slug: templates.slug,
+        title: templates.title,
+        body: templates.body,
+        issueTags: templates.issueTags,
+        viewCount: templates.viewCount,
+        useCount: templates.useCount,
+        userId: templates.userId,
+        forkedFrom: templates.forkedFrom,
+        createdAt: templates.createdAt,
+      })
+      .from(templates)
+      .where(
+        and(
+          eq(templates.slug, slug),
+          eq(templates.isPublic, true),
+          eq(templates.moderationStatus, "approved")
+        )
+      )
+      .limit(1);
+
+    if (results.length > 0) {
+      template = results[0];
+
+      await db
+        .update(templates)
+        .set({ viewCount: sql`${templates.viewCount} + 1` })
+        .where(eq(templates.id, template.id));
+    } else {
+      Astro.response.status = 404;
+      error = "Template not found.";
+    }
+  } catch (e) {
+    console.error("Failed to load template:", e);
+    Astro.response.status = 500;
+    error = "Failed to load template.";
+  }
+}
+
+const isOwner = user && template?.userId === user.id;
+---
+
+<Layout
+  title={template ? template.title : "Template Not Found"}
+  description={template ? template.body.slice(0, 160) : "Template not found"}
+>
+  <Header currentPath="/templates" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      {
+        error ? (
+          <div class="max-w-2xl mx-auto text-center">
+            <div class="card-civic">
+              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+                <svg
+                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The template you're looking for couldn't be found or may have been removed.
+              </p>
+              <a href="/templates" class="btn-primary inline-block">
+                Browse Templates
+              </a>
+            </div>
+          </div>
+        ) : (
+          template && (
+            <div class="max-w-4xl mx-auto">
+              <div class="mb-6">
+                <a
+                  href="/templates"
+                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Back to Templates</span>
+                </a>
+              </div>
+
+              <article class="card-civic">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                  <h1
+                    data-testid="template-title"
+                    class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]"
+                  >
+                    {template.title}
+                  </h1>
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{template.viewCount.toLocaleString()} views</span>
+                    <span>·</span>
+                    <span>{template.useCount.toLocaleString()} uses</span>
+                  </div>
+                </div>
+
+                {template.issueTags && template.issueTags.length > 0 && (
+                  <div class="flex flex-wrap gap-2 mb-6">
+                    {template.issueTags.map((tag) => (
+                      <span
+                        data-testid="issue-tag"
+                        class="px-3 py-1 text-sm bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div class="mb-8">
+                  <div
+                    data-testid="template-body"
+                    class="prose prose-slate max-w-none whitespace-pre-wrap text-foreground leading-relaxed"
+                  >
+                    {template.body}
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-border">
+                  <a
+                    href={`/?template=${template.slug}`}
+                    data-testid="use-template-button"
+                    class="btn-primary text-center"
+                  >
+                    Use This Template
+                  </a>
+
+                  {user ? (
+                    <a
+                      href={`/templates/fork/${template.slug}`}
+                      data-testid="fork-button"
+                      class="btn-secondary text-center"
+                    >
+                      Fork Template
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      data-testid="fork-button-login"
+                      class="btn-secondary text-center opacity-75"
+                      onclick="document.querySelector('[data-testid=sign-in-button]')?.click()"
+                    >
+                      Sign in to Fork
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    data-testid="report-button"
+                    class="btn-secondary text-center text-[var(--color-civic-red)] border-[var(--color-civic-red)]/30 hover:bg-[var(--color-civic-red)]/10"
+                    onclick={`window.reportTemplate && window.reportTemplate('${template.slug}')`}
+                  >
+                    Report
+                  </button>
+                </div>
+
+                {isOwner && (
+                  <div class="mt-6 pt-6 border-t border-border">
+                    <p class="text-sm text-muted-foreground mb-4">You created this template</p>
+                    <div class="flex gap-4">
+                      <a href={`/templates/${template.slug}/edit`} class="btn-secondary text-sm">
+                        Edit
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </article>
+
+              {template.forkedFrom && (
+                <p class="mt-4 text-sm text-muted-foreground text-center">
+                  This template was forked from another template
+                </p>
+              )}
+            </div>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath="/templates" />
+</Layout>

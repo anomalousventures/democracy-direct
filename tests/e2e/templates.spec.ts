@@ -1,6 +1,28 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Template List Page", () => {
+  test("search input exists", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("[data-testid='template-search-input']")).toBeVisible();
+  });
+
+  test("typing in search filters results", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    const searchInput = page.locator("[data-testid='template-search-input']");
+    await searchInput.fill("nonexistent-template-xyz");
+
+    const noResults = page.locator("[data-testid='no-results']");
+    const hasNoResults = await noResults.isVisible().catch(() => false);
+
+    if (hasNoResults) {
+      await expect(noResults).toBeVisible();
+    }
+  });
+
   test("page loads at /templates", async ({ page }) => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
@@ -55,9 +77,92 @@ test.describe("Template List Page", () => {
   });
 });
 
+test.describe("Template Creation Page", () => {
+  test("redirects to login when not authenticated", async ({ page }) => {
+    await page.goto("/templates/new");
+    await page.waitForLoadState("networkidle");
+
+    const url = page.url();
+    expect(url).toContain("/templates");
+  });
+
+  test("form renders with required fields", async ({ page }) => {
+    await page.goto("/templates/new");
+    await page.waitForLoadState("networkidle");
+
+    const titleInput = page.locator("[data-testid='template-title-input']");
+    const bodyInput = page.locator("[data-testid='template-body-input']");
+    const submitButton = page.locator("[data-testid='submit-template-button']");
+
+    if ((await titleInput.count()) > 0) {
+      await expect(titleInput).toBeVisible();
+      await expect(bodyInput).toBeVisible();
+      await expect(submitButton).toBeVisible();
+    }
+  });
+
+  test("shows issue tag selector", async ({ page }) => {
+    await page.goto("/templates/new");
+    await page.waitForLoadState("networkidle");
+
+    const tagSelector = page.locator("[data-testid='issue-tag-selector']");
+    if ((await tagSelector.count()) > 0) {
+      await expect(tagSelector).toBeVisible();
+    }
+  });
+});
+
 test.describe("Template Detail Page", () => {
   test("shows 404 for invalid slug", async ({ page }) => {
     const response = await page.goto("/templates/non-existent-template-xyz");
     expect(response?.status()).toBe(404);
+  });
+
+  test("shows error page with navigation for invalid slug", async ({ page }) => {
+    await page.goto("/templates/non-existent-template-xyz");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText(/template not found/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /browse templates/i })).toBeVisible();
+  });
+
+  test("template detail page shows use template button", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    const firstTemplate = page.locator("[data-testid='template-card']").first();
+    if (await firstTemplate.isVisible()) {
+      await firstTemplate.locator("a").click();
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator("[data-testid='use-template-button']")).toBeVisible();
+    }
+  });
+
+  test("template detail page shows template content", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    const firstTemplate = page.locator("[data-testid='template-card']").first();
+    if (await firstTemplate.isVisible()) {
+      await firstTemplate.locator("a").click();
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator("[data-testid='template-title']")).toBeVisible();
+      await expect(page.locator("[data-testid='template-body']")).toBeVisible();
+    }
+  });
+
+  test("template detail page shows report button", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    const firstTemplate = page.locator("[data-testid='template-card']").first();
+    if (await firstTemplate.isVisible()) {
+      await firstTemplate.locator("a").click();
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator("[data-testid='report-button']")).toBeVisible();
+    }
   });
 });

@@ -1,0 +1,155 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { TemplateForkClient } from "@/components/TemplateForkClient";
+import { createDb } from "@/db/client";
+import { templates } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+
+const user = Astro.locals.user;
+const { slug } = Astro.params;
+
+if (!user) {
+  return Astro.redirect(`/templates/${slug}?login=required`);
+}
+
+let originalTemplate: {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  issueTags: string[] | null;
+} | null = null;
+
+let error: string | null = null;
+
+if (!slug) {
+  Astro.response.status = 404;
+  error = "Template not found.";
+} else {
+  try {
+    const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+    const [result] = await db
+      .select({
+        id: templates.id,
+        slug: templates.slug,
+        title: templates.title,
+        body: templates.body,
+        issueTags: templates.issueTags,
+      })
+      .from(templates)
+      .where(
+        and(
+          eq(templates.slug, slug),
+          eq(templates.isPublic, true),
+          eq(templates.moderationStatus, "approved")
+        )
+      )
+      .limit(1);
+
+    if (result) {
+      originalTemplate = result;
+    } else {
+      Astro.response.status = 404;
+      error = "Template not found or not available for forking.";
+    }
+  } catch (e) {
+    console.error("Failed to load template:", e);
+    Astro.response.status = 500;
+    error = "Failed to load template.";
+  }
+}
+
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+---
+
+<Layout title={originalTemplate ? `Fork: ${originalTemplate.title}` : "Template Not Found"}>
+  <Header currentPath="/templates" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-2xl mx-auto">
+        {
+          error ? (
+            <div class="card-civic text-center">
+              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+                <svg
+                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <a href="/templates" class="btn-primary inline-block">
+                Browse Templates
+              </a>
+            </div>
+          ) : (
+            originalTemplate && (
+              <>
+                <div class="mb-6">
+                  <a
+                    href={`/templates/${slug}`}
+                    class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    <span>Back to Original Template</span>
+                  </a>
+                </div>
+
+                <div class="card-civic">
+                  <h1 class="text-2xl font-bold mb-2 text-[var(--color-civic-navy)]">
+                    Fork Template
+                  </h1>
+                  <p class="text-muted-foreground mb-8">
+                    Create your own version of "{originalTemplate.title}". Your forked template will
+                    be submitted for review before being published.
+                  </p>
+
+                  <TemplateForkClient
+                    client:load
+                    forkedFromId={originalTemplate.id}
+                    initialData={{
+                      title: originalTemplate.title,
+                      body: originalTemplate.body,
+                      issueTags: originalTemplate.issueTags || [],
+                    }}
+                    turnstileSiteKey={turnstileSiteKey}
+                  />
+                </div>
+              </>
+            )
+          )
+        }
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/templates" />
+</Layout>
+
+{
+  turnstileSiteKey && (
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+  )
+}

@@ -1,0 +1,89 @@
+import { describe, it, expect } from "vitest";
+
+describe("Template Creation Endpoint", () => {
+  it("returns 401 when not authenticated", async () => {
+    const { POST } = await import("@/pages/api/templates/index");
+
+    const mockRequest = new Request("http://localhost/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Test Template",
+        body: "This is a test template body that is long enough to pass validation requirements.",
+      }),
+    });
+
+    const mockLocals = {
+      user: null,
+      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+    };
+
+    const response = await POST({
+      request: mockRequest,
+      locals: mockLocals,
+    } as never);
+
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.error).toBe("Authentication required");
+  });
+
+  it("returns 400 for missing title", async () => {
+    const { POST } = await import("@/pages/api/templates/index");
+
+    const mockRequest = new Request("http://localhost/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        body: "This is a test template body that is long enough to pass validation requirements.",
+      }),
+    });
+
+    const mockLocals = {
+      user: { id: "user-123" },
+      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+    };
+
+    const response = await POST({
+      request: mockRequest,
+      locals: mockLocals,
+    } as never);
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain("required");
+  });
+
+  it("returns 400 for validation errors", async () => {
+    const { POST } = await import("@/pages/api/templates/index");
+
+    const mockRequest = new Request("http://localhost/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Hi",
+        body: "Too short",
+      }),
+    });
+
+    const mockLocals = {
+      user: { id: "user-123" },
+      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+    };
+
+    const response = await POST({
+      request: mockRequest,
+      locals: mockLocals,
+    } as never);
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe("Validation failed");
+    expect(data.errors).toBeDefined();
+  });
+
+  it("exports POST function", async () => {
+    const { POST } = await import("@/pages/api/templates/index");
+    expect(typeof POST).toBe("function");
+  });
+});
