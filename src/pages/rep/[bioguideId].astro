@@ -1,18 +1,19 @@
 ---
 export const prerender = false;
 
-import Layout from "../../layouts/Layout.astro";
-import { createDb } from "../../db/client";
-import { getLegislatorByBioguideId } from "../../db/queries/legislators";
-import { ContactFlow } from "../../components/ContactFlow";
-import type { Legislator } from "../../db/schema";
+import Layout from "@/layouts/Layout.astro";
+import { createDb } from "@/db/client";
+import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import { ContactFlow } from "@/components/ContactFlow";
+import type { Legislator } from "@/db/schema";
 import {
   getPhotoUrl,
   getPartyColor,
   getPartyLabel,
   getRepTitle,
   formatDate,
-} from "../../lib/legislator-utils";
+} from "@/lib/legislator-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
 
 const { bioguideId } = Astro.params;
 
@@ -192,7 +193,7 @@ if (!error) {
                         </div>
                       )}
 
-                      {rep.contactFormUrl && (
+                      {sanitizeExternalUrl(rep.contactFormUrl) && (
                         <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
                           <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
                             <svg
@@ -212,7 +213,7 @@ if (!error) {
                           <div>
                             <p class="font-medium">Online Contact Form</p>
                             <a
-                              href={rep.contactFormUrl}
+                              href={sanitizeExternalUrl(rep.contactFormUrl)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline-flex items-center gap-1 text-[var(--color-civic-navy)] hover:underline"
@@ -333,7 +334,7 @@ if (!error) {
                     state: rep.state,
                     district: rep.district,
                     chamber: rep.chamber as "senate" | "house",
-                    contact_form: rep.contactFormUrl || undefined,
+                    contact_form: sanitizeExternalUrl(rep.contactFormUrl) || undefined,
                     phone: rep.phoneCapitol || undefined,
                     office_address: rep.addressCapitol || undefined,
                   }}

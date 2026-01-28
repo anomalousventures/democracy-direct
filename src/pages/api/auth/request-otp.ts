@@ -55,7 +55,11 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
-    await emailSender(emailMessage);
+    try {
+      await emailSender(emailMessage);
+    } catch (error) {
+      console.error("Failed to send OTP email:", error);
+    }
   }
 
   // Always return success to prevent email enumeration
