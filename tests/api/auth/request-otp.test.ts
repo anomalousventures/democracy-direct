@@ -26,6 +26,8 @@ const mockLocals = {
       EMAIL_PROVIDER: "smtp",
       SMTP_HOST: "localhost",
       SMTP_PORT: "1025",
+      TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+      TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
     },
   },
 } as unknown as App.Locals;
@@ -36,17 +38,38 @@ describe("OTP Request Endpoint", () => {
   });
 
   describe("requestOtpBodySchema", () => {
-    it("accepts valid email format", () => {
-      expect(requestOtpBodySchema.safeParse({ email: "test@example.com" }).success).toBe(true);
-      expect(requestOtpBodySchema.safeParse({ email: "user.name@domain.org" }).success).toBe(true);
-      expect(requestOtpBodySchema.safeParse({ email: "user+tag@example.com" }).success).toBe(true);
+    it("accepts valid email and turnstile token", () => {
+      expect(
+        requestOtpBodySchema.safeParse({ email: "test@example.com", turnstileToken: "token" })
+          .success
+      ).toBe(true);
+      expect(
+        requestOtpBodySchema.safeParse({ email: "user.name@domain.org", turnstileToken: "token" })
+          .success
+      ).toBe(true);
+      expect(
+        requestOtpBodySchema.safeParse({ email: "user+tag@example.com", turnstileToken: "token" })
+          .success
+      ).toBe(true);
     });
 
     it("rejects invalid email format", () => {
-      expect(requestOtpBodySchema.safeParse({ email: "notanemail" }).success).toBe(false);
-      expect(requestOtpBodySchema.safeParse({ email: "@nodomain.com" }).success).toBe(false);
-      expect(requestOtpBodySchema.safeParse({ email: "missing@" }).success).toBe(false);
-      expect(requestOtpBodySchema.safeParse({ email: "" }).success).toBe(false);
+      expect(
+        requestOtpBodySchema.safeParse({ email: "notanemail", turnstileToken: "token" }).success
+      ).toBe(false);
+      expect(
+        requestOtpBodySchema.safeParse({ email: "@nodomain.com", turnstileToken: "token" }).success
+      ).toBe(false);
+      expect(
+        requestOtpBodySchema.safeParse({ email: "missing@", turnstileToken: "token" }).success
+      ).toBe(false);
+      expect(requestOtpBodySchema.safeParse({ email: "", turnstileToken: "token" }).success).toBe(
+        false
+      );
+    });
+
+    it("rejects missing turnstile token", () => {
+      expect(requestOtpBodySchema.safeParse({ email: "test@example.com" }).success).toBe(false);
     });
   });
 

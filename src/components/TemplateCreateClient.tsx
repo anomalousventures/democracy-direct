@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { TemplateForm } from "./TemplateForm";
 
 interface TemplateCreateClientProps {
-  turnstileSiteKey?: string;
+  turnstileSiteKey: string;
   isAuthenticated?: boolean;
 }
 

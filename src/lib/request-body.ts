@@ -42,6 +42,7 @@ export type FlagBody = z.infer<typeof flagBodySchema>;
 
 export const requestOtpBodySchema = z.object({
   email: z.string().email(),
+  turnstileToken: z.string().min(1),
 });
 
 export type RequestOtpBody = z.infer<typeof requestOtpBodySchema>;

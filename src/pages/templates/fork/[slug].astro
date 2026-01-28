@@ -67,7 +67,7 @@ if (!slug) {
   }
 }
 
-const turnstileSiteKey = config.turnstile.siteKey || "";
+const turnstileSiteKey = config.turnstile.siteKey;
 ---
 
 <Layout title={originalTemplate ? `Fork: ${originalTemplate.title}` : "Template Not Found"}>
@@ -150,8 +150,4 @@ const turnstileSiteKey = config.turnstile.siteKey || "";
   <Footer currentPath="/templates" />
 </Layout>
 
-{
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

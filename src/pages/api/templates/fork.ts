@@ -48,33 +48,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const config = getConfig(locals);
 
-  if (config.turnstile.enabled) {
-    if (!turnstileToken) {
-      return forbidden("Turnstile verification required");
+  if (!turnstileToken) {
+    return forbidden("Turnstile verification required");
+  }
+
+  const turnstileResponse = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: config.turnstile.secretKey,
+        response: turnstileToken,
+      }),
     }
+  );
 
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: config.turnstile.secretKey!,
-          response: turnstileToken,
-        }),
-      }
-    );
+  const turnstileResult: unknown = await turnstileResponse.json();
+  const isValidTurnstile =
+    typeof turnstileResult === "object" &&
+    turnstileResult !== null &&
+    "success" in turnstileResult &&
+    turnstileResult.success === true;
 
-    const turnstileResult: unknown = await turnstileResponse.json();
-    const isValidTurnstile =
-      typeof turnstileResult === "object" &&
-      turnstileResult !== null &&
-      "success" in turnstileResult &&
-      turnstileResult.success === true;
-
-    if (!isValidTurnstile) {
-      return forbidden("Turnstile verification failed");
-    }
+  if (!isValidTurnstile) {
+    return forbidden("Turnstile verification failed");
   }
 
   try {

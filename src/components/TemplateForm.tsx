@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
 import { LoadingButton } from "./ui/loading-button";
 import {
@@ -7,6 +7,19 @@ import {
   BODY_MIN_LENGTH,
   BODY_MAX_LENGTH,
 } from "@/lib/template-validation";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void }
+      ) => string;
+      remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
 
 const ISSUE_TAG_OPTIONS = [
   "Healthcare",
@@ -51,6 +64,32 @@ export function TemplateForm({
   const [body, setBody] = useState(initialData?.body || "");
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.issueTags || []);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const renderTurnstile = () => {
+      if (turnstileRef.current && window.turnstile && turnstileSiteKey) {
+        if (widgetIdRef.current) {
+          window.turnstile.remove(widgetIdRef.current);
+        }
+        widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+          sitekey: turnstileSiteKey,
+          callback: (token: string) => setTurnstileToken(token),
+        });
+      }
+    };
+
+    const timer = setTimeout(renderTurnstile, 100);
+    return () => {
+      clearTimeout(timer);
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    };
+  }, [turnstileSiteKey]);
 
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -86,23 +125,16 @@ export function TemplateForm({
       e.preventDefault();
 
       if (!validate()) return;
-
-      let turnstileToken: string | undefined;
-      if (turnstileSiteKey) {
-        const turnstileWidget = document.querySelector<HTMLInputElement>(
-          '[name="cf-turnstile-response"]'
-        );
-        turnstileToken = turnstileWidget?.value;
-      }
+      if (turnstileSiteKey && !turnstileToken) return;
 
       await onSubmit({
         title: title.trim(),
         body: body.trim(),
         issueTags: selectedTags,
-        turnstileToken,
+        turnstileToken: turnstileToken ?? undefined,
       });
     },
-    [title, body, selectedTags, onSubmit, validate, turnstileSiteKey]
+    [title, body, selectedTags, onSubmit, validate, turnstileSiteKey, turnstileToken]
   );
 
   return (
@@ -178,13 +210,7 @@ export function TemplateForm({
         </div>
       </div>
 
-      {turnstileSiteKey && (
-        <div
-          className="cf-turnstile"
-          data-sitekey={turnstileSiteKey}
-          data-testid="turnstile-widget"
-        />
-      )}
+      {turnstileSiteKey && <div ref={turnstileRef} data-testid="turnstile-widget" />}
 
       <div className="pt-4">
         <LoadingButton
@@ -193,6 +219,11 @@ export function TemplateForm({
           loadingText="Saving..."
           className="btn-primary w-full sm:w-auto"
           data-testid="submit-template-button"
+          disabled={
+            (turnstileSiteKey && !turnstileToken) ||
+            title.trim().length < TITLE_MIN_LENGTH ||
+            body.trim().length < BODY_MIN_LENGTH
+          }
         >
           {submitLabel}
         </LoadingButton>

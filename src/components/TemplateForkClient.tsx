@@ -8,7 +8,7 @@ interface TemplateForkClientProps {
     body: string;
     issueTags: string[];
   };
-  turnstileSiteKey?: string;
+  turnstileSiteKey: string;
 }
 
 export function TemplateForkClient({

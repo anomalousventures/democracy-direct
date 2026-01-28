@@ -1,12 +1,16 @@
 ---
 import "../styles/global.css";
 import { Toaster } from "@/components/ui/sonner";
+import { getConfig } from "@/lib/config";
 
 interface Props {
   title: string;
   description?: string;
   ogImage?: string;
 }
+
+const config = getConfig(Astro.locals);
+const turnstileSiteKey = config.turnstile.siteKey;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || "https://democracydirect.us");
 const {
@@ -51,5 +55,9 @@ const fullTitle = `${title} | Democracy Direct`;
   <body class="min-h-screen bg-background antialiased flex flex-col">
     <slot />
     <Toaster client:load position="top-right" duration={5000} />
+    <script is:inline define:vars={{ turnstileSiteKey }}>
+      window.TURNSTILE_SITE_KEY = turnstileSiteKey;
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   </body>
 </html>

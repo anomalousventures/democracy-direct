@@ -26,15 +26,10 @@ const moderationSchema = z.object({
   openaiApiKey: z.string().optional(),
 });
 
-const turnstileBaseSchema = z.object({
+const turnstileSchema = z.object({
   siteKey: z.string().min(1, "TURNSTILE_SITE_KEY is required"),
   secretKey: z.string().min(1, "TURNSTILE_SECRET_KEY is required"),
 });
-
-const turnstileSchema = turnstileBaseSchema.transform((data) => ({
-  ...data,
-  enabled: data.secretKey !== "test-secret",
-}));
 
 const dataSourcesSchema = z.object({
   congressApiKey: z.string().optional(),

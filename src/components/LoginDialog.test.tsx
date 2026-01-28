@@ -7,14 +7,41 @@ describe("LoginDialog", () => {
   const mockOnSuccess = vi.fn();
   const mockFetch = vi.fn();
   const originalFetch = global.fetch;
-
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = mockFetch;
+
+    (window as typeof window & { TURNSTILE_SITE_KEY?: string }).TURNSTILE_SITE_KEY =
+      "1x00000000000000000000AA";
+    (
+      window as typeof window & {
+        turnstile?: {
+          render: (
+            el: HTMLElement,
+            opts: { sitekey: string; callback: (token: string) => void }
+          ) => string;
+          remove: (id: string) => void;
+          reset: (id: string) => void;
+        };
+      }
+    ).turnstile = {
+      render: (_el, opts) => {
+        setTimeout(() => opts.callback("test-turnstile-token"), 0);
+        return "widget-id";
+      },
+      remove: vi.fn(),
+      reset: vi.fn(),
+    };
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    delete (window as typeof window & { TURNSTILE_SITE_KEY?: string }).TURNSTILE_SITE_KEY;
+    delete (
+      window as typeof window & {
+        turnstile?: unknown;
+      }
+    ).turnstile;
   });
 
   describe("email step", () => {
@@ -29,13 +56,12 @@ describe("LoginDialog", () => {
       render(<LoginDialog open={true} onOpenChange={() => {}} onSuccess={mockOnSuccess} />);
 
       const emailInput = screen.getByLabelText(/email/i);
-      const submitBtn = screen.getByRole("button", { name: /send code/i });
 
       await user.type(emailInput, "invalid-email");
-      await user.click(submitBtn);
 
+      // Button should remain disabled with invalid email even after turnstile completes
       await waitFor(() => {
-        expect(screen.getByText(/valid email/i)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /send code/i })).toBeDisabled();
       });
     });
 
@@ -50,6 +76,12 @@ describe("LoginDialog", () => {
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, "test@example.com");
+
+      // Wait for turnstile to complete and button to be enabled
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /send code/i })).not.toBeDisabled();
+      });
+
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
@@ -69,6 +101,12 @@ describe("LoginDialog", () => {
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, "test@example.com");
+
+      // Wait for button to be enabled
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /send code/i })).not.toBeDisabled();
+      });
+
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       expect(screen.getByRole("button", { name: /sending/i })).toBeDisabled();
@@ -90,6 +128,12 @@ describe("LoginDialog", () => {
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, "test@example.com");
+
+      // Wait for button to be enabled
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /send code/i })).not.toBeDisabled();
+      });
+
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
@@ -110,6 +154,12 @@ describe("LoginDialog", () => {
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, "test@example.com");
+
+      // Wait for turnstile to complete
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /send code/i })).not.toBeDisabled();
+      });
+
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
@@ -206,6 +256,12 @@ describe("LoginDialog", () => {
 
       const emailInput = screen.getByLabelText(/email/i);
       await user.type(emailInput, "test@example.com");
+
+      // Wait for turnstile to complete
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /send code/i })).not.toBeDisabled();
+      });
+
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {

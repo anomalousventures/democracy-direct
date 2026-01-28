@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { emailOtps } from "@/db/schema";
-import { badRequest, jsonResponse } from "@/lib/api-response";
+import { badRequest, forbidden, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
@@ -73,10 +73,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { email } = parseResult.data;
+  const { email, turnstileToken } = parseResult.data;
 
   try {
     const config = getConfig(locals);
+
+    const turnstileResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: config.turnstile.secretKey,
+          response: turnstileToken,
+        }),
+      }
+    );
+
+    const turnstileResult: unknown = await turnstileResponse.json();
+    const isValidTurnstile =
+      typeof turnstileResult === "object" &&
+      turnstileResult !== null &&
+      "success" in turnstileResult &&
+      turnstileResult.success === true;
+
+    if (!isValidTurnstile) {
+      return forbidden("Verification failed");
+    }
+
     const db = createDb(config.database.url);
     await requestOTP(email, locals, db);
 

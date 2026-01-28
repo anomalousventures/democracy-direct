@@ -10,7 +10,7 @@ import { getConfig } from "@/lib/config";
 const user = Astro.locals.user;
 
 const config = getConfig(Astro.locals);
-const turnstileSiteKey = config.turnstile.siteKey || "";
+const turnstileSiteKey = config.turnstile.siteKey;
 ---
 
 <Layout title="Create New Template">
@@ -57,8 +57,4 @@ const turnstileSiteKey = config.turnstile.siteKey || "";
   <Footer currentPath="/templates" />
 </Layout>
 
-{
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
