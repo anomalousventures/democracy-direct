@@ -76,6 +76,18 @@ jobs:
   test-e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    services:
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+    env:
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+      EMAIL_PROVIDER: smtp
+      EMAIL_FROM: noreply@democracy-direct.com
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
     steps:
       - uses: actions/checkout@v6
 
