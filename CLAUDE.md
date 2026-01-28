@@ -64,6 +64,20 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **API routes**: Always add `export const prerender = false;`
 - **Database**: Fresh connection per request, prefer JOINs over multiple queries
 - **Tests**: Unit tests colocated as `*.test.ts`, E2E in `tests/e2e/`
+- **No `as` casts**: Use type guards and discriminated unions instead of type assertions
+- **Lookup objects over if/else chains**: Prefer `const handlers = { a: fn1, b: fn2 }` over `if (x === 'a') ... else if ...`
+
+## Testing Notes
+
+- **API tests location**: Place in `tests/api/`, NOT `src/pages/api/` (Astro treats files there as routes)
+- **Use static imports**: Prefer `import { POST } from "@/pages/api/foo"` over dynamic `await import()`
+
+## Shared Utilities
+
+- **API responses**: `src/lib/api-response.ts` - `badRequest()`, `unauthorized()`, `forbidden()`, `notFound()`, `jsonResponse()`
+- **Request parsing**: `src/lib/request-body.ts` - type-safe JSON parsing with validators
+- **Moderation**: `src/lib/moderation/` - OpenAI content moderation integration
+- **Trust levels**: `src/lib/trust-level.ts` - user trust calculation (`NEW_USER`, `TRUSTED`, `ADMIN`, `BANNED`)
 
 ## GitHub & CI
 
