@@ -6,6 +6,8 @@ import { hashEmail } from "../../../lib/auth/hash-email";
 import { verifyOTP } from "../../../lib/auth/otp";
 import { randomUUID } from "crypto";
 
+export const prerender = false;
+
 interface VerifyResult {
   success: boolean;
   sessionId?: string;
@@ -51,7 +53,7 @@ export async function verifyOTPRequest(
   let userId: string;
 
   if (userRecords.length === 0) {
-    const newUsers = await db.insert(users).values({ emailHash }).returning({ id: users.id });
+    const newUsers = await db.insert(users).values({ emailHash }).returning();
     userId = newUsers[0].id;
   } else {
     userId = userRecords[0].id;

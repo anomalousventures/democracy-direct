@@ -9,24 +9,3 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     restart: unless-stopped
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: democracy-direct-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: democracy
-      POSTGRES_PASSWORD: democracy
-      POSTGRES_DB: democracy_direct
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U democracy -d democracy_direct"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:

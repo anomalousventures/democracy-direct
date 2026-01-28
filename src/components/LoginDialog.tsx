@@ -173,7 +173,6 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={6}
                 placeholder="000000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}

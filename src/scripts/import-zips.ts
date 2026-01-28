@@ -180,14 +180,15 @@ export async function importZipDistricts(): Promise<{
   total: number;
   inserted: number;
 }> {
-  const { neon } = await import("@neondatabase/serverless");
+  const { createDb } = await import("@/db/client");
+  const { zipDistricts: zipDistrictsTable } = await import("@/db/schema");
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const sql = neon(databaseUrl);
+  const db = createDb(databaseUrl);
 
   console.log("Fetching ZCTA-CD relationship data from Census Bureau...");
   const csvData = await fetchZctaCdData();
@@ -197,43 +198,34 @@ export async function importZipDistricts(): Promise<{
   console.log(`Found ${records.length} raw records`);
 
   console.log("Calculating proportions...");
-  const zipDistricts = calculateProportions(records);
-  console.log(`Calculated ${zipDistricts.length} ZIP-district mappings`);
+  const zipDistrictsData = calculateProportions(records);
+  console.log(`Calculated ${zipDistrictsData.length} ZIP-district mappings`);
 
-  console.log("Replacing ZIP-district data in transaction...");
+  console.log("Deleting existing data...");
+  await db.delete(zipDistrictsTable);
 
-  await sql`BEGIN`;
+  console.log("Inserting ZIP-district data...");
+  const batchSize = 1000;
+  let inserted = 0;
 
-  try {
-    await sql`DELETE FROM zip_districts`;
+  for (let i = 0; i < zipDistrictsData.length; i += batchSize) {
+    const batch = zipDistrictsData.slice(i, i + batchSize);
 
-    const batchSize = 1000;
-    let inserted = 0;
+    await db.insert(zipDistrictsTable).values(
+      batch.map((record) => ({
+        zip: record.zip,
+        state: record.state,
+        district: record.district,
+        proportion: record.proportion,
+      }))
+    );
 
-    for (let i = 0; i < zipDistricts.length; i += batchSize) {
-      const batch = zipDistricts.slice(i, i + batchSize);
-
-      for (const record of batch) {
-        await sql`
-          INSERT INTO zip_districts (zip, state, district, proportion)
-          VALUES (${record.zip}, ${record.state}, ${record.district}, ${record.proportion})
-          ON CONFLICT (zip, state, district) DO UPDATE SET
-            proportion = EXCLUDED.proportion
-        `;
-      }
-
-      inserted += batch.length;
-      console.log(`Inserted ${inserted} / ${zipDistricts.length} records...`);
-    }
-
-    await sql`COMMIT`;
-    console.log(`Import complete: ${inserted} records inserted`);
-
-    return { total: zipDistricts.length, inserted };
-  } catch (error) {
-    await sql`ROLLBACK`;
-    throw error;
+    inserted += batch.length;
+    console.log(`Inserted ${inserted} / ${zipDistrictsData.length} records...`);
   }
+
+  console.log(`Import complete: ${inserted} records inserted`);
+  return { total: zipDistrictsData.length, inserted };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

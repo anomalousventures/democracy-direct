@@ -20,7 +20,10 @@ If you didn't request this code, you can safely ignore this email.
 
 ---
 Democracy Direct
-Your Voice, Your Representatives`,
+Your Voice, Your Representatives
+
+Contact: contact@democracy-direct.com
+Privacy: https://democracy-direct.com/privacy`,
 
     html: `<!DOCTYPE html>
 <html>
@@ -76,8 +79,13 @@ Your Voice, Your Representatives`,
           <!-- Footer -->
           <tr>
             <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0;">
-              <p style="margin: 0; font-size: 12px; color: #a0aec0; text-align: center;">
+              <p style="margin: 0 0 12px 0; font-size: 12px; color: #a0aec0; text-align: center;">
                 We never store your email address on our servers.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #a0aec0; text-align: center;">
+                <a href="mailto:contact@democracy-direct.com" style="color: #4a5568; text-decoration: underline;">Contact</a>
+                &nbsp;·&nbsp;
+                <a href="https://democracy-direct.com/privacy" style="color: #4a5568; text-decoration: underline;">Privacy</a>
               </p>
             </td>
           </tr>

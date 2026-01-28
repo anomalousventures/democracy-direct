@@ -243,14 +243,15 @@ export async function importLegislators(): Promise<{
   inserted: number;
   updated: number;
 }> {
-  const { neon } = await import("@neondatabase/serverless");
+  const { createDb } = await import("@/db/client");
+  const { legislators } = await import("@/db/schema");
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const sql = neon(databaseUrl);
+  const db = createDb(databaseUrl);
 
   console.log("Fetching legislators from GitHub...");
   const [legislatorsYaml, socialYaml] = await Promise.all([
@@ -271,45 +272,63 @@ export async function importLegislators(): Promise<{
   let updated = 0;
 
   for (const leg of transformed) {
-    const result = await sql`
-      INSERT INTO legislators (
-        bioguide_id, first_name, last_name, full_name, party, state, district,
-        chamber, title, term_start, term_end, phone_capitol, phone_district,
-        fax, address_capitol, address_district, contact_form_url, website,
-        twitter_handle, facebook_id, youtube_id
-      ) VALUES (
-        ${leg.bioguideId}, ${leg.firstName}, ${leg.lastName}, ${leg.fullName},
-        ${leg.party}, ${leg.state}, ${leg.district}, ${leg.chamber}, ${leg.title},
-        ${leg.termStart}, ${leg.termEnd}, ${leg.phoneCapitol}, ${leg.phoneDistrict},
-        ${leg.fax}, ${leg.addressCapitol}, ${leg.addressDistrict},
-        ${leg.contactFormUrl}, ${leg.website}, ${leg.twitterHandle},
-        ${leg.facebookId}, ${leg.youtubeId}
-      )
-      ON CONFLICT (bioguide_id) DO UPDATE SET
-        first_name = EXCLUDED.first_name,
-        last_name = EXCLUDED.last_name,
-        full_name = EXCLUDED.full_name,
-        party = EXCLUDED.party,
-        state = EXCLUDED.state,
-        district = EXCLUDED.district,
-        chamber = EXCLUDED.chamber,
-        title = EXCLUDED.title,
-        term_start = EXCLUDED.term_start,
-        term_end = EXCLUDED.term_end,
-        phone_capitol = EXCLUDED.phone_capitol,
-        phone_district = EXCLUDED.phone_district,
-        fax = EXCLUDED.fax,
-        address_capitol = EXCLUDED.address_capitol,
-        address_district = EXCLUDED.address_district,
-        contact_form_url = EXCLUDED.contact_form_url,
-        website = EXCLUDED.website,
-        twitter_handle = EXCLUDED.twitter_handle,
-        facebook_id = EXCLUDED.facebook_id,
-        youtube_id = EXCLUDED.youtube_id
-      RETURNING (xmax = 0) AS inserted
-    `;
+    const existing = await db
+      .select({ bioguideId: legislators.bioguideId })
+      .from(legislators)
+      .where((await import("drizzle-orm")).eq(legislators.bioguideId, leg.bioguideId));
 
-    if (result[0]?.inserted) {
+    await db
+      .insert(legislators)
+      .values({
+        bioguideId: leg.bioguideId,
+        firstName: leg.firstName,
+        lastName: leg.lastName,
+        fullName: leg.fullName,
+        party: leg.party,
+        state: leg.state,
+        district: leg.district,
+        chamber: leg.chamber,
+        title: leg.title,
+        termStart: leg.termStart,
+        termEnd: leg.termEnd,
+        phoneCapitol: leg.phoneCapitol,
+        phoneDistrict: leg.phoneDistrict,
+        fax: leg.fax,
+        addressCapitol: leg.addressCapitol,
+        addressDistrict: leg.addressDistrict,
+        contactFormUrl: leg.contactFormUrl,
+        website: leg.website,
+        twitterHandle: leg.twitterHandle,
+        facebookId: leg.facebookId,
+        youtubeId: leg.youtubeId,
+      })
+      .onConflictDoUpdate({
+        target: legislators.bioguideId,
+        set: {
+          firstName: leg.firstName,
+          lastName: leg.lastName,
+          fullName: leg.fullName,
+          party: leg.party,
+          state: leg.state,
+          district: leg.district,
+          chamber: leg.chamber,
+          title: leg.title,
+          termStart: leg.termStart,
+          termEnd: leg.termEnd,
+          phoneCapitol: leg.phoneCapitol,
+          phoneDistrict: leg.phoneDistrict,
+          fax: leg.fax,
+          addressCapitol: leg.addressCapitol,
+          addressDistrict: leg.addressDistrict,
+          contactFormUrl: leg.contactFormUrl,
+          website: leg.website,
+          twitterHandle: leg.twitterHandle,
+          facebookId: leg.facebookId,
+          youtubeId: leg.youtubeId,
+        },
+      });
+
+    if (existing.length === 0) {
       inserted++;
     } else {
       updated++;

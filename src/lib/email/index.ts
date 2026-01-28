@@ -24,7 +24,7 @@ export function getEmailConfig(): EmailConfig {
 
   return {
     provider,
-    from: import.meta.env.EMAIL_FROM || "noreply@democracydirect.us",
+    from: import.meta.env.EMAIL_FROM || "noreply@democracy-direct.com",
     smtp:
       provider === "smtp"
         ? {

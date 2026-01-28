@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { createDb } from "../../../db/client";
 import { sessions } from "../../../db/schema";
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ cookies }) => {
   const sessionId = cookies.get("session")?.value;
 

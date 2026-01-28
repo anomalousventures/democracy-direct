@@ -120,9 +120,10 @@ describe("LoginDialog", () => {
     };
 
     it("renders 6-digit OTP input", async () => {
-      await setupOTPStep();
+      const user = await setupOTPStep();
       const otpInput = screen.getByPlaceholderText("000000");
-      expect(otpInput).toHaveAttribute("maxLength", "6");
+      await user.type(otpInput, "1234567890");
+      expect(otpInput).toHaveValue("123456");
     });
 
     it("verifies OTP and calls onSuccess", async () => {

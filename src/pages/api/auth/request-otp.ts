@@ -7,6 +7,8 @@ import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
 
+export const prerender = false;
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_EXPIRY_MINUTES = 10;
 const RATE_LIMIT_MAX_REQUESTS = 5;
