@@ -8,10 +8,6 @@ import { TemplateCreateClient } from "@/components/TemplateCreateClient";
 
 const user = Astro.locals.user;
 
-if (!user) {
-  return Astro.redirect("/templates?login=required");
-}
-
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 ---
 

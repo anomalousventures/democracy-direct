@@ -7,7 +7,6 @@ import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
 import {
   jsonResponse,
   badRequest,
-  unauthorized,
   forbidden,
   serverError,
   validationError,
@@ -15,15 +14,12 @@ import {
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 import { moderateTemplate } from "@/lib/moderation/moderate-template";
 import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
+import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
-
-  if (!user) {
-    return unauthorized();
-  }
 
   const parseResult = await parseJsonBody(request, templateBodySchema);
   if (!parseResult.success) {
@@ -74,13 +70,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
 
-    const [userRecord] = await db
-      .select({ trustLevel: users.trustLevel })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .limit(1);
-
-    const trustLevel = userRecord?.trustLevel ?? 0;
+    let trustLevel: number = TRUST_LEVELS.NEW_USER;
+    if (user) {
+      const [userRecord] = await db
+        .select({ trustLevel: users.trustLevel })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+      trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
+    }
 
     const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
     const contentToModerate = `${title}\n\n${templateBody}`;
@@ -95,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         title: title.trim(),
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
-        userId: user.id,
+        userId: user?.id ?? null,
         isPublic: true,
         moderationStatus: moderation.status,
         moderationScores: moderation.scores,
@@ -110,7 +108,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         createdAt: templates.createdAt,
       });
 
-    if (moderation.status === "approved") {
+    if (moderation.status === "approved" && user) {
       await incrementApprovedTemplatesCount(db, user.id);
     }
 
