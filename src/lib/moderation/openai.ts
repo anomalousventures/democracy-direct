@@ -1,16 +1,20 @@
-export interface ModerationCategory {
-  harassment: number;
-  "harassment/threatening": number;
-  hate: number;
-  "hate/threatening": number;
-  "self-harm": number;
-  "self-harm/intent": number;
-  "self-harm/instructions": number;
-  sexual: number;
-  "sexual/minors": number;
-  violence: number;
-  "violence/graphic": number;
-}
+import { z } from "zod";
+
+export const moderationCategorySchema = z.object({
+  harassment: z.number(),
+  "harassment/threatening": z.number(),
+  hate: z.number(),
+  "hate/threatening": z.number(),
+  "self-harm": z.number(),
+  "self-harm/intent": z.number(),
+  "self-harm/instructions": z.number(),
+  sexual: z.number(),
+  "sexual/minors": z.number(),
+  violence: z.number(),
+  "violence/graphic": z.number(),
+});
+
+export type ModerationCategory = z.infer<typeof moderationCategorySchema>;
 
 export interface ModerationResult {
   flagged: boolean;
@@ -18,22 +22,26 @@ export interface ModerationResult {
   categoryScores: ModerationCategory;
 }
 
-export interface OpenAIModerationResponse {
-  id: string;
-  model: string;
-  results: Array<{
-    flagged: boolean;
-    categories: Record<string, boolean>;
-    category_scores: Record<string, number>;
-  }>;
-}
+export const openAIModerationResponseSchema = z.object({
+  id: z.string(),
+  model: z.string(),
+  results: z.array(
+    z.object({
+      flagged: z.boolean(),
+      categories: z.record(z.string(), z.boolean()),
+      category_scores: moderationCategorySchema,
+    })
+  ),
+});
+
+export type OpenAIModerationResponse = z.infer<typeof openAIModerationResponseSchema>;
 
 export async function moderateContent(content: string, apiKey: string): Promise<ModerationResult> {
   if (!apiKey) {
     throw new Error("OpenAI API key is required");
   }
 
-  if (!content || content.trim().length === 0) {
+  if (!content?.trim()) {
     throw new Error("Content is required for moderation");
   }
 
@@ -53,10 +61,17 @@ export async function moderateContent(content: string, apiKey: string): Promise<
     throw new Error(`OpenAI Moderation API error: ${response.status} - ${errorText}`);
   }
 
-  const data = (await response.json()) as OpenAIModerationResponse;
+  const json = await response.json();
+  const parseResult = openAIModerationResponseSchema.safeParse(json);
 
-  if (!data.results || data.results.length === 0) {
-    throw new Error("Invalid response from OpenAI Moderation API");
+  if (!parseResult.success) {
+    throw new Error("Invalid response format from OpenAI Moderation API");
+  }
+
+  const data = parseResult.data;
+
+  if (data.results.length === 0) {
+    throw new Error("Empty results from OpenAI Moderation API");
   }
 
   const result = data.results[0];
@@ -64,7 +79,7 @@ export async function moderateContent(content: string, apiKey: string): Promise<
   return {
     flagged: result.flagged,
     categories: result.categories,
-    categoryScores: result.category_scores as unknown as ModerationCategory,
+    categoryScores: result.category_scores,
   };
 }
 
@@ -72,10 +87,11 @@ export function getHighestCategoryScore(scores: ModerationCategory): {
   category: string;
   score: number;
 } {
-  let highestCategory = "";
-  let highestScore = 0;
+  const entries = Object.entries(scores);
+  let highestCategory = entries[0]?.[0] ?? "unknown";
+  let highestScore = entries[0]?.[1] ?? 0;
 
-  for (const [category, score] of Object.entries(scores)) {
+  for (const [category, score] of entries) {
     if (score > highestScore) {
       highestScore = score;
       highestCategory = category;

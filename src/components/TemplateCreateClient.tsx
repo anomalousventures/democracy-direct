@@ -4,9 +4,13 @@ import { TemplateForm } from "./TemplateForm";
 
 interface TemplateCreateClientProps {
   turnstileSiteKey?: string;
+  isAuthenticated?: boolean;
 }
 
-export function TemplateCreateClient({ turnstileSiteKey }: TemplateCreateClientProps) {
+export function TemplateCreateClient({
+  turnstileSiteKey,
+  isAuthenticated = false,
+}: TemplateCreateClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -31,8 +35,11 @@ export function TemplateCreateClient({ turnstileSiteKey }: TemplateCreateClientP
 
         setSuccess(true);
         toast.success("Template created successfully!");
+        const redirectUrl = isAuthenticated
+          ? "/templates/mine"
+          : `/templates/${result.template.slug}`;
         setTimeout(() => {
-          window.location.href = `/templates/mine`;
+          window.location.href = redirectUrl;
         }, 1500);
       } catch (err) {
         const message = err instanceof Error ? err.message : "An error occurred";
