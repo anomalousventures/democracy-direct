@@ -103,7 +103,7 @@ jobs:
       - name: Run Playwright tests
         run: pnpm test:e2e
         env:
-          DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           EMAIL_PROVIDER: smtp
           EMAIL_FROM: noreply@democracy-direct.com
           SMTP_HOST: localhost
