@@ -30,7 +30,19 @@ describe("OpenAI Moderation", () => {
               {
                 flagged: false,
                 categories: { harassment: false },
-                category_scores: { harassment: 0.001 },
+                category_scores: {
+                  harassment: 0.001,
+                  "harassment/threatening": 0,
+                  hate: 0,
+                  "hate/threatening": 0,
+                  "self-harm": 0,
+                  "self-harm/intent": 0,
+                  "self-harm/instructions": 0,
+                  sexual: 0,
+                  "sexual/minors": 0,
+                  violence: 0,
+                  "violence/graphic": 0,
+                },
               },
             ],
           }),
@@ -63,7 +75,16 @@ describe("OpenAI Moderation", () => {
             },
             category_scores: {
               harassment: 0.85,
+              "harassment/threatening": 0,
               hate: 0.01,
+              "hate/threatening": 0,
+              "self-harm": 0,
+              "self-harm/intent": 0,
+              "self-harm/instructions": 0,
+              sexual: 0,
+              "sexual/minors": 0,
+              violence: 0,
+              "violence/graphic": 0,
             },
           },
         ],
@@ -93,14 +114,30 @@ describe("OpenAI Moderation", () => {
       );
     });
 
-    it("handles invalid response structure", async () => {
+    it("handles invalid response format", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ results: [] }),
+        json: () => Promise.resolve({ invalid: "structure" }),
       });
 
       await expect(moderateContent("test content", "test-api-key")).rejects.toThrow(
-        "Invalid response from OpenAI Moderation API"
+        "Invalid response format from OpenAI Moderation API"
+      );
+    });
+
+    it("handles empty results array", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "modr-123",
+            model: "text-moderation-007",
+            results: [],
+          }),
+      });
+
+      await expect(moderateContent("test content", "test-api-key")).rejects.toThrow(
+        "Empty results from OpenAI Moderation API"
       );
     });
   });

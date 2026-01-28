@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates, templateFlags } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
 import { jsonResponse, badRequest, unauthorized, notFound, serverError } from "@/lib/api-response";
 import { parseJsonBody, flagBodySchema } from "@/lib/request-body";
@@ -80,17 +80,22 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       details: details?.trim() ?? null,
     });
 
-    const newFlagCount = template.flagCount + 1;
+    const [updated] = await db
+      .update(templates)
+      .set({
+        flagCount: sql`${templates.flagCount} + 1`,
+      })
+      .where(eq(templates.id, template.id))
+      .returning({ flagCount: templates.flagCount });
 
-    const updateData: { flagCount: number; moderationStatus?: string } = {
-      flagCount: newFlagCount,
-    };
+    const newFlagCount = updated?.flagCount ?? template.flagCount + 1;
 
     if (newFlagCount >= FLAG_HIDE_THRESHOLD) {
-      updateData.moderationStatus = "flagged";
+      await db
+        .update(templates)
+        .set({ moderationStatus: "flagged" })
+        .where(eq(templates.id, template.id));
     }
-
-    await db.update(templates).set(updateData).where(eq(templates.id, template.id));
 
     return jsonResponse({
       success: true,
