@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
 import { createDb } from "../../db/client";
-import { getLegislatorsByStateAndDistrict } from "../../db/queries/zip-districts";
+import { getLegislatorsByStateAndDistrict } from "../../db/queries/legislators";
 import type { Legislator } from "../../db/schema";
 import zipData from "../../../public/data/zip-districts.json";
 import { getPhotoUrl, getPartyColor, getPartyLabel, getRepTitle } from "../../lib/legislator-utils";

@@ -1,12 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-
-export interface Address {
-  name: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-}
+import { type Address, createEmptyAddress } from "../types/representative";
 
 interface AddressFormProps {
   onChange: (address: Address) => void;
@@ -14,44 +7,36 @@ interface AddressFormProps {
 
 const STORAGE_KEY = "democracy-direct-address";
 
-const emptyAddress: Address = {
-  name: "",
-  street: "",
-  city: "",
-  state: "",
-  zip: "",
-};
-
-const loadFromLocalStorage = (): Address => {
+function loadFromLocalStorage(): Address {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);
     }
   } catch {
-    // ignore parse errors
+    // Ignore parse errors, return empty address
   }
-  return emptyAddress;
-};
+  return createEmptyAddress();
+}
 
-const saveToLocalStorage = (address: Address): void => {
+function saveToLocalStorage(address: Address): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(address));
   } catch {
-    // ignore storage errors
+    // Ignore storage errors
   }
-};
+}
 
-const clearFromLocalStorage = (): void => {
+function clearFromLocalStorage(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // ignore storage errors
+    // Ignore storage errors
   }
-};
+}
 
 export function AddressForm({ onChange }: AddressFormProps) {
-  const [address, setAddress] = useState<Address>(emptyAddress);
+  const [address, setAddress] = useState<Address>(createEmptyAddress);
 
   useEffect(() => {
     const saved = loadFromLocalStorage();
@@ -73,9 +58,10 @@ export function AddressForm({ onChange }: AddressFormProps) {
   );
 
   const handleClear = useCallback(() => {
-    setAddress(emptyAddress);
+    const empty = createEmptyAddress();
+    setAddress(empty);
     clearFromLocalStorage();
-    onChange(emptyAddress);
+    onChange(empty);
   }, [onChange]);
 
   return (
@@ -188,3 +174,5 @@ export function AddressForm({ onChange }: AddressFormProps) {
     </div>
   );
 }
+
+export { type Address };

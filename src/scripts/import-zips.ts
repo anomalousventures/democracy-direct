@@ -200,34 +200,40 @@ export async function importZipDistricts(): Promise<{
   const zipDistricts = calculateProportions(records);
   console.log(`Calculated ${zipDistricts.length} ZIP-district mappings`);
 
-  console.log("Clearing existing data...");
-  await sql`DELETE FROM zip_districts`;
+  console.log("Replacing ZIP-district data in transaction...");
 
-  console.log("Inserting ZIP-district mappings...");
-  const batchSize = 1000;
-  let inserted = 0;
+  await sql`BEGIN`;
 
-  for (let i = 0; i < zipDistricts.length; i += batchSize) {
-    const batch = zipDistricts.slice(i, i + batchSize);
+  try {
+    await sql`DELETE FROM zip_districts`;
 
-    const values = batch
-      .map((r) => `('${r.zip}', '${r.state}', '${r.district}', ${r.proportion})`)
-      .join(",\n");
+    const batchSize = 1000;
+    let inserted = 0;
 
-    await sql.query(`
-      INSERT INTO zip_districts (zip, state, district, proportion)
-      VALUES ${values}
-      ON CONFLICT (zip, state, district) DO UPDATE SET
-        proportion = EXCLUDED.proportion
-    `);
+    for (let i = 0; i < zipDistricts.length; i += batchSize) {
+      const batch = zipDistricts.slice(i, i + batchSize);
 
-    inserted += batch.length;
-    console.log(`Inserted ${inserted} / ${zipDistricts.length} records...`);
+      for (const record of batch) {
+        await sql`
+          INSERT INTO zip_districts (zip, state, district, proportion)
+          VALUES (${record.zip}, ${record.state}, ${record.district}, ${record.proportion})
+          ON CONFLICT (zip, state, district) DO UPDATE SET
+            proportion = EXCLUDED.proportion
+        `;
+      }
+
+      inserted += batch.length;
+      console.log(`Inserted ${inserted} / ${zipDistricts.length} records...`);
+    }
+
+    await sql`COMMIT`;
+    console.log(`Import complete: ${inserted} records inserted`);
+
+    return { total: zipDistricts.length, inserted };
+  } catch (error) {
+    await sql`ROLLBACK`;
+    throw error;
   }
-
-  console.log(`Import complete: ${inserted} records inserted`);
-
-  return { total: zipDistricts.length, inserted };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

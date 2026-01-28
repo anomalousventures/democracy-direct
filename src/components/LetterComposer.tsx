@@ -1,14 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-
-export interface Representative {
-  first_name: string;
-  last_name: string;
-  party: string;
-  state: string;
-  district: string | null;
-  chamber: "senate" | "house";
-  title?: string;
-}
+import { type Representative, getRepresentativeTitle } from "../types/representative";
 
 interface LetterComposerProps {
   representative: Representative;
@@ -16,17 +7,12 @@ interface LetterComposerProps {
   onContentChange?: (content: string) => void;
 }
 
-const getTitle = (rep: Representative): string => {
-  if (rep.title) return rep.title;
-  return rep.chamber === "senate" ? "Senator" : "Representative";
-};
-
-const substituteVariables = (content: string, rep: Representative): string => {
+function substituteVariables(content: string, rep: Representative): string {
   const variables: Record<string, string> = {
     REP_NAME: `${rep.first_name} ${rep.last_name}`,
     REP_FIRST: rep.first_name,
     REP_LAST: rep.last_name,
-    REP_TITLE: getTitle(rep),
+    REP_TITLE: getRepresentativeTitle(rep),
     REP_PARTY: rep.party,
     STATE: rep.state,
     DISTRICT: rep.district || "At-Large",
@@ -40,7 +26,7 @@ const substituteVariables = (content: string, rep: Representative): string => {
   return content.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
     return variables[varName] ?? match;
   });
-};
+}
 
 export function LetterComposer({
   representative,
