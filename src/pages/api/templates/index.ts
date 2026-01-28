@@ -1,8 +1,20 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
-import { templates } from "@/db/schema";
+import { templates, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
-import { getRequiredEnv } from "@/lib/env";
+import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
+import {
+  jsonResponse,
+  badRequest,
+  unauthorized,
+  forbidden,
+  serverError,
+  validationError,
+} from "@/lib/api-response";
+import { parseJsonBody, isTemplateBody } from "@/lib/request-body";
+import { moderateTemplate } from "@/lib/moderation/moderate-template";
+import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
 
 export const prerender = false;
 
@@ -10,56 +22,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
 
   if (!user) {
-    return new Response(JSON.stringify({ error: "Authentication required" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return unauthorized();
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+  const parseResult = await parseJsonBody(request, isTemplateBody);
+  if (!parseResult.success) {
+    return badRequest(parseResult.error);
   }
 
-  const {
-    title,
-    body: templateBody,
-    issueTags,
-    turnstileToken,
-  } = body as {
-    title?: string;
-    body?: string;
-    issueTags?: string[];
-    turnstileToken?: string;
-  };
+  const { title, body: templateBody, issueTags, turnstileToken } = parseResult.data;
 
   if (!title || !templateBody) {
-    return new Response(JSON.stringify({ error: "Title and body are required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return badRequest("Title and body are required");
   }
 
   const validationErrors = validateTemplate({ title, body: templateBody, issueTags });
   if (validationErrors.length > 0) {
-    return new Response(JSON.stringify({ error: "Validation failed", errors: validationErrors }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return validationError(validationErrors);
   }
 
   const turnstileSecret = getRequiredEnv(locals, "TURNSTILE_SECRET_KEY");
   if (turnstileSecret && turnstileSecret !== "test-secret") {
     if (!turnstileToken) {
-      return new Response(JSON.stringify({ error: "Turnstile verification required" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return forbidden("Turnstile verification required");
     }
 
     const turnstileResponse = await fetch(
@@ -74,17 +59,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     );
 
-    const turnstileResult = (await turnstileResponse.json()) as { success: boolean };
-    if (!turnstileResult.success) {
-      return new Response(JSON.stringify({ error: "Turnstile verification failed" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+    const turnstileResult: unknown = await turnstileResponse.json();
+    const isValidTurnstile =
+      typeof turnstileResult === "object" &&
+      turnstileResult !== null &&
+      "success" in turnstileResult &&
+      turnstileResult.success === true;
+
+    if (!isValidTurnstile) {
+      return forbidden("Turnstile verification failed");
     }
   }
 
   try {
     const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+
+    const [userRecord] = await db
+      .select({ trustLevel: users.trustLevel })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    const trustLevel = userRecord?.trustLevel ?? 0;
+
+    const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
+    const contentToModerate = `${title}\n\n${templateBody}`;
+    const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
 
     const slug = generateSlug(title);
 
@@ -94,10 +94,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         slug,
         title: title.trim(),
         body: templateBody.trim(),
-        issueTags: issueTags?.filter((t) => t.trim()) || [],
+        issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         userId: user.id,
         isPublic: true,
-        moderationStatus: "pending",
+        moderationStatus: moderation.status,
+        moderationScores: moderation.scores,
       })
       .returning({
         id: templates.id,
@@ -109,15 +110,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         createdAt: templates.createdAt,
       });
 
-    return new Response(JSON.stringify({ template: newTemplate }), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    if (moderation.status === "approved") {
+      await incrementApprovedTemplatesCount(db, user.id);
+    }
+
+    return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {
     console.error("Failed to create template:", error);
-    return new Response(JSON.stringify({ error: "Failed to create template" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return serverError("Failed to create template");
   }
 };

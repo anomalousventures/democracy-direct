@@ -3,6 +3,8 @@ import { createDb } from "@/db/client";
 import { templates, templateFlags } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
+import { jsonResponse, badRequest, unauthorized, notFound, serverError } from "@/lib/api-response";
+import { parseJsonBody, isFlagBody } from "@/lib/request-body";
 
 export const prerender = false;
 
@@ -25,44 +27,27 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const { slug } = params;
 
   if (!user) {
-    return new Response(JSON.stringify({ error: "Authentication required" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return unauthorized();
   }
 
   if (!slug) {
-    return new Response(JSON.stringify({ error: "Template slug is required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return badRequest("Template slug is required");
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+  const parseResult = await parseJsonBody(request, isFlagBody);
+  if (!parseResult.success) {
+    return badRequest(parseResult.error);
   }
 
-  const { reason, details } = body as {
-    reason?: string;
-    details?: string;
-  };
+  const { reason, details } = parseResult.data;
 
   if (!reason || !FLAG_REASONS.includes(reason as FlagReason)) {
-    return new Response(
-      JSON.stringify({
-        error: "Invalid flag reason",
-        validReasons: FLAG_REASONS,
-      }),
+    return jsonResponse(
       {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
+        error: "Invalid flag reason",
+        validReasons: [...FLAG_REASONS],
+      },
+      400
     );
   }
 
@@ -76,10 +61,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       .limit(1);
 
     if (!template) {
-      return new Response(JSON.stringify({ error: "Template not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return notFound("Template not found");
     }
 
     const existingFlags = await db
@@ -88,17 +70,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       .where(and(eq(templateFlags.templateId, template.id), eq(templateFlags.userId, user.id)));
 
     if (existingFlags.length >= MAX_FLAGS_PER_USER_PER_TEMPLATE) {
-      return new Response(JSON.stringify({ error: "You have already flagged this template" }), {
-        status: 429,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "You have already flagged this template" }, 429);
     }
 
     await db.insert(templateFlags).values({
       templateId: template.id,
       userId: user.id,
       reason,
-      details: details?.trim() || null,
+      details: details?.trim() ?? null,
     });
 
     const newFlagCount = template.flagCount + 1;
@@ -113,24 +92,15 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     await db.update(templates).set(updateData).where(eq(templates.id, template.id));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message:
-          newFlagCount >= FLAG_HIDE_THRESHOLD
-            ? "Template flagged and hidden for review"
-            : "Template flagged successfully",
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return jsonResponse({
+      success: true,
+      message:
+        newFlagCount >= FLAG_HIDE_THRESHOLD
+          ? "Template flagged and hidden for review"
+          : "Template flagged successfully",
+    });
   } catch (error) {
     console.error("Failed to flag template:", error);
-    return new Response(JSON.stringify({ error: "Failed to flag template" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return serverError("Failed to flag template");
   }
 };

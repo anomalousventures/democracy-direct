@@ -21,3 +21,7 @@ export function getRequiredEnv<K extends EnvKey>(locals: App.Locals, key: K): En
   }
   return value;
 }
+
+export function getOptionalEnv<K extends EnvKey>(locals: App.Locals, key: K): Env[K] | undefined {
+  return getEnv(locals, key);
+}
