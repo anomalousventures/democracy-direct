@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { LetterComposer } from "./LetterComposer";
 import { ContactActions } from "./ContactActions";
 import { AddressForm } from "./AddressForm";
@@ -14,9 +14,9 @@ export function ContactFlow({ representative, initialTemplate = "" }: ContactFlo
   const [letterContent, setLetterContent] = useState(initialTemplate);
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
 
-  const handlePrint = useCallback(() => {
+  function handlePrint(): void {
     window.print();
-  }, []);
+  }
 
   return (
     <div className="space-y-8">

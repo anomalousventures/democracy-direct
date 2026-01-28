@@ -23,7 +23,9 @@ import { getRequiredEnv } from "@/lib/env";
 const user = Astro.locals.user;
 
 const { bioguideId } = Astro.params;
-const templateSlug = Astro.url.searchParams.get("template");
+const rawTemplateSlug = Astro.url.searchParams.get("template");
+const templateSlug =
+  rawTemplateSlug && /^[a-z0-9-]{1,100}$/.test(rawTemplateSlug) ? rawTemplateSlug : null;
 
 let rep: Legislator | null = null;
 let error: string | null = null;
