@@ -27,6 +27,10 @@ export function notFound(error = "Not found"): Response {
   return errorResponse(error, 404);
 }
 
+export function conflict(error: string): Response {
+  return errorResponse(error, 409);
+}
+
 export function serverError(error = "Internal server error"): Response {
   return errorResponse(error, 500);
 }
