@@ -1,0 +1,159 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { createDb } from "@/db/client";
+import { templates, users } from "@/db/schema";
+import { eq, count } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+import { isAdmin } from "@/lib/admin";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/?login=required");
+}
+
+if (!isAdmin(user)) {
+  return new Response(null, { status: 403 });
+}
+
+let stats = {
+  pendingReviews: 0,
+  flaggedTemplates: 0,
+  totalUsers: 0,
+  totalTemplates: 0,
+};
+
+try {
+  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+  const [pendingResult] = await db
+    .select({ count: count() })
+    .from(templates)
+    .where(eq(templates.moderationStatus, "pending"));
+
+  const [flaggedResult] = await db
+    .select({ count: count() })
+    .from(templates)
+    .where(eq(templates.moderationStatus, "flagged"));
+
+  const [usersResult] = await db.select({ count: count() }).from(users);
+
+  const [templatesResult] = await db.select({ count: count() }).from(templates);
+
+  stats = {
+    pendingReviews: pendingResult?.count ?? 0,
+    flaggedTemplates: flaggedResult?.count ?? 0,
+    totalUsers: usersResult?.count ?? 0,
+    totalTemplates: templatesResult?.count ?? 0,
+  };
+} catch (error) {
+  console.error("Failed to load admin stats:", error);
+}
+---
+
+<Layout title="Admin Dashboard">
+  <Header currentPath="/admin" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="mb-8">
+          <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
+            Admin Dashboard
+          </h1>
+          <p class="text-muted-foreground mt-1">Manage moderation and users</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="card-civic" data-testid="stat-pending">
+            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">
+              {stats.pendingReviews}
+            </div>
+            <div class="text-muted-foreground">Pending Reviews</div>
+          </div>
+
+          <div class="card-civic" data-testid="stat-flagged">
+            <div class="text-3xl font-bold text-orange-600">{stats.flaggedTemplates}</div>
+            <div class="text-muted-foreground">Flagged Templates</div>
+          </div>
+
+          <div class="card-civic" data-testid="stat-users">
+            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">{stats.totalUsers}</div>
+            <div class="text-muted-foreground">Total Users</div>
+          </div>
+
+          <div class="card-civic" data-testid="stat-templates">
+            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">
+              {stats.totalTemplates}
+            </div>
+            <div class="text-muted-foreground">Total Templates</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <a
+            href="/admin/queue"
+            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
+            data-testid="link-queue"
+          >
+            <div
+              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
+            >
+              <svg
+                class="w-6 h-6 text-[var(--color-civic-navy)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="font-semibold text-[var(--color-civic-navy)]">Moderation Queue</div>
+              <div class="text-sm text-muted-foreground">Review pending and flagged content</div>
+            </div>
+          </a>
+
+          <a
+            href="/admin/users"
+            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
+            data-testid="link-users"
+          >
+            <div
+              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
+            >
+              <svg
+                class="w-6 h-6 text-[var(--color-civic-navy)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="font-semibold text-[var(--color-civic-navy)]">User Management</div>
+              <div class="text-sm text-muted-foreground">Manage users and trust levels</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/admin" />
+</Layout>

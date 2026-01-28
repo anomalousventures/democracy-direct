@@ -1,0 +1,247 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { createDb } from "@/db/client";
+import { users, templates } from "@/db/schema";
+import { desc, count } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+import { isAdmin } from "@/lib/admin";
+import { TRUST_LEVELS } from "@/lib/trust-level";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/?login=required");
+}
+
+if (!isAdmin(user)) {
+  return new Response(null, { status: 403 });
+}
+
+type UserItem = {
+  id: string;
+  trustLevel: number;
+  approvedTemplatesCount: number;
+  createdAt: Date;
+  templateCount: number;
+};
+
+let userItems: UserItem[] = [];
+
+try {
+  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+  const userRows = await db
+    .select({
+      id: users.id,
+      trustLevel: users.trustLevel,
+      approvedTemplatesCount: users.approvedTemplatesCount,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt))
+    .limit(100);
+
+  // Get template counts for each user
+  const templateCounts = await db
+    .select({
+      userId: templates.userId,
+      count: count(),
+    })
+    .from(templates)
+    .groupBy(templates.userId);
+
+  const countMap = new Map(templateCounts.map((tc) => [tc.userId, tc.count]));
+
+  userItems = userRows.map((u) => ({
+    ...u,
+    templateCount: countMap.get(u.id) ?? 0,
+  }));
+} catch (error) {
+  console.error("Failed to load users:", error);
+}
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getTrustLevelBadge(level: number): { label: string; color: string } {
+  const badges: Record<number, { label: string; color: string }> = {
+    [TRUST_LEVELS.BANNED]: { label: "Banned", color: "bg-red-100 text-red-700" },
+    [TRUST_LEVELS.NEW_USER]: { label: "New User", color: "bg-gray-100 text-gray-700" },
+    [TRUST_LEVELS.TRUSTED]: { label: "Trusted", color: "bg-blue-100 text-blue-700" },
+    [TRUST_LEVELS.ADMIN]: { label: "Admin", color: "bg-purple-100 text-purple-700" },
+  };
+  return badges[level] ?? { label: `Level ${level}`, color: "bg-gray-100 text-gray-700" };
+}
+
+function truncateId(id: string): string {
+  if (id.length <= 12) return id;
+  return id.slice(0, 6) + "..." + id.slice(-4);
+}
+---
+
+<Layout title="User Management">
+  <Header currentPath="/admin" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
+              User Management
+            </h1>
+            <p class="text-muted-foreground mt-1">{userItems.length} users</p>
+          </div>
+          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div class="mb-6">
+          <input
+            type="text"
+            id="user-search"
+            placeholder="Search by user ID..."
+            class="w-full max-w-md px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[var(--color-civic-navy)] focus:border-transparent"
+          />
+        </div>
+
+        <div data-testid="user-list" class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-border">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">User ID</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Trust Level</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Templates</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Approved</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Joined</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border" id="user-tbody">
+              {
+                userItems.map((u) => {
+                  const trust = getTrustLevelBadge(u.trustLevel);
+                  return (
+                    <tr data-testid="user-row" data-user-id={u.id} class="hover:bg-gray-50">
+                      <td class="px-4 py-3 text-sm font-mono" title={u.id}>
+                        {truncateId(u.id)}
+                      </td>
+                      <td class="px-4 py-3">
+                        <span
+                          class={`px-2 py-1 text-xs rounded ${trust.color}`}
+                          data-testid="trust-badge"
+                        >
+                          {trust.label}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-sm">{u.templateCount}</td>
+                      <td class="px-4 py-3 text-sm">{u.approvedTemplatesCount}</td>
+                      <td class="px-4 py-3 text-sm text-muted-foreground">
+                        {formatDate(u.createdAt)}
+                      </td>
+                      <td class="px-4 py-3">
+                        <select
+                          class="text-sm border border-border rounded px-2 py-1 focus:ring-2 focus:ring-[var(--color-civic-navy)]"
+                          data-testid="trust-select"
+                          onchange={`window.updateTrustLevel('${u.id}', this.value)`}
+                        >
+                          <option
+                            value={TRUST_LEVELS.BANNED}
+                            selected={u.trustLevel === TRUST_LEVELS.BANNED}
+                          >
+                            Banned
+                          </option>
+                          <option
+                            value={TRUST_LEVELS.NEW_USER}
+                            selected={u.trustLevel === TRUST_LEVELS.NEW_USER}
+                          >
+                            New User
+                          </option>
+                          <option
+                            value={TRUST_LEVELS.TRUSTED}
+                            selected={u.trustLevel === TRUST_LEVELS.TRUSTED}
+                          >
+                            Trusted
+                          </option>
+                          <option
+                            value={TRUST_LEVELS.ADMIN}
+                            selected={u.trustLevel === TRUST_LEVELS.ADMIN}
+                          >
+                            Admin
+                          </option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })
+              }
+            </tbody>
+          </table>
+        </div>
+
+        {
+          userItems.length === 0 && (
+            <div class="text-center py-12">
+              <p class="text-muted-foreground">No users found.</p>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/admin" />
+</Layout>
+
+<script is:inline>
+  // Search functionality
+  document.getElementById("user-search")?.addEventListener("input", function (e) {
+    const search = e.target.value.toLowerCase();
+    document.querySelectorAll('[data-testid="user-row"]').forEach((row) => {
+      const userId = row.getAttribute("data-user-id")?.toLowerCase() ?? "";
+      row.style.display = userId.includes(search) ? "" : "none";
+    });
+  });
+
+  window.updateTrustLevel = async function (userId, newLevel) {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trustLevel: parseInt(newLevel, 10) }),
+      });
+
+      if (response.ok) {
+        // Update badge
+        const row = document.querySelector(`[data-user-id="${userId}"]`);
+        const badge = row?.querySelector('[data-testid="trust-badge"]');
+        if (badge) {
+          const labels = { "-1": "Banned", "0": "New User", "1": "Trusted", "2": "Admin" };
+          const colors = {
+            "-1": "bg-red-100 text-red-700",
+            "0": "bg-gray-100 text-gray-700",
+            "1": "bg-blue-100 text-blue-700",
+            "2": "bg-purple-100 text-purple-700",
+          };
+          badge.textContent = labels[newLevel] || `Level ${newLevel}`;
+          badge.className = `px-2 py-1 text-xs rounded ${colors[newLevel] || "bg-gray-100 text-gray-700"}`;
+        }
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to update trust level");
+        window.location.reload();
+      }
+    } catch {
+      alert("Failed to update trust level");
+      window.location.reload();
+    }
+  };
+</script>

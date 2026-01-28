@@ -1,0 +1,232 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { createDb } from "@/db/client";
+import { templates } from "@/db/schema";
+import { eq, or, desc } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+import { isAdmin } from "@/lib/admin";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/?login=required");
+}
+
+if (!isAdmin(user)) {
+  return new Response(null, { status: 403 });
+}
+
+type QueueItem = {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  moderationStatus: string;
+  moderationScores: Record<string, number> | null;
+  flagCount: number;
+  createdAt: Date;
+  userId: string | null;
+};
+
+let queueItems: QueueItem[] = [];
+
+try {
+  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+  queueItems = await db
+    .select({
+      id: templates.id,
+      slug: templates.slug,
+      title: templates.title,
+      body: templates.body,
+      moderationStatus: templates.moderationStatus,
+      moderationScores: templates.moderationScores,
+      flagCount: templates.flagCount,
+      createdAt: templates.createdAt,
+      userId: templates.userId,
+    })
+    .from(templates)
+    .where(or(eq(templates.moderationStatus, "pending"), eq(templates.moderationStatus, "flagged")))
+    .orderBy(desc(templates.flagCount), desc(templates.createdAt))
+    .limit(50);
+} catch (error) {
+  console.error("Failed to load moderation queue:", error);
+}
+
+function truncateBody(body: string, maxLength: number = 200): string {
+  if (body.length <= maxLength) return body;
+  return body.slice(0, maxLength).trim() + "...";
+}
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getStatusBadge(status: string): { label: string; color: string } {
+  const badges: Record<string, { label: string; color: string }> = {
+    pending: { label: "Pending Review", color: "bg-yellow-100 text-yellow-700" },
+    flagged: { label: "Flagged", color: "bg-red-100 text-red-700" },
+  };
+  return badges[status] ?? { label: status, color: "bg-gray-100 text-gray-700" };
+}
+
+function formatScores(scores: Record<string, number> | null): string {
+  if (!scores) return "No scores";
+  const highScores = Object.entries(scores)
+    .filter(([, value]) => value > 0.1)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`);
+  return highScores.length > 0 ? highScores.join(", ") : "All scores low";
+}
+---
+
+<Layout title="Moderation Queue">
+  <Header currentPath="/admin" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
+              Moderation Queue
+            </h1>
+            <p class="text-muted-foreground mt-1">
+              {queueItems.length} items awaiting review
+            </p>
+          </div>
+          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div data-testid="queue-items" class="space-y-6">
+          {
+            queueItems.length > 0 ? (
+              queueItems.map((item) => {
+                const status = getStatusBadge(item.moderationStatus);
+                return (
+                  <article data-testid="queue-item" class="card-civic" data-template-id={item.id}>
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                          <h2 class="text-xl font-semibold text-[var(--color-civic-navy)]">
+                            {item.title}
+                          </h2>
+                          <span class={`px-2 py-1 text-xs rounded ${status.color}`}>
+                            {status.label}
+                          </span>
+                          {item.flagCount > 0 && (
+                            <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
+                              {item.flagCount} flags
+                            </span>
+                          )}
+                        </div>
+                        <p class="text-muted-foreground whitespace-pre-wrap">
+                          {truncateBody(item.body)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded p-3 mb-4 text-sm">
+                      <div class="font-medium text-gray-700 mb-1">Moderation Scores</div>
+                      <div class="text-gray-600">{formatScores(item.moderationScores)}</div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border">
+                      <div class="text-sm text-muted-foreground">
+                        Created {formatDate(item.createdAt)}
+                      </div>
+                      <div class="flex gap-2">
+                        <button
+                          type="button"
+                          class="btn-primary text-sm bg-green-600 hover:bg-green-700"
+                          data-testid="approve-button"
+                          onclick={`window.moderateTemplate('${item.id}', 'approve')`}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-secondary text-sm text-red-600 hover:bg-red-50"
+                          data-testid="reject-button"
+                          onclick={`window.moderateTemplate('${item.id}', 'reject')`}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <div class="text-center py-12">
+                <div class="w-16 h-16 mx-auto mb-6 bg-green-100 flex items-center justify-center rounded-full">
+                  <svg
+                    class="w-8 h-8 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <p class="text-muted-foreground">All caught up! No items pending review.</p>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/admin" />
+</Layout>
+
+<script is:inline>
+  window.moderateTemplate = async function (templateId, action) {
+    const reason = action === "reject" ? prompt("Reason for rejection (optional):") : null;
+
+    try {
+      const response = await fetch(`/api/admin/moderate/${templateId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reason }),
+      });
+
+      if (response.ok) {
+        // Remove the item from the page
+        const item = document.querySelector(`[data-template-id="${templateId}"]`);
+        if (item) {
+          item.remove();
+        }
+        // Update the count in the header
+        const countEl = document.querySelector('[data-testid="queue-items"]');
+        const remaining = countEl?.querySelectorAll('[data-testid="queue-item"]').length ?? 0;
+        const headerP = document.querySelector("main h1 + p");
+        if (headerP) {
+          headerP.textContent = `${remaining} items awaiting review`;
+        }
+      } else {
+        const data = await response.json();
+        alert(data.error || `Failed to ${action} template`);
+      }
+    } catch {
+      alert(`Failed to ${action} template`);
+    }
+  };
+</script>
