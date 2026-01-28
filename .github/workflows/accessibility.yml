@@ -67,7 +67,6 @@ jobs:
             --url=http://localhost:4321/templates \
             --url=http://localhost:4321/zip/10001 \
             --url=http://localhost:4321/rep/S000033 \
-            --staticDistDir=./dist \
             --settings.chromeFlags="--no-sandbox --headless" \
             || true
 
