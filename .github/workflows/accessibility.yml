@@ -77,12 +77,12 @@ jobs:
         run: |
           mkdir -p pa11y-results
 
-          pa11y http://localhost:4321 --reporter json > pa11y-results/home.json 2>&1 || true
-          pa11y http://localhost:4321/about --reporter json > pa11y-results/about.json 2>&1 || true
-          pa11y http://localhost:4321/privacy --reporter json > pa11y-results/privacy.json 2>&1 || true
-          pa11y http://localhost:4321/templates --reporter json > pa11y-results/templates.json 2>&1 || true
-          pa11y http://localhost:4321/zip/10001 --reporter json > pa11y-results/zip.json 2>&1 || true
-          pa11y http://localhost:4321/rep/S000033 --reporter json > pa11y-results/rep.json 2>&1 || true
+          pa11y http://localhost:4321 --reporter json > pa11y-results/home.json || true
+          pa11y http://localhost:4321/about --reporter json > pa11y-results/about.json || true
+          pa11y http://localhost:4321/privacy --reporter json > pa11y-results/privacy.json || true
+          pa11y http://localhost:4321/templates --reporter json > pa11y-results/templates.json || true
+          pa11y http://localhost:4321/zip/10001 --reporter json > pa11y-results/zip.json || true
+          pa11y http://localhost:4321/rep/S000033 --reporter json > pa11y-results/rep.json || true
 
       - name: Generate audit summary
         id: summary
