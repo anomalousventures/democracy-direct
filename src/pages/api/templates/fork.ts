@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return validationError(validationErrors);
   }
 
-  const turnstileSecret = getRequiredEnv(locals, "TURNSTILE_SECRET_KEY");
+  const turnstileSecret = getOptionalEnv(locals, "TURNSTILE_SECRET_KEY");
   if (turnstileSecret && turnstileSecret !== "test-secret") {
     if (!turnstileToken) {
       return forbidden("Turnstile verification required");

@@ -3,7 +3,7 @@ import { createDb } from "@/db/client";
 import { templates, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
-import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
+import { getOptionalEnv, getRequiredEnv } from "@/lib/env";
 import {
   jsonResponse,
   badRequest,
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return validationError(validationErrors);
   }
 
-  const turnstileSecret = getRequiredEnv(locals, "TURNSTILE_SECRET_KEY");
+  const turnstileSecret = getOptionalEnv(locals, "TURNSTILE_SECRET_KEY");
   if (turnstileSecret && turnstileSecret !== "test-secret") {
     if (!turnstileToken) {
       return forbidden("Turnstile verification required");
