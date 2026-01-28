@@ -13,6 +13,9 @@ importers:
       "@astrojs/react":
         specifier: 4.4.2
         version: 4.4.2(@types/node@25.0.10)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(jiti@2.6.1)(lightningcss@1.30.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tsx@4.21.0)(yaml@2.8.2)
+      "@astrojs/sitemap":
+        specifier: ^3.7.0
+        version: 3.7.0
       "@neondatabase/serverless":
         specifier: 1.0.2
         version: 1.0.2
@@ -228,6 +231,12 @@ packages:
       "@types/react-dom": ^17.0.17 || ^18.0.6 || ^19.0.0
       react: ^17.0.2 || ^18.0.0 || ^19.0.0
       react-dom: ^17.0.2 || ^18.0.0 || ^19.0.0
+
+  "@astrojs/sitemap@3.7.0":
+    resolution:
+      {
+        integrity: sha512-+qxjUrz6Jcgh+D5VE1gKUJTA3pSthuPHe6Ao5JCxok794Lewx8hBFaWHtOnN0ntb2lfOf7gvOi9TefUswQ/ZVA==,
+      }
 
   "@astrojs/telemetry@3.3.0":
     resolution:
@@ -2904,6 +2913,12 @@ packages:
         integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==,
       }
 
+  "@types/node@17.0.45":
+    resolution:
+      {
+        integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==,
+      }
+
   "@types/node@22.19.7":
     resolution:
       {
@@ -2940,6 +2955,12 @@ packages:
     resolution:
       {
         integrity: sha512-WPigyYuGhgZ/cTPRXB2EwUw+XvsRA3GqHlsP4qteqrnnjDrApbS7MxcGr/hke5iUoeB7E/gQtrs9I37zAJ0Vjw==,
+      }
+
+  "@types/sax@1.2.7":
+    resolution:
+      {
+        integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==,
       }
 
   "@types/unist@3.0.3":
@@ -3221,6 +3242,12 @@ packages:
         integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==,
       }
     engines: { node: ">= 8" }
+
+  arg@5.0.2:
+    resolution:
+      {
+        integrity: sha512-PYjyFOLKQ9y57JvQ6QLo8dAgNqswh8M1RMJYdQduT6xbWSgK36P/Z/v+p888pM69jMMfS8Xd8F6I1kQ/I9HUGg==,
+      }
 
   argparse@2.0.1:
     resolution:
@@ -6710,6 +6737,14 @@ packages:
         integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==,
       }
 
+  sitemap@8.0.2:
+    resolution:
+      {
+        integrity: sha512-LwktpJcyZDoa0IL6KT++lQ53pbSrx2c9ge41/SeLTyqy2XUNA6uR4+P9u5IVo5lPeL2arAcOKn1aZAxoYbCKlQ==,
+      }
+    engines: { node: ">=14.0.0", npm: ">=6.0.0" }
+    hasBin: true
+
   slice-ansi@7.1.2:
     resolution:
       {
@@ -6791,6 +6826,12 @@ packages:
         integrity: sha512-KXDYZ9dszj6bzvnEMRYvxgeTHU74QBFL54XKtP3nyMuJ81CFYtABZ3bAzL2EdFUaEwJOBOgENyFj3R7oTzDyyw==,
       }
     engines: { node: ">=4", npm: ">=6" }
+
+  stream-replace-string@2.0.0:
+    resolution:
+      {
+        integrity: sha512-TlnjJ1C0QrmxRNrON00JvaFFlNh5TTG00APw23j74ET7gkQpTASi6/L2fuiav8pzK715HXtUeClpBTw2NPSn6w==,
+      }
 
   string-argv@0.3.2:
     resolution:
@@ -7890,6 +7931,12 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  "@astrojs/sitemap@3.7.0":
+    dependencies:
+      sitemap: 8.0.2
+      stream-replace-string: 2.0.0
+      zod: 3.25.76
 
   "@astrojs/telemetry@3.3.0":
     dependencies:
@@ -9154,6 +9201,8 @@ snapshots:
     dependencies:
       "@types/unist": 3.0.3
 
+  "@types/node@17.0.45": {}
+
   "@types/node@22.19.7":
     dependencies:
       undici-types: 6.21.0
@@ -9179,6 +9228,10 @@ snapshots:
   "@types/react@19.2.10":
     dependencies:
       csstype: 3.2.3
+
+  "@types/sax@1.2.7":
+    dependencies:
+      "@types/node": 25.0.10
 
   "@types/unist@3.0.3": {}
 
@@ -9395,6 +9448,8 @@ snapshots:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.1
+
+  arg@5.0.2: {}
 
   argparse@2.0.1: {}
 
@@ -11989,6 +12044,13 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
+  sitemap@8.0.2:
+    dependencies:
+      "@types/node": 17.0.45
+      "@types/sax": 1.2.7
+      arg: 5.0.2
+      sax: 1.4.4
+
   slice-ansi@7.1.2:
     dependencies:
       ansi-styles: 6.2.3
@@ -12025,6 +12087,8 @@ snapshots:
       internal-slot: 1.1.0
 
   stoppable@1.1.0: {}
+
+  stream-replace-string@2.0.0: {}
 
   string-argv@0.3.2: {}
 
