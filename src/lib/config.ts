@@ -45,7 +45,7 @@ const configSchema = z.object({
 
 export type Config = z.infer<typeof configSchema>;
 export type DatabaseConfig = z.infer<typeof databaseSchema>;
-export type EmailConfig = z.infer<typeof emailSchema>;
+export type RawEmailConfig = z.infer<typeof emailSchema>;
 export type TurnstileConfig = z.infer<typeof turnstileSchema>;
 export type ModerationConfig = z.infer<typeof moderationSchema>;
 
