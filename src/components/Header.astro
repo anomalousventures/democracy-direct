@@ -9,7 +9,7 @@ interface Props {
 
 const { currentPath = "/", user } = Astro.props;
 
-const isAdmin = user?.trustLevel === TRUST_LEVELS.ADMIN;
+const isAdmin = typeof user?.trustLevel === "number" && user.trustLevel >= TRUST_LEVELS.ADMIN;
 
 const navLinks = [
   { href: "/about", label: "About" },
