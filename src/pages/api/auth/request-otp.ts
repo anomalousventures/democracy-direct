@@ -2,22 +2,19 @@ import type { APIRoute } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { emailOtps } from "@/db/schema";
+import { badRequest, serverError, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
 import { getRequiredEnv } from "@/lib/env";
+import { parseJsonBody, requestOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_EXPIRY_MINUTES = 10;
 const RATE_LIMIT_MAX_REQUESTS = 5;
 const RATE_LIMIT_WINDOW_HOURS = 1;
-
-export function validateEmail(email: string): boolean {
-  return EMAIL_REGEX.test(email);
-}
 
 type EmailSender = (
   message: Parameters<typeof sendEmail>[0],
@@ -30,10 +27,6 @@ export async function requestOTP(
   db?: ReturnType<typeof createDb>,
   emailSender: EmailSender = sendEmail
 ): Promise<{ success: boolean; error?: string }> {
-  if (!validateEmail(email)) {
-    return { success: false, error: "Invalid email format" };
-  }
-
   const emailHash = hashEmail(email);
 
   if (db) {
@@ -74,36 +67,24 @@ export async function requestOTP(
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const parseResult = await parseJsonBody(request, requestOtpBodySchema);
+  if (!parseResult.success) {
+    return badRequest(parseResult.error);
+  }
+
+  const { email } = parseResult.data;
+
   try {
-    const body = await request.json();
-    const { email } = body;
-
-    if (!email || typeof email !== "string") {
-      return new Response(JSON.stringify({ success: false, error: "Email required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
     const result = await requestOTP(email, locals, db);
 
     if (!result.success) {
-      return new Response(JSON.stringify(result), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return badRequest(result.error ?? "Request failed");
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ success: true });
   } catch (error) {
     console.error("OTP request error:", error);
-    return new Response(JSON.stringify({ success: false, error: "Internal error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return serverError("Internal error");
   }
 };

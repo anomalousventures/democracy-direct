@@ -39,3 +39,16 @@ export const flagBodySchema = z.object({
 });
 
 export type FlagBody = z.infer<typeof flagBodySchema>;
+
+export const requestOtpBodySchema = z.object({
+  email: z.string().email(),
+});
+
+export type RequestOtpBody = z.infer<typeof requestOtpBodySchema>;
+
+export const verifyOtpBodySchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(1),
+});
+
+export type VerifyOtpBody = z.infer<typeof verifyOtpBodySchema>;
