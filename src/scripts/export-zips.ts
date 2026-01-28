@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { writeFile, mkdir } from "fs/promises";
 import { dirname } from "path";
+import { desc } from "drizzle-orm";
+import { createDb } from "../db/client";
+import { zipDistricts } from "../db/schema";
 
 export interface ZipDistrictDb {
   zip: string;
@@ -51,28 +54,25 @@ export async function exportZipData(outputPath: string): Promise<{
   zipCount: number;
   fileSize: number;
 }> {
-  const { neon } = await import("@neondatabase/serverless");
-
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const sql = neon(databaseUrl);
+  const db = createDb(databaseUrl);
 
   console.log("Fetching ZIP-district data from database...");
-  const rawRecords = await sql`
-    SELECT zip, state, district, proportion
-    FROM zip_districts
-    ORDER BY zip, proportion DESC
-  `;
+  const rawRecords = await db
+    .select({
+      zip: zipDistricts.zip,
+      state: zipDistricts.state,
+      district: zipDistricts.district,
+      proportion: zipDistricts.proportion,
+    })
+    .from(zipDistricts)
+    .orderBy(zipDistricts.zip, desc(zipDistricts.proportion));
 
-  const records: ZipDistrictDb[] = rawRecords.map((r) => ({
-    zip: r.zip as string,
-    state: r.state as string,
-    district: r.district as string,
-    proportion: r.proportion as number,
-  }));
+  const records: ZipDistrictDb[] = rawRecords;
 
   console.log(`Found ${records.length} records`);
 
