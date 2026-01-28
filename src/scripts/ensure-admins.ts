@@ -82,7 +82,9 @@ async function ensureAdmins() {
   console.log("Admin users ensured.");
 }
 
-ensureAdmins().catch((error) => {
-  console.error("Failed to ensure admins:", error);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  ensureAdmins().catch((error) => {
+    console.error("Failed to ensure admins:", error);
+    process.exit(1);
+  });
+}
