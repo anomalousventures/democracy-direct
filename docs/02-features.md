@@ -865,11 +865,13 @@
 - Playwright: Meta descriptions present
 - Vitest: Sitemap generated correctly
 
-### 8.5 Analytics Setup
+### 8.5 Analytics Setup (Optional)
 
 - [ ] Privacy-respecting analytics (Plausible or Fathom)
 - [ ] Page view tracking only
 - [ ] No user identification
+
+**Notes:** Optional - implement only if analytics needed. Privacy-first approach may prefer no analytics.
 
 **Tests:**
 
@@ -878,25 +880,24 @@
 
 ### 8.6 Rate Limiting
 
-- [ ] Rate limiting on all API endpoints
-- [ ] Different limits for auth vs non-auth
-- [ ] Returns 429 with Retry-After header
+- [x] Rate limiting on authentication endpoints (OTP: 5 requests/email/hour)
+- [x] Database-backed rate limiting with privacy (uses email hash)
+- [x] Turnstile CAPTCHA on template creation endpoints
+
+**Notes:** OTP rate limiting implemented in `request-otp.ts`. Template creation protected by Turnstile CAPTCHA. Additional rate limiting can be added at Cloudflare edge if needed.
 
 **Tests:**
 
-- Vitest: Rate limit triggers after threshold
-- Vitest: 429 response includes Retry-After
+- Vitest: Rate limit triggers after threshold ✓
+- Vitest: OTP requests limited per email hash ✓
 
 ### 8.7 CORS Configuration
 
-- [ ] CORS headers set appropriately
-- [ ] API routes allow same-origin
-- [ ] No credentials exposed to third parties
+- [x] N/A - All API requests are same-origin
+- [x] Default browser same-origin policy provides security
+- [x] No cross-origin API access needed or desired
 
-**Tests:**
-
-- Vitest: CORS headers present on API responses
-- Vitest: Cross-origin requests blocked appropriately
+**Notes:** CORS not required. This is a server-rendered Astro app where all `/api/*` routes are same-origin. Default browser behavior correctly blocks cross-origin requests, which is the desired security posture for a privacy-focused platform.
 
 ### 8.8 Production Build
 
@@ -909,6 +910,101 @@
 
 - Vitest: `pnpm build` succeeds
 - Playwright: Production build serves correctly
+
+---
+
+## Phase 9: Security Hardening & Code Quality
+
+### 9.1 OTP Rate Limit Info Leak Fix
+
+- [ ] Fix `request-otp.ts` to return success even when rate limited
+- [ ] Prevents email enumeration via rate limit error messages
+- [ ] Rate-limited requests should silently succeed (no OTP created/sent)
+
+**Current behavior:** Returns error "Too many requests" which reveals email exists and is active.
+
+**Required behavior:** Always return `{ success: true }` to prevent enumeration.
+
+**Tests:**
+
+- Vitest: Rate-limited request returns 200 with `{ success: true }`
+- Vitest: No OTP record created when rate limited
+- Vitest: No email sent when rate limited
+
+### 9.2 Magic Number Cleanup
+
+- [ ] Replace magic number `1` with `TRUST_LEVELS.TRUSTED` in `decision.ts`
+- [ ] Audit codebase for other magic numbers
+- [ ] Use constants from `trust-level.ts` consistently
+
+**Tests:**
+
+- Vitest: All trust level comparisons use named constants
+
+### 9.3 HTTP Status Code Correction
+
+- [ ] Change "already flagged" response from 429 to 409 Conflict
+- [ ] 429 should only be used for actual rate limiting
+- [ ] Review other endpoints for correct status codes
+
+**Tests:**
+
+- Vitest: Duplicate flag returns 409 Conflict
+- Vitest: 429 only returned for rate limit scenarios
+
+### 9.4 Perspective API Integration (Optional)
+
+- [ ] Add `src/lib/moderation/perspective.ts` module
+- [ ] Call Perspective API for TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK scores
+- [ ] Run in parallel with OpenAI moderation
+- [ ] Combine scores in decision logic
+- [ ] OR: Remove Perspective API references from README and .env.example if not implementing
+
+**Note:** Currently only OpenAI Moderation API is implemented despite docs mentioning Perspective.
+
+**Tests:**
+
+- Vitest: Perspective API called with correct parameters
+- Vitest: Response parsed correctly
+- Vitest: Combined decision uses both API results
+
+### 9.5 Site-Wide Design Review
+
+- [ ] Review all pages for consistent styling
+- [ ] Check responsive design on mobile/tablet/desktop
+- [ ] Verify accessibility (WCAG 2.1 AA)
+- [ ] Review copy for clarity and consistency
+- [ ] Test all interactive elements
+
+**Tests:**
+
+- Playwright: Visual regression tests for key pages
+- Lighthouse: Accessibility score > 90
+
+### 9.6 Security & Code Review
+
+- [ ] Audit all API endpoints for proper auth checks
+- [ ] Review input validation across all forms
+- [ ] Check for SQL injection, XSS vulnerabilities
+- [ ] Verify rate limiting on sensitive endpoints
+- [ ] Code simplification pass for maintainability
+
+**Tests:**
+
+- Vitest: Security-focused test suite
+- Manual: Penetration testing checklist
+
+### 9.7 Tiptap Rich Text Editor (Optional)
+
+- [ ] Replace plain textarea with Tiptap editor in LetterComposer
+- [ ] Basic formatting: bold, italic, lists
+- [ ] Export to plain text for contact forms
+- [ ] Preserve Markdown-style variable syntax ({{VAR}})
+
+**Tests:**
+
+- Vitest: Tiptap component renders and handles input
+- Playwright: User can format text and variables still work
 
 ---
 
