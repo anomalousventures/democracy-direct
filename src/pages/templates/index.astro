@@ -1,9 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { AuthButton } from "@/components/AuthButton";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
 
 export const prerender = false;
 
@@ -25,7 +27,7 @@ let templateList: {
 let totalCount = 0;
 
 try {
-  const db = createDb(import.meta.env.DATABASE_URL);
+  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
 
   const results = await db
     .select({
@@ -65,35 +67,7 @@ function truncateBody(body: string, maxLength: number = 100): string {
 ---
 
 <Layout title="Letter Templates">
-  <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-4">
-      <nav class="flex items-center justify-between">
-        <a href="/" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 bg-[var(--color-civic-navy)] flex items-center justify-center">
-            <span
-              class="text-[var(--color-civic-gold)] text-xl font-bold"
-              style="font-family: var(--font-display)">D</span
-            >
-          </div>
-          <span class="font-semibold text-[var(--color-civic-navy)] hidden sm:inline"
-            >Democracy Direct</span
-          >
-        </a>
-        <div class="flex items-center gap-6">
-          <a
-            href="/about"
-            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
-          >
-            About
-          </a>
-          <a href="/templates" class="text-sm font-medium text-[var(--color-civic-navy)]">
-            Templates
-          </a>
-          <AuthButton isLoggedIn={!!user} client:load />
-        </div>
-      </nav>
-    </div>
-  </header>
+  <Header currentPath="/templates" user={user} />
 
   <main class="flex-1 py-12">
     <div class="container mx-auto px-4">
@@ -196,9 +170,5 @@ function truncateBody(body: string, maxLength: number = 100): string {
     </div>
   </main>
 
-  <footer class="border-t border-border py-8 bg-white">
-    <div class="container mx-auto px-4 text-center text-sm text-muted-foreground">
-      © {new Date().getFullYear()} Democracy Direct
-    </div>
-  </footer>
+  <Footer currentPath="/templates" />
 </Layout>

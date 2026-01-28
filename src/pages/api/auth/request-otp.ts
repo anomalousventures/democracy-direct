@@ -6,6 +6,7 @@ import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
+import { getRequiredEnv } from "@/lib/env";
 
 export const prerender = false;
 
@@ -66,7 +67,7 @@ export async function requestOTP(
   return { success: true };
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json();
     const { email } = body;
@@ -78,7 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const db = createDb(import.meta.env.DATABASE_URL);
+    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
     const result = await requestOTP(email, db);
 
     if (!result.success) {
