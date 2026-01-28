@@ -641,10 +641,10 @@
 
 ### 6.1 OpenAI Moderation Integration
 
-- [ ] Function to call OpenAI Moderation API
-- [ ] Accepts text content
-- [ ] Returns category scores and flagged boolean
-- [ ] Handles API errors gracefully
+- [x] Function to call OpenAI Moderation API
+- [x] Accepts text content
+- [x] Returns category scores and flagged boolean
+- [x] Handles API errors gracefully
 
 **Tests:**
 
@@ -654,11 +654,11 @@
 
 ### 6.3 Moderation Decision Logic
 
-- [ ] Function that takes API response
-- [ ] Returns decision: 'approve', 'reject', or 'review'
-- [ ] Rejection thresholds configurable
-- [ ] Review thresholds configurable
-- [ ] Logs reasoning
+- [x] Function that takes API response
+- [x] Returns decision: 'approve', 'reject', or 'review'
+- [x] Rejection thresholds configurable
+- [x] Review thresholds configurable
+- [x] Logs reasoning
 
 **Tests:**
 
@@ -669,11 +669,11 @@
 
 ### 6.4 Basic Validation Layer
 
-- [ ] Validates before API calls
-- [ ] Minimum length (50 chars)
-- [ ] Maximum length (10,000 chars)
-- [ ] No all-caps titles
-- [ ] Regex for obvious spam patterns
+- [x] Validates before API calls (implemented in Phase 5)
+- [x] Minimum length (50 chars)
+- [x] Maximum length (10,000 chars)
+- [x] No all-caps titles
+- [x] Regex for obvious spam patterns
 
 **Tests:**
 
@@ -684,11 +684,11 @@
 
 ### 6.5 Template Flag Endpoint
 
-- [ ] POST `/api/templates/[slug]/flag`
-- [ ] Accepts `{ reason: string, details?: string }`
-- [ ] Creates flag record
-- [ ] Hides template if flag count >= 3
-- [ ] Rate limited per user
+- [x] POST `/api/templates/[slug]/flag`
+- [x] Accepts `{ reason: string, details?: string }`
+- [x] Creates flag record
+- [x] Hides template if flag count >= 3
+- [x] Rate limited per user (1 flag per user per template)
 
 **Tests:**
 
@@ -698,11 +698,11 @@
 
 ### 6.6 Trust Level System
 
-- [ ] New users: trust_level = 0
-- [ ] After 2 approved templates: trust_level = 1
-- [ ] Admin-verified users: trust_level = 2
-- [ ] Rejected template: trust_level = -1
-- [ ] Trust level affects auto-publish threshold
+- [x] New users: trust_level = 0
+- [x] After 2 approved templates: trust_level = 1
+- [x] Admin-verified users: trust_level = 2
+- [x] Rejected template: trust_level = -1
+- [x] Trust level affects auto-publish threshold
 
 **Tests:**
 
