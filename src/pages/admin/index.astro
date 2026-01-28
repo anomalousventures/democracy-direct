@@ -5,7 +5,7 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
-import { templates, users } from "@/db/schema";
+import { templates, users, tagSuggestions } from "@/db/schema";
 import { eq, count } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
 import { isAdmin } from "@/lib/admin";
@@ -25,6 +25,7 @@ let stats = {
   flaggedTemplates: 0,
   totalUsers: 0,
   totalTemplates: 0,
+  pendingTags: 0,
 };
 
 try {
@@ -44,11 +45,17 @@ try {
 
   const [templatesResult] = await db.select({ count: count() }).from(templates);
 
+  const [pendingTagsResult] = await db
+    .select({ count: count() })
+    .from(tagSuggestions)
+    .where(eq(tagSuggestions.status, "pending"));
+
   stats = {
     pendingReviews: pendingResult?.count ?? 0,
     flaggedTemplates: flaggedResult?.count ?? 0,
     totalUsers: usersResult?.count ?? 0,
     totalTemplates: templatesResult?.count ?? 0,
+    pendingTags: pendingTagsResult?.count ?? 0,
   };
 } catch (error) {
   console.error("Failed to load admin stats:", error);
@@ -148,6 +155,36 @@ try {
             <div>
               <div class="font-semibold text-[var(--color-civic-navy)]">User Management</div>
               <div class="text-sm text-muted-foreground">Manage users and trust levels</div>
+            </div>
+          </a>
+
+          <a
+            href="/admin/tags"
+            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
+            data-testid="link-tags"
+          >
+            <div
+              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
+            >
+              <svg
+                class="w-6 h-6 text-[var(--color-civic-navy)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="font-semibold text-[var(--color-civic-navy)]">Tag Suggestions</div>
+              <div class="text-sm text-muted-foreground">
+                {stats.pendingTags > 0 ? `${stats.pendingTags} pending` : "Review suggested tags"}
+              </div>
             </div>
           </a>
         </div>

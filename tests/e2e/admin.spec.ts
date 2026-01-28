@@ -22,5 +22,27 @@ test.describe("Admin Dashboard", () => {
     await expect(page.getByTestId("stat-templates")).toBeVisible();
     await expect(page.getByTestId("link-queue")).toBeVisible();
     await expect(page.getByTestId("link-users")).toBeVisible();
+    await expect(page.getByTestId("link-tags")).toBeVisible();
+  });
+});
+
+test.describe("Admin Tag Suggestions", () => {
+  test("non-admin is redirected from tags page", async ({ page }) => {
+    await page.goto("/admin/tags");
+
+    await expect(page).toHaveURL(/\?login=required/);
+  });
+
+  test("admin can manage tag suggestions", async ({ page }) => {
+    test.skip(true, "Requires admin session setup with pending tag suggestions");
+
+    await page.goto("/admin/tags");
+
+    await expect(page.getByText("Tag Suggestions")).toBeVisible();
+    await expect(page.getByTestId("tag-items")).toBeVisible();
+
+    const tagItem = page.getByTestId("tag-item").first();
+    await expect(tagItem.getByTestId("approve-button")).toBeVisible();
+    await expect(tagItem.getByTestId("reject-button")).toBeVisible();
   });
 });

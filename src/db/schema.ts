@@ -162,6 +162,23 @@ export const userTemplates = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.templateId] })]
 );
 
+export const tagSuggestions = pgTable(
+  "tag_suggestions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 50 }).notNull(),
+    suggestedBy: uuid("suggested_by").references(() => users.id, { onDelete: "set null" }),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("tag_suggestions_name_idx").on(table.name),
+    index("tag_suggestions_status_idx").on(table.status),
+  ]
+);
+
 export type Legislator = typeof legislators.$inferSelect;
 export type NewLegislator = typeof legislators.$inferInsert;
 export type ZipDistrict = typeof zipDistricts.$inferSelect;
@@ -180,3 +197,5 @@ export type ModerationLogEntry = typeof moderationLog.$inferSelect;
 export type NewModerationLogEntry = typeof moderationLog.$inferInsert;
 export type UserTemplate = typeof userTemplates.$inferSelect;
 export type NewUserTemplate = typeof userTemplates.$inferInsert;
+export type TagSuggestion = typeof tagSuggestions.$inferSelect;
+export type NewTagSuggestion = typeof tagSuggestions.$inferInsert;

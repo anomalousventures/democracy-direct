@@ -1,0 +1,192 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { createDb } from "@/db/client";
+import { tagSuggestions, users } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { getRequiredEnv } from "@/lib/env";
+import { isAdmin } from "@/lib/admin";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/?login=required");
+}
+
+if (!isAdmin(user)) {
+  return new Response(null, { status: 403 });
+}
+
+type TagItem = {
+  id: string;
+  name: string;
+  status: string;
+  suggestedBy: string | null;
+  suggestedByEmail: string | null;
+  createdAt: Date;
+};
+
+let pendingTags: TagItem[] = [];
+
+try {
+  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+
+  const results = await db
+    .select({
+      id: tagSuggestions.id,
+      name: tagSuggestions.name,
+      status: tagSuggestions.status,
+      suggestedBy: tagSuggestions.suggestedBy,
+      suggestedByEmail: users.emailHash,
+      createdAt: tagSuggestions.createdAt,
+    })
+    .from(tagSuggestions)
+    .leftJoin(users, eq(tagSuggestions.suggestedBy, users.id))
+    .where(eq(tagSuggestions.status, "pending"))
+    .orderBy(desc(tagSuggestions.createdAt));
+
+  pendingTags = results;
+} catch (error) {
+  console.error("Failed to load tag suggestions:", error);
+}
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+---
+
+<Layout title="Tag Suggestions">
+  <Header currentPath="/admin" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
+              Tag Suggestions
+            </h1>
+            <p class="text-muted-foreground mt-1">
+              {pendingTags.length} tags awaiting review
+            </p>
+          </div>
+          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div data-testid="tag-items" class="space-y-4">
+          {
+            pendingTags.length > 0 ? (
+              pendingTags.map((tag) => (
+                <article data-testid="tag-item" class="card-civic" data-tag-id={tag.id}>
+                  <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-secondary)] text-[var(--color-civic-navy)] font-medium">
+                          {tag.name}
+                        </span>
+                        <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">
+                          Pending
+                        </span>
+                      </div>
+                      <p class="text-sm text-muted-foreground">
+                        Suggested {formatDate(tag.createdAt)}
+                        {tag.suggestedByEmail && ` by user ${tag.suggestedByEmail.slice(0, 8)}...`}
+                      </p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        class="btn-primary text-sm bg-green-600 hover:bg-green-700 tag-action-btn"
+                        data-testid="approve-button"
+                        data-action="approve"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-secondary text-sm text-red-600 hover:bg-red-50 tag-action-btn"
+                        data-testid="reject-button"
+                        data-action="reject"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div class="text-center py-12">
+                <div class="w-16 h-16 mx-auto mb-6 bg-green-100 flex items-center justify-center rounded-full">
+                  <svg
+                    class="w-8 h-8 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <p class="text-muted-foreground">
+                  All caught up! No tag suggestions pending review.
+                </p>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/admin" />
+</Layout>
+
+<script is:inline>
+  document.addEventListener("click", async function (e) {
+    const button = e.target.closest(".tag-action-btn");
+    if (!button) return;
+
+    const article = button.closest("[data-tag-id]");
+    if (!article) return;
+
+    const tagId = article.getAttribute("data-tag-id");
+    const action = button.getAttribute("data-action");
+    if (!tagId || !action) return;
+
+    try {
+      const response = await fetch("/api/admin/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tagId, action }),
+      });
+
+      if (response.ok) {
+        article.remove();
+        const countEl = document.querySelector('[data-testid="tag-items"]');
+        const remaining = countEl?.querySelectorAll('[data-testid="tag-item"]').length ?? 0;
+        const headerP = document.querySelector("main h1 + p");
+        if (headerP) {
+          headerP.textContent = `${remaining} tags awaiting review`;
+        }
+      } else {
+        const data = await response.json();
+        alert(data.error || `Failed to ${action} tag`);
+      }
+    } catch {
+      alert(`Failed to ${action} tag`);
+    }
+  });
+</script>
