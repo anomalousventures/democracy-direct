@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -10,10 +11,6 @@ import { getRequiredEnv } from "@/lib/env";
 export const prerender = false;
 
 const user = Astro.locals.user;
-
-const page = parseInt(Astro.url.searchParams.get("page") || "1", 10);
-const perPage = 20;
-const offset = (page - 1) * perPage;
 
 let templateList: {
   id: string;
@@ -24,7 +21,7 @@ let templateList: {
   viewCount: number;
 }[] = [];
 
-let totalCount = 0;
+let availableTags: string[] = [];
 
 try {
   const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
@@ -40,29 +37,14 @@ try {
     })
     .from(templates)
     .where(and(eq(templates.isPublic, true), eq(templates.moderationStatus, "approved")))
-    .orderBy(desc(templates.viewCount))
-    .limit(perPage)
-    .offset(offset);
+    .orderBy(desc(templates.viewCount));
 
   templateList = results;
 
-  const countResult = await db
-    .select({ id: templates.id })
-    .from(templates)
-    .where(and(eq(templates.isPublic, true), eq(templates.moderationStatus, "approved")));
-
-  totalCount = countResult.length;
+  const allTags = results.flatMap((t) => t.issueTags || []);
+  availableTags = [...new Set(allTags)].sort();
 } catch (error) {
   console.error("Failed to load templates:", error);
-}
-
-const totalPages = Math.ceil(totalCount / perPage);
-const hasNextPage = page < totalPages;
-const hasPrevPage = page > 1;
-
-function truncateBody(body: string, maxLength: number = 100): string {
-  if (body.length <= maxLength) return body;
-  return body.slice(0, maxLength).trim() + "...";
 }
 ---
 
@@ -76,96 +58,22 @@ function truncateBody(body: string, maxLength: number = 100): string {
           <h1 class="text-3xl md:text-4xl font-bold mb-4 text-[var(--color-civic-navy)]">
             Letter Templates
           </h1>
-          <p class="text-muted-foreground max-w-2xl mx-auto">
+          <p class="text-muted-foreground max-w-2xl mx-auto mb-6">
             Browse community-contributed letter templates for common issues. Use them as a starting
             point or inspiration for your own message to Congress.
           </p>
-        </div>
-
-        <div data-testid="template-list" class="space-y-6">
           {
-            templateList.length > 0 ? (
-              templateList.map((template) => (
-                <article
-                  data-testid="template-card"
-                  class="card-civic hover:-translate-y-1 transition-transform duration-300"
-                >
-                  <a href={`/templates/${template.slug}`} class="block">
-                    <h2 class="text-xl font-semibold mb-2 text-[var(--color-civic-navy)] hover:text-[var(--color-civic-navy)]/80">
-                      {template.title}
-                    </h2>
-                    <p class="text-muted-foreground mb-4 line-clamp-2">
-                      {truncateBody(template.body)}
-                    </p>
-                    <div class="flex items-center justify-between">
-                      <div class="flex flex-wrap gap-2">
-                        {template.issueTags?.map((tag) => (
-                          <span
-                            data-testid="issue-tag"
-                            class="px-2 py-1 text-xs bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <span class="text-sm text-muted-foreground">
-                        {template.viewCount.toLocaleString()} views
-                      </span>
-                    </div>
-                  </a>
-                </article>
-              ))
-            ) : (
-              <div class="text-center py-12">
-                <p class="text-muted-foreground">No templates available yet.</p>
-                {user && (
-                  <a
-                    href="/templates/new"
-                    class="inline-block mt-4 px-6 py-2 bg-[var(--color-civic-navy)] text-white rounded hover:bg-[var(--color-civic-navy)]/90 transition-colors"
-                  >
-                    Create the first template
-                  </a>
-                )}
-              </div>
+            user && (
+              <a href="/templates/new" class="btn-primary inline-block">
+                Create New Template
+              </a>
             )
           }
         </div>
 
-        {
-          totalPages > 1 && (
-            <nav class="flex justify-center items-center gap-4 mt-12">
-              {hasPrevPage ? (
-                <a
-                  href={`/templates?page=${page - 1}`}
-                  class="px-4 py-2 border border-border rounded hover:bg-[var(--color-secondary)] transition-colors"
-                >
-                  Previous
-                </a>
-              ) : (
-                <span class="px-4 py-2 border border-border rounded opacity-50 cursor-not-allowed">
-                  Previous
-                </span>
-              )}
-
-              <span class="text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-
-              {hasNextPage ? (
-                <a
-                  href={`/templates?page=${page + 1}`}
-                  class="px-4 py-2 border border-border rounded hover:bg-[var(--color-secondary)] transition-colors"
-                >
-                  Next
-                </a>
-              ) : (
-                <span class="px-4 py-2 border border-border rounded opacity-50 cursor-not-allowed">
-                  Next
-                </span>
-              )}
-            </nav>
-          )
-        }
+        <div data-testid="template-list">
+          <TemplateSearch client:load templates={templateList} availableTags={availableTags} />
+        </div>
       </div>
     </div>
   </main>

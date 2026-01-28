@@ -1,0 +1,62 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { TemplateCreateClient } from "@/components/TemplateCreateClient";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/templates?login=required");
+}
+
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+---
+
+<Layout title="Create New Template">
+  <Header currentPath="/templates" user={user} />
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+          <a
+            href="/templates"
+            class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span>Back to Templates</span>
+          </a>
+        </div>
+
+        <div class="card-civic">
+          <h1 class="text-2xl font-bold mb-2 text-[var(--color-civic-navy)]">
+            Create New Template
+          </h1>
+          <p class="text-muted-foreground mb-8">
+            Share your letter template with the community. Templates will be reviewed before being
+            published.
+          </p>
+
+          <TemplateCreateClient client:load turnstileSiteKey={turnstileSiteKey} />
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/templates" />
+</Layout>
+
+{
+  turnstileSiteKey && (
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+  )
+}
