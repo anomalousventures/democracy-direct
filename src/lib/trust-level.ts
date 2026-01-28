@@ -67,3 +67,23 @@ export function canCreateTemplates(trustLevel: number): boolean {
 export function canBypassModeration(trustLevel: number): boolean {
   return trustLevel >= TRUST_LEVELS.ADMIN;
 }
+
+type UserWithTrustLevel = { trustLevel: number } | null | undefined;
+
+export function hasMinTrustLevel(user: UserWithTrustLevel, minLevel: TrustLevel): boolean {
+  if (!user) return false;
+  return user.trustLevel >= minLevel;
+}
+
+export function isTrusted(user: UserWithTrustLevel): boolean {
+  return hasMinTrustLevel(user, TRUST_LEVELS.TRUSTED);
+}
+
+export function isAdmin(user: UserWithTrustLevel): boolean {
+  return hasMinTrustLevel(user, TRUST_LEVELS.ADMIN);
+}
+
+export function isBanned(user: UserWithTrustLevel): boolean {
+  if (!user) return false;
+  return user.trustLevel === TRUST_LEVELS.BANNED;
+}

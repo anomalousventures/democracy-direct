@@ -1,6 +1,6 @@
 ---
 import { AuthButton } from "./AuthButton";
-import { TRUST_LEVELS } from "@/lib/trust-level";
+import { isAdmin } from "@/lib/trust-level";
 
 interface Props {
   currentPath?: string;
@@ -9,7 +9,7 @@ interface Props {
 
 const { currentPath = "/", user } = Astro.props;
 
-const isAdmin = typeof user?.trustLevel === "number" && user.trustLevel >= TRUST_LEVELS.ADMIN;
+const showAdminLink = isAdmin(user);
 
 const navLinks = [
   { href: "/about", label: "About" },
@@ -48,7 +48,7 @@ const navLinks = [
           ))
         }
         {
-          isAdmin && (
+          showAdminLink && (
             <a
               href="/admin"
               class:list={[

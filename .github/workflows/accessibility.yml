@@ -27,6 +27,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Push database schema
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+
+      - name: Import legislators
+        run: pnpm tsx src/scripts/import-legislators.ts
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+
       - name: Install audit tools
         run: |
           npm install -g @lhci/cli pa11y
@@ -35,6 +45,8 @@ jobs:
         run: |
           pnpm dev &
           sleep 10
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
       - name: Wait for server
         run: |
@@ -49,6 +61,8 @@ jobs:
             --url=http://localhost:4321/about \
             --url=http://localhost:4321/privacy \
             --url=http://localhost:4321/templates \
+            --url=http://localhost:4321/zip/10001 \
+            --url=http://localhost:4321/rep/S000033 \
             --staticDistDir=./dist \
             --settings.chromeFlags="--no-sandbox --headless" \
             || true
@@ -67,6 +81,8 @@ jobs:
           pa11y http://localhost:4321/about --reporter json > pa11y-results/about.json 2>&1 || true
           pa11y http://localhost:4321/privacy --reporter json > pa11y-results/privacy.json 2>&1 || true
           pa11y http://localhost:4321/templates --reporter json > pa11y-results/templates.json 2>&1 || true
+          pa11y http://localhost:4321/zip/10001 --reporter json > pa11y-results/zip.json 2>&1 || true
+          pa11y http://localhost:4321/rep/S000033 --reporter json > pa11y-results/rep.json 2>&1 || true
 
       - name: Generate audit summary
         id: summary
