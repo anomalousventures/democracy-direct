@@ -1,0 +1,390 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import { createDb } from "@/db/client";
+import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import { ContactFlow } from "@/components/ContactFlow";
+import type { Legislator } from "@/db/schema";
+import {
+  getPhotoUrl,
+  getPartyColor,
+  getPartyLabel,
+  getRepTitle,
+  formatDate,
+} from "@/lib/legislator-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
+
+const { bioguideId } = Astro.params;
+
+let rep: Legislator | null = null;
+let error: string | null = null;
+
+const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
+if (isInvalidId) {
+  error = "Invalid representative ID.";
+}
+
+if (!error) {
+  const db = createDb(import.meta.env.DATABASE_URL);
+  const [loadedRep, dbError] = await getLegislatorByBioguideId(db, bioguideId!)
+    .then((result) => [result, null] as const)
+    .catch((e) => {
+      console.error("Database error:", e);
+      return [null, "Failed to load representative details."] as const;
+    });
+
+  rep = loadedRep;
+  error = dbError;
+
+  if (!error && !rep) {
+    Astro.response.status = 404;
+    error = "Representative not found.";
+  }
+}
+---
+
+<Layout
+  title={rep ? `${rep.firstName} ${rep.lastName}` : "Representative Not Found"}
+  description={rep
+    ? `Contact information and details for ${rep.firstName} ${rep.lastName}, ${rep.chamber === "senate" ? "Senator" : "Representative"} from ${rep.state}`
+    : "Representative not found"}
+>
+  <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <nav class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-[var(--color-civic-navy)] flex items-center justify-center">
+            <span
+              class="text-[var(--color-civic-gold)] text-xl font-bold"
+              style="font-family: var(--font-display)">D</span
+            >
+          </div>
+          <span class="font-semibold text-[var(--color-civic-navy)] hidden sm:inline"
+            >Democracy Direct</span
+          >
+        </a>
+        <div class="flex items-center gap-6">
+          <a
+            href="/about"
+            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            About
+          </a>
+          <a
+            href="/templates"
+            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            Templates
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      {
+        error ? (
+          <div class="max-w-2xl mx-auto text-center">
+            <div class="card-civic">
+              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+                <svg
+                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The representative you're looking for couldn't be found.
+              </p>
+              <a href="/" class="btn-primary inline-block">
+                Find Your Representatives
+              </a>
+            </div>
+          </div>
+        ) : (
+          rep && (
+            <div class="max-w-4xl mx-auto">
+              <article class="card-civic animate-fade-up">
+                <div class="flex flex-col md:flex-row gap-8">
+                  <div class="flex-shrink-0">
+                    <div class="relative w-48 h-60 mx-auto md:mx-0 bg-[var(--color-secondary)] overflow-hidden shadow-lg">
+                      <img
+                        src={getPhotoUrl(rep.bioguideId)}
+                        alt={`${rep.firstName} ${rep.lastName}`}
+                        class="w-full h-full object-cover object-top"
+                        onerror="this.style.display='none'"
+                      />
+                      <div
+                        class="absolute inset-0 flex items-center justify-center text-6xl font-bold text-[var(--color-muted-foreground)]/30"
+                        style="font-family: var(--font-display)"
+                      >
+                        {rep.firstName[0]}
+                        {rep.lastName[0]}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex-1">
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                      <div>
+                        <h1 class="text-3xl sm:text-4xl font-bold mb-2">
+                          {rep.firstName} {rep.lastName}
+                        </h1>
+                        <p class="text-lg text-muted-foreground">
+                          {getRepTitle(rep.chamber, rep.state, rep.district)}
+                        </p>
+                      </div>
+                      <span
+                        class={`${getPartyColor(rep.party)} text-white px-4 py-2 text-sm font-semibold`}
+                      >
+                        {getPartyLabel(rep.party)}
+                      </span>
+                    </div>
+
+                    {rep.termStart && (
+                      <div class="mb-6 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                        <p class="text-sm text-muted-foreground">
+                          <span class="font-medium">Current Term:</span> {formatDate(rep.termStart)}
+                          {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
+                        </p>
+                      </div>
+                    )}
+
+                    <div class="space-y-4">
+                      <h2 class="text-xl font-semibold">Contact Information</h2>
+
+                      {rep.phoneCapitol && (
+                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                            <svg
+                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="font-medium">DC Office Phone</p>
+                            <a
+                              href={`tel:${rep.phoneCapitol}`}
+                              class="text-[var(--color-civic-navy)] hover:underline text-lg"
+                            >
+                              {rep.phoneCapitol}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {sanitizeExternalUrl(rep.contactFormUrl) && (
+                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                            <svg
+                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="font-medium">Online Contact Form</p>
+                            <a
+                              href={sanitizeExternalUrl(rep.contactFormUrl)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="inline-flex items-center gap-1 text-[var(--color-civic-navy)] hover:underline"
+                            >
+                              <span>Send a message</span>
+                              <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {rep.addressCapitol && (
+                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                            <svg
+                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="font-medium">DC Office Address</p>
+                            <p class="text-muted-foreground whitespace-pre-line">
+                              {rep.addressCapitol}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {(rep.twitterHandle || rep.facebookId) && (
+                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                            <svg
+                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p class="font-medium">Social Media</p>
+                            <div class="flex gap-4 mt-2">
+                              {rep.twitterHandle && (
+                                <a
+                                  href={`https://twitter.com/${rep.twitterHandle}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
+                                >
+                                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                  </svg>
+                                  <span>@{rep.twitterHandle}</span>
+                                </a>
+                              )}
+                              {rep.facebookId && (
+                                <a
+                                  href={`https://facebook.com/${rep.facebookId}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
+                                >
+                                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                  </svg>
+                                  <span>Facebook</span>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <div class="mt-8 animate-fade-up-delay-1">
+                <ContactFlow
+                  client:load
+                  representative={{
+                    first_name: rep.firstName,
+                    last_name: rep.lastName,
+                    party: rep.party,
+                    state: rep.state,
+                    district: rep.district,
+                    chamber: rep.chamber as "senate" | "house",
+                    contact_form: sanitizeExternalUrl(rep.contactFormUrl) || undefined,
+                    phone: rep.phoneCapitol || undefined,
+                    office_address: rep.addressCapitol || undefined,
+                  }}
+                />
+              </div>
+
+              <div class="text-center mt-12">
+                <a
+                  href="/"
+                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Look up a different ZIP code</span>
+                </a>
+              </div>
+            </div>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <footer class="border-t border-border py-8 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <span class="text-muted-foreground text-sm">
+          © {new Date().getFullYear()} Democracy Direct
+        </span>
+        <nav class="flex items-center gap-6">
+          <a
+            href="/about"
+            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            About
+          </a>
+          <a
+            href="/privacy"
+            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            Privacy
+          </a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+</Layout>

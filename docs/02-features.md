@@ -182,11 +182,11 @@
 
 ### 2.1 Client-Side ZIP Lookup Logic
 
-- [ ] TypeScript module for ZIP lookup
-- [ ] Loads JSON data once, caches in memory
-- [ ] Returns single district if unambiguous (>95% proportion)
-- [ ] Returns multiple options if ambiguous
-- [ ] Returns error for invalid/unknown ZIP
+- [x] TypeScript module for ZIP lookup
+- [x] Loads JSON data once, caches in memory
+- [x] Returns single district if unambiguous (>95% proportion)
+- [x] Returns multiple options if ambiguous
+- [x] Returns error for invalid/unknown ZIP
 
 **Tests:**
 
@@ -197,12 +197,12 @@
 
 ### 2.2 ZIP Lookup React Component
 
-- [ ] `ZipLookup` React component (island)
-- [ ] Input field with 5-digit validation
-- [ ] Loading state while fetching JSON
-- [ ] Error state for invalid ZIP
-- [ ] Disambiguation UI for split ZIPs
-- [ ] Redirects to results page on success
+- [x] `ZipLookup` React component (island)
+- [x] Input field with 5-digit validation
+- [x] Loading state while fetching JSON
+- [x] Error state for invalid ZIP
+- [x] Disambiguation UI for split ZIPs
+- [x] Redirects to results page on success
 
 **Tests:**
 
@@ -213,11 +213,11 @@
 
 ### 2.3 Representatives Results Page
 
-- [ ] Dynamic Astro page at `/zip/[zip]`
-- [ ] Fetches legislators for state/district from database
-- [ ] Displays 2 senators + 1 representative
-- [ ] Each rep shows: photo, name, party, title
-- [ ] Link to individual rep profile page
+- [x] Dynamic Astro page at `/zip/[zip]`
+- [x] Fetches legislators for state/district from database
+- [x] Displays 2 senators + 1 representative
+- [x] Each rep shows: photo, name, party, title
+- [x] Link to individual rep profile page
 
 **Tests:**
 
@@ -228,10 +228,10 @@
 
 ### 2.4 Ambiguous ZIP Handler
 
-- [ ] Page handles ZIPs that span multiple districts
-- [ ] Shows district options with context (e.g., "District 5 - 60% of ZIP")
-- [ ] User selection updates results
-- [ ] Selection persisted in URL params or session
+- [x] Page handles ZIPs that span multiple districts
+- [x] Shows district options with context (e.g., "District 5 - 60% of ZIP")
+- [x] User selection updates results
+- [x] Selection persisted in URL params or session
 
 **Tests:**
 
@@ -241,12 +241,12 @@
 
 ### 2.5 Representative Profile Page
 
-- [ ] Dynamic Astro page at `/rep/[bioguideId]`
-- [ ] Full legislator details from database
-- [ ] Photo (from bioguide/GPO)
-- [ ] Name, party, state, district, title
-- [ ] Term start date
-- [ ] All contact options displayed
+- [x] Dynamic Astro page at `/rep/[bioguideId]`
+- [x] Full legislator details from database
+- [x] Photo (from bioguide/GPO)
+- [x] Name, party, state, district, title
+- [x] Term start date
+- [x] All contact options displayed
 
 **Tests:**
 
@@ -256,11 +256,11 @@
 
 ### 2.6 Contact Options Display
 
-- [ ] Phone numbers displayed (DC office, district office if available)
-- [ ] Phone numbers are clickable `tel:` links
-- [ ] Contact form URL displayed as button
-- [ ] Social media links (Twitter, Facebook) if available
-- [ ] Mailing address displayed
+- [x] Phone numbers displayed (DC office, district office if available)
+- [x] Phone numbers are clickable `tel:` links
+- [x] Contact form URL displayed as button
+- [x] Social media links (Twitter, Facebook) if available
+- [x] Mailing address displayed
 
 **Tests:**
 
@@ -274,76 +274,76 @@
 
 ### 3.1 Letter Composer Component
 
-- [ ] `LetterComposer` React component (island)
-- [ ] Textarea for letter body
-- [ ] Character count display
-- [ ] Template variable substitution preview ({{REP_NAME}}, etc.)
-- [ ] "Use Template" button to load from template
+- [x] `LetterComposer` React component (island)
+- [x] Textarea for letter body
+- [x] Character count display
+- [x] Template variable substitution preview ({{REP_NAME}}, etc.)
+- [x] "Use Template" button to load from template
 
 **Tests:**
 
-- Playwright: Can type in composer
-- Playwright: Character count updates
-- Playwright: Variable substitution shows preview
+- Vitest: Can type in composer
+- Vitest: Character count updates
+- Vitest: Variable substitution shows preview
 
 ### 3.2 Clipboard Copy Functionality
 
-- [ ] "Copy to Clipboard" button
-- [ ] Uses Clipboard API with fallback
-- [ ] Toast notification on success
-- [ ] Error handling for clipboard failures
+- [x] "Copy to Clipboard" button
+- [x] Uses Clipboard API with fallback
+- [x] Toast notification on success
+- [x] Error handling for clipboard failures
 
 **Tests:**
 
-- Playwright: Copy button exists
-- Playwright: Clicking copy shows success toast
+- Vitest: Copy button exists
+- Vitest: Clicking copy shows success toast
 - Vitest: Clipboard API called with correct content
 
 ### 3.3 Contact Form Flow
 
-- [ ] "Send via Contact Form" button
-- [ ] Copies letter to clipboard
-- [ ] Opens rep's contact form in new tab
-- [ ] Shows instruction toast: "Letter copied! Paste into the form."
+- [x] "Send via Contact Form" button
+- [x] Copies letter to clipboard
+- [x] Opens rep's contact form in new tab
+- [x] Shows instruction toast: "Letter copied! Paste into the form."
 
 **Tests:**
 
-- Playwright: Button triggers copy + new tab
-- Playwright: Toast message appears
-- Playwright: New tab opens correct URL
+- Vitest: Button triggers copy + new tab
+- Vitest: Toast message appears
+- Vitest: New tab opens correct URL
 
 ### 3.4 Print Letter Feature
 
-- [ ] "Print & Mail" button
-- [ ] Print-optimized CSS (`@media print`)
-- [ ] Letter formatted with:
+- [x] "Print & Mail" button
+- [x] Print-optimized CSS (`@media print`)
+- [x] Letter formatted with:
   - User's return address fields (editable, client-side only)
   - Date
   - Rep's mailing address
   - Salutation
   - Letter body
   - Signature line
-- [ ] `window.print()` triggered
+- [x] `window.print()` triggered
 
 **Tests:**
 
-- Playwright: Print button exists
-- Playwright: Print preview contains all sections
-- Playwright: Return address fields are editable
+- Vitest: Print button exists
+- Vitest: Print preview contains all sections
+- Vitest: Return address fields are editable
 - Vitest: Print styles hide non-letter elements
 
 ### 3.5 Print Address Form
 
-- [ ] Form fields for user's return address (name, street, city, state, ZIP)
-- [ ] Fields stored in localStorage (never sent to server)
-- [ ] Pre-fills on subsequent visits
-- [ ] Clear button to reset
+- [x] Form fields for user's return address (name, street, city, state, ZIP)
+- [x] Fields stored in localStorage (never sent to server)
+- [x] Pre-fills on subsequent visits
+- [x] Clear button to reset
 
 **Tests:**
 
-- Playwright: Address fields exist and are editable
-- Playwright: Values persist after page reload (localStorage)
-- Playwright: Clear button removes stored values
+- Vitest: Address fields exist and are editable
+- Vitest: Values persist (localStorage)
+- Vitest: Clear button removes stored values
 
 ---
 
@@ -351,10 +351,10 @@
 
 ### 4.1 Email Hash Utility
 
-- [ ] `hashEmail(email: string): string` function
-- [ ] Normalizes email (lowercase, trim)
-- [ ] Returns SHA-256 hex digest
-- [ ] Deterministic (same input = same output)
+- [x] `hashEmail(email: string): string` function
+- [x] Normalizes email (lowercase, trim)
+- [x] Returns SHA-256 hex digest
+- [x] Deterministic (same input = same output)
 
 **Tests:**
 
@@ -364,10 +364,10 @@
 
 ### 4.2 OTP Generation
 
-- [ ] `generateOTP(): { otp: string, otpHash: string }` function
-- [ ] Generates 6-digit numeric OTP
-- [ ] Returns both plain OTP (for email) and hashed OTP (for storage)
-- [ ] Uses cryptographically secure random
+- [x] `generateOTP(): { otp: string, otpHash: string }` function
+- [x] Generates 6-digit numeric OTP
+- [x] Returns both plain OTP (for email) and hashed OTP (for storage)
+- [x] Uses cryptographically secure random
 
 **Tests:**
 
@@ -377,13 +377,13 @@
 
 ### 4.3 OTP Request Endpoint
 
-- [ ] POST `/api/auth/request-otp`
-- [ ] Accepts `{ email: string }`
-- [ ] Validates email format
-- [ ] Creates OTP record in database (hashed)
-- [ ] Sends OTP via SES (email in memory only)
-- [ ] Returns `{ success: true }` (no info leakage)
-- [ ] Rate limited (5 requests per email per hour)
+- [x] POST `/api/auth/request-otp`
+- [x] Accepts `{ email: string }`
+- [x] Validates email format
+- [x] Creates OTP record in database (hashed)
+- [x] Sends OTP via SES (email in memory only)
+- [x] Returns `{ success: true }` (no info leakage)
+- [x] Rate limited (5 requests per email per hour)
 
 **Tests:**
 
@@ -394,14 +394,14 @@
 
 ### 4.4 OTP Verification Endpoint
 
-- [ ] POST `/api/auth/verify-otp`
-- [ ] Accepts `{ email: string, otp: string }`
-- [ ] Validates OTP against hashed stored value
-- [ ] Checks expiration (10 minutes)
-- [ ] Marks OTP as used
-- [ ] Creates or gets user record
-- [ ] Creates session (30-day expiry)
-- [ ] Returns session cookie
+- [x] POST `/api/auth/verify-otp`
+- [x] Accepts `{ email: string, otp: string }`
+- [x] Validates OTP against hashed stored value
+- [x] Checks expiration (10 minutes)
+- [x] Marks OTP as used
+- [x] Creates or gets user record
+- [x] Creates session (30-day expiry)
+- [x] Returns session cookie
 
 **Tests:**
 
@@ -413,10 +413,10 @@
 
 ### 4.5 Session Middleware
 
-- [ ] Astro middleware checks session cookie
-- [ ] Validates session exists and not expired
-- [ ] Attaches user to `locals` context
-- [ ] Works for both pages and API routes
+- [x] Astro middleware checks session cookie
+- [x] Validates session exists and not expired
+- [x] Attaches user to `locals` context
+- [x] Works for both pages and API routes
 
 **Tests:**
 
@@ -427,9 +427,9 @@
 
 ### 4.6 Logout Endpoint
 
-- [ ] POST `/api/auth/logout`
-- [ ] Deletes session from database
-- [ ] Clears session cookie
+- [x] POST `/api/auth/logout`
+- [x] Deletes session from database
+- [x] Clears session cookie
 
 **Tests:**
 
@@ -438,12 +438,14 @@
 
 ### 4.7 Login Dialog Component
 
-- [ ] `LoginDialog` React component (shadcn Dialog)
-- [ ] Email input step
-- [ ] OTP input step (6 digit boxes)
-- [ ] Loading states
-- [ ] Error display
-- [ ] Success redirects or closes dialog
+- [x] `LoginDialog` React component (shadcn Dialog)
+- [x] Email input step
+- [x] OTP input step (6 digit boxes)
+- [x] Loading states
+- [x] Error display
+- [x] Success redirects or closes dialog
+- [x] Privacy notice (email not stored)
+- [x] Step transition animations
 
 **Tests:**
 
@@ -455,10 +457,10 @@
 
 ### 4.8 Auth State in UI
 
-- [ ] Header shows "Sign In" when logged out
-- [ ] Header shows user indicator when logged in (no email shown)
-- [ ] "Sign Out" option when logged in
-- [ ] Auth state persists across navigation
+- [x] Header shows "Sign In" when logged out
+- [x] Header shows user indicator when logged in (no email shown)
+- [x] "Sign Out" option when logged in
+- [x] Auth state persists across navigation
 
 **Tests:**
 
@@ -648,22 +650,9 @@
 - Vitest: Response parsed correctly
 - Vitest: Error handling works (mock failure)
 
-### 6.2 Perspective API Integration
-
-- [ ] Function to call Perspective API
-- [ ] Requests TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK, INSULT, THREAT scores
-- [ ] Returns normalized scores
-- [ ] Handles API errors gracefully
-
-**Tests:**
-
-- Vitest: API called with correct parameters
-- Vitest: Response parsed correctly
-- Vitest: Error handling works
-
 ### 6.3 Moderation Decision Logic
 
-- [ ] Function that takes both API responses
+- [ ] Function that takes API response
 - [ ] Returns decision: 'approve', 'reject', or 'review'
 - [ ] Rejection thresholds configurable
 - [ ] Review thresholds configurable

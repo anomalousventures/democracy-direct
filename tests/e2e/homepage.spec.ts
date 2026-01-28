@@ -15,8 +15,9 @@ test.describe("Homepage", () => {
     await page.goto("/");
     const hero = page.getByTestId("hero");
     await expect(hero).toBeVisible();
-    const heading = page.getByRole("heading", { name: "Democracy Direct" });
+    const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible();
+    await expect(heading).toContainText(/Your Voice|Representatives/);
   });
 
   test("ZIP input field exists and is focusable", async ({ page }) => {

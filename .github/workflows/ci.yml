@@ -76,6 +76,12 @@ jobs:
   test-e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    services:
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
     steps:
       - uses: actions/checkout@v6
 
@@ -94,8 +100,25 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Push database schema
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Import legislators
+        run: pnpm tsx src/scripts/import-legislators.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Run Playwright tests
         run: pnpm test:e2e
+        timeout-minutes: 10
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EMAIL_PROVIDER: smtp
+          EMAIL_FROM: noreply@democracy-direct.com
+          SMTP_HOST: localhost
+          SMTP_PORT: "1025"
 
       - uses: actions/upload-artifact@v6
         if: failure()

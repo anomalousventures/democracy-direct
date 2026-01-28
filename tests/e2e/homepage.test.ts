@@ -8,7 +8,8 @@ test.describe("Homepage", () => {
 
   test("should display main heading", async ({ page }) => {
     await page.goto("/");
-    const heading = page.getByRole("heading", { name: /Democracy Direct/i });
+    const heading = page.getByRole("heading", { level: 1 });
     await expect(heading).toBeVisible();
+    await expect(heading).toContainText(/Your Voice|Representatives/);
   });
 });

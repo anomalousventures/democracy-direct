@@ -1,0 +1,204 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { AuthButton } from "@/components/AuthButton";
+import { createDb } from "@/db/client";
+import { templates } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+
+const page = parseInt(Astro.url.searchParams.get("page") || "1", 10);
+const perPage = 20;
+const offset = (page - 1) * perPage;
+
+let templateList: {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  issueTags: string[] | null;
+  viewCount: number;
+}[] = [];
+
+let totalCount = 0;
+
+try {
+  const db = createDb(import.meta.env.DATABASE_URL);
+
+  const results = await db
+    .select({
+      id: templates.id,
+      slug: templates.slug,
+      title: templates.title,
+      body: templates.body,
+      issueTags: templates.issueTags,
+      viewCount: templates.viewCount,
+    })
+    .from(templates)
+    .where(and(eq(templates.isPublic, true), eq(templates.moderationStatus, "approved")))
+    .orderBy(desc(templates.viewCount))
+    .limit(perPage)
+    .offset(offset);
+
+  templateList = results;
+
+  const countResult = await db
+    .select({ id: templates.id })
+    .from(templates)
+    .where(and(eq(templates.isPublic, true), eq(templates.moderationStatus, "approved")));
+
+  totalCount = countResult.length;
+} catch (error) {
+  console.error("Failed to load templates:", error);
+}
+
+const totalPages = Math.ceil(totalCount / perPage);
+const hasNextPage = page < totalPages;
+const hasPrevPage = page > 1;
+
+function truncateBody(body: string, maxLength: number = 100): string {
+  if (body.length <= maxLength) return body;
+  return body.slice(0, maxLength).trim() + "...";
+}
+---
+
+<Layout title="Letter Templates">
+  <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <nav class="flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-[var(--color-civic-navy)] flex items-center justify-center">
+            <span
+              class="text-[var(--color-civic-gold)] text-xl font-bold"
+              style="font-family: var(--font-display)">D</span
+            >
+          </div>
+          <span class="font-semibold text-[var(--color-civic-navy)] hidden sm:inline"
+            >Democracy Direct</span
+          >
+        </a>
+        <div class="flex items-center gap-6">
+          <a
+            href="/about"
+            class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors"
+          >
+            About
+          </a>
+          <a href="/templates" class="text-sm font-medium text-[var(--color-civic-navy)]">
+            Templates
+          </a>
+          <AuthButton isLoggedIn={!!user} client:load />
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+          <h1 class="text-3xl md:text-4xl font-bold mb-4 text-[var(--color-civic-navy)]">
+            Letter Templates
+          </h1>
+          <p class="text-muted-foreground max-w-2xl mx-auto">
+            Browse community-contributed letter templates for common issues. Use them as a starting
+            point or inspiration for your own message to Congress.
+          </p>
+        </div>
+
+        <div data-testid="template-list" class="space-y-6">
+          {
+            templateList.length > 0 ? (
+              templateList.map((template) => (
+                <article
+                  data-testid="template-card"
+                  class="card-civic hover:-translate-y-1 transition-transform duration-300"
+                >
+                  <a href={`/templates/${template.slug}`} class="block">
+                    <h2 class="text-xl font-semibold mb-2 text-[var(--color-civic-navy)] hover:text-[var(--color-civic-navy)]/80">
+                      {template.title}
+                    </h2>
+                    <p class="text-muted-foreground mb-4 line-clamp-2">
+                      {truncateBody(template.body)}
+                    </p>
+                    <div class="flex items-center justify-between">
+                      <div class="flex flex-wrap gap-2">
+                        {template.issueTags?.map((tag) => (
+                          <span
+                            data-testid="issue-tag"
+                            class="px-2 py-1 text-xs bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <span class="text-sm text-muted-foreground">
+                        {template.viewCount.toLocaleString()} views
+                      </span>
+                    </div>
+                  </a>
+                </article>
+              ))
+            ) : (
+              <div class="text-center py-12">
+                <p class="text-muted-foreground">No templates available yet.</p>
+                {user && (
+                  <a
+                    href="/templates/new"
+                    class="inline-block mt-4 px-6 py-2 bg-[var(--color-civic-navy)] text-white rounded hover:bg-[var(--color-civic-navy)]/90 transition-colors"
+                  >
+                    Create the first template
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
+
+        {
+          totalPages > 1 && (
+            <nav class="flex justify-center items-center gap-4 mt-12">
+              {hasPrevPage ? (
+                <a
+                  href={`/templates?page=${page - 1}`}
+                  class="px-4 py-2 border border-border rounded hover:bg-[var(--color-secondary)] transition-colors"
+                >
+                  Previous
+                </a>
+              ) : (
+                <span class="px-4 py-2 border border-border rounded opacity-50 cursor-not-allowed">
+                  Previous
+                </span>
+              )}
+
+              <span class="text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+
+              {hasNextPage ? (
+                <a
+                  href={`/templates?page=${page + 1}`}
+                  class="px-4 py-2 border border-border rounded hover:bg-[var(--color-secondary)] transition-colors"
+                >
+                  Next
+                </a>
+              ) : (
+                <span class="px-4 py-2 border border-border rounded opacity-50 cursor-not-allowed">
+                  Next
+                </span>
+              )}
+            </nav>
+          )
+        }
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-border py-8 bg-white">
+    <div class="container mx-auto px-4 text-center text-sm text-muted-foreground">
+      © {new Date().getFullYear()} Democracy Direct
+    </div>
+  </footer>
+</Layout>

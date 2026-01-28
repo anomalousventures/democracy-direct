@@ -1,46 +1,67 @@
 import { describe, it, expect } from "vitest";
-import { parseZctaCdCsv, calculateProportions, type ZctaCdRecord } from "./import-zips";
+import { parseCensusFile, calculateProportions } from "./import-zips";
 
-const sampleCsv = `ZCTA5,STATE,CD,AREALAND_ZCTA,AREALAND_PART
-90210,CA,37,1000000,1000000
-10001,NY,12,500000,300000
-10001,NY,10,500000,200000
-20500,DC,98,250000,250000
+const sampleCensusData = `OID_CD119_20|GEOID_CD119_20|NAMELSAD_CD119_20|AREALAND_CD119_20|AREAWATER_CD119_20|MTFCC_CD119_20|FUNCSTAT_CD119_20|OID_ZCTA5_20|GEOID_ZCTA5_20|NAMELSAD_ZCTA5_20|AREALAND_ZCTA5_20|AREAWATER_ZCTA5_20|MTFCC_ZCTA5_20|CLASSFP_ZCTA5_20|FUNCSTAT_ZCTA5_20|AREALAND_PART|AREAWATER_PART
+123|0637|Congressional District 37|1000000|0|G5200|N|456|90210|ZCTA5 90210|1000000|0|G6350|B5|S|1000000|0
+123|3612|Congressional District 12|500000|0|G5200|N|789|10001|ZCTA5 10001|500000|0|G6350|B5|S|300000|0
+123|3610|Congressional District 10|500000|0|G5200|N|790|10001|ZCTA5 10001|500000|0|G6350|B5|S|200000|0
+123|1198|Congressional District 98|250000|0|G5200|N|791|20500|ZCTA5 20500|250000|0|G6350|B5|S|250000|0
 `;
 
-describe("parseZctaCdCsv", () => {
-  it("correctly parses CSV format", () => {
-    const records = parseZctaCdCsv(sampleCsv);
+describe("parseCensusFile", () => {
+  it("correctly parses pipe-delimited Census format", () => {
+    const records = parseCensusFile(sampleCensusData);
 
-    expect(records.length).toBeGreaterThan(0);
-    expect(records[0].zcta5).toBe("90210");
-    expect(records[0].state).toBe("CA");
-    expect(records[0].cd).toBe("37");
+    expect(records.length).toBe(4);
+    expect(records[0].zcta).toBe("90210");
+    expect(records[0].stateFips).toBe("06");
+    expect(records[0].district).toBe("37");
   });
 
   it("handles split ZIPs (multiple districts)", () => {
-    const records = parseZctaCdCsv(sampleCsv);
-    const zip10001Records = records.filter((r) => r.zcta5 === "10001");
+    const records = parseCensusFile(sampleCensusData);
+    const zip10001Records = records.filter((r) => r.zcta === "10001");
 
     expect(zip10001Records).toHaveLength(2);
   });
 
   it("parses area values as numbers", () => {
-    const records = parseZctaCdCsv(sampleCsv);
+    const records = parseCensusFile(sampleCensusData);
 
     expect(typeof records[0].arealandZcta).toBe("number");
     expect(typeof records[0].arealandPart).toBe("number");
     expect(records[0].arealandZcta).toBe(1000000);
   });
+
+  it("extracts state FIPS from GEOID", () => {
+    const records = parseCensusFile(sampleCensusData);
+
+    const caRecord = records.find((r) => r.zcta === "90210");
+    const nyRecord = records.find((r) => r.zcta === "10001");
+
+    expect(caRecord?.stateFips).toBe("06");
+    expect(nyRecord?.stateFips).toBe("36");
+  });
+
+  it("skips invalid records without ZCTA", () => {
+    const dataWithInvalid = `OID_CD119_20|GEOID_CD119_20|NAMELSAD_CD119_20|AREALAND_CD119_20|AREAWATER_CD119_20|MTFCC_CD119_20|FUNCSTAT_CD119_20|OID_ZCTA5_20|GEOID_ZCTA5_20|NAMELSAD_ZCTA5_20|AREALAND_ZCTA5_20|AREAWATER_ZCTA5_20|MTFCC_ZCTA5_20|CLASSFP_ZCTA5_20|FUNCSTAT_ZCTA5_20|AREALAND_PART|AREAWATER_PART
+123|0637|Congressional District 37|1000000|0|G5200|N|||ZCTA5|1000000|0|G6350|B5|S|1000000|0
+123|0637|Congressional District 37|1000000|0|G5200|N|456|90210|ZCTA5 90210|1000000|0|G6350|B5|S|1000000|0
+`;
+    const records = parseCensusFile(dataWithInvalid);
+
+    expect(records).toHaveLength(1);
+    expect(records[0].zcta).toBe("90210");
+  });
 });
 
 describe("calculateProportions", () => {
   it("calculates correct proportion for single-district ZIP", () => {
-    const records: ZctaCdRecord[] = [
+    const records = [
       {
-        zcta5: "90210",
-        state: "CA",
-        cd: "37",
+        stateFips: "06",
+        district: "37",
+        zcta: "90210",
         arealandZcta: 1000000,
         arealandPart: 1000000,
       },
@@ -56,18 +77,18 @@ describe("calculateProportions", () => {
   });
 
   it("calculates proportions correctly for split ZIPs", () => {
-    const records: ZctaCdRecord[] = [
+    const records = [
       {
-        zcta5: "10001",
-        state: "NY",
-        cd: "12",
+        stateFips: "36",
+        district: "12",
+        zcta: "10001",
         arealandZcta: 500000,
         arealandPart: 300000,
       },
       {
-        zcta5: "10001",
-        state: "NY",
-        cd: "10",
+        stateFips: "36",
+        district: "10",
+        zcta: "10001",
         arealandZcta: 500000,
         arealandPart: 200000,
       },
@@ -85,11 +106,11 @@ describe("calculateProportions", () => {
   });
 
   it("handles at-large districts (CD=98 or CD=00)", () => {
-    const records: ZctaCdRecord[] = [
+    const records = [
       {
-        zcta5: "20500",
-        state: "DC",
-        cd: "98",
+        stateFips: "11",
+        district: "98",
+        zcta: "20500",
         arealandZcta: 250000,
         arealandPart: 250000,
       },
@@ -101,19 +122,35 @@ describe("calculateProportions", () => {
     expect(result[0].district).toBe("0");
   });
 
-  it("returns sorted by proportion descending", () => {
-    const records: ZctaCdRecord[] = [
+  it("converts state FIPS to abbreviation", () => {
+    const records = [
       {
-        zcta5: "10001",
-        state: "NY",
-        cd: "10",
+        stateFips: "06",
+        district: "37",
+        zcta: "90210",
+        arealandZcta: 1000000,
+        arealandPart: 1000000,
+      },
+    ];
+
+    const result = calculateProportions(records);
+
+    expect(result[0].state).toBe("CA");
+  });
+
+  it("returns sorted by ZIP then proportion descending", () => {
+    const records = [
+      {
+        stateFips: "36",
+        district: "10",
+        zcta: "10001",
         arealandZcta: 500000,
         arealandPart: 100000,
       },
       {
-        zcta5: "10001",
-        state: "NY",
-        cd: "12",
+        stateFips: "36",
+        district: "12",
+        zcta: "10001",
         arealandZcta: 500000,
         arealandPart: 400000,
       },
@@ -123,5 +160,37 @@ describe("calculateProportions", () => {
     const zip10001 = result.filter((r) => r.zip === "10001");
 
     expect(zip10001[0].proportion).toBeGreaterThan(zip10001[1].proportion);
+  });
+
+  it("skips records with unknown state FIPS", () => {
+    const records = [
+      {
+        stateFips: "99",
+        district: "01",
+        zcta: "00000",
+        arealandZcta: 1000,
+        arealandPart: 1000,
+      },
+    ];
+
+    const result = calculateProportions(records);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("strips leading zeros from district numbers", () => {
+    const records = [
+      {
+        stateFips: "06",
+        district: "07",
+        zcta: "90210",
+        arealandZcta: 1000000,
+        arealandPart: 1000000,
+      },
+    ];
+
+    const result = calculateProportions(records);
+
+    expect(result[0].district).toBe("7");
   });
 });

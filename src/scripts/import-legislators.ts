@@ -1,3 +1,4 @@
+import "dotenv/config";
 import YAML from "yaml";
 
 export interface RawLegislatorId {
@@ -85,8 +86,65 @@ export interface TransformedLegislator {
   youtubeId: string | null;
 }
 
+export function validateRawLegislator(data: unknown, index: number): data is RawLegislator {
+  const leg = data as RawLegislator;
+  const errors: string[] = [];
+
+  if (!leg.id?.bioguide || typeof leg.id.bioguide !== "string") {
+    errors.push("missing or invalid id.bioguide");
+  }
+  if (!leg.name?.first || typeof leg.name.first !== "string") {
+    errors.push("missing or invalid name.first");
+  }
+  if (!leg.name?.last || typeof leg.name.last !== "string") {
+    errors.push("missing or invalid name.last");
+  }
+  if (!Array.isArray(leg.terms) || leg.terms.length === 0) {
+    errors.push("missing or empty terms array");
+  } else {
+    const currentTerm = leg.terms[leg.terms.length - 1];
+    if (!currentTerm.type || !["sen", "rep"].includes(currentTerm.type)) {
+      errors.push("invalid term type");
+    }
+    if (!currentTerm.state || typeof currentTerm.state !== "string") {
+      errors.push("missing term state");
+    }
+    if (!currentTerm.party || typeof currentTerm.party !== "string") {
+      errors.push("missing term party");
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn(
+      `Validation warnings for legislator at index ${index} (${leg.id?.bioguide || "unknown"}): ${errors.join(", ")}`
+    );
+    return false;
+  }
+  return true;
+}
+
 export function parseLegislatorYaml(yamlContent: string): RawLegislator[] {
-  return YAML.parse(yamlContent) as RawLegislator[];
+  const parsed = YAML.parse(yamlContent);
+  if (!Array.isArray(parsed)) {
+    throw new Error("Expected YAML to parse to an array");
+  }
+
+  const valid: RawLegislator[] = [];
+  const invalid: number[] = [];
+
+  for (let i = 0; i < parsed.length; i++) {
+    if (validateRawLegislator(parsed[i], i)) {
+      valid.push(parsed[i]);
+    } else {
+      invalid.push(i);
+    }
+  }
+
+  if (invalid.length > 0) {
+    console.warn(`Skipped ${invalid.length} invalid entries`);
+  }
+
+  return valid;
 }
 
 export function transformLegislator(raw: RawLegislator): TransformedLegislator {
@@ -182,17 +240,17 @@ export function mergeSocialMedia(
 
 export async function importLegislators(): Promise<{
   total: number;
-  inserted: number;
-  updated: number;
+  upserted: number;
 }> {
-  const { neon } = await import("@neondatabase/serverless");
+  const { createDb } = await import("@/db/client");
+  const { legislators } = await import("@/db/schema");
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const sql = neon(databaseUrl);
+  const db = createDb(databaseUrl);
 
   console.log("Fetching legislators from GitHub...");
   const [legislatorsYaml, socialYaml] = await Promise.all([
@@ -209,64 +267,69 @@ export async function importLegislators(): Promise<{
   const transformed = rawLegislators.map(transformLegislator);
 
   console.log("Upserting legislators to database...");
-  let inserted = 0;
-  let updated = 0;
 
   for (const leg of transformed) {
-    const result = await sql`
-      INSERT INTO legislators (
-        bioguide_id, first_name, last_name, full_name, party, state, district,
-        chamber, title, term_start, term_end, phone_capitol, phone_district,
-        fax, address_capitol, address_district, contact_form_url, website,
-        twitter_handle, facebook_id, youtube_id
-      ) VALUES (
-        ${leg.bioguideId}, ${leg.firstName}, ${leg.lastName}, ${leg.fullName},
-        ${leg.party}, ${leg.state}, ${leg.district}, ${leg.chamber}, ${leg.title},
-        ${leg.termStart}, ${leg.termEnd}, ${leg.phoneCapitol}, ${leg.phoneDistrict},
-        ${leg.fax}, ${leg.addressCapitol}, ${leg.addressDistrict},
-        ${leg.contactFormUrl}, ${leg.website}, ${leg.twitterHandle},
-        ${leg.facebookId}, ${leg.youtubeId}
-      )
-      ON CONFLICT (bioguide_id) DO UPDATE SET
-        first_name = EXCLUDED.first_name,
-        last_name = EXCLUDED.last_name,
-        full_name = EXCLUDED.full_name,
-        party = EXCLUDED.party,
-        state = EXCLUDED.state,
-        district = EXCLUDED.district,
-        chamber = EXCLUDED.chamber,
-        title = EXCLUDED.title,
-        term_start = EXCLUDED.term_start,
-        term_end = EXCLUDED.term_end,
-        phone_capitol = EXCLUDED.phone_capitol,
-        phone_district = EXCLUDED.phone_district,
-        fax = EXCLUDED.fax,
-        address_capitol = EXCLUDED.address_capitol,
-        address_district = EXCLUDED.address_district,
-        contact_form_url = EXCLUDED.contact_form_url,
-        website = EXCLUDED.website,
-        twitter_handle = EXCLUDED.twitter_handle,
-        facebook_id = EXCLUDED.facebook_id,
-        youtube_id = EXCLUDED.youtube_id
-      RETURNING (xmax = 0) AS inserted
-    `;
-
-    if (result[0]?.inserted) {
-      inserted++;
-    } else {
-      updated++;
-    }
+    await db
+      .insert(legislators)
+      .values({
+        bioguideId: leg.bioguideId,
+        firstName: leg.firstName,
+        lastName: leg.lastName,
+        fullName: leg.fullName,
+        party: leg.party,
+        state: leg.state,
+        district: leg.district,
+        chamber: leg.chamber,
+        title: leg.title,
+        termStart: leg.termStart,
+        termEnd: leg.termEnd,
+        phoneCapitol: leg.phoneCapitol,
+        phoneDistrict: leg.phoneDistrict,
+        fax: leg.fax,
+        addressCapitol: leg.addressCapitol,
+        addressDistrict: leg.addressDistrict,
+        contactFormUrl: leg.contactFormUrl,
+        website: leg.website,
+        twitterHandle: leg.twitterHandle,
+        facebookId: leg.facebookId,
+        youtubeId: leg.youtubeId,
+      })
+      .onConflictDoUpdate({
+        target: legislators.bioguideId,
+        set: {
+          firstName: leg.firstName,
+          lastName: leg.lastName,
+          fullName: leg.fullName,
+          party: leg.party,
+          state: leg.state,
+          district: leg.district,
+          chamber: leg.chamber,
+          title: leg.title,
+          termStart: leg.termStart,
+          termEnd: leg.termEnd,
+          phoneCapitol: leg.phoneCapitol,
+          phoneDistrict: leg.phoneDistrict,
+          fax: leg.fax,
+          addressCapitol: leg.addressCapitol,
+          addressDistrict: leg.addressDistrict,
+          contactFormUrl: leg.contactFormUrl,
+          website: leg.website,
+          twitterHandle: leg.twitterHandle,
+          facebookId: leg.facebookId,
+          youtubeId: leg.youtubeId,
+        },
+      });
   }
 
-  console.log(`Import complete: ${inserted} inserted, ${updated} updated`);
+  console.log(`Import complete: ${transformed.length} legislators upserted`);
 
-  return { total: transformed.length, inserted, updated };
+  return { total: transformed.length, upserted: transformed.length };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   importLegislators()
     .then((result) => {
-      console.log("Import successful:", result);
+      console.log(`Import successful: ${result.upserted} of ${result.total} legislators`);
       process.exit(0);
     })
     .catch((error) => {
