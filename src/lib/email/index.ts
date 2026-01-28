@@ -1,5 +1,4 @@
 import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
-import { ConsoleEmailProvider } from "./providers/console";
 import { SmtpEmailProvider } from "./providers/smtp";
 import { SesEmailProvider } from "./providers/ses";
 
@@ -13,14 +12,13 @@ export function createEmailProvider(config: EmailConfig): EmailProvider {
       return new SmtpEmailProvider(config);
     case "ses":
       return new SesEmailProvider(config);
-    case "console":
     default:
-      return new ConsoleEmailProvider();
+      throw new Error(`Unknown email provider: ${config.provider}`);
   }
 }
 
 export function getEmailConfig(): EmailConfig {
-  const provider = (import.meta.env.EMAIL_PROVIDER || "console") as EmailConfig["provider"];
+  const provider = (import.meta.env.EMAIL_PROVIDER || "smtp") as EmailConfig["provider"];
 
   return {
     provider,

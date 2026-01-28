@@ -10,7 +10,7 @@ export interface EmailProvider {
 }
 
 export interface EmailConfig {
-  provider: "smtp" | "ses" | "console";
+  provider: "smtp" | "ses";
   smtp?: {
     host: string;
     port: number;

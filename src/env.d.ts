@@ -13,7 +13,7 @@ declare global {
 
   interface ImportMetaEnv {
     readonly DATABASE_URL: string;
-    readonly EMAIL_PROVIDER: "console" | "smtp" | "ses";
+    readonly EMAIL_PROVIDER: "smtp" | "ses";
     readonly EMAIL_FROM: string;
     readonly SMTP_HOST?: string;
     readonly SMTP_PORT?: string;
