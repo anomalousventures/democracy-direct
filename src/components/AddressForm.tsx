@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { type Address, createEmptyAddress } from "../types/representative";
 
 interface AddressFormProps {
@@ -37,11 +37,13 @@ function clearFromLocalStorage(): void {
 
 export function AddressForm({ onChange }: AddressFormProps) {
   const [address, setAddress] = useState<Address>(createEmptyAddress);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     const saved = loadFromLocalStorage();
     setAddress(saved);
-    onChange(saved);
+    onChangeRef.current(saved);
   }, []);
 
   const handleChange = useCallback(

@@ -1,12 +1,21 @@
 import { defineMiddleware } from "astro:middleware";
 import { eq } from "drizzle-orm";
-import { createDb } from "./db/client";
+import { createDb, type Database } from "./db/client";
 import { sessions, users } from "./db/schema";
 
 export interface SessionUser {
   id: string;
   emailHash: string;
   trustLevel: number;
+}
+
+let cachedDb: Database | null = null;
+
+function getDb(): Database {
+  if (!cachedDb) {
+    cachedDb = createDb(import.meta.env.DATABASE_URL);
+  }
+  return cachedDb;
 }
 
 export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
@@ -18,7 +27,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
   }
 
   try {
-    const db = createDb(import.meta.env.DATABASE_URL);
+    const db = getDb();
 
     const sessionRecords = await db
       .select({

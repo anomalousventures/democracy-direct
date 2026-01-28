@@ -87,7 +87,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const db = createDb(import.meta.env.DATABASE_URL);
     const result = await verifyOTPRequest(email, otp, db);
 
-    if (!result.success) {
+    if (!result.success || !result.sessionId) {
       return new Response(JSON.stringify(result), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -95,7 +95,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Set session cookie
-    cookies.set("session", result.sessionId!, {
+    cookies.set("session", result.sessionId, {
       httpOnly: true,
       secure: !import.meta.env.DEV,
       sameSite: "lax",
