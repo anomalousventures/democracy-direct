@@ -717,9 +717,9 @@
 
 ### 7.1 Admin Authentication Check
 
-- [ ] Middleware/utility to check admin status
-- [ ] Admin users identified by trust_level = 2 or admin flag
-- [ ] Returns 403 for non-admins on admin routes
+- [x] Middleware/utility to check admin status
+- [x] Admin users identified by trust_level = 2 or admin flag
+- [x] Returns 403 for non-admins on admin routes
 
 **Tests:**
 
@@ -729,9 +729,9 @@
 
 ### 7.2 Admin Dashboard Page
 
-- [ ] Page at `/admin` (requires admin)
-- [ ] Summary stats: pending reviews, flagged items, users
-- [ ] Quick links to queues
+- [x] Page at `/admin` (requires admin)
+- [x] Summary stats: pending reviews, flagged items, users
+- [x] Quick links to queues
 
 **Tests:**
 
@@ -741,10 +741,10 @@
 
 ### 7.3 Moderation Queue Page
 
-- [ ] Page at `/admin/queue`
-- [ ] Lists templates with status 'pending_review' or 'flagged'
-- [ ] Shows template content, moderation scores, flags
-- [ ] Approve/Reject buttons
+- [x] Page at `/admin/queue`
+- [x] Lists templates with status 'pending_review' or 'flagged'
+- [x] Shows template content, moderation scores, flags
+- [x] Approve/Reject buttons
 
 **Tests:**
 
@@ -755,11 +755,11 @@
 
 ### 7.4 Moderation Actions Endpoint
 
-- [ ] POST `/api/admin/moderate/[templateId]`
-- [ ] Accepts `{ action: 'approve' | 'reject', reason?: string }`
-- [ ] Updates template status
-- [ ] Creates moderation_log entry
-- [ ] Updates user trust level
+- [x] POST `/api/admin/moderate/[templateId]`
+- [x] Accepts `{ action: 'approve' | 'reject', reason?: string }`
+- [x] Updates template status
+- [x] Creates moderation_log entry
+- [x] Updates user trust level
 
 **Tests:**
 
@@ -770,10 +770,10 @@
 
 ### 7.5 User Management Page
 
-- [ ] Page at `/admin/users`
-- [ ] List users with search
-- [ ] Shows trust level, template count, created date
-- [ ] Actions: adjust trust level, ban
+- [x] Page at `/admin/users`
+- [x] List users with search
+- [x] Shows trust level, template count, created date
+- [x] Actions: adjust trust level, ban
 
 **Tests:**
 
