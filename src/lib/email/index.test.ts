@@ -6,6 +6,8 @@ function createMockLocals(env: Record<string, string | undefined>): App.Locals {
     runtime: {
       env: {
         DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+        TURNSTILE_SITE_KEY: "test-site-key",
+        TURNSTILE_SECRET_KEY: "test-secret",
         ...env,
       },
     },

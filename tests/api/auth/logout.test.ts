@@ -25,7 +25,15 @@ describe("Logout Endpoint", () => {
 
     const response = await POST({
       cookies: mockCookies,
-      locals: { runtime: { env: { DATABASE_URL: "postgres://test" } } },
+      locals: {
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
+      },
     } as never);
 
     expect(response.status).toBe(200);
@@ -46,7 +54,15 @@ describe("Logout Endpoint", () => {
 
     const response = await POST({
       cookies: mockCookies,
-      locals: { runtime: { env: { DATABASE_URL: "postgres://test" } } },
+      locals: {
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
+      },
     } as never);
 
     expect(response.status).toBe(200);
@@ -65,7 +81,15 @@ describe("Logout Endpoint", () => {
 
     const response = await POST({
       cookies: mockCookies,
-      locals: { runtime: { env: { DATABASE_URL: "postgres://test" } } },
+      locals: {
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
+      },
     } as never);
 
     expect(response.status).toBe(200);

@@ -30,12 +30,24 @@ function resetMockDb() {
 
 const adminLocals = {
   user: { id: "admin-123", trustLevel: 2 },
-  runtime: { env: { DATABASE_URL: "postgres://test" } },
+  runtime: {
+    env: {
+      DATABASE_URL: "postgres://test",
+      TURNSTILE_SITE_KEY: "test-site-key",
+      TURNSTILE_SECRET_KEY: "test-secret",
+    },
+  },
 };
 
 const nonAdminLocals = {
   user: { id: "user-456", trustLevel: 0 },
-  runtime: { env: { DATABASE_URL: "postgres://test" } },
+  runtime: {
+    env: {
+      DATABASE_URL: "postgres://test",
+      TURNSTILE_SITE_KEY: "test-site-key",
+      TURNSTILE_SECRET_KEY: "test-secret",
+    },
+  },
 };
 
 describe("Tag Suggestions Admin API", () => {

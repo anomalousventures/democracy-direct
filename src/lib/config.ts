@@ -27,13 +27,13 @@ const moderationSchema = z.object({
 });
 
 const turnstileBaseSchema = z.object({
-  siteKey: z.string().optional(),
-  secretKey: z.string().optional(),
+  siteKey: z.string().min(1, "TURNSTILE_SITE_KEY is required"),
+  secretKey: z.string().min(1, "TURNSTILE_SECRET_KEY is required"),
 });
 
 const turnstileSchema = turnstileBaseSchema.transform((data) => ({
   ...data,
-  enabled: Boolean(data.siteKey && data.secretKey && data.secretKey !== "test-secret"),
+  enabled: data.secretKey !== "test-secret",
 }));
 
 const dataSourcesSchema = z.object({

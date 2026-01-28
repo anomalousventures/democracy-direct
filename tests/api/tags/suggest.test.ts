@@ -24,7 +24,13 @@ function resetMockDb() {
 
 const createLocals = (userId: string | null) => ({
   user: userId ? { id: userId } : null,
-  runtime: { env: { DATABASE_URL: "postgres://test" } },
+  runtime: {
+    env: {
+      DATABASE_URL: "postgres://test",
+      TURNSTILE_SITE_KEY: "test-site-key",
+      TURNSTILE_SECRET_KEY: "test-secret",
+    },
+  },
 });
 
 describe("Tag Suggestion API", () => {

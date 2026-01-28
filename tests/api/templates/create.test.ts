@@ -14,7 +14,13 @@ describe("Template Creation Endpoint", () => {
 
     const mockLocals = {
       user: null,
-      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "test-site-key",
+          TURNSTILE_SECRET_KEY: "test-secret",
+        },
+      },
     };
 
     const response = await POST({
@@ -36,7 +42,13 @@ describe("Template Creation Endpoint", () => {
 
     const mockLocals = {
       user: { id: "user-123" },
-      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "test-site-key",
+          TURNSTILE_SECRET_KEY: "test-secret",
+        },
+      },
     };
 
     const response = await POST({
@@ -61,7 +73,13 @@ describe("Template Creation Endpoint", () => {
 
     const mockLocals = {
       user: { id: "user-123" },
-      runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "test-site-key",
+          TURNSTILE_SECRET_KEY: "test-secret",
+        },
+      },
     };
 
     const response = await POST({

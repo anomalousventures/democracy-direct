@@ -145,6 +145,8 @@ jobs:
           EMAIL_FROM: no-reply@democracy-direct.com
           SMTP_HOST: localhost
           SMTP_PORT: "1025"
+          TURNSTILE_SITE_KEY: test-site-key
+          TURNSTILE_SECRET_KEY: test-secret
 
       - uses: actions/upload-artifact@v6
         if: failure()
@@ -173,3 +175,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          TURNSTILE_SITE_KEY: test-site-key
+          TURNSTILE_SECRET_KEY: test-secret

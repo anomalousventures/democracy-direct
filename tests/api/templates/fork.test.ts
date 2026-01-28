@@ -14,7 +14,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
       },
     } as never);
 
@@ -31,7 +37,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
       },
     } as never);
 
@@ -51,7 +63,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
       },
     } as never);
 
@@ -71,7 +89,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
       },
     } as never);
 
@@ -92,7 +116,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "test-site-key",
+            TURNSTILE_SECRET_KEY: "test-secret",
+          },
+        },
       },
     } as never);
 
