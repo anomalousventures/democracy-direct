@@ -1,6 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { ZipLookup } from "../components/ZipLookup";
+import { AuthButton } from "../components/AuthButton";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
 ---
 
 <Layout title="Home">
@@ -31,6 +36,7 @@ import { ZipLookup } from "../components/ZipLookup";
           >
             Templates
           </a>
+          <AuthButton isLoggedIn={!!user} client:load />
         </div>
       </nav>
     </div>

@@ -438,12 +438,14 @@
 
 ### 4.7 Login Dialog Component
 
-- [ ] `LoginDialog` React component (shadcn Dialog)
-- [ ] Email input step
-- [ ] OTP input step (6 digit boxes)
-- [ ] Loading states
-- [ ] Error display
-- [ ] Success redirects or closes dialog
+- [x] `LoginDialog` React component (shadcn Dialog)
+- [x] Email input step
+- [x] OTP input step (6 digit boxes)
+- [x] Loading states
+- [x] Error display
+- [x] Success redirects or closes dialog
+- [x] Privacy notice (email not stored)
+- [x] Step transition animations
 
 **Tests:**
 
@@ -455,10 +457,10 @@
 
 ### 4.8 Auth State in UI
 
-- [ ] Header shows "Sign In" when logged out
-- [ ] Header shows user indicator when logged in (no email shown)
-- [ ] "Sign Out" option when logged in
-- [ ] Auth state persists across navigation
+- [x] Header shows "Sign In" when logged out
+- [x] Header shows user indicator when logged in (no email shown)
+- [x] "Sign Out" option when logged in
+- [x] Auth state persists across navigation
 
 **Tests:**
 
