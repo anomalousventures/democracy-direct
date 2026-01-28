@@ -1,5 +1,7 @@
 import { test as base, type Page } from "@playwright/test";
-import { neon } from "@neondatabase/serverless";
+import { and, desc, eq, gt } from "drizzle-orm";
+import { createDb } from "@/db/client";
+import { sessions, users } from "@/db/schema";
 import { TRUST_LEVELS } from "@/lib/trust-level";
 
 interface AuthFixtures {
@@ -15,20 +17,18 @@ async function getAdminSession(): Promise<string | null> {
   }
 
   try {
-    const sql = neon(databaseUrl);
+    const db = createDb(databaseUrl);
 
-    const result = await sql`
-      SELECT s.id
-      FROM sessions s
-      JOIN users u ON s.user_id = u.id
-      WHERE u.trust_level = ${TRUST_LEVELS.ADMIN}
-        AND s.expires_at > NOW()
-      ORDER BY s.created_at DESC
-      LIMIT 1
-    `;
+    const result = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(and(eq(users.trustLevel, TRUST_LEVELS.ADMIN), gt(sessions.expiresAt, new Date())))
+      .orderBy(desc(sessions.createdAt))
+      .limit(1);
 
     if (result.length > 0) {
-      return result[0].id as string;
+      return result[0].id;
     }
 
     console.warn("No valid admin session found. Run 'pnpm seed:e2e' first.");

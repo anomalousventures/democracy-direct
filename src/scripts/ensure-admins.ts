@@ -8,7 +8,7 @@ import { TRUST_LEVELS } from "../lib/trust-level";
 
 const emailSchema = z.string().email();
 
-function parseAdminEmails(input: string): string[] {
+export function parseAdminEmails(input: string): string[] {
   const emails = input
     .split(",")
     .map((e) => e.trim())
