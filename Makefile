@@ -29,6 +29,7 @@ db-push:
 db-seed: db-push
 	pnpm import:legislators
 	pnpm import:zips
+	pnpm seed:templates
 	pnpm ensure:admins
 
 logs:
