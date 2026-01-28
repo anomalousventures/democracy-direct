@@ -4,7 +4,7 @@ const databaseSchema = z.object({
   url: z.string().min(1, "DATABASE_URL is required"),
 });
 
-const smtpSchema = z.object({
+const rawSmtpSchema = z.object({
   host: z.string().optional(),
   port: z.coerce.number().optional(),
   secure: z
@@ -15,12 +15,30 @@ const smtpSchema = z.object({
   pass: z.string().optional(),
 });
 
-const emailSchema = z.object({
+const rawEmailSchema = z.object({
   provider: z.enum(["smtp", "ses"]).default("smtp"),
   from: z.string().default("no-reply@democracy-direct.com"),
-  smtp: smtpSchema.optional(),
+  smtp: rawSmtpSchema.optional(),
   awsRegion: z.string().default("us-east-1"),
 });
+
+const emailSchema = rawEmailSchema.transform((raw) => ({
+  provider: raw.provider,
+  from: raw.from,
+  smtp:
+    raw.provider === "smtp"
+      ? {
+          host: raw.smtp?.host || "localhost",
+          port: raw.smtp?.port || 1025,
+          secure: raw.smtp?.secure || false,
+          auth:
+            raw.smtp?.user && raw.smtp?.pass
+              ? { user: raw.smtp.user, pass: raw.smtp.pass }
+              : undefined,
+        }
+      : undefined,
+  ses: raw.provider === "ses" ? { region: raw.awsRegion } : undefined,
+}));
 
 const moderationSchema = z.object({
   openaiApiKey: z.string().optional(),
@@ -45,7 +63,7 @@ const configSchema = z.object({
 
 export type Config = z.infer<typeof configSchema>;
 export type DatabaseConfig = z.infer<typeof databaseSchema>;
-export type RawEmailConfig = z.infer<typeof emailSchema>;
+export type EmailConfig = z.infer<typeof emailSchema>;
 export type TurnstileConfig = z.infer<typeof turnstileSchema>;
 export type ModerationConfig = z.infer<typeof moderationSchema>;
 

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
-import type { EmailConfig, EmailMessage, EmailProvider } from "../types";
+import type { EmailMessage, EmailProvider } from "../types";
+import type { EmailConfig } from "@/lib/config";
 
 export class SmtpEmailProvider implements EmailProvider {
   private transporter: nodemailer.Transporter;

@@ -1,5 +1,6 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import type { EmailConfig, EmailMessage, EmailProvider } from "../types";
+import type { EmailMessage, EmailProvider } from "../types";
+import type { EmailConfig } from "@/lib/config";
 
 export class SesEmailProvider implements EmailProvider {
   private client: SESClient;

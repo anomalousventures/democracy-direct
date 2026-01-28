@@ -1,5 +1,5 @@
-import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
-import { getConfig } from "@/lib/config";
+import type { EmailMessage, EmailProvider } from "./types";
+import { getConfig, type EmailConfig } from "@/lib/config";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
@@ -19,34 +19,7 @@ async function createEmailProvider(config: EmailConfig): Promise<EmailProvider> 
 }
 
 export function getEmailConfig(locals: App.Locals): EmailConfig {
-  const config = getConfig(locals);
-  const { email } = config;
-
-  return {
-    provider: email.provider,
-    from: email.from,
-    smtp:
-      email.provider === "smtp"
-        ? {
-            host: email.smtp?.host || "localhost",
-            port: email.smtp?.port || 1025,
-            secure: email.smtp?.secure || false,
-            auth:
-              email.smtp?.user && email.smtp?.pass
-                ? {
-                    user: email.smtp.user,
-                    pass: email.smtp.pass,
-                  }
-                : undefined,
-          }
-        : undefined,
-    ses:
-      email.provider === "ses"
-        ? {
-            region: email.awsRegion,
-          }
-        : undefined,
-  };
+  return getConfig(locals).email;
 }
 
 export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
