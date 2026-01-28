@@ -351,10 +351,10 @@
 
 ### 4.1 Email Hash Utility
 
-- [ ] `hashEmail(email: string): string` function
-- [ ] Normalizes email (lowercase, trim)
-- [ ] Returns SHA-256 hex digest
-- [ ] Deterministic (same input = same output)
+- [x] `hashEmail(email: string): string` function
+- [x] Normalizes email (lowercase, trim)
+- [x] Returns SHA-256 hex digest
+- [x] Deterministic (same input = same output)
 
 **Tests:**
 
@@ -364,10 +364,10 @@
 
 ### 4.2 OTP Generation
 
-- [ ] `generateOTP(): { otp: string, otpHash: string }` function
-- [ ] Generates 6-digit numeric OTP
-- [ ] Returns both plain OTP (for email) and hashed OTP (for storage)
-- [ ] Uses cryptographically secure random
+- [x] `generateOTP(): { otp: string, otpHash: string }` function
+- [x] Generates 6-digit numeric OTP
+- [x] Returns both plain OTP (for email) and hashed OTP (for storage)
+- [x] Uses cryptographically secure random
 
 **Tests:**
 
@@ -377,12 +377,12 @@
 
 ### 4.3 OTP Request Endpoint
 
-- [ ] POST `/api/auth/request-otp`
-- [ ] Accepts `{ email: string }`
-- [ ] Validates email format
-- [ ] Creates OTP record in database (hashed)
-- [ ] Sends OTP via SES (email in memory only)
-- [ ] Returns `{ success: true }` (no info leakage)
+- [x] POST `/api/auth/request-otp`
+- [x] Accepts `{ email: string }`
+- [x] Validates email format
+- [x] Creates OTP record in database (hashed)
+- [x] Sends OTP via SES (email in memory only)
+- [x] Returns `{ success: true }` (no info leakage)
 - [ ] Rate limited (5 requests per email per hour)
 
 **Tests:**
@@ -394,14 +394,14 @@
 
 ### 4.4 OTP Verification Endpoint
 
-- [ ] POST `/api/auth/verify-otp`
-- [ ] Accepts `{ email: string, otp: string }`
-- [ ] Validates OTP against hashed stored value
-- [ ] Checks expiration (10 minutes)
-- [ ] Marks OTP as used
-- [ ] Creates or gets user record
-- [ ] Creates session (30-day expiry)
-- [ ] Returns session cookie
+- [x] POST `/api/auth/verify-otp`
+- [x] Accepts `{ email: string, otp: string }`
+- [x] Validates OTP against hashed stored value
+- [x] Checks expiration (10 minutes)
+- [x] Marks OTP as used
+- [x] Creates or gets user record
+- [x] Creates session (30-day expiry)
+- [x] Returns session cookie
 
 **Tests:**
 
@@ -413,10 +413,10 @@
 
 ### 4.5 Session Middleware
 
-- [ ] Astro middleware checks session cookie
-- [ ] Validates session exists and not expired
-- [ ] Attaches user to `locals` context
-- [ ] Works for both pages and API routes
+- [x] Astro middleware checks session cookie
+- [x] Validates session exists and not expired
+- [x] Attaches user to `locals` context
+- [x] Works for both pages and API routes
 
 **Tests:**
 
@@ -427,9 +427,9 @@
 
 ### 4.6 Logout Endpoint
 
-- [ ] POST `/api/auth/logout`
-- [ ] Deletes session from database
-- [ ] Clears session cookie
+- [x] POST `/api/auth/logout`
+- [x] Deletes session from database
+- [x] Clears session cookie
 
 **Tests:**
 
