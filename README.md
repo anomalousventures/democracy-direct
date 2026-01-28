@@ -1,187 +1,53 @@
-# Democracy Direct: Vision & Philosophy
+# Democracy Direct
 
-## Mission
+This is the source code for [democracy-direct.com](https://democracy-direct.com).
 
-Make civic engagement effortless, private, and accessible to everyone.
+## Your representatives work for you
 
-## The Problem
+Elected officials are public servants. They represent *you*. But actually reaching them shouldn't require navigating five government websites, filling out invasive forms, or wondering if your message went into a void.
 
-Contacting elected representatives is unnecessarily difficult:
+Democracy Direct makes it simple: enter your ZIP code, see who represents you, and contact them directly through their official channels. Use a community-contributed letter template or write your own. Copy it to your clipboard, paste it into their contact form, and you're done. Or print it out and drop it in the mail.
 
-1. **Fragmented information** - Finding who represents you requires navigating multiple government websites
-2. **No direct email** - Representatives don't publish email addresses; contact forms are clunky
-3. **Writer's block** - Most people don't know how to write an effective letter to their rep
-4. **Privacy concerns** - Existing tools require accounts, track usage, or sell data
-5. **Technical barriers** - Current solutions assume tech literacy that excludes many citizens
+No account required. No app to download. No data harvested.
 
-## Our Solution
+## Why this code is public
 
-A single platform that:
+This project is open source because civic tools should be transparent. When a website asks for your information, you deserve to know exactly what happens to it.
 
-1. **Finds your representatives** - Enter ZIP code, see your senators, representative, governor, and state legislators
-2. **Provides contact paths** - Phone numbers, contact form links, mailing addresses
-3. **Offers letter templates** - Community-contributed templates for common issues, easily customizable
-4. **Respects privacy** - No accounts required for core features; optional auth uses hashed emails only
-5. **Works for everyone** - Simple interface that boomers, Gen X, millennials, zoomers, and Gen Alpha can all use
+The code in this repository is the same code running on democracy-direct.com. Anyone can read it, audit it, or run their own copy. There are no hidden trackers, no secret analytics, no background data collection that isn't visible right here.
 
-## Core Principles
+**What you can verify by reading this code:**
 
-### 1. Privacy by Default
+Your email address is never stored. Accounts use a one-way cryptographic hash—the original email cannot be recovered, even by someone with full database access. This isn't a policy; it's math.
 
-- **No PII storage** - We never store email addresses (only SHA-256 hashes for optional auth)
-- **No address storage** - ZIP code lookup happens client-side against static data
-- **No message storage** - Letters are copied to clipboard; we never see or transmit them
-- **No tracking** - No analytics tied to individuals; aggregate counts only
+Your searches stay in your browser. When you enter a ZIP code, the lookup happens locally using data that's already loaded on the page. The server never sees what you searched for.
 
-### 2. User Controls the Message
+Your letters never touch the server. The text you write is copied to your clipboard and pasted into your representative's official contact form by *you*. Democracy Direct never sees, stores, or transmits what you write.
 
-We facilitate contact but never touch the actual communication:
+## Where the data comes from
 
-- Letters go to clipboard → user pastes into rep's contact form
-- Phone numbers open the phone app → user makes the call
-- Print option → user prints, signs, and mails
+Representative information comes from public sources maintained by government agencies and civic organizations:
 
-This means:
+Federal legislators are sourced from the [unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators) project, a public dataset maintained by volunteers and used by dozens of civic applications. Voting records come from [Congress.gov](https://api.congress.gov), the official Congressional database. State legislator data comes from [Open States](https://openstates.org), a nonpartisan nonprofit. ZIP code-to-district mapping comes from the [U.S. Census Bureau](https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.html).
 
-- We can't be subpoenaed for message content (we don't have it)
-- Users maintain full control over what they send
-- No risk of us being used as a spam vector
+This data is refreshed regularly. If something looks wrong, [open an issue](https://github.com/yourusername/democracy-direct/issues).
 
-### 3. Transparent Data
+## Who runs this
 
-All representative data comes from public sources:
+Democracy Direct is an independent project. It is not affiliated with any political party, campaign, PAC, nonprofit, or government entity.
 
-- Congress.gov API (federal legislators, voting records)
-- unitedstates/congress-legislators GitHub repo
-- Open States API (state legislators)
-- Census Bureau (ZIP-to-district mapping)
+The project is funded entirely by donations. There are no ads, no sponsors, no "premium" features, and no data sales. Operating costs are minimal by design—the entire platform runs on free or near-free infrastructure.
 
-Data is cached locally with stale-while-revalidate pattern. Users can audit exactly where information comes from.
+## What the license means
 
-### 4. Community-Driven Templates
+The code is released under the AGPL-3.0 license. In practical terms: anyone can use, study, modify, and share this code. If someone takes this code, modifies it, and runs it as a public service, they're required to publish their modifications under the same license.
 
-Templates are the heart of the platform:
+This ensures that Democracy Direct—or anything built from it—remains open and auditable. Civic infrastructure should stay in public hands.
 
-- Anyone can contribute (with bot protection and moderation)
-- Templates are forkable - customize for your situation
-- No political bias in moderation - we only filter harmful content, not viewpoints
-- Trust system rewards good contributors
+## For developers
 
-### 5. Sustainable & Independent
-
-- **Donation-supported** - No ads, no data monetization
-- **Low operational cost** - Designed for $0-30/month hosting
-- **No VC money** - No pressure to grow at all costs or monetize users
-- **Open about limitations** - We tell users what we can't do
-
-## What We Are
-
-- A civic tool that makes contacting representatives easier
-- A letter template library maintained by the community
-- A privacy-respecting alternative to existing civic tech
-- A resource for people who want to participate in democracy
-
-## What We Are Not
-
-- A lobbying platform
-- A petition site
-- A social network
-- A voter registration service
-- A campaign finance tracker
-- A news source
-
-## Design Philosophy
-
-### For All Generations
-
-| Generation  | What they need                                   |
-| ----------- | ------------------------------------------------ |
-| Boomers     | Clear navigation, readable text, phone-friendly  |
-| Gen X       | Efficiency, no BS, works on first try            |
-| Millennials | Modern design, mobile-first, shareable           |
-| Zoomers     | Fast, clean, doesn't feel like a government site |
-| Gen Alpha   | Simple, visual, works on any device              |
-
-### Accessibility
-
-- WCAG 2.1 AA compliance
-- Keyboard navigation
-- Screen reader support
-- High contrast mode
-- No CAPTCHA puzzles (Turnstile is invisible)
-
-### Performance
-
-- Zero JavaScript by default (Astro)
-- Interactive islands only where needed
-- Static data cached aggressively
-- Works on slow connections
-
-## Privacy Stance
-
-We believe civic participation should not require surveillance.
-
-**What we can truthfully tell users:**
-
-> "We do not store your email address. When you log in, we hash your email using SHA-256 and store only the hash. This allows us to recognize you when you return, but we cannot recover your email address from the hash."
-
-> "We do not log your ZIP code lookups. The lookup happens entirely in your browser against data we've pre-loaded. We have no way to know what ZIP codes you've searched."
-
-> "We never see your letters. When you click 'Send via Contact Form,' your letter is copied to your clipboard and we open your representative's contact form. The letter content never touches our servers."
-
-**Threat model we address:**
-
-- Government subpoena for user emails → We don't have them
-- Data breach exposing user activity → Minimal data to expose
-- Third-party tracking → No third-party scripts
-
-## Moderation Philosophy
-
-Templates are moderated for safety, not viewpoint:
-
-**We reject:**
-
-- Hate speech, slurs, calls for violence
-- Harassment or threats
-- Spam or commercial content
-- Illegal content
-
-**We allow:**
-
-- Strong political opinions (left, right, or otherwise)
-- Criticism of any politician or party
-- Controversial but legal viewpoints
-- Passionate advocacy
-
-We use AI moderation (OpenAI + Perspective API) for initial screening, with human review for borderline cases. The goal is to catch genuinely harmful content without becoming political censors.
-
-## Success Metrics
-
-We measure success by:
-
-1. **Usage** - People actually contacting their reps through us
-2. **Template quality** - Community contributing useful templates
-3. **Privacy preserved** - No data breaches, no regrettable data collection
-4. **Accessibility** - People of all ages and abilities using the platform
-5. **Sustainability** - Running costs covered by donations
-
-We do NOT measure:
-
-- User retention/engagement metrics
-- Time on site
-- Social shares
-- Growth rate
-
-## Long-Term Vision
-
-Phase 1 (MVP): Federal representatives + letter templates
-Phase 2: State legislators, voting records
-Phase 3: Become the default "how do I contact my rep?" answer
-
-We want to be boring infrastructure - the thing people use without thinking about it, like looking up a phone number used to be.
+Technical documentation, setup instructions, and contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-**Name:** Democracy Direct  
-**Domain:** democracy-direct.com  
-**Tagline:** Direct access to your democracy.
+Questions or concerns? Reach out at hello@democracy-direct.com
