@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates, templateFlags } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
   badRequest,
@@ -59,7 +59,8 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [template] = await db
       .select({ id: templates.id, flagCount: templates.flagCount })

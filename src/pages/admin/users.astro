@@ -7,7 +7,7 @@ import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { users, templates } from "@/db/schema";
 import { desc, count, inArray } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { isAdmin } from "@/lib/admin";
 import { TRUST_LEVELS } from "@/lib/trust-level";
 
@@ -32,7 +32,8 @@ type UserItem = {
 let userItems: UserItem[] = [];
 
 try {
-  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
 
   const userRows = await db
     .select({

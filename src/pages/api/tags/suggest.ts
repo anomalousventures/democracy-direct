@@ -3,7 +3,7 @@ import { eq, or } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { tagSuggestions } from "@/db/schema";
 import { jsonResponse, badRequest, conflict, serverError } from "@/lib/api-response";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { z } from "zod";
 
 export const prerender = false;
@@ -33,7 +33,8 @@ export const POST: APIRoute = async ({ locals, request }) => {
   const { name } = result.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const existing = await db
       .select()

@@ -26,10 +26,15 @@ const moderationSchema = z.object({
   openaiApiKey: z.string().optional(),
 });
 
-const turnstileSchema = z.object({
+const turnstileBaseSchema = z.object({
   siteKey: z.string().optional(),
   secretKey: z.string().optional(),
 });
+
+const turnstileSchema = turnstileBaseSchema.transform((data) => ({
+  ...data,
+  enabled: Boolean(data.siteKey && data.secretKey && data.secretKey !== "test-secret"),
+}));
 
 const dataSourcesSchema = z.object({
   congressApiKey: z.string().optional(),
@@ -47,6 +52,7 @@ export type Config = z.infer<typeof configSchema>;
 export type DatabaseConfig = z.infer<typeof databaseSchema>;
 export type EmailConfig = z.infer<typeof emailSchema>;
 export type TurnstileConfig = z.infer<typeof turnstileSchema>;
+export type ModerationConfig = z.infer<typeof moderationSchema>;
 
 function getRawEnv(locals: App.Locals, key: string): string | undefined {
   const runtimeValue = locals.runtime?.env?.[key as keyof typeof locals.runtime.env];

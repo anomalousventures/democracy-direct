@@ -3,7 +3,7 @@ import { createDb } from "@/db/client";
 import { templates, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
-import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
   badRequest,
@@ -46,8 +46,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return validationError(validationErrors);
   }
 
-  const turnstileSecret = getOptionalEnv(locals, "TURNSTILE_SECRET_KEY");
-  if (turnstileSecret && turnstileSecret !== "test-secret") {
+  const config = getConfig(locals);
+
+  if (config.turnstile.enabled) {
     if (!turnstileToken) {
       return forbidden("Turnstile verification required");
     }
@@ -58,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          secret: turnstileSecret,
+          secret: config.turnstile.secretKey!,
           response: turnstileToken,
         }),
       }
@@ -77,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const db = createDb(config.database.url);
 
     const [userRecord] = await db
       .select({ trustLevel: users.trustLevel })
@@ -87,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
 
-    const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
+    const openaiKey = config.moderation.openaiApiKey;
     const contentToModerate = `${title}\n\n${templateBody}`;
     const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
 

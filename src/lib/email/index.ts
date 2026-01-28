@@ -1,5 +1,5 @@
 import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
-import { getEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
@@ -19,30 +19,31 @@ async function createEmailProvider(config: EmailConfig): Promise<EmailProvider> 
 }
 
 export function getEmailConfig(locals: App.Locals): EmailConfig {
-  const provider = (getEnv(locals, "EMAIL_PROVIDER") || "smtp") as EmailConfig["provider"];
+  const config = getConfig(locals);
+  const { email } = config;
 
   return {
-    provider,
-    from: getEnv(locals, "EMAIL_FROM") || "no-reply@democracy-direct.com",
+    provider: email.provider,
+    from: email.from,
     smtp:
-      provider === "smtp"
+      email.provider === "smtp"
         ? {
-            host: getEnv(locals, "SMTP_HOST") || "localhost",
-            port: parseInt(getEnv(locals, "SMTP_PORT") || "1025", 10),
-            secure: getEnv(locals, "SMTP_SECURE") === "true",
+            host: email.smtp?.host || "localhost",
+            port: email.smtp?.port || 1025,
+            secure: email.smtp?.secure || false,
             auth:
-              getEnv(locals, "SMTP_USER") && getEnv(locals, "SMTP_PASS")
+              email.smtp?.user && email.smtp?.pass
                 ? {
-                    user: getEnv(locals, "SMTP_USER")!,
-                    pass: getEnv(locals, "SMTP_PASS")!,
+                    user: email.smtp.user,
+                    pass: email.smtp.pass,
                   }
                 : undefined,
           }
         : undefined,
     ses:
-      provider === "ses"
+      email.provider === "ses"
         ? {
-            region: getEnv(locals, "AWS_REGION") || "us-east-1",
+            region: email.awsRegion,
           }
         : undefined,
   };

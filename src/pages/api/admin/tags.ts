@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { tagSuggestions } from "@/db/schema";
 import { jsonResponse, badRequest, serverError, notFound } from "@/lib/api-response";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 
@@ -19,7 +19,8 @@ export const GET: APIRoute = async ({ locals }) => {
   if (adminError) return adminError;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const tags = await db
       .select()
       .from(tagSuggestions)
@@ -53,7 +54,8 @@ export const POST: APIRoute = async ({ locals, request }) => {
   const newStatus = action === "approve" ? "approved" : "rejected";
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const [updatedTag] = await db
       .update(tagSuggestions)
       .set({

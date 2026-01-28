@@ -6,7 +6,7 @@ import { emailOtps, users, sessions } from "@/db/schema";
 import { badRequest, unauthorized, serverError, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { hashOTP } from "@/lib/auth/otp";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { parseJsonBody, verifyOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
@@ -77,7 +77,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const { email, otp } = parseResult.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const result = await verifyOTPRequest(email, otp, db);
 
     if (!result.success || !result.sessionId) {

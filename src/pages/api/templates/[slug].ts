@@ -3,7 +3,7 @@ import { createDb } from "@/db/client";
 import { templates, users, type Template } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTemplate } from "@/lib/template-validation";
-import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
   badRequest,
@@ -66,7 +66,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [template] = await db.select().from(templates).where(eq(templates.slug, slug)).limit(1);
 
@@ -118,7 +119,8 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [existingTemplate] = await db
       .select({ id: templates.id, userId: templates.userId })
@@ -141,7 +143,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       .limit(1);
     const trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
 
-    const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
+    const openaiKey = config.moderation.openaiApiKey;
     const contentToModerate = `${title}\n\n${templateBody}`;
     const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
 
@@ -178,7 +180,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [existingTemplate] = await db
       .select({ id: templates.id, userId: templates.userId })

@@ -7,7 +7,7 @@ import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { parseJsonBody, requestOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
@@ -76,7 +76,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const { email } = parseResult.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     await requestOTP(email, locals, db);
 
     // Always return success to prevent email enumeration

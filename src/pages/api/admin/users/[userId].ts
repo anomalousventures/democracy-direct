@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { jsonResponse, badRequest, notFound, serverError } from "@/lib/api-response";
 import { requireAdmin, ADMIN_TRUST_LEVEL } from "@/lib/admin";
 import { parseJsonBody } from "@/lib/request-body";
@@ -37,7 +37,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [existingUser] = await db
       .select({ id: users.id })

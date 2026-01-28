@@ -3,7 +3,12 @@ import { getEmailConfig } from "./index";
 
 function createMockLocals(env: Record<string, string | undefined>): App.Locals {
   return {
-    runtime: { env },
+    runtime: {
+      env: {
+        DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+        ...env,
+      },
+    },
   } as App.Locals;
 }
 
