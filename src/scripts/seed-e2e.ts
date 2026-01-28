@@ -4,7 +4,47 @@ import { createDb } from "../db/client";
 import { users, sessions, templates, tagSuggestions } from "../db/schema";
 import { TRUST_LEVELS } from "../lib/trust-level";
 
-const SESSION_DURATION_DAYS = 30;
+export const SESSION_DURATION_DAYS = 30;
+
+interface SampleTemplate {
+  slug: string;
+  title: string;
+  body: string;
+  issueTags: string[];
+}
+
+export const SAMPLE_TEMPLATES: SampleTemplate[] = [
+  {
+    slug: "e2e-test-infrastructure",
+    title: "Support Local Infrastructure Investment",
+    body: `Dear {{REP_TITLE}} {{REP_LAST}},
+
+As a constituent in {{STATE}}, I am writing to express my strong support for increased investment in local infrastructure.
+
+Our roads, bridges, and public facilities are the backbone of our community.
+
+Thank you for your service.
+
+Sincerely,
+{{USER_NAME}}`,
+    issueTags: ["infrastructure", "economy"],
+  },
+  {
+    slug: "e2e-test-climate",
+    title: "Urgent Action on Climate Change",
+    body: `Dear {{REP_TITLE}} {{REP_LAST}},
+
+I am writing to express my concern about climate change.
+
+Please support legislation to reduce emissions and invest in clean energy.
+
+Sincerely,
+{{USER_NAME}}`,
+    issueTags: ["climate", "environment"],
+  },
+];
+
+export const E2E_TAG_NAME = "e2e-test-tag";
 
 async function seedE2E() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -43,38 +83,7 @@ async function seedE2E() {
 
   console.log(`\nCreating sample templates...`);
 
-  const sampleTemplates = [
-    {
-      slug: "e2e-test-infrastructure",
-      title: "Support Local Infrastructure Investment",
-      body: `Dear {{REP_TITLE}} {{REP_LAST}},
-
-As a constituent in {{STATE}}, I am writing to express my strong support for increased investment in local infrastructure.
-
-Our roads, bridges, and public facilities are the backbone of our community.
-
-Thank you for your service.
-
-Sincerely,
-{{USER_NAME}}`,
-      issueTags: ["infrastructure", "economy"],
-    },
-    {
-      slug: "e2e-test-climate",
-      title: "Urgent Action on Climate Change",
-      body: `Dear {{REP_TITLE}} {{REP_LAST}},
-
-I am writing to express my concern about climate change.
-
-Please support legislation to reduce emissions and invest in clean energy.
-
-Sincerely,
-{{USER_NAME}}`,
-      issueTags: ["climate", "environment"],
-    },
-  ];
-
-  for (const template of sampleTemplates) {
+  for (const template of SAMPLE_TEMPLATES) {
     const existing = await db
       .select()
       .from(templates)
@@ -104,24 +113,26 @@ Sincerely,
   const existingTag = await db
     .select()
     .from(tagSuggestions)
-    .where(eq(tagSuggestions.name, "e2e-test-tag"))
+    .where(eq(tagSuggestions.name, E2E_TAG_NAME))
     .limit(1);
 
   if (existingTag.length === 0) {
     await db.insert(tagSuggestions).values({
-      name: "e2e-test-tag",
+      name: E2E_TAG_NAME,
       suggestedBy: adminUser.id,
       status: "pending",
     });
-    console.log(`  Created: e2e-test-tag`);
+    console.log(`  Created: ${E2E_TAG_NAME}`);
   } else {
-    console.log(`  Tag "e2e-test-tag" exists, skipping`);
+    console.log(`  Tag "${E2E_TAG_NAME}" exists, skipping`);
   }
 
   console.log("\nE2E seed complete!");
 }
 
-seedE2E().catch((error) => {
-  console.error("Seed failed:", error);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedE2E().catch((error) => {
+    console.error("Seed failed:", error);
+    process.exit(1);
+  });
+}
