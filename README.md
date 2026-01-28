@@ -4,7 +4,7 @@ This is the source code for [democracy-direct.com](https://democracy-direct.com)
 
 ## Your representatives work for you
 
-Elected officials are public servants. They represent *you*. But actually reaching them shouldn't require navigating five government websites, filling out invasive forms, or wondering if your message went into a void.
+Elected officials are public servants. They represent _you_. But actually reaching them shouldn't require navigating five government websites, filling out invasive forms, or wondering if your message went into a void.
 
 Democracy Direct makes it simple: enter your ZIP code, see who represents you, and contact them directly through their official channels. Paste a letter into their contact form, print one to mail, or call their office with talking points in hand.
 
