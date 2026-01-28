@@ -58,7 +58,7 @@ Representative information comes from public sources maintained by government ag
 - **State legislators:** [Open States](https://openstates.org), a nonpartisan nonprofit
 - **ZIP code mapping:** [U.S. Census Bureau](https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.html)
 
-This data is refreshed regularly. If something looks wrong, [open an issue](https://github.com/yourusername/democracy-direct/issues).
+This data is refreshed regularly. If something looks wrong, [open an issue](https://github.com/anomalousventures/democracy-direct/issues).
 
 ## Who runs this
 
