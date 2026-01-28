@@ -116,7 +116,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Push database schema
-        run: pnpm db:push
+        run: pnpm drizzle-kit push --force
         env:
           DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
