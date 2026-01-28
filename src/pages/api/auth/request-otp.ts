@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { and, eq, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { emailOtps } from "@/db/schema";
 import { hashEmail } from "@/lib/auth/hash-email";
@@ -8,6 +9,8 @@ import { createOtpEmail } from "@/lib/email/templates/otp";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_EXPIRY_MINUTES = 10;
+const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_WINDOW_HOURS = 1;
 
 export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
@@ -23,10 +26,21 @@ export async function requestOTP(
   }
 
   const emailHash = hashEmail(email);
-  const { otp, otpHash } = generateOTP();
-  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
   if (db) {
+    const oneHourAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000);
+    const recentRequests = await db
+      .select({ id: emailOtps.id })
+      .from(emailOtps)
+      .where(and(eq(emailOtps.emailHash, emailHash), gte(emailOtps.createdAt, oneHourAgo)));
+
+    if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+      return { success: false, error: "Too many requests. Please try again later." };
+    }
+
+    const { otp, otpHash } = generateOTP();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
     await db.insert(emailOtps).values({
       emailHash,
       otpHash,

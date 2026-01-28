@@ -53,5 +53,41 @@ describe("OTP Request Endpoint", () => {
       const result = await requestOTP("nonexistent@example.com");
       expect(result.success).toBe(true);
     });
+
+    it("rate limits after 5 requests per email per hour", async () => {
+      const mockDb = {
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockResolvedValue(undefined),
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        where: vi
+          .fn()
+          .mockResolvedValue([{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }, { id: "5" }]),
+      };
+
+      const mockEmailSender = vi.fn().mockResolvedValue(true);
+      const result = await requestOTP("test@example.com", mockDb as never, mockEmailSender);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Too many requests. Please try again later.");
+      expect(mockDb.insert).not.toHaveBeenCalled();
+      expect(mockEmailSender).not.toHaveBeenCalled();
+    });
+
+    it("allows requests when under rate limit", async () => {
+      const mockDb = {
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockResolvedValue(undefined),
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue([{ id: "1" }, { id: "2" }]),
+      };
+
+      const mockEmailSender = vi.fn().mockResolvedValue(true);
+      const result = await requestOTP("test@example.com", mockDb as never, mockEmailSender);
+
+      expect(result.success).toBe(true);
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
   });
 });

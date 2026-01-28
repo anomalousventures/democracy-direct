@@ -383,7 +383,7 @@
 - [x] Creates OTP record in database (hashed)
 - [x] Sends OTP via SES (email in memory only)
 - [x] Returns `{ success: true }` (no info leakage)
-- [ ] Rate limited (5 requests per email per hour)
+- [x] Rate limited (5 requests per email per hour)
 
 **Tests:**
 
