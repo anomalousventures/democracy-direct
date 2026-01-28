@@ -4,8 +4,6 @@ import { SesEmailProvider } from "./providers/ses";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
-let emailProvider: EmailProvider | null = null;
-
 export function createEmailProvider(config: EmailConfig): EmailProvider {
   switch (config.provider) {
     case "smtp":
@@ -47,14 +45,7 @@ export function getEmailConfig(): EmailConfig {
   };
 }
 
-export function getEmailProvider(): EmailProvider {
-  if (!emailProvider) {
-    emailProvider = createEmailProvider(getEmailConfig());
-  }
-  return emailProvider;
-}
-
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
-  const provider = getEmailProvider();
+  const provider = createEmailProvider(getEmailConfig());
   return provider.send(message);
 }
