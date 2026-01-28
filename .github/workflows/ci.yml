@@ -82,12 +82,6 @@ jobs:
         ports:
           - 1025:1025
           - 8025:8025
-    env:
-      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
-      EMAIL_PROVIDER: smtp
-      EMAIL_FROM: noreply@democracy-direct.com
-      SMTP_HOST: localhost
-      SMTP_PORT: 1025
     steps:
       - uses: actions/checkout@v6
 
@@ -108,6 +102,12 @@ jobs:
 
       - name: Run Playwright tests
         run: pnpm test:e2e
+        env:
+          DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+          EMAIL_PROVIDER: smtp
+          EMAIL_FROM: noreply@democracy-direct.com
+          SMTP_HOST: localhost
+          SMTP_PORT: "1025"
 
       - uses: actions/upload-artifact@v6
         if: failure()
