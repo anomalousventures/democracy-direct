@@ -30,6 +30,7 @@ type PublicTemplateFields = Pick<
   | "useCount"
   | "forkedFrom"
   | "createdAt"
+  | "updatedAt"
 >;
 
 function filterPublicFields(template: Template): PublicTemplateFields {
@@ -43,6 +44,7 @@ function filterPublicFields(template: Template): PublicTemplateFields {
     useCount: template.useCount,
     forkedFrom: template.forkedFrom,
     createdAt: template.createdAt,
+    updatedAt: template.updatedAt,
   };
 }
 
