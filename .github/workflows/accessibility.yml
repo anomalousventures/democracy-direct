@@ -2,6 +2,16 @@ name: Accessibility & Performance Audit
 
 on:
   deployment_status:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "Deployment URL to audit"
+        required: true
+        type: string
+      pr_number:
+        description: "PR number to comment on (optional)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -16,7 +26,7 @@ jobs:
   audit:
     name: Lighthouse & Pa11y
     runs-on: ubuntu-latest
-    if: github.event.deployment_status.state == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
     steps:
       - uses: actions/checkout@v6
 
@@ -25,28 +35,36 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const deploymentUrl = context.payload.deployment_status.target_url;
-            const sha = context.payload.deployment.sha;
+            let deploymentUrl, prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              deploymentUrl = '${{ inputs.deployment_url }}';
+              prNumber = '${{ inputs.pr_number }}' || null;
+              console.log('Manual trigger');
+            } else {
+              deploymentUrl = context.payload.deployment_status.target_url;
+              const sha = context.payload.deployment.sha;
+
+              console.log(`Commit SHA: ${sha}`);
+
+              // Find PR associated with this commit
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100
+              });
+
+              const pr = prs.find(p => p.head.sha === sha);
+              prNumber = pr ? pr.number : null;
+            }
 
             console.log(`Deployment URL: ${deploymentUrl}`);
-            console.log(`Commit SHA: ${sha}`);
-
-            // Find PR associated with this commit
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              sort: 'updated',
-              direction: 'desc',
-              per_page: 100
-            });
-
-            const pr = prs.find(p => p.head.sha === sha);
-            const prNumber = pr ? pr.number : null;
-
             console.log(`PR Number: ${prNumber}`);
 
-            core.setOutput('url', deploymentUrl);
+            core.setOutput('url', deploymentUrl || '');
             core.setOutput('pr_number', prNumber || '');
 
       - name: Install audit tools
