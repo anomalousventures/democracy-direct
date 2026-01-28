@@ -5,10 +5,11 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { TemplateCreateClient } from "@/components/TemplateCreateClient";
+import { getOptionalEnv } from "@/lib/env";
 
 const user = Astro.locals.user;
 
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+const turnstileSiteKey = getOptionalEnv(Astro.locals, "TURNSTILE_SITE_KEY") || "";
 ---
 
 <Layout title="Create New Template">

@@ -8,7 +8,7 @@ import { TemplateForkClient } from "@/components/TemplateForkClient";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
 
 const user = Astro.locals.user;
 const { slug } = Astro.params;
@@ -65,7 +65,7 @@ if (!slug) {
   }
 }
 
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+const turnstileSiteKey = getOptionalEnv(Astro.locals, "TURNSTILE_SITE_KEY") || "";
 ---
 
 <Layout title={originalTemplate ? `Fork: ${originalTemplate.title}` : "Template Not Found"}>
