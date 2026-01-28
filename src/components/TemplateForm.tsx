@@ -210,8 +210,6 @@ export function TemplateForm({
         </div>
       </div>
 
-      {turnstileSiteKey && <div ref={turnstileRef} data-testid="turnstile-widget" />}
-
       <div className="pt-4">
         <LoadingButton
           type="submit"
@@ -228,6 +226,8 @@ export function TemplateForm({
           {submitLabel}
         </LoadingButton>
       </div>
+
+      {turnstileSiteKey && <div ref={turnstileRef} data-testid="turnstile-widget" />}
     </form>
   );
 }

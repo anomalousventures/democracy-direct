@@ -53,3 +53,21 @@ export const verifyOtpBodySchema = z.object({
 });
 
 export type VerifyOtpBody = z.infer<typeof verifyOtpBodySchema>;
+
+export const suggestTagBodySchema = z.object({
+  name: z
+    .string()
+    .min(2, "Tag name must be at least 2 characters")
+    .max(50, "Tag name must be at most 50 characters")
+    .regex(/^[a-z0-9-]+$/, "Tag name must be lowercase alphanumeric with hyphens only")
+    .transform((s) => s.toLowerCase().trim()),
+});
+
+export type SuggestTagBody = z.infer<typeof suggestTagBodySchema>;
+
+export const adminTagActionBodySchema = z.object({
+  tagId: z.string().uuid(),
+  action: z.enum(["approve", "reject"]),
+});
+
+export type AdminTagActionBody = z.infer<typeof adminTagActionBodySchema>;
