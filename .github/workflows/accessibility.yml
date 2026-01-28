@@ -23,23 +23,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
       - name: Install audit tools
         run: |
-          npm install -g @lhci/cli pa11y pa11y-ci
+          npm install -g @lhci/cli pa11y
 
-      - name: Start preview server
+      - name: Start dev server
         run: |
-          pnpm preview &
-          sleep 5
-        env:
-          PORT: 4321
+          pnpm dev &
+          sleep 10
 
       - name: Wait for server
         run: |
-          timeout 30 bash -c 'until curl -s http://localhost:4321 > /dev/null; do sleep 1; done'
+          timeout 60 bash -c 'until curl -s http://localhost:4321 > /dev/null; do sleep 2; done'
 
       - name: Run Lighthouse audit
         id: lighthouse

@@ -39,7 +39,8 @@ async function getAdminSession(): Promise<string | null> {
 }
 
 export const test = base.extend<AuthFixtures>({
-  adminSessionId: async (_, use) => {
+  // eslint-disable-next-line no-empty-pattern
+  adminSessionId: async ({}, use) => {
     const sessionId = await getAdminSession();
     await use(sessionId ?? "");
   },
