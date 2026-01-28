@@ -1,16 +1,18 @@
 import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
-import { SmtpEmailProvider } from "./providers/smtp";
-import { SesEmailProvider } from "./providers/ses";
 import { getEnv } from "@/lib/env";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
-export function createEmailProvider(config: EmailConfig): EmailProvider {
+async function createEmailProvider(config: EmailConfig): Promise<EmailProvider> {
   switch (config.provider) {
-    case "smtp":
+    case "smtp": {
+      const { SmtpEmailProvider } = await import("./providers/smtp");
       return new SmtpEmailProvider(config);
-    case "ses":
+    }
+    case "ses": {
+      const { SesEmailProvider } = await import("./providers/ses");
       return new SesEmailProvider(config);
+    }
     default:
       throw new Error(`Unknown email provider: ${config.provider}`);
   }
@@ -47,6 +49,6 @@ export function getEmailConfig(locals: App.Locals): EmailConfig {
 }
 
 export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
-  const provider = createEmailProvider(getEmailConfig(locals));
+  const provider = await createEmailProvider(getEmailConfig(locals));
   return provider.send(message);
 }
