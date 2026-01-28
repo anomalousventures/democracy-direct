@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { POST } from "@/pages/api/templates/index";
 
 describe("Template Creation Endpoint", () => {
-  it("returns 401 when not authenticated", async () => {
+  it("accepts anonymous users for template creation", async () => {
     const mockRequest = new Request("http://localhost/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -22,9 +22,7 @@ describe("Template Creation Endpoint", () => {
       locals: mockLocals,
     } as never);
 
-    expect(response.status).toBe(401);
-    const data = await response.json();
-    expect(data.error).toBe("Authentication required");
+    expect(response.status).not.toBe(401);
   });
 
   it("returns 400 for missing title", async () => {

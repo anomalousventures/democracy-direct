@@ -542,13 +542,13 @@
 
 ### 5.6 Template Creation Form
 
-- [ ] Page at `/templates/new` (no auth required)
+- [x] Page at `/templates/new` (no auth required)
 - [x] Title input (required, 5-100 chars)
 - [x] Body textarea (required, 50-10000 chars)
 - [x] Issue tags multi-select
 - [x] Turnstile widget (when configured)
 - [x] Submit button
-- [ ] Anonymous templates treated as NEW_USER for moderation
+- [x] Anonymous templates treated as NEW_USER for moderation
 
 **Tests:**
 
@@ -559,13 +559,13 @@
 ### 5.7 Template Creation Endpoint
 
 - [x] POST `/api/templates`
-- [ ] Allows anonymous users (creates template without userId)
+- [x] Allows anonymous users (creates template without userId)
 - [x] Validates Turnstile token (when configured)
 - [x] Validates input (length, format, spam patterns)
 - [x] Generates unique slug
-- [ ] Runs content moderation (Phase 6)
+- [x] Runs content moderation (Phase 6)
 - [x] Saves with pending moderation_status
-- [ ] Anonymous templates use NEW_USER trust level for moderation
+- [x] Anonymous templates use NEW_USER trust level for moderation
 - [x] Returns created template
 
 **Tests:**
@@ -590,7 +590,7 @@
 ### 5.9 My Templates Page
 
 - [x] Page at `/templates/mine` (requires auth)
-- [ ] Auth only required for viewing own templates, not creating
+- [x] Auth only required for viewing own templates, not creating
 - [x] Lists user's own templates
 - [x] Shows moderation status for each
 - [x] Edit and delete actions
