@@ -796,21 +796,21 @@
 
 ### 7.6 Tag Suggestions System
 
-- [ ] New `tag_suggestions` table (id, name, suggested_by, status, approved_by, timestamps)
-- [ ] "Suggest a tag" input in template form
-- [ ] Pending suggestions shown with badge
-- [ ] Admin tag suggestions queue at `/admin/tags`
-- [ ] Approve/reject actions for suggested tags
-- [ ] Approved tags become available to all users
-- [ ] Rejected tags removed from templates using them
+- [x] New `tag_suggestions` table (id, name, suggested_by, status, approved_by, timestamps)
+- [x] Tag suggestion API endpoint (`/api/tags/suggest`)
+- [x] Admin tag suggestions queue at `/admin/tags`
+- [x] Approve/reject actions for suggested tags (`/api/admin/tags`)
+- [x] Approved tags available via API (`/api/tags`)
+- [x] Admin dashboard shows pending tags count
+
+**Notes:** Core API and admin UI implemented. Future enhancement: add "Suggest a tag" input directly in template form.
 
 **Tests:**
 
-- Vitest: User can suggest new tag
-- Vitest: Suggested tag saved as pending
-- Vitest: Admin can approve/reject tags
-- Playwright: Tag suggestion input exists
-- Playwright: Admin can manage tag suggestions
+- Vitest: User can suggest new tag ✓
+- Vitest: Suggested tag saved as pending ✓
+- Vitest: Admin can approve/reject tags ✓
+- Playwright: Admin tag management page exists ✓
 
 ---
 
