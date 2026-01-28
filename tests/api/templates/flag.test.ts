@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { POST } from "@/pages/api/templates/[slug]/flag";
 
 describe("Template Flag Endpoint", () => {
   it("returns 401 when not authenticated", async () => {
-    const { POST } = await import("@/pages/api/templates/[slug]/flag");
-
     const mockRequest = new Request("http://localhost/api/templates/test-slug/flag", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,8 +26,6 @@ describe("Template Flag Endpoint", () => {
   });
 
   it("returns 400 for invalid flag reason", async () => {
-    const { POST } = await import("@/pages/api/templates/[slug]/flag");
-
     const mockRequest = new Request("http://localhost/api/templates/test-slug/flag", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -53,8 +50,6 @@ describe("Template Flag Endpoint", () => {
   });
 
   it("returns 400 for missing slug", async () => {
-    const { POST } = await import("@/pages/api/templates/[slug]/flag");
-
     const mockRequest = new Request("http://localhost/api/templates//flag", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -75,10 +70,5 @@ describe("Template Flag Endpoint", () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toBe("Template slug is required");
-  });
-
-  it("exports POST function", async () => {
-    const { POST } = await import("@/pages/api/templates/[slug]/flag");
-    expect(typeof POST).toBe("function");
   });
 });
