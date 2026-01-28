@@ -20,10 +20,18 @@ import Footer from "@/components/Footer.astro";
       </p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
         <a href="/" class="btn-primary">Go to Homepage</a>
-        <button onclick="window.location.reload()" class="btn-secondary">Try Again</button>
+        <button class="btn-secondary" data-reload-button>Try Again</button>
       </div>
     </div>
   </main>
 
   <Footer currentPath="" />
 </Layout>
+
+<script is:inline>
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-reload-button]")) {
+      window.location.reload();
+    }
+  });
+</script>
