@@ -4,7 +4,7 @@ import { templates, templateFlags } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
 import { jsonResponse, badRequest, unauthorized, notFound, serverError } from "@/lib/api-response";
-import { parseJsonBody, isFlagBody } from "@/lib/request-body";
+import { parseJsonBody, flagBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
 
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return badRequest("Template slug is required");
   }
 
-  const parseResult = await parseJsonBody(request, isFlagBody);
+  const parseResult = await parseJsonBody(request, flagBodySchema);
   if (!parseResult.success) {
     return badRequest(parseResult.error);
   }

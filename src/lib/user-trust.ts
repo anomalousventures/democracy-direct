@@ -10,17 +10,24 @@ export async function incrementApprovedTemplatesCount(db: Database, userId: stri
       approvedTemplatesCount: sql`${users.approvedTemplatesCount} + 1`,
     })
     .where(eq(users.id, userId))
-    .returning({ approvedTemplatesCount: users.approvedTemplatesCount });
+    .returning({
+      approvedTemplatesCount: users.approvedTemplatesCount,
+      trustLevel: users.trustLevel,
+    });
 
   if (!updated) return;
 
+  if (updated.trustLevel === TRUST_LEVELS.BANNED) return;
+
   const newTrustLevel = calculateTrustLevel(
-    TRUST_LEVELS.NEW_USER,
+    updated.trustLevel,
     updated.approvedTemplatesCount,
     false
   );
 
-  await db.update(users).set({ trustLevel: newTrustLevel }).where(eq(users.id, userId));
+  if (newTrustLevel !== updated.trustLevel) {
+    await db.update(users).set({ trustLevel: newTrustLevel }).where(eq(users.id, userId));
+  }
 }
 
 export async function handleTemplateRejection(db: Database, userId: string): Promise<void> {

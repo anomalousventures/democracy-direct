@@ -57,7 +57,7 @@ describe("POST /api/templates/fork", () => {
 
     expect(response.status).toBe(400);
     const data = await response.json();
-    expect(data.error).toBe("Title and body are required");
+    expect(data.error).toBe("Invalid request body");
   });
 
   it("returns 400 when forkedFromId is missing", async () => {

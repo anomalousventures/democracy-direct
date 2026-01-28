@@ -1,8 +1,12 @@
-export type ParseResult<T> = { success: true; data: T } | { success: false; error: string };
+import { z } from "zod";
+
+export type ParseResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string; issues?: z.ZodIssue[] };
 
 export async function parseJsonBody<T>(
   request: Request,
-  validator: (data: unknown) => data is T
+  schema: z.ZodSchema<T>
 ): Promise<ParseResult<T>> {
   let parsed: unknown;
   try {
@@ -11,41 +15,27 @@ export async function parseJsonBody<T>(
     return { success: false, error: "Invalid JSON" };
   }
 
-  if (!validator(parsed)) {
-    return { success: false, error: "Invalid request body" };
+  const result = schema.safeParse(parsed);
+  if (!result.success) {
+    return { success: false, error: "Invalid request body", issues: result.error.issues };
   }
 
-  return { success: true, data: parsed };
+  return { success: true, data: result.data };
 }
 
-export function isTemplateBody(data: unknown): data is {
-  title: string;
-  body: string;
-  issueTags?: string[];
-  turnstileToken?: string;
-  forkedFromId?: string;
-} {
-  if (typeof data !== "object" || data === null) return false;
-  const obj = data as Record<string, unknown>;
+export const templateBodySchema = z.object({
+  title: z.string().min(1),
+  body: z.string().min(1),
+  issueTags: z.array(z.string()).optional(),
+  turnstileToken: z.string().optional(),
+  forkedFromId: z.string().optional(),
+});
 
-  if (typeof obj.title !== "string" && obj.title !== undefined) return false;
-  if (typeof obj.body !== "string" && obj.body !== undefined) return false;
-  if (obj.issueTags !== undefined && !Array.isArray(obj.issueTags)) return false;
-  if (obj.turnstileToken !== undefined && typeof obj.turnstileToken !== "string") return false;
-  if (obj.forkedFromId !== undefined && typeof obj.forkedFromId !== "string") return false;
+export type TemplateBody = z.infer<typeof templateBodySchema>;
 
-  return true;
-}
+export const flagBodySchema = z.object({
+  reason: z.string().min(1),
+  details: z.string().optional(),
+});
 
-export function isFlagBody(data: unknown): data is {
-  reason: string;
-  details?: string;
-} {
-  if (typeof data !== "object" || data === null) return false;
-  const obj = data as Record<string, unknown>;
-
-  if (typeof obj.reason !== "string" && obj.reason !== undefined) return false;
-  if (obj.details !== undefined && typeof obj.details !== "string") return false;
-
-  return true;
-}
+export type FlagBody = z.infer<typeof flagBodySchema>;

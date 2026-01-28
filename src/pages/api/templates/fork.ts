@@ -12,7 +12,7 @@ import {
   serverError,
   validationError,
 } from "@/lib/api-response";
-import { parseJsonBody, isTemplateBody } from "@/lib/request-body";
+import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 import { moderateTemplate } from "@/lib/moderation/moderate-template";
 import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
 
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return unauthorized();
   }
 
-  const parseResult = await parseJsonBody(request, isTemplateBody);
+  const parseResult = await parseJsonBody(request, templateBodySchema);
   if (!parseResult.success) {
     return badRequest(parseResult.error);
   }

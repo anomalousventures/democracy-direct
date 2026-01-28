@@ -32,22 +32,45 @@ describe("user-trust", () => {
       expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
 
-    it("increments count and calculates trust level for user with 1 approved", async () => {
-      mockReturning.mockResolvedValueOnce([{ approvedTemplatesCount: 1 }]);
+    it("does not update trust level for banned users", async () => {
+      mockReturning.mockResolvedValueOnce([
+        { approvedTemplatesCount: 5, trustLevel: TRUST_LEVELS.BANNED },
+      ]);
 
       await incrementApprovedTemplatesCount(mockDb as never, "user-123");
 
-      expect(mockUpdate).toHaveBeenCalledTimes(2);
-      expect(mockSet).toHaveBeenLastCalledWith({ trustLevel: TRUST_LEVELS.NEW_USER });
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it("increments count and calculates trust level for user with 1 approved", async () => {
+      mockReturning.mockResolvedValueOnce([
+        { approvedTemplatesCount: 1, trustLevel: TRUST_LEVELS.NEW_USER },
+      ]);
+
+      await incrementApprovedTemplatesCount(mockDb as never, "user-123");
+
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
 
     it("increments count and promotes to trusted for user reaching 2 approved", async () => {
-      mockReturning.mockResolvedValueOnce([{ approvedTemplatesCount: 2 }]);
+      mockReturning.mockResolvedValueOnce([
+        { approvedTemplatesCount: 2, trustLevel: TRUST_LEVELS.NEW_USER },
+      ]);
 
       await incrementApprovedTemplatesCount(mockDb as never, "user-123");
 
       expect(mockUpdate).toHaveBeenCalledTimes(2);
       expect(mockSet).toHaveBeenLastCalledWith({ trustLevel: TRUST_LEVELS.TRUSTED });
+    });
+
+    it("does not update if trust level unchanged", async () => {
+      mockReturning.mockResolvedValueOnce([
+        { approvedTemplatesCount: 5, trustLevel: TRUST_LEVELS.TRUSTED },
+      ]);
+
+      await incrementApprovedTemplatesCount(mockDb as never, "user-123");
+
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
   });
 

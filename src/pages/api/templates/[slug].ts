@@ -13,7 +13,7 @@ import {
   serverError,
   validationError,
 } from "@/lib/api-response";
-import { parseJsonBody, isTemplateBody } from "@/lib/request-body";
+import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
 
@@ -97,7 +97,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return badRequest("Slug is required");
   }
 
-  const parseResult = await parseJsonBody(request, isTemplateBody);
+  const parseResult = await parseJsonBody(request, templateBodySchema);
   if (!parseResult.success) {
     return badRequest(parseResult.error);
   }
