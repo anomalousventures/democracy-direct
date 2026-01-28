@@ -13,9 +13,6 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
-    ssr: {
-      external: ["crypto", "events", "util", "url"],
-    },
   },
 
   adapter: cloudflare({
