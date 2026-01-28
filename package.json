@@ -29,6 +29,8 @@
     "import:legislators": "npx tsx src/scripts/import-legislators.ts",
     "import:zips": "npx tsx src/scripts/import-zips.ts",
     "export:zips": "npx tsx src/scripts/export-zips.ts",
+    "seed:e2e": "npx tsx src/scripts/seed-e2e.ts",
+    "ensure:admins": "npx tsx src/scripts/ensure-admins.ts",
     "prepare": "husky"
   },
   "dependencies": {

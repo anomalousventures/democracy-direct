@@ -105,6 +105,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      - name: Ensure admin users
+        run: pnpm ensure:admins
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
+
       - name: Import legislators
         run: pnpm tsx src/scripts/import-legislators.ts
         env:

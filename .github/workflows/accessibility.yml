@@ -1,0 +1,181 @@
+name: Accessibility & Performance Audit
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    name: Lighthouse & Pa11y
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install audit tools
+        run: |
+          npm install -g @lhci/cli pa11y pa11y-ci
+
+      - name: Start preview server
+        run: |
+          pnpm preview &
+          sleep 5
+        env:
+          PORT: 4321
+
+      - name: Wait for server
+        run: |
+          timeout 30 bash -c 'until curl -s http://localhost:4321 > /dev/null; do sleep 1; done'
+
+      - name: Run Lighthouse audit
+        id: lighthouse
+        run: |
+          mkdir -p lighthouse-results
+          lhci collect \
+            --url=http://localhost:4321 \
+            --url=http://localhost:4321/about \
+            --url=http://localhost:4321/privacy \
+            --url=http://localhost:4321/templates \
+            --staticDistDir=./dist \
+            --settings.chromeFlags="--no-sandbox --headless" \
+            || true
+
+          lhci upload \
+            --target=filesystem \
+            --outputDir=./lighthouse-results \
+            || true
+
+      - name: Run Pa11y accessibility audit
+        id: pa11y
+        run: |
+          mkdir -p pa11y-results
+
+          pa11y http://localhost:4321 --reporter json > pa11y-results/home.json 2>&1 || true
+          pa11y http://localhost:4321/about --reporter json > pa11y-results/about.json 2>&1 || true
+          pa11y http://localhost:4321/privacy --reporter json > pa11y-results/privacy.json 2>&1 || true
+          pa11y http://localhost:4321/templates --reporter json > pa11y-results/templates.json 2>&1 || true
+
+      - name: Generate audit summary
+        id: summary
+        run: |
+          echo "## 🔍 Accessibility & Performance Audit Results" > audit-summary.md
+          echo "" >> audit-summary.md
+
+          echo "### Lighthouse Scores" >> audit-summary.md
+          echo "" >> audit-summary.md
+
+          if [ -d ".lighthouseci" ]; then
+            for file in .lighthouseci/lhr-*.json; do
+              if [ -f "$file" ]; then
+                url=$(jq -r '.finalUrl' "$file" 2>/dev/null || echo "unknown")
+                perf=$(jq -r '.categories.performance.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                a11y=$(jq -r '.categories.accessibility.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                bp=$(jq -r '.categories["best-practices"].score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                seo=$(jq -r '.categories.seo.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+
+                echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
+                echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
+                echo "| $url | $perf | $a11y | $bp | $seo |" >> audit-summary.md
+                echo "" >> audit-summary.md
+              fi
+            done
+          else
+            echo "No Lighthouse results found." >> audit-summary.md
+          fi
+
+          echo "" >> audit-summary.md
+          echo "### Pa11y Accessibility Issues" >> audit-summary.md
+          echo "" >> audit-summary.md
+
+          total_issues=0
+          for file in pa11y-results/*.json; do
+            if [ -f "$file" ]; then
+              page=$(basename "$file" .json)
+              issues=$(jq -r 'if type == "array" then length else 0 end' "$file" 2>/dev/null || echo "0")
+              total_issues=$((total_issues + issues))
+              echo "- **$page**: $issues issues" >> audit-summary.md
+            fi
+          done
+
+          echo "" >> audit-summary.md
+          echo "**Total Pa11y issues: $total_issues**" >> audit-summary.md
+
+          if [ "$total_issues" -gt 0 ]; then
+            echo "" >> audit-summary.md
+            echo "<details>" >> audit-summary.md
+            echo "<summary>View Pa11y Details</summary>" >> audit-summary.md
+            echo "" >> audit-summary.md
+            for file in pa11y-results/*.json; do
+              if [ -f "$file" ]; then
+                page=$(basename "$file" .json)
+                issues=$(jq -r 'if type == "array" then . else [] end | .[] | "- [\(.type)] \(.message)"' "$file" 2>/dev/null || echo "")
+                if [ -n "$issues" ]; then
+                  echo "#### $page" >> audit-summary.md
+                  echo "$issues" >> audit-summary.md
+                  echo "" >> audit-summary.md
+                fi
+              fi
+            done
+            echo "</details>" >> audit-summary.md
+          fi
+
+          cat audit-summary.md
+
+      - name: Post audit results to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('audit-summary.md', 'utf8');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Accessibility & Performance Audit Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+            }
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: audit-results
+          path: |
+            lighthouse-results/
+            pa11y-results/
+            .lighthouseci/
+          retention-days: 14

@@ -29,6 +29,7 @@ db-push:
 db-seed: db-push
 	pnpm import:legislators
 	pnpm import:zips
+	pnpm ensure:admins
 
 logs:
 	docker-compose logs -f
