@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { POST } from "@/pages/api/templates/fork";
 
 describe("POST /api/templates/fork", () => {
   it("returns 401 when not authenticated", async () => {
-    const { POST } = await import("./fork");
-
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
         method: "POST",
@@ -25,8 +24,6 @@ describe("POST /api/templates/fork", () => {
   });
 
   it("returns 400 for invalid JSON", async () => {
-    const { POST } = await import("./fork");
-
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
         method: "POST",
@@ -44,8 +41,6 @@ describe("POST /api/templates/fork", () => {
   });
 
   it("returns 400 when title or body missing", async () => {
-    const { POST } = await import("./fork");
-
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
         method: "POST",
@@ -66,8 +61,6 @@ describe("POST /api/templates/fork", () => {
   });
 
   it("returns 400 when forkedFromId is missing", async () => {
-    const { POST } = await import("./fork");
-
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
         method: "POST",
@@ -88,8 +81,6 @@ describe("POST /api/templates/fork", () => {
   });
 
   it("returns 400 for validation errors", async () => {
-    const { POST } = await import("./fork");
-
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
         method: "POST",
@@ -109,10 +100,5 @@ describe("POST /api/templates/fork", () => {
     const data = await response.json();
     expect(data.error).toBe("Validation failed");
     expect(data.errors).toBeDefined();
-  });
-
-  it("exports POST function", async () => {
-    const { POST } = await import("./fork");
-    expect(typeof POST).toBe("function");
   });
 });

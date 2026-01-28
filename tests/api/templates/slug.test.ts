@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { GET, PUT, DELETE } from "@/pages/api/templates/[slug]";
 
 describe("GET /api/templates/[slug]", () => {
   it("returns 400 when slug is missing", async () => {
-    const { GET } = await import("./[slug]");
-
     const response = await GET({
       params: {},
       locals: {
@@ -16,17 +15,10 @@ describe("GET /api/templates/[slug]", () => {
     const data = await response.json();
     expect(data.error).toBe("Slug is required");
   });
-
-  it("exports GET function", async () => {
-    const { GET } = await import("./[slug]");
-    expect(typeof GET).toBe("function");
-  });
 });
 
 describe("PUT /api/templates/[slug]", () => {
   it("returns 401 when not authenticated", async () => {
-    const { PUT } = await import("./[slug]");
-
     const response = await PUT({
       params: { slug: "test-template" },
       locals: {
@@ -45,8 +37,6 @@ describe("PUT /api/templates/[slug]", () => {
   });
 
   it("returns 400 when slug is missing", async () => {
-    const { PUT } = await import("./[slug]");
-
     const response = await PUT({
       params: {},
       locals: {
@@ -65,8 +55,6 @@ describe("PUT /api/templates/[slug]", () => {
   });
 
   it("returns 400 for invalid JSON", async () => {
-    const { PUT } = await import("./[slug]");
-
     const response = await PUT({
       params: { slug: "test-template" },
       locals: {
@@ -85,8 +73,6 @@ describe("PUT /api/templates/[slug]", () => {
   });
 
   it("returns 400 when title or body missing", async () => {
-    const { PUT } = await import("./[slug]");
-
     const response = await PUT({
       params: { slug: "test-template" },
       locals: {
@@ -105,8 +91,6 @@ describe("PUT /api/templates/[slug]", () => {
   });
 
   it("returns 400 for validation errors", async () => {
-    const { PUT } = await import("./[slug]");
-
     const response = await PUT({
       params: { slug: "test-template" },
       locals: {
@@ -124,17 +108,10 @@ describe("PUT /api/templates/[slug]", () => {
     expect(data.error).toBe("Validation failed");
     expect(data.errors).toBeDefined();
   });
-
-  it("exports PUT function", async () => {
-    const { PUT } = await import("./[slug]");
-    expect(typeof PUT).toBe("function");
-  });
 });
 
 describe("DELETE /api/templates/[slug]", () => {
   it("returns 401 when not authenticated", async () => {
-    const { DELETE } = await import("./[slug]");
-
     const response = await DELETE({
       params: { slug: "test-template" },
       locals: {
@@ -149,8 +126,6 @@ describe("DELETE /api/templates/[slug]", () => {
   });
 
   it("returns 400 when slug is missing", async () => {
-    const { DELETE } = await import("./[slug]");
-
     const response = await DELETE({
       params: {},
       locals: {
@@ -162,10 +137,5 @@ describe("DELETE /api/templates/[slug]", () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toBe("Slug is required");
-  });
-
-  it("exports DELETE function", async () => {
-    const { DELETE } = await import("./[slug]");
-    expect(typeof DELETE).toBe("function");
   });
 });

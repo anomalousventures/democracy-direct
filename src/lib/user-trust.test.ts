@@ -2,24 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { incrementApprovedTemplatesCount, handleTemplateRejection } from "./user-trust";
 import { TRUST_LEVELS } from "./trust-level";
 
-const mockSelect = vi.fn();
-const mockFrom = vi.fn();
-const mockWhere = vi.fn();
-const mockLimit = vi.fn();
-const mockUpdate = vi.fn();
+const mockReturning = vi.fn();
+const mockUpdateWhere = vi.fn();
 const mockSet = vi.fn();
+const mockUpdate = vi.fn();
 
 const mockDb = {
-  select: mockSelect,
   update: mockUpdate,
 };
 
 function setupMockChain() {
-  mockSelect.mockReturnValue({ from: mockFrom });
-  mockFrom.mockReturnValue({ where: mockWhere });
-  mockWhere.mockReturnValue({ limit: mockLimit });
   mockUpdate.mockReturnValue({ set: mockSet });
-  mockSet.mockReturnValue({ where: vi.fn() });
+  mockSet.mockReturnValue({ where: mockUpdateWhere });
+  mockUpdateWhere.mockReturnValue({ returning: mockReturning });
 }
 
 describe("user-trust", () => {
@@ -30,37 +25,29 @@ describe("user-trust", () => {
 
   describe("incrementApprovedTemplatesCount", () => {
     it("does nothing if user not found", async () => {
-      mockLimit.mockResolvedValue([]);
+      mockReturning.mockResolvedValue([]);
 
       await incrementApprovedTemplatesCount(mockDb as never, "user-123");
 
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
     });
 
-    it("increments count and calculates trust level for user with 0 approved", async () => {
-      mockLimit.mockResolvedValue([{ approvedTemplatesCount: 0 }]);
+    it("increments count and calculates trust level for user with 1 approved", async () => {
+      mockReturning.mockResolvedValueOnce([{ approvedTemplatesCount: 1 }]);
 
       await incrementApprovedTemplatesCount(mockDb as never, "user-123");
 
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(mockSet).toHaveBeenCalledWith(
-        expect.objectContaining({
-          trustLevel: TRUST_LEVELS.NEW_USER,
-        })
-      );
+      expect(mockUpdate).toHaveBeenCalledTimes(2);
+      expect(mockSet).toHaveBeenLastCalledWith({ trustLevel: TRUST_LEVELS.NEW_USER });
     });
 
     it("increments count and promotes to trusted for user reaching 2 approved", async () => {
-      mockLimit.mockResolvedValue([{ approvedTemplatesCount: 1 }]);
+      mockReturning.mockResolvedValueOnce([{ approvedTemplatesCount: 2 }]);
 
       await incrementApprovedTemplatesCount(mockDb as never, "user-123");
 
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(mockSet).toHaveBeenCalledWith(
-        expect.objectContaining({
-          trustLevel: TRUST_LEVELS.TRUSTED,
-        })
-      );
+      expect(mockUpdate).toHaveBeenCalledTimes(2);
+      expect(mockSet).toHaveBeenLastCalledWith({ trustLevel: TRUST_LEVELS.TRUSTED });
     });
   });
 
@@ -69,11 +56,7 @@ describe("user-trust", () => {
       await handleTemplateRejection(mockDb as never, "user-123");
 
       expect(mockUpdate).toHaveBeenCalled();
-      expect(mockSet).toHaveBeenCalledWith(
-        expect.objectContaining({
-          trustLevel: TRUST_LEVELS.NEW_USER,
-        })
-      );
+      expect(mockSet).toHaveBeenCalledWith({ trustLevel: TRUST_LEVELS.NEW_USER });
     });
   });
 });

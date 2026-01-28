@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { POST } from "@/pages/api/templates/index";
 
 describe("Template Creation Endpoint", () => {
   it("returns 401 when not authenticated", async () => {
-    const { POST } = await import("@/pages/api/templates/index");
-
     const mockRequest = new Request("http://localhost/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,8 +28,6 @@ describe("Template Creation Endpoint", () => {
   });
 
   it("returns 400 for missing title", async () => {
-    const { POST } = await import("@/pages/api/templates/index");
-
     const mockRequest = new Request("http://localhost/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,8 +52,6 @@ describe("Template Creation Endpoint", () => {
   });
 
   it("returns 400 for validation errors", async () => {
-    const { POST } = await import("@/pages/api/templates/index");
-
     const mockRequest = new Request("http://localhost/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -80,10 +75,5 @@ describe("Template Creation Endpoint", () => {
     const data = await response.json();
     expect(data.error).toBe("Validation failed");
     expect(data.errors).toBeDefined();
-  });
-
-  it("exports POST function", async () => {
-    const { POST } = await import("@/pages/api/templates/index");
-    expect(typeof POST).toBe("function");
   });
 });
