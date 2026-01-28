@@ -3,7 +3,7 @@ import { eq, and, isNull, gt } from "drizzle-orm";
 import { createDb, type Database } from "../../../db/client";
 import { emailOtps, users, sessions } from "../../../db/schema";
 import { hashEmail } from "../../../lib/auth/hash-email";
-import { verifyOTP } from "../../../lib/auth/otp";
+import { hashOTP } from "../../../lib/auth/otp";
 import { randomUUID } from "crypto";
 
 export const prerender = false;
@@ -20,14 +20,16 @@ export async function verifyOTPRequest(
   db: Database
 ): Promise<VerifyResult> {
   const emailHash = hashEmail(email);
+  const otpHash = hashOTP(otp);
 
-  // Find valid OTP record
+  // Find valid OTP record by both email hash and OTP hash
   const otpRecords = await db
     .select()
     .from(emailOtps)
     .where(
       and(
         eq(emailOtps.emailHash, emailHash),
+        eq(emailOtps.otpHash, otpHash),
         isNull(emailOtps.usedAt),
         gt(emailOtps.expiresAt, new Date())
       )
@@ -37,12 +39,7 @@ export async function verifyOTPRequest(
     return { success: false, error: "Invalid or expired OTP" };
   }
 
-  // Check if OTP matches any valid record
-  const matchingRecord = otpRecords.find((record) => verifyOTP(otp, record.otpHash));
-
-  if (!matchingRecord) {
-    return { success: false, error: "Invalid or expired OTP" };
-  }
+  const matchingRecord = otpRecords[0];
 
   // Mark OTP as used
   await db.update(emailOtps).set({ usedAt: new Date() }).where(eq(emailOtps.id, matchingRecord.id));
@@ -98,7 +95,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     cookies.set("session", result.sessionId, {
       httpOnly: true,
       secure: !import.meta.env.DEV,
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });

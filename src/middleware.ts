@@ -1,5 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { createDb } from "./db/client";
 import { sessions, users } from "./db/schema";
 
@@ -20,37 +20,23 @@ export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
   try {
     const db = createDb(import.meta.env.DATABASE_URL);
 
-    const sessionRecords = await db
-      .select({
-        userId: sessions.userId,
-        expiresAt: sessions.expiresAt,
-      })
-      .from(sessions)
-      .where(eq(sessions.id, sessionId));
-
-    if (sessionRecords.length === 0 || sessionRecords[0].expiresAt < new Date()) {
-      // Invalid or expired session
-      cookies.delete("session", { path: "/" });
-      locals.user = null;
-      return next();
-    }
-
-    const userRecords = await db
+    const results = await db
       .select({
         id: users.id,
         emailHash: users.emailHash,
         trustLevel: users.trustLevel,
       })
-      .from(users)
-      .where(eq(users.id, sessionRecords[0].userId));
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
 
-    if (userRecords.length === 0) {
+    if (results.length === 0) {
       cookies.delete("session", { path: "/" });
       locals.user = null;
       return next();
     }
 
-    locals.user = userRecords[0] as SessionUser;
+    locals.user = results[0] as SessionUser;
   } catch (error) {
     console.error("Session middleware error:", error);
     locals.user = null;

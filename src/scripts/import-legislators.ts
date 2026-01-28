@@ -240,8 +240,7 @@ export function mergeSocialMedia(
 
 export async function importLegislators(): Promise<{
   total: number;
-  inserted: number;
-  updated: number;
+  upserted: number;
 }> {
   const { createDb } = await import("@/db/client");
   const { legislators } = await import("@/db/schema");
@@ -268,15 +267,8 @@ export async function importLegislators(): Promise<{
   const transformed = rawLegislators.map(transformLegislator);
 
   console.log("Upserting legislators to database...");
-  let inserted = 0;
-  let updated = 0;
 
   for (const leg of transformed) {
-    const existing = await db
-      .select({ bioguideId: legislators.bioguideId })
-      .from(legislators)
-      .where((await import("drizzle-orm")).eq(legislators.bioguideId, leg.bioguideId));
-
     await db
       .insert(legislators)
       .values({
@@ -327,23 +319,17 @@ export async function importLegislators(): Promise<{
           youtubeId: leg.youtubeId,
         },
       });
-
-    if (existing.length === 0) {
-      inserted++;
-    } else {
-      updated++;
-    }
   }
 
-  console.log(`Import complete: ${inserted} inserted, ${updated} updated`);
+  console.log(`Import complete: ${transformed.length} legislators upserted`);
 
-  return { total: transformed.length, inserted, updated };
+  return { total: transformed.length, upserted: transformed.length };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   importLegislators()
     .then((result) => {
-      console.log("Import successful:", result);
+      console.log(`Import successful: ${result.upserted} of ${result.total} legislators`);
       process.exit(0);
     })
     .catch((error) => {

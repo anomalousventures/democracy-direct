@@ -102,6 +102,7 @@ jobs:
 
       - name: Run Playwright tests
         run: pnpm test:e2e
+        timeout-minutes: 10
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           EMAIL_PROVIDER: smtp

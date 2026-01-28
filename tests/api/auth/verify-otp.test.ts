@@ -40,18 +40,12 @@ describe("OTP Verification Endpoint", () => {
     });
 
     it("returns error for wrong OTP", async () => {
+      // With the new logic, wrong OTP means the database query returns empty
+      // because we query by both emailHash AND otpHash
       const mockDb = {
         select: vi.fn().mockReturnThis(),
         from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockResolvedValue([
-          {
-            id: "otp-1",
-            emailHash,
-            otpHash,
-            expiresAt: new Date(Date.now() + 60000),
-            usedAt: null,
-          },
-        ]),
+        where: vi.fn().mockResolvedValue([]),
       };
 
       const result = await verifyOTPRequest(validEmail, "000000", mockDb as never);
