@@ -781,6 +781,24 @@
 - Playwright: Search filters users
 - Playwright: Can change trust level
 
+### 7.6 Tag Suggestions System
+
+- [ ] New `tag_suggestions` table (id, name, suggested_by, status, approved_by, timestamps)
+- [ ] "Suggest a tag" input in template form
+- [ ] Pending suggestions shown with badge
+- [ ] Admin tag suggestions queue at `/admin/tags`
+- [ ] Approve/reject actions for suggested tags
+- [ ] Approved tags become available to all users
+- [ ] Rejected tags removed from templates using them
+
+**Tests:**
+
+- Vitest: User can suggest new tag
+- Vitest: Suggested tag saved as pending
+- Vitest: Admin can approve/reject tags
+- Playwright: Tag suggestion input exists
+- Playwright: Admin can manage tag suggestions
+
 ---
 
 ## Phase 8: Polish & Production
