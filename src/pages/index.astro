@@ -7,6 +7,7 @@ import { ZipLookup } from "../components/ZipLookup";
 export const prerender = false;
 
 const user = Astro.locals.user;
+const templateSlug = Astro.url.searchParams.get("template") || undefined;
 ---
 
 <Layout title="Home">
@@ -49,7 +50,7 @@ const user = Astro.locals.user;
           </p>
 
           <div class="animate-fade-up-delay-3">
-            <ZipLookup client:load />
+            <ZipLookup client:load templateSlug={templateSlug} />
           </div>
         </div>
       </div>

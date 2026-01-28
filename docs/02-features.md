@@ -519,12 +519,14 @@
 ### 5.4 Use Template Flow
 
 - [x] "Use This Template" links to homepage with template param
-- [ ] Redirects to rep profile with composer open (deferred - requires homepage changes)
-- [ ] If no rep selected, prompts for ZIP first (deferred)
+- [x] Template param passed through ZIP lookup → zip page → rep profile
+- [x] Rep profile page loads template content and passes to ContactFlow
+- [x] LetterComposer pre-fills with template content
 
 **Tests:**
 
 - Playwright: Use Template button exists and links correctly
+- Vitest: ContactFlow accepts and passes initialTemplate to LetterComposer
 
 ### 5.5 Template Search
 

@@ -3,9 +3,10 @@ import { lookupZip, type ZipLookupResult } from "../lib/zip-lookup";
 
 interface ZipLookupProps {
   autoFocus?: boolean;
+  templateSlug?: string;
 }
 
-export function ZipLookup({ autoFocus = true }: ZipLookupProps) {
+export function ZipLookup({ autoFocus = true, templateSlug }: ZipLookupProps) {
   const [zip, setZip] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,8 @@ export function ZipLookup({ autoFocus = true }: ZipLookupProps) {
       if (lookupResult.type === "error") {
         setError(lookupResult.message);
       } else if (lookupResult.type === "single") {
-        window.location.href = `/zip/${zip}`;
+        const templateParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
+        window.location.href = `/zip/${zip}${templateParam}`;
       } else {
         setResult(lookupResult);
       }
@@ -54,7 +56,12 @@ export function ZipLookup({ autoFocus = true }: ZipLookupProps) {
   };
 
   const handleDistrictSelect = (district: string) => {
-    window.location.href = `/zip/${zip}?district=${district}`;
+    const params = new URLSearchParams();
+    params.set("district", district);
+    if (templateSlug) {
+      params.set("template", templateSlug);
+    }
+    window.location.href = `/zip/${zip}?${params.toString()}`;
   };
 
   return (

@@ -6,6 +6,8 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import { templates } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
 import type { Legislator } from "@/db/schema";
 import {
@@ -21,9 +23,11 @@ import { getRequiredEnv } from "@/lib/env";
 const user = Astro.locals.user;
 
 const { bioguideId } = Astro.params;
+const templateSlug = Astro.url.searchParams.get("template");
 
 let rep: Legislator | null = null;
 let error: string | null = null;
+let templateContent: string | null = null;
 
 const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
 if (isInvalidId) {
@@ -45,6 +49,28 @@ if (!error) {
   if (!error && !rep) {
     Astro.response.status = 404;
     error = "Representative not found.";
+  }
+
+  if (templateSlug && !error) {
+    try {
+      const [template] = await db
+        .select({ body: templates.body })
+        .from(templates)
+        .where(
+          and(
+            eq(templates.slug, templateSlug),
+            eq(templates.isPublic, true),
+            eq(templates.moderationStatus, "approved")
+          )
+        )
+        .limit(1);
+
+      if (template) {
+        templateContent = template.body;
+      }
+    } catch (e) {
+      console.error("Failed to load template:", e);
+    }
   }
 }
 ---
@@ -313,6 +339,7 @@ if (!error) {
                     phone: rep.phoneCapitol || undefined,
                     office_address: rep.addressCapitol || undefined,
                   }}
+                  initialTemplate={templateContent || undefined}
                 />
               </div>
 
