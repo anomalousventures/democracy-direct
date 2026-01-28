@@ -1,0 +1,44 @@
+name: Refresh Data
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Run daily at 6am UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh-data:
+    name: Refresh Cached Data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Push database schema
+        run: pnpm db:push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Import legislators
+        run: pnpm import:legislators
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Import ZIP districts
+        run: pnpm import:zips
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
