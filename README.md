@@ -1,5 +1,13 @@
 # Democracy Direct
 
+<p align="center">
+  <img src="https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=1200&h=400&fit=crop&crop=bottom" alt="U.S. Capitol Building" width="100%">
+</p>
+
+<p align="center">
+  <em>Photo by <a href="https://unsplash.com/@afeliciotti">Andy Feliciotti</a> on Unsplash</em>
+</p>
+
 This is the source code for [democracy-direct.com](https://democracy-direct.com).
 
 ## Your representatives work for you
@@ -16,13 +24,34 @@ This project is open source because civic tools should be transparent. When a we
 
 The code in this repository is the same code running on democracy-direct.com. Anyone can read it, audit it, or run their own copy. There are no hidden trackers, no secret analytics, no background data collection that isn't visible right here.
 
-**What you can verify by reading this code:**
+### How your privacy is protected
 
-Your email address is never stored. Accounts use a one-way cryptographic hash—the original email cannot be recovered, even by someone with full database access. This isn't a policy; it's math.
+```mermaid
+flowchart LR
+    subgraph browser ["Your Browser (private)"]
+        A[Enter ZIP] --> B[Local Lookup]
+        B --> C[See Your Reps]
+        C --> D[Write Letter]
+        D --> E[Copy to Clipboard]
+    end
+    
+    E --> F[Paste into Rep's\nOfficial Contact Form]
+    
+    subgraph server ["Democracy Direct Server"]
+        G[ZIP Data\n& Rep Info]
+    end
+    
+    G -.->|"downloaded once,\nstored in browser"| B
+    
+    style browser fill:#e8f5e9,stroke:#2e7d32
+    style server fill:#fff3e0,stroke:#ef6c00
+```
 
-Your searches stay in your browser. When you enter a ZIP code, the lookup happens locally using data that's already loaded on the page. The server never sees what you searched for.
+**Your email address is never stored.** Accounts use a one-way cryptographic hash—the original email cannot be recovered, even by someone with full database access. This isn't a policy; it's math.
 
-Your letters never touch the server. The text you write is copied to your clipboard and pasted into your representative's official contact form by *you*. Democracy Direct never sees, stores, or transmits what you write.
+**Your searches stay in your browser.** When you enter a ZIP code, the lookup happens locally using data that's already loaded on the page. The server never sees what you searched for.
+
+**Your letters never touch the server.** The text you write is copied to your clipboard and pasted into your representative's official contact form by *you*. Democracy Direct never sees, stores, or transmits what you write.
 
 ## Where the data comes from
 
