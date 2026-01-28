@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { emailOtps } from "@/db/schema";
-import { badRequest, serverError, jsonResponse } from "@/lib/api-response";
+import { badRequest, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
@@ -37,7 +37,8 @@ export async function requestOTP(
       .where(and(eq(emailOtps.emailHash, emailHash), gte(emailOtps.createdAt, oneHourAgo)));
 
     if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
-      return { success: false, error: "Too many requests. Please try again later." };
+      // Silently succeed to prevent email enumeration - no OTP created/sent
+      return { success: true };
     }
 
     const { otp, otpHash } = generateOTP();
@@ -76,15 +77,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
-    const result = await requestOTP(email, locals, db);
+    await requestOTP(email, locals, db);
 
-    if (!result.success) {
-      return badRequest(result.error ?? "Request failed");
-    }
-
+    // Always return success to prevent email enumeration
     return jsonResponse({ success: true });
   } catch (error) {
     console.error("OTP request error:", error);
-    return serverError("Internal error");
+    // Return success even on error to prevent enumeration
+    return jsonResponse({ success: true });
   }
 };

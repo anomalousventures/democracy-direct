@@ -3,7 +3,14 @@ import { createDb } from "@/db/client";
 import { templates, templateFlags } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getRequiredEnv } from "@/lib/env";
-import { jsonResponse, badRequest, unauthorized, notFound, serverError } from "@/lib/api-response";
+import {
+  jsonResponse,
+  badRequest,
+  unauthorized,
+  notFound,
+  serverError,
+  conflict,
+} from "@/lib/api-response";
 import { parseJsonBody, flagBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
@@ -70,7 +77,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       .where(and(eq(templateFlags.templateId, template.id), eq(templateFlags.userId, user.id)));
 
     if (existingFlags.length >= MAX_FLAGS_PER_USER_PER_TEMPLATE) {
-      return jsonResponse({ error: "You have already flagged this template" }, 429);
+      return conflict("You have already flagged this template");
     }
 
     await db.insert(templateFlags).values({

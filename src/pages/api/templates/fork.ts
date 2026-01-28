@@ -15,6 +15,7 @@ import {
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 import { moderateTemplate } from "@/lib/moderation/moderate-template";
 import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
+import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export const prerender = false;
 
@@ -84,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .where(eq(users.id, user.id))
       .limit(1);
 
-    const trustLevel = userRecord?.trustLevel ?? 0;
+    const trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
 
     const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
     const contentToModerate = `${title}\n\n${templateBody}`;
