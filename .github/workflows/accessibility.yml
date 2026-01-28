@@ -51,7 +51,9 @@ jobs:
 
       - name: Install audit tools
         if: steps.deployment.outputs.url != ''
-        run: npm install -g @lhci/cli pa11y
+        run: |
+          npm install -g @lhci/cli pa11y
+          npx puppeteer browsers install chrome
 
       - name: Run Lighthouse audit
         if: steps.deployment.outputs.url != ''
@@ -81,10 +83,12 @@ jobs:
         run: |
           mkdir -p pa11y-results
 
-          pa11y "${DEPLOY_URL}" --reporter json > pa11y-results/home.json || true
-          pa11y "${DEPLOY_URL}/about" --reporter json > pa11y-results/about.json || true
-          pa11y "${DEPLOY_URL}/privacy" --reporter json > pa11y-results/privacy.json || true
-          pa11y "${DEPLOY_URL}/templates" --reporter json > pa11y-results/templates.json || true
+          PA11Y_OPTS="--reporter json --chrome-launch-config '{\"args\":[\"--no-sandbox\",\"--disable-setuid-sandbox\"]}'"
+
+          eval pa11y "${DEPLOY_URL}" $PA11Y_OPTS > pa11y-results/home.json || true
+          eval pa11y "${DEPLOY_URL}/about" $PA11Y_OPTS > pa11y-results/about.json || true
+          eval pa11y "${DEPLOY_URL}/privacy" $PA11Y_OPTS > pa11y-results/privacy.json || true
+          eval pa11y "${DEPLOY_URL}/templates" $PA11Y_OPTS > pa11y-results/templates.json || true
 
       - name: Generate audit summary
         if: steps.deployment.outputs.url != ''
@@ -124,11 +128,19 @@ jobs:
 
           total_issues=0
           for file in pa11y-results/*.json; do
-            if [ -f "$file" ]; then
+            if [ -f "$file" ] && [ -s "$file" ]; then
               page=$(basename "$file" .json)
-              issues=$(jq -r 'if type == "array" then length else 0 end' "$file" 2>/dev/null || echo "0")
-              total_issues=$((total_issues + issues))
-              echo "- **$page**: $issues issues" >> audit-summary.md
+              issues=$(jq -r 'if type == "array" then length else 0 end' "$file" 2>/dev/null)
+              issues=${issues:-0}
+              if [[ "$issues" =~ ^[0-9]+$ ]]; then
+                total_issues=$((total_issues + issues))
+                echo "- **$page**: $issues issues" >> audit-summary.md
+              else
+                echo "- **$page**: parse error" >> audit-summary.md
+              fi
+            elif [ -f "$file" ]; then
+              page=$(basename "$file" .json)
+              echo "- **$page**: no data (audit may have failed)" >> audit-summary.md
             fi
           done
 
