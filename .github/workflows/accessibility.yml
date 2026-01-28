@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
           version: 10
 
@@ -78,6 +78,8 @@ jobs:
           echo "" >> audit-summary.md
 
           if [ -d ".lighthouseci" ]; then
+            echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
+            echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
             for file in .lighthouseci/lhr-*.json; do
               if [ -f "$file" ]; then
                 url=$(jq -r '.finalUrl' "$file" 2>/dev/null || echo "unknown")
@@ -85,13 +87,10 @@ jobs:
                 a11y=$(jq -r '.categories.accessibility.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
                 bp=$(jq -r '.categories["best-practices"].score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
                 seo=$(jq -r '.categories.seo.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
-
-                echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
-                echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
                 echo "| $url | $perf | $a11y | $bp | $seo |" >> audit-summary.md
-                echo "" >> audit-summary.md
               fi
             done
+            echo "" >> audit-summary.md
           else
             echo "No Lighthouse results found." >> audit-summary.md
           fi

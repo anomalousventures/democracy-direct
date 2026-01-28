@@ -1,8 +1,7 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { createDb } from "../db/client";
 import { users } from "../db/schema";
 import { hashEmail } from "../lib/auth/hash-email";
 import { TRUST_LEVELS } from "../lib/trust-level";
@@ -48,8 +47,7 @@ async function ensureAdmins() {
     return;
   }
 
-  const sql = neon(databaseUrl);
-  const db = drizzle(sql);
+  const db = createDb(databaseUrl);
 
   console.log(`Ensuring ${adminEmails.length} admin user(s)...`);
 

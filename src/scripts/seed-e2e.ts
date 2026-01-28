@@ -1,7 +1,6 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
+import { createDb } from "../db/client";
 import { users, sessions, templates, tagSuggestions } from "../db/schema";
 import { TRUST_LEVELS } from "../lib/trust-level";
 
@@ -14,8 +13,7 @@ async function seedE2E() {
     process.exit(1);
   }
 
-  const sql = neon(databaseUrl);
-  const db = drizzle(sql);
+  const db = createDb(databaseUrl);
 
   console.log("Seeding E2E test data...\n");
 

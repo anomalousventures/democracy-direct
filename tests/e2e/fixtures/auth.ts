@@ -1,5 +1,6 @@
 import { test as base, type Page } from "@playwright/test";
 import { neon } from "@neondatabase/serverless";
+import { TRUST_LEVELS } from "@/lib/trust-level";
 
 interface AuthFixtures {
   adminPage: Page;
@@ -20,7 +21,7 @@ async function getAdminSession(): Promise<string | null> {
       SELECT s.id
       FROM sessions s
       JOIN users u ON s.user_id = u.id
-      WHERE u.trust_level = 2
+      WHERE u.trust_level = ${TRUST_LEVELS.ADMIN}
         AND s.expires_at > NOW()
       ORDER BY s.created_at DESC
       LIMIT 1
