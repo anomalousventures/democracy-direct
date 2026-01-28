@@ -30,11 +30,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Push database schema
-        run: pnpm db:push
-        env:
-          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-
       - name: Import legislators
         run: pnpm import:legislators
         env:
