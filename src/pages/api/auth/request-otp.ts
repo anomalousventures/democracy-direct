@@ -6,6 +6,7 @@ import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
+import { getRequiredEnv } from "@/lib/env";
 
 export const prerender = false;
 
@@ -18,10 +19,16 @@ export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
 }
 
+type EmailSender = (
+  message: Parameters<typeof sendEmail>[0],
+  locals: App.Locals
+) => Promise<boolean>;
+
 export async function requestOTP(
   email: string,
+  locals: App.Locals,
   db?: ReturnType<typeof createDb>,
-  emailSender: typeof sendEmail = sendEmail
+  emailSender: EmailSender = sendEmail
 ): Promise<{ success: boolean; error?: string }> {
   if (!validateEmail(email)) {
     return { success: false, error: "Invalid email format" };
@@ -56,7 +63,7 @@ export async function requestOTP(
     });
 
     try {
-      await emailSender(emailMessage);
+      await emailSender(emailMessage, locals);
     } catch (error) {
       console.error("Failed to send OTP email:", error);
     }
@@ -66,7 +73,7 @@ export async function requestOTP(
   return { success: true };
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json();
     const { email } = body;
@@ -78,8 +85,8 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const db = createDb(import.meta.env.DATABASE_URL);
-    const result = await requestOTP(email, db);
+    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const result = await requestOTP(email, locals, db);
 
     if (!result.success) {
       return new Response(JSON.stringify(result), {

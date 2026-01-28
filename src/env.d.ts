@@ -4,17 +4,35 @@
 
 import type { SessionUser } from "./middleware";
 
+type Runtime = import("@astrojs/cloudflare").Runtime<Env>;
+
+export interface Env {
+  DATABASE_URL: string;
+  EMAIL_PROVIDER?: "smtp" | "ses";
+  EMAIL_FROM?: string;
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_SECURE?: string;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  AWS_REGION?: string;
+  OPENAI_API_KEY?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  CONGRESS_API_KEY?: string;
+}
+
 declare global {
   namespace App {
-    interface Locals {
+    interface Locals extends Runtime {
       user: SessionUser | null;
     }
   }
 
   interface ImportMetaEnv {
-    readonly DATABASE_URL: string;
-    readonly EMAIL_PROVIDER: "smtp" | "ses";
-    readonly EMAIL_FROM: string;
+    readonly DATABASE_URL?: string;
+    readonly EMAIL_PROVIDER?: "smtp" | "ses";
+    readonly EMAIL_FROM?: string;
     readonly SMTP_HOST?: string;
     readonly SMTP_PORT?: string;
     readonly SMTP_SECURE?: string;

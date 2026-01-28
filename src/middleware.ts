@@ -2,6 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import { eq, and, gt } from "drizzle-orm";
 import { createDb } from "./db/client";
 import { sessions, users } from "./db/schema";
+import { getRequiredEnv } from "./lib/env";
 
 export interface SessionUser {
   id: string;
@@ -17,9 +18,11 @@ export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
     return next();
   }
 
-  try {
-    const db = createDb(import.meta.env.DATABASE_URL);
+  // Get DATABASE_URL outside try/catch so config errors surface immediately
+  const databaseUrl = getRequiredEnv(locals, "DATABASE_URL");
+  const db = createDb(databaseUrl);
 
+  try {
     const results = await db
       .select({
         id: users.id,

@@ -1,78 +1,225 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
 ---
 
 <Layout title="About" description="Learn about Democracy Direct and our mission.">
-  <main class="container mx-auto px-4 py-8 flex-1">
-    <h1 class="text-4xl font-bold mb-8">About Democracy Direct</h1>
+  <Header currentPath="/about" user={user} />
 
-    <section class="prose prose-lg max-w-3xl">
-      <h2>Our Mission</h2>
-      <p>Make civic engagement effortless, private, and accessible to everyone.</p>
-
-      <h2>The Problem</h2>
-      <p>
-        Contacting elected representatives is unnecessarily difficult. Finding who represents you
-        requires navigating multiple government websites. Representatives don't publish email
-        addresses. Most people don't know how to write an effective letter. Existing tools require
-        accounts and track usage.
-      </p>
-
-      <h2 id="privacy">Privacy</h2>
-      <p>
-        We believe civic participation should not require surveillance. We don't store your email
-        address—when you log in, we hash it using SHA-256 and store only the hash. We don't log your
-        ZIP code lookups. We never see your letters.
-      </p>
-
-      <h2 id="data-sources">Data Sources</h2>
-      <p>All representative data comes from public sources:</p>
-      <ul>
-        <li>
-          <a
-            href="https://github.com/unitedstates/congress-legislators"
-            target="_blank"
-            rel="noopener"
-          >
-            unitedstates/congress-legislators
-          </a> - Legislator information
-        </li>
-        <li>Census Bureau - ZIP-to-district mapping</li>
-        <li>Congress.gov - Voting records (coming soon)</li>
-      </ul>
-
-      <h2>Contact</h2>
-      <p>
-        Have questions or feedback? Open an issue on our
-        <a
-          href="https://github.com/anomalousventures/democracy-direct"
-          target="_blank"
-          rel="noopener"
+  <main class="flex-1">
+    <section class="relative py-16 md:py-24 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          class="absolute top-0 right-1/4 w-96 h-96 bg-[var(--color-civic-navy)]/5 rounded-full blur-3xl"
         >
-          GitHub repository
-        </a>.
-      </p>
+        </div>
+        <div
+          class="absolute bottom-0 left-1/4 w-96 h-96 bg-[var(--color-civic-gold)]/10 rounded-full blur-3xl"
+        >
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 relative">
+        <div class="max-w-3xl mx-auto">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-8 animate-fade-up"
+          >
+            <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)]"></span>
+            <span>Our Mission</span>
+          </div>
+
+          <h1
+            class="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight animate-fade-up-delay-1"
+          >
+            About <span class="text-gradient">Democracy Direct</span>
+          </h1>
+
+          <p class="text-lg md:text-xl text-muted-foreground mb-12 animate-fade-up-delay-2">
+            Making civic engagement effortless, private, and accessible to everyone.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider-civic"></div>
+
+    <section class="py-12 md:py-16">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto">
+          <div class="card-civic mb-8">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">The Problem</h2>
+            <p class="text-muted-foreground leading-relaxed">
+              Contacting elected representatives is unnecessarily difficult. Finding who represents
+              you requires navigating multiple government websites. Representatives don't publish
+              email addresses. Most people don't know how to write an effective letter. Existing
+              tools require accounts and track usage.
+            </p>
+          </div>
+
+          <div class="card-civic mb-8">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Privacy First</h2>
+            <p class="text-muted-foreground leading-relaxed">
+              We believe civic participation should not require surveillance. We don't store your
+              email address—when you log in, we hash it using SHA-256 and store only the hash. We
+              don't log your ZIP code lookups. We never see your letters.
+            </p>
+          </div>
+
+          <div class="card-civic">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Data Sources</h2>
+            <p class="text-muted-foreground leading-relaxed mb-4">
+              All representative data comes from public sources:
+            </p>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <span class="text-muted-foreground">
+                  <a
+                    href="https://github.com/unitedstates/congress-legislators"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-[var(--color-civic-navy)] hover:text-[var(--color-civic-gold)] transition-colors underline underline-offset-2"
+                  >
+                    unitedstates/congress-legislators
+                  </a> — Legislator information
+                </span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <span class="text-muted-foreground">Census Bureau — ZIP-to-district mapping</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <span class="text-muted-foreground"
+                  >Congress.gov — Voting records (coming soon)</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="py-16 md:py-24 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] relative overflow-hidden"
+    >
+      <div class="absolute inset-0 opacity-10" aria-hidden="true">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
+          </pattern>
+          <rect width="100" height="100" fill="url(#grid)"></rect>
+        </svg>
+      </div>
+
+      <div class="container mx-auto px-4 relative">
+        <div class="max-w-3xl mx-auto text-center">
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 bg-[var(--color-civic-gold)]/20 mb-8"
+          >
+            <svg
+              class="w-8 h-8 text-[var(--color-civic-gold)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              ></path>
+            </svg>
+          </div>
+
+          <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[var(--color-civic-cream)]">
+            Get In Touch
+          </h2>
+          <p class="text-[var(--color-civic-cream)]/80 text-lg leading-relaxed mb-8">
+            Have questions or feedback? We'd love to hear from you. Open an issue on our GitHub
+            repository or contribute to make civic engagement even better.
+          </p>
+
+          <a
+            href="https://github.com/anomalousventures/democracy-direct"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-[var(--color-civic-gold)] hover:text-[var(--color-civic-gold)]/80 transition-colors font-medium"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              ></path>
+            </svg>
+            <span>View on GitHub</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
+              ></path>
+            </svg>
+          </a>
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer class="border-t border-border py-8">
-    <div class="container mx-auto px-4">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-        <p class="text-muted-foreground text-sm">
-          © {new Date().getFullYear()} Democracy Direct
-        </p>
-        <nav class="flex gap-6">
-          <a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Home
-          </a>
-          <a
-            href="/privacy"
-            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Privacy
-          </a>
-        </nav>
-      </div>
-    </div>
-  </footer>
+  <Footer currentPath="/about" />
 </Layout>

@@ -5,6 +5,7 @@ import { emailOtps, users, sessions } from "../../../db/schema";
 import { hashEmail } from "../../../lib/auth/hash-email";
 import { hashOTP } from "../../../lib/auth/otp";
 import { randomUUID } from "crypto";
+import { getRequiredEnv } from "@/lib/env";
 
 export const prerender = false;
 
@@ -69,7 +70,7 @@ export async function verifyOTPRequest(
   return { success: true, sessionId };
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
     const body = await request.json();
     const { email, otp } = body;
@@ -81,7 +82,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const db = createDb(import.meta.env.DATABASE_URL);
+    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
     const result = await verifyOTPRequest(email, otp, db);
 
     if (!result.success || !result.sessionId) {

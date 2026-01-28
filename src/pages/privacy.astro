@@ -1,127 +1,474 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
 ---
 
 <Layout title="Privacy Policy" description="Privacy policy for Democracy Direct.">
-  <main class="container mx-auto px-4 py-8 flex-1">
-    <h1 class="text-4xl font-bold mb-4">Privacy Policy</h1>
-    <p class="text-muted-foreground mb-8">Last Updated: January 2026</p>
+  <Header currentPath="/privacy" user={user} />
 
-    <div class="prose prose-lg max-w-3xl">
-      <h2>Overview</h2>
-      <p>
-        Democracy Direct is designed with privacy as a core principle. We minimize data collection
-        and never sell or share your information with third parties.
-      </p>
-
-      <h2>Data Collection</h2>
-      <p>We collect minimal information to provide our services:</p>
-
-      <h3>Information We Do NOT Collect</h3>
-      <ul>
-        <li>
-          <strong>Email addresses:</strong> We never store your email address. When you log in, we hash
-          it using SHA-256 and store only the hash. We cannot recover your email from this hash.
-        </li>
-        <li>
-          <strong>ZIP code lookups:</strong> ZIP code lookups happen entirely in your browser using pre-loaded
-          data. We have no way to know what ZIP codes you've searched.
-        </li>
-        <li>
-          <strong>Your letters:</strong> When you copy a letter to send to your representative, the content
-          never touches our servers. It goes directly to your clipboard.
-        </li>
-        <li>
-          <strong>Tracking data:</strong> We do not use cookies for tracking. We do not use third-party
-          analytics that identify users.
-        </li>
-      </ul>
-
-      <h3>Information We DO Collect</h3>
-      <ul>
-        <li>
-          <strong>Email hash (optional):</strong> If you create an account, we store a SHA-256 hash of
-          your email for authentication.
-        </li>
-        <li>
-          <strong>Templates you create:</strong> If you contribute templates, we store the template content
-          and associate it with your account.
-        </li>
-        <li>
-          <strong>Aggregate statistics:</strong> We count total page views and template usage, but these
-          are not tied to individual users.
-        </li>
-      </ul>
-
-      <h2>Data Retention</h2>
-      <p>We retain data only as long as necessary to provide our services:</p>
-      <ul>
-        <li>Account data is retained until you delete your account</li>
-        <li>Templates are retained until deleted by you or removed for policy violations</li>
-        <li>Session data expires after 30 days of inactivity</li>
-      </ul>
-
-      <h2>Your Rights</h2>
-      <p>You have the right to:</p>
-      <ul>
-        <li><strong>Access:</strong> View all data associated with your account</li>
-        <li><strong>Delete:</strong> Request deletion of your account and all associated data</li>
-        <li><strong>Export:</strong> Download your templates and account data</li>
-        <li><strong>Opt out:</strong> Use the site without creating an account</li>
-      </ul>
-
-      <h2>Security</h2>
-      <p>We use industry-standard security practices including:</p>
-      <ul>
-        <li>HTTPS encryption for all connections</li>
-        <li>Secure password hashing (SHA-256 for email, bcrypt for OTPs)</li>
-        <li>Regular security audits</li>
-        <li>Minimal data collection to reduce breach impact</li>
-      </ul>
-
-      <h2>Third-Party Services</h2>
-      <p>We use the following third-party services:</p>
-      <ul>
-        <li><strong>Cloudflare:</strong> For hosting and DDoS protection</li>
-        <li><strong>Neon:</strong> For database hosting (PostgreSQL)</li>
-      </ul>
-      <p>
-        We do not use advertising networks, social media trackers, or analytics platforms that
-        identify individual users.
-      </p>
-
-      <h2>Contact</h2>
-      <p>
-        For privacy-related questions, open an issue on our
-        <a
-          href="https://github.com/anomalousventures/democracy-direct"
-          target="_blank"
-          rel="noopener"
+  <main class="flex-1">
+    <section class="relative py-16 md:py-24 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          class="absolute top-0 left-1/3 w-96 h-96 bg-[var(--color-civic-navy)]/5 rounded-full blur-3xl"
         >
-          GitHub repository
-        </a>.
-      </p>
-    </div>
+        </div>
+        <div
+          class="absolute bottom-0 right-1/3 w-96 h-96 bg-[var(--color-civic-gold)]/10 rounded-full blur-3xl"
+        >
+        </div>
+      </div>
+
+      <div class="container mx-auto px-4 relative">
+        <div class="max-w-3xl mx-auto">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-8 animate-fade-up"
+          >
+            <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)]"></span>
+            <span>Last Updated: January 2026</span>
+          </div>
+
+          <h1
+            class="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight animate-fade-up-delay-1"
+          >
+            Privacy <span class="text-gradient">Policy</span>
+          </h1>
+
+          <p class="text-lg md:text-xl text-muted-foreground mb-12 animate-fade-up-delay-2">
+            Democracy Direct is designed with privacy as a core principle. We minimize data
+            collection and never sell or share your information with third parties.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider-civic"></div>
+
+    <section class="py-12 md:py-16">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto space-y-8">
+          <div class="card-civic">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Information We Do NOT Collect</h2>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-red)] mt-2 shrink-0"></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Email addresses:</strong>
+                  <span class="text-muted-foreground">
+                    We never store your email address. When you log in, we hash it using SHA-256 and
+                    store only the hash. We cannot recover your email from this hash.
+                  </span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-red)] mt-2 shrink-0"></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">ZIP code lookups:</strong>
+                  <span class="text-muted-foreground">
+                    ZIP code lookups happen entirely in your browser using pre-loaded data. We have
+                    no way to know what ZIP codes you've searched.
+                  </span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-red)] mt-2 shrink-0"></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Your letters:</strong>
+                  <span class="text-muted-foreground">
+                    When you copy a letter to send to your representative, the content never touches
+                    our servers. It goes directly to your clipboard.
+                  </span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-red)] mt-2 shrink-0"></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Tracking data:</strong>
+                  <span class="text-muted-foreground">
+                    We do not use cookies for tracking. We do not use third-party analytics that
+                    identify users.
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-civic">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Information We DO Collect</h2>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Email hash (optional):</strong>
+                  <span class="text-muted-foreground">
+                    If you create an account, we store a SHA-256 hash of your email for
+                    authentication.
+                  </span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Templates you create:</strong>
+                  <span class="text-muted-foreground">
+                    If you contribute templates, we store the template content and associate it with
+                    your account.
+                  </span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <div>
+                  <strong class="text-[var(--color-civic-navy)]">Aggregate statistics:</strong>
+                  <span class="text-muted-foreground">
+                    We count total page views and template usage, but these are not tied to
+                    individual users.
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="card-civic">
+              <div
+                class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+              >
+                <svg
+                  class="w-7 h-7 text-[var(--color-civic-gold)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold mb-4">Data Retention</h2>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    >Account data retained until you delete your account</span
+                  >
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    >Templates retained until deleted by you or removed for policy violations</span
+                  >
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    >Session data expires after 30 days of inactivity</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-civic">
+              <div
+                class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+              >
+                <svg
+                  class="w-7 h-7 text-[var(--color-civic-gold)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold mb-4">Your Rights</h2>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    ><strong class="text-[var(--color-civic-navy)]">Access:</strong> View all data associated
+                    with your account</span
+                  >
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    ><strong class="text-[var(--color-civic-navy)]">Delete:</strong> Request deletion
+                    of your account and all associated data</span
+                  >
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    ><strong class="text-[var(--color-civic-navy)]">Export:</strong> Download your templates
+                    and account data</span
+                  >
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                  ></span>
+                  <span class="text-muted-foreground"
+                    ><strong class="text-[var(--color-civic-navy)]">Opt out:</strong> Use the site without
+                    creating an account</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card-civic">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Security</h2>
+            <p class="text-muted-foreground leading-relaxed mb-4">
+              We use industry-standard security practices including:
+            </p>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div class="flex items-center gap-3 p-3 bg-[var(--color-secondary)] rounded-sm">
+                <svg
+                  class="w-5 h-5 text-[var(--color-civic-navy)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  ></path>
+                </svg>
+                <span class="text-sm text-muted-foreground">HTTPS encryption</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-[var(--color-secondary)] rounded-sm">
+                <svg
+                  class="w-5 h-5 text-[var(--color-civic-navy)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                  ></path>
+                </svg>
+                <span class="text-sm text-muted-foreground">Secure password hashing</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-[var(--color-secondary)] rounded-sm">
+                <svg
+                  class="w-5 h-5 text-[var(--color-civic-navy)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                  ></path>
+                </svg>
+                <span class="text-sm text-muted-foreground">Regular security audits</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-[var(--color-secondary)] rounded-sm">
+                <svg
+                  class="w-5 h-5 text-[var(--color-civic-navy)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  ></path>
+                </svg>
+                <span class="text-sm text-muted-foreground">Minimal data collection</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-civic">
+            <div
+              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Third-Party Services</h2>
+            <p class="text-muted-foreground leading-relaxed mb-4">
+              We use the following third-party services:
+            </p>
+            <ul class="space-y-3 mb-4">
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <span class="text-muted-foreground"
+                  ><strong class="text-[var(--color-civic-navy)]">Cloudflare:</strong> For hosting and
+                  DDoS protection</span
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
+                ></span>
+                <span class="text-muted-foreground"
+                  ><strong class="text-[var(--color-civic-navy)]">Neon:</strong> For database hosting
+                  (PostgreSQL)</span
+                >
+              </li>
+            </ul>
+            <p class="text-muted-foreground leading-relaxed">
+              We do not use advertising networks, social media trackers, or analytics platforms that
+              identify individual users.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="py-16 md:py-24 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] relative overflow-hidden"
+    >
+      <div class="absolute inset-0 opacity-10" aria-hidden="true">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <pattern id="grid-privacy" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
+          </pattern>
+          <rect width="100" height="100" fill="url(#grid-privacy)"></rect>
+        </svg>
+      </div>
+
+      <div class="container mx-auto px-4 relative">
+        <div class="max-w-3xl mx-auto text-center">
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 bg-[var(--color-civic-gold)]/20 mb-8"
+          >
+            <svg
+              class="w-8 h-8 text-[var(--color-civic-gold)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+
+          <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[var(--color-civic-cream)]">
+            Questions?
+          </h2>
+          <p class="text-[var(--color-civic-cream)]/80 text-lg leading-relaxed mb-8">
+            For privacy-related questions, open an issue on our GitHub repository. We're committed
+            to transparency and will respond to all inquiries.
+          </p>
+
+          <a
+            href="https://github.com/anomalousventures/democracy-direct"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-[var(--color-civic-gold)] hover:text-[var(--color-civic-gold)]/80 transition-colors font-medium"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              ></path>
+            </svg>
+            <span>Contact Us on GitHub</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
+              ></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer class="border-t border-border py-8">
-    <div class="container mx-auto px-4">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-        <p class="text-muted-foreground text-sm">
-          © {new Date().getFullYear()} Democracy Direct
-        </p>
-        <nav class="flex gap-6">
-          <a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Home
-          </a>
-          <a
-            href="/about"
-            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            About
-          </a>
-        </nav>
-      </div>
-    </div>
-  </footer>
+  <Footer currentPath="/privacy" />
 </Layout>
