@@ -33,15 +33,15 @@ jobs:
       - name: Push database schema
         run: pnpm db:push
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
       - name: Import legislators
         run: pnpm import:legislators
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
 
       - name: Import ZIP districts
         run: pnpm import:zips
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}

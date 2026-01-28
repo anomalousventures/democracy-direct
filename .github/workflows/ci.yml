@@ -106,29 +106,29 @@ jobs:
       - name: Push database schema
         run: pnpm db:push
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_E2E }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
       - name: Ensure admin users
         run: pnpm ensure:admins
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_E2E }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
           ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
 
       - name: Seed E2E test data
         run: pnpm seed:e2e
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_E2E }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
       - name: Import legislators
         run: pnpm tsx src/scripts/import-legislators.ts
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_E2E }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
       - name: Run Playwright tests
         run: pnpm test:e2e
         timeout-minutes: 10
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_E2E }}
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
           EMAIL_PROVIDER: smtp
           EMAIL_FROM: no-reply@democracy-direct.com
           SMTP_HOST: localhost
