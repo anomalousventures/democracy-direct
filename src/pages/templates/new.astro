@@ -42,7 +42,11 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
             published.
           </p>
 
-          <TemplateCreateClient client:load turnstileSiteKey={turnstileSiteKey} />
+          <TemplateCreateClient
+            client:load
+            turnstileSiteKey={turnstileSiteKey}
+            isAuthenticated={!!user}
+          />
         </div>
       </div>
     </div>
