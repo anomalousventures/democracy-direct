@@ -1,5 +1,6 @@
 import type { ModerationResult, ModerationCategory } from "./openai";
 import { getHighestCategoryScore } from "./openai";
+import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export type ModerationDecision = "approve" | "reject" | "review";
 
@@ -28,7 +29,7 @@ export function makeModerationDecision(
 ): DecisionResult {
   const { category, score } = getHighestCategoryScore(result.categoryScores);
 
-  if (userTrustLevel < 0) {
+  if (userTrustLevel === TRUST_LEVELS.BANNED) {
     return {
       decision: "reject",
       reason: "User is banned",
@@ -58,7 +59,7 @@ export function makeModerationDecision(
     };
   }
 
-  if (userTrustLevel >= 1 && score < thresholds.reviewThreshold) {
+  if (userTrustLevel >= TRUST_LEVELS.TRUSTED && score < thresholds.reviewThreshold) {
     return {
       decision: "approve",
       reason: `Auto-approved: trusted user (trust level ${userTrustLevel}) with clean content`,

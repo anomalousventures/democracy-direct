@@ -917,13 +917,11 @@
 
 ### 9.1 OTP Rate Limit Info Leak Fix
 
-- [ ] Fix `request-otp.ts` to return success even when rate limited
-- [ ] Prevents email enumeration via rate limit error messages
-- [ ] Rate-limited requests should silently succeed (no OTP created/sent)
+- [x] Fix `request-otp.ts` to return success even when rate limited
+- [x] Prevents email enumeration via rate limit error messages
+- [x] Rate-limited requests should silently succeed (no OTP created/sent)
 
-**Current behavior:** Returns error "Too many requests" which reveals email exists and is active.
-
-**Required behavior:** Always return `{ success: true }` to prevent enumeration.
+**Status:** Already implemented correctly in `src/pages/api/auth/request-otp.ts:65-66`. The code returns `{ success: true }` for ALL cases with comment "Always return success to prevent email enumeration".
 
 **Tests:**
 
@@ -933,9 +931,10 @@
 
 ### 9.2 Magic Number Cleanup
 
-- [ ] Replace magic number `1` with `TRUST_LEVELS.TRUSTED` in `decision.ts`
-- [ ] Audit codebase for other magic numbers
-- [ ] Use constants from `trust-level.ts` consistently
+- [x] Replace magic number `1` with `TRUST_LEVELS.TRUSTED` in `decision.ts`
+- [x] Replace magic number `< 0` with `=== TRUST_LEVELS.BANNED` in `decision.ts`
+- [x] Replace magic number `0` with `TRUST_LEVELS.NEW_USER` in `fork.ts`
+- [x] Use constants from `trust-level.ts` consistently
 
 **Tests:**
 
@@ -943,9 +942,9 @@
 
 ### 9.3 HTTP Status Code Correction
 
-- [ ] Change "already flagged" response from 429 to 409 Conflict
-- [ ] 429 should only be used for actual rate limiting
-- [ ] Review other endpoints for correct status codes
+- [x] Change "already flagged" response from 429 to 409 Conflict
+- [x] 429 should only be used for actual rate limiting
+- [x] Review other endpoints for correct status codes
 
 **Tests:**
 
@@ -954,19 +953,10 @@
 
 ### 9.4 Perspective API Integration (Optional)
 
-- [ ] Add `src/lib/moderation/perspective.ts` module
-- [ ] Call Perspective API for TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK scores
-- [ ] Run in parallel with OpenAI moderation
-- [ ] Combine scores in decision logic
-- [ ] OR: Remove Perspective API references from README and .env.example if not implementing
+- [x] Decision: Not implementing - OpenAI Moderation API is sufficient
+- [x] Removed `PERSPECTIVE_API_KEY` from `.env.example`
 
-**Note:** Currently only OpenAI Moderation API is implemented despite docs mentioning Perspective.
-
-**Tests:**
-
-- Vitest: Perspective API called with correct parameters
-- Vitest: Response parsed correctly
-- Vitest: Combined decision uses both API results
+**Note:** OpenAI Moderation API provides comprehensive content moderation. Perspective API would add complexity without significant benefit for this use case.
 
 ### 9.5 Site-Wide Design Review
 
