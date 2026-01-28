@@ -19,10 +19,16 @@ export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
 }
 
+type EmailSender = (
+  message: Parameters<typeof sendEmail>[0],
+  locals: App.Locals
+) => Promise<boolean>;
+
 export async function requestOTP(
   email: string,
+  locals: App.Locals,
   db?: ReturnType<typeof createDb>,
-  emailSender: typeof sendEmail = sendEmail
+  emailSender: EmailSender = sendEmail
 ): Promise<{ success: boolean; error?: string }> {
   if (!validateEmail(email)) {
     return { success: false, error: "Invalid email format" };
@@ -57,7 +63,7 @@ export async function requestOTP(
     });
 
     try {
-      await emailSender(emailMessage);
+      await emailSender(emailMessage, locals);
     } catch (error) {
       console.error("Failed to send OTP email:", error);
     }
@@ -80,7 +86,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
-    const result = await requestOTP(email, db);
+    const result = await requestOTP(email, locals, db);
 
     if (!result.success) {
       return new Response(JSON.stringify(result), {

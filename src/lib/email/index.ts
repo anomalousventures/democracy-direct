@@ -1,6 +1,7 @@
 import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
 import { SmtpEmailProvider } from "./providers/smtp";
 import { SesEmailProvider } from "./providers/ses";
+import { getEnv } from "@/lib/env";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
@@ -15,23 +16,23 @@ export function createEmailProvider(config: EmailConfig): EmailProvider {
   }
 }
 
-export function getEmailConfig(): EmailConfig {
-  const provider = (import.meta.env.EMAIL_PROVIDER || "smtp") as EmailConfig["provider"];
+export function getEmailConfig(locals: App.Locals): EmailConfig {
+  const provider = (getEnv(locals, "EMAIL_PROVIDER") || "smtp") as EmailConfig["provider"];
 
   return {
     provider,
-    from: import.meta.env.EMAIL_FROM || "noreply@democracy-direct.com",
+    from: getEnv(locals, "EMAIL_FROM") || "noreply@democracy-direct.com",
     smtp:
       provider === "smtp"
         ? {
-            host: import.meta.env.SMTP_HOST || "localhost",
-            port: parseInt(import.meta.env.SMTP_PORT || "1025", 10),
-            secure: import.meta.env.SMTP_SECURE === "true",
+            host: getEnv(locals, "SMTP_HOST") || "localhost",
+            port: parseInt(getEnv(locals, "SMTP_PORT") || "1025", 10),
+            secure: getEnv(locals, "SMTP_SECURE") === "true",
             auth:
-              import.meta.env.SMTP_USER && import.meta.env.SMTP_PASS
+              getEnv(locals, "SMTP_USER") && getEnv(locals, "SMTP_PASS")
                 ? {
-                    user: import.meta.env.SMTP_USER,
-                    pass: import.meta.env.SMTP_PASS,
+                    user: getEnv(locals, "SMTP_USER")!,
+                    pass: getEnv(locals, "SMTP_PASS")!,
                   }
                 : undefined,
           }
@@ -39,13 +40,13 @@ export function getEmailConfig(): EmailConfig {
     ses:
       provider === "ses"
         ? {
-            region: import.meta.env.AWS_REGION || "us-east-1",
+            region: getEnv(locals, "AWS_REGION") || "us-east-1",
           }
         : undefined,
   };
 }
 
-export async function sendEmail(message: EmailMessage): Promise<boolean> {
-  const provider = createEmailProvider(getEmailConfig());
+export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
+  const provider = createEmailProvider(getEmailConfig(locals));
   return provider.send(message);
 }

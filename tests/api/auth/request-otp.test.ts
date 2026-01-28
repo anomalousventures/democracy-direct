@@ -17,6 +17,18 @@ vi.mock("@/lib/auth/send-otp-email", () => ({
 
 import { requestOTP, validateEmail } from "@/pages/api/auth/request-otp";
 
+const mockLocals = {
+  user: null,
+  runtime: {
+    env: {
+      DATABASE_URL: "mock-url",
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "localhost",
+      SMTP_PORT: "1025",
+    },
+  },
+} as unknown as App.Locals;
+
 describe("OTP Request Endpoint", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,18 +51,18 @@ describe("OTP Request Endpoint", () => {
 
   describe("requestOTP", () => {
     it("returns success for valid email", async () => {
-      const result = await requestOTP("test@example.com");
+      const result = await requestOTP("test@example.com", mockLocals);
       expect(result.success).toBe(true);
     });
 
     it("returns error for invalid email format", async () => {
-      const result = await requestOTP("invalid-email");
+      const result = await requestOTP("invalid-email", mockLocals);
       expect(result.success).toBe(false);
       expect(result.error).toBe("Invalid email format");
     });
 
     it("returns generic success even for non-existent email (no info leakage)", async () => {
-      const result = await requestOTP("nonexistent@example.com");
+      const result = await requestOTP("nonexistent@example.com", mockLocals);
       expect(result.success).toBe(true);
     });
 
@@ -66,7 +78,12 @@ describe("OTP Request Endpoint", () => {
       };
 
       const mockEmailSender = vi.fn().mockResolvedValue(true);
-      const result = await requestOTP("test@example.com", mockDb as never, mockEmailSender);
+      const result = await requestOTP(
+        "test@example.com",
+        mockLocals,
+        mockDb as never,
+        mockEmailSender
+      );
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Too many requests. Please try again later.");
@@ -84,7 +101,12 @@ describe("OTP Request Endpoint", () => {
       };
 
       const mockEmailSender = vi.fn().mockResolvedValue(true);
-      const result = await requestOTP("test@example.com", mockDb as never, mockEmailSender);
+      const result = await requestOTP(
+        "test@example.com",
+        mockLocals,
+        mockDb as never,
+        mockEmailSender
+      );
 
       expect(result.success).toBe(true);
       expect(mockDb.insert).toHaveBeenCalled();
