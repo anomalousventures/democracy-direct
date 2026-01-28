@@ -101,12 +101,19 @@ jobs:
         run: |
           mkdir -p pa11y-results
 
-          PA11Y_OPTS="--reporter json --chrome-launch-config '{\"args\":[\"--no-sandbox\",\"--disable-setuid-sandbox\"]}'"
+          # Create pa11y config for Chrome sandbox settings
+          cat > pa11y-config.json << 'EOF'
+          {
+            "chromeLaunchConfig": {
+              "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+            }
+          }
+          EOF
 
-          eval pa11y "${DEPLOY_URL}" $PA11Y_OPTS > pa11y-results/home.json || true
-          eval pa11y "${DEPLOY_URL}/about" $PA11Y_OPTS > pa11y-results/about.json || true
-          eval pa11y "${DEPLOY_URL}/privacy" $PA11Y_OPTS > pa11y-results/privacy.json || true
-          eval pa11y "${DEPLOY_URL}/templates" $PA11Y_OPTS > pa11y-results/templates.json || true
+          pa11y "${DEPLOY_URL}" --config pa11y-config.json --reporter json > pa11y-results/home.json || true
+          pa11y "${DEPLOY_URL}/about" --config pa11y-config.json --reporter json > pa11y-results/about.json || true
+          pa11y "${DEPLOY_URL}/privacy" --config pa11y-config.json --reporter json > pa11y-results/privacy.json || true
+          pa11y "${DEPLOY_URL}/templates" --config pa11y-config.json --reporter json > pa11y-results/templates.json || true
 
       - name: Generate audit summary
         if: steps.deployment.outputs.url != ''
