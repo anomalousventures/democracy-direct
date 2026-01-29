@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { Toaster } from "@/components/ui/sonner";
+import { LoginRequiredToast } from "@/components/LoginRequiredToast";
 import { getConfig } from "@/lib/config";
 import PostHog from "../components/posthog.astro";
 
@@ -63,6 +64,7 @@ const fullTitle = `${title} | Democracy Direct`;
     </a>
     <slot />
     <Toaster client:load position="top-right" duration={5000} />
+    <LoginRequiredToast client:load />
     <script is:inline define:vars={{ turnstileSiteKey }}>
       window.TURNSTILE_SITE_KEY = turnstileSiteKey;
     </script>

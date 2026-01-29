@@ -9,7 +9,15 @@ import cloudflare from "@astrojs/cloudflare";
 // https://astro.build/config
 export default defineConfig({
   site: "https://democracy-direct.com",
-  integrations: [react(), sitemap()],
+  integrations: [
+    react(),
+    sitemap({
+      filter: (page) =>
+        !page.includes("/admin") &&
+        !page.includes("/templates/mine") &&
+        !page.includes("/templates/new"),
+    }),
+  ],
 
   vite: {
     plugins: [tailwindcss()],
