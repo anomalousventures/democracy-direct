@@ -2,6 +2,8 @@ name: Accessibility & Performance Audit
 
 on:
   deployment_status:
+  check_run:
+    types: [completed]
   workflow_dispatch:
     inputs:
       deployment_url:
@@ -17,16 +19,22 @@ permissions:
   contents: read
   pull-requests: write
   deployments: read
+  checks: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.deployment.sha }}
+  group: ${{ github.workflow }}-${{ github.event.deployment.sha || github.event.check_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   audit:
     name: Lighthouse & Pa11y
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.deployment_status.state == 'success' ||
+      (github.event_name == 'check_run' &&
+       github.event.check_run.app.slug == 'cloudflare-workers-and-pages' &&
+       github.event.check_run.conclusion == 'success')
     steps:
       - uses: actions/checkout@v6
 
@@ -41,13 +49,39 @@ jobs:
               deploymentUrl = '${{ inputs.deployment_url }}';
               prNumber = '${{ inputs.pr_number }}' || null;
               console.log('Manual trigger');
+            } else if (context.eventName === 'check_run') {
+              const sha = context.payload.check_run.head_sha;
+              console.log(`Check run event - Commit SHA: ${sha}`);
+
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100
+              });
+
+              const pr = prs.find(p => p.head.sha === sha);
+              prNumber = pr ? pr.number : null;
+
+              if (pr) {
+                const branchSlug = pr.head.ref
+                  .toLowerCase()
+                  .replace(/\//g, '-')
+                  .replace(/[^a-z0-9-]/g, '');
+                deploymentUrl = `https://${branchSlug}.democracy-direct.pages.dev`;
+                console.log(`Branch: ${pr.head.ref} -> Slug: ${branchSlug}`);
+              } else {
+                console.log('No PR found for this commit, skipping audit');
+                deploymentUrl = null;
+              }
             } else {
               deploymentUrl = context.payload.deployment_status.target_url;
               const sha = context.payload.deployment.sha;
 
-              console.log(`Commit SHA: ${sha}`);
+              console.log(`Deployment status event - Commit SHA: ${sha}`);
 
-              // Find PR associated with this commit
               const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
