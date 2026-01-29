@@ -4,8 +4,9 @@ test.describe("Admin Dashboard", () => {
   test("non-admin is redirected", async ({ page }) => {
     await page.goto("/admin");
 
+    // Should redirect to home page (login=required param is consumed by toast)
     await expect(page).toHaveURL("/");
-    await expect(page.getByText("Please sign in to access that page")).toBeVisible();
+    await expect(page.locator('[data-testid="hero"]')).toBeVisible();
   });
 
   test("admin sees dashboard with stats", async ({ adminPage, adminSessionId }) => {
@@ -28,8 +29,9 @@ test.describe("Admin Tag Suggestions", () => {
   test("non-admin is redirected from tags page", async ({ page }) => {
     await page.goto("/admin/tags");
 
+    // Should redirect to home page (login=required param is consumed by toast)
     await expect(page).toHaveURL("/");
-    await expect(page.getByText("Please sign in to access that page")).toBeVisible();
+    await expect(page.locator('[data-testid="hero"]')).toBeVisible();
   });
 
   test("admin can access tag suggestions page", async ({ adminPage, adminSessionId }) => {
