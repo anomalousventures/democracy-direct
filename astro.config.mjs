@@ -13,7 +13,9 @@ export default defineConfig({
     react(),
     sitemap({
       filter: (page) =>
-        !page.includes("/admin") && !page.includes("/templates/mine"),
+        !page.includes("/admin") &&
+        !page.includes("/templates/mine") &&
+        !page.includes("/templates/fork"),
     }),
   ],
 
