@@ -1,7 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "@/pages/api/templates/index";
 
 describe("Template Creation Endpoint", () => {
+  const mockFetch = vi.fn();
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = mockFetch;
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve({ success: true }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    mockFetch.mockReset();
+  });
+
   it("accepts anonymous users for template creation", async () => {
     const mockRequest = new Request("http://localhost/api/templates", {
       method: "POST",

@@ -1,7 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "@/pages/api/templates/fork";
 
 describe("POST /api/templates/fork", () => {
+  const mockFetch = vi.fn();
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = mockFetch;
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve({ success: true }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    mockFetch.mockReset();
+  });
+
   it("returns 401 when not authenticated", async () => {
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
