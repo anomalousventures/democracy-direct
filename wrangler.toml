@@ -9,5 +9,5 @@ enabled = true
 [vars]
 EMAIL_PROVIDER = "ses"
 EMAIL_FROM = "no-reply@democracydirect.us"
-AWS_REGION = "us-west-2"
+AWS_REGION = "us-west-1"
 TURNSTILE_SITE_KEY = "0x4AAAAAABB4GqN8-8XHC21Y"
