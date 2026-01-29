@@ -171,7 +171,14 @@ describe("POST /api/templates/fork", () => {
     expect(data.errors).toBeDefined();
   });
 
-  it("returns 404 when source template does not exist", async () => {
+  // Security: All inaccessible template scenarios return the same 404 response
+  // to prevent information leakage about which templates exist, are private, or pending.
+  // The database query filters by: exists AND isPublic AND moderationStatus='approved'
+  it.each([
+    ["non-existent", "non-existent-template-id"],
+    ["private", "private-template-id"],
+    ["unapproved", "pending-template-id"],
+  ])("returns 404 when source template is %s", async (_scenario, forkedFromId) => {
     mockDb.limit.mockResolvedValue([]);
 
     const response = await POST({
@@ -180,67 +187,7 @@ describe("POST /api/templates/fork", () => {
         body: JSON.stringify({
           title: "Forked Template",
           body: "This is a forked template body that is long enough to pass validation requirements.",
-          forkedFromId: "non-existent-template-id",
-          turnstileToken: "test-token",
-        }),
-      }),
-      locals: {
-        user: { id: "user-123" },
-        runtime: {
-          env: {
-            DATABASE_URL: "postgres://test",
-            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
-            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
-          },
-        },
-      },
-    } as never);
-
-    expect(response.status).toBe(404);
-    const data = await response.json();
-    expect(data.error).toBe("Source template not found");
-  });
-
-  it("returns 404 when source template is private", async () => {
-    mockDb.limit.mockResolvedValue([]);
-
-    const response = await POST({
-      request: new Request("http://localhost/api/templates/fork", {
-        method: "POST",
-        body: JSON.stringify({
-          title: "Forked Template",
-          body: "This is a forked template body that is long enough to pass validation requirements.",
-          forkedFromId: "private-template-id",
-          turnstileToken: "test-token",
-        }),
-      }),
-      locals: {
-        user: { id: "user-123" },
-        runtime: {
-          env: {
-            DATABASE_URL: "postgres://test",
-            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
-            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
-          },
-        },
-      },
-    } as never);
-
-    expect(response.status).toBe(404);
-    const data = await response.json();
-    expect(data.error).toBe("Source template not found");
-  });
-
-  it("returns 404 when source template is not approved", async () => {
-    mockDb.limit.mockResolvedValue([]);
-
-    const response = await POST({
-      request: new Request("http://localhost/api/templates/fork", {
-        method: "POST",
-        body: JSON.stringify({
-          title: "Forked Template",
-          body: "This is a forked template body that is long enough to pass validation requirements.",
-          forkedFromId: "pending-template-id",
+          forkedFromId,
           turnstileToken: "test-token",
         }),
       }),

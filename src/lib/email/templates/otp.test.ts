@@ -32,7 +32,7 @@ describe("createOtpEmail", () => {
     expect(email.html).toContain(">4</td>");
     expect(email.html).toContain(">5</td>");
     expect(email.html).toContain(">6</td>");
-    expect(email.html).toContain(">123456</a>");
+    expect(email.html).toContain(">123456</span>");
   });
 
   it("includes expiry time in text body", () => {

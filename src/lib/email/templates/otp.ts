@@ -81,11 +81,11 @@ Privacy: https://democracy-direct.com/privacy`,
                 </tr>
               </table>
 
-              <!-- Copyable OTP (hidden visually but selectable) -->
+              <!-- Copyable OTP -->
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td align="center" style="padding: 0 0 24px 0;">
-                    <a href="#" style="display: inline-block; background-color: #1a365d; color: #ffffff; font-size: 18px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; letter-spacing: 4px; padding: 14px 28px; border-radius: 8px; text-decoration: none; -webkit-user-select: all; user-select: all;">${otp}</a>
+                    <span role="button" aria-label="Your verification code: ${otp}" style="display: inline-block; background-color: #1a365d; color: #ffffff; font-size: 18px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; letter-spacing: 4px; padding: 14px 28px; border-radius: 8px; text-decoration: none; -webkit-user-select: all; user-select: all;">${otp}</span>
                   </td>
                 </tr>
               </table>
