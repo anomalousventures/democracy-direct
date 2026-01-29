@@ -10,4 +10,9 @@ enabled = true
 EMAIL_PROVIDER = "ses"
 EMAIL_FROM = "no-reply@democracydirect.us"
 AWS_REGION = "us-west-1"
+
+[env.production.vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAABB4GqN8-8XHC21Y"
+
+[env.preview.vars]
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
