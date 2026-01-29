@@ -32,6 +32,14 @@ export default tseslint.config(
   },
   eslintConfigPrettier,
   {
+    files: ["*.config.{js,mjs,ts}", "*.config.*.{js,mjs,ts}"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+      },
+    },
+  },
+  {
     ignores: [
       "dist/**",
       "node_modules/**",
