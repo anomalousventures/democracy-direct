@@ -36,6 +36,9 @@ interface TiptapEditorProps {
   onChange: (content: string) => void;
   placeholder?: string;
   showVariableButtons?: boolean;
+  maxLength?: number;
+  "aria-invalid"?: "true" | "false";
+  "aria-describedby"?: string;
 }
 
 export function TiptapEditor({
@@ -43,6 +46,9 @@ export function TiptapEditor({
   onChange,
   placeholder = "Write your letter here...",
   showVariableButtons = true,
+  maxLength,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: TiptapEditorProps) {
   const initialHtml = useMemo(() => textToHtml(content), [content]);
 
@@ -69,6 +75,8 @@ export function TiptapEditor({
         class:
           "tiptap-editor input-civic min-h-[200px] resize-y text-sm focus:outline-none prose prose-sm max-w-none",
         "data-testid": "tiptap-editor",
+        ...(ariaInvalid && { "aria-invalid": ariaInvalid }),
+        ...(ariaDescribedBy && { "aria-describedby": ariaDescribedBy }),
       },
     },
   });
@@ -253,11 +261,14 @@ export function TiptapEditor({
         <span className="text-xs sm:text-sm">
           Variables like {"{{REP_NAME}}"} will be replaced with actual values
         </span>
-        <span className="text-xs sm:text-sm">
+        <span
+          className={`text-xs sm:text-sm ${maxLength && characterCount > maxLength ? "text-red-500 font-medium" : ""}`}
+        >
           <span className="font-medium" data-testid="character-count">
             {characterCount}
-          </span>{" "}
-          characters
+          </span>
+          {maxLength ? ` / ${maxLength}` : ""} characters
+          {maxLength && characterCount > maxLength && " (exceeds limit)"}
         </span>
       </div>
     </div>

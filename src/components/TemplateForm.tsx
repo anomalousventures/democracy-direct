@@ -178,6 +178,9 @@ export function TemplateForm({
           content={body}
           onChange={setBody}
           placeholder="Write your letter template here..."
+          maxLength={BODY_MAX_LENGTH}
+          aria-invalid={errors.body ? "true" : undefined}
+          aria-describedby={errors.body ? "body-error" : "body-hint"}
         />
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>
