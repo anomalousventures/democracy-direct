@@ -79,12 +79,16 @@ if (!slug) {
 }
 
 const isOwner = user && template?.userId === user.id;
+
+function getCleanDescription(body: string): string {
+  const templateVarPattern = /\{\{[^}]+\}\}/g;
+  return body.replace(templateVarPattern, "").slice(0, 155).trim() + "...";
+}
+
+const description = template ? getCleanDescription(template.body) : "Template not found";
 ---
 
-<Layout
-  title={template ? template.title : "Template Not Found"}
-  description={template ? template.body.slice(0, 160) : "Template not found"}
->
+<Layout title={template ? template.title : "Template Not Found"} description={description}>
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">

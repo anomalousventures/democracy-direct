@@ -11,6 +11,7 @@ import zipData from "../../../public/data/zip-districts.json";
 import { getPhotoUrl, getPartyColor, getPartyLabel, getRepTitle } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
 import { getConfig } from "@/lib/config";
+import { getStateName } from "@/lib/states";
 
 const user = Astro.locals.user;
 
@@ -69,10 +70,10 @@ if (!error && zipEntry) {
 ---
 
 <Layout
-  title={zipInfo ? `Representatives for ${zip}` : "ZIP Lookup"}
+  title={zipInfo ? `Your Representatives for ${zip} | ${zipInfo.state}` : "ZIP Lookup"}
   description={zipInfo
-    ? `Find your senators and representative for ZIP code ${zip}`
-    : "Look up your congressional representatives"}
+    ? `Find and contact your ${reps.length} elected officials for ZIP code ${zip} in ${getStateName(zipInfo.state)}`
+    : "Look up your congressional representatives by ZIP code"}
 >
   <Header currentPath={`/zip/${zip}`} user={user} />
 
