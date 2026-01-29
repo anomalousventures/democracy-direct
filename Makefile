@@ -36,7 +36,7 @@ logs:
 	docker-compose logs -f
 
 dev:
-	docker-compose up -d
+	docker-compose down --remove-orphans && docker-compose up -d
 	@echo "Mailpit: http://localhost:8025"
 	@echo "Building and starting dev server..."
 	@trap 'docker-compose down' EXIT; pnpm dev

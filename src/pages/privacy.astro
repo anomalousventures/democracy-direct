@@ -107,8 +107,8 @@ const user = Astro.locals.user;
                 <div>
                   <strong class="text-[var(--color-civic-navy)]">IP addresses:</strong>
                   <span class="text-muted-foreground">
-                    We do not collect or store your IP address. Our analytics are configured to
-                    discard IP information before processing.
+                    We do not store IP addresses in our database. Our analytics provider (PostHog)
+                    receives IPs for geolocation but cannot link them to your identity.
                   </span>
                 </div>
               </li>
@@ -163,8 +163,8 @@ const user = Astro.locals.user;
                   <strong class="text-[var(--color-civic-navy)]">Anonymous analytics:</strong>
                   <span class="text-muted-foreground">
                     We collect anonymous usage data (page views, button clicks, general
-                    browser/device type) to improve the site. This data cannot be used to identify
-                    you personally. No IP addresses are collected.
+                    browser/device type, geographic region) to improve the site. This data cannot be
+                    linked to your identity since we never store email addresses.
                   </span>
                 </div>
               </li>
