@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-make dev                    # Start Mailpit + Astro dev (localhost:4321, Mailpit at :8025)
-pnpm dev                    # Astro dev server only
+make dev                    # Start Mailpit + build + wrangler dev (localhost:4321)
+pnpm dev                    # Build + wrangler dev (Cloudflare runtime required)
 
 # Testing
 pnpm test                   # Run unit tests (Vitest)
@@ -28,7 +28,7 @@ make db-seed                # Import legislators + ZIP data
 
 ### Astro + React Islands
 
-Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`.
+Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. **Dev requires wrangler** - `astro dev` lacks Cloudflare runtime (`locals.runtime.env`).
 
 ### Database (Neon + Drizzle)
 
@@ -48,7 +48,7 @@ Passwordless OTP flow with timing-safe verification:
 
 ### Email Providers
 
-Abstraction in `src/lib/email/` supports SMTP (Mailpit locally) and SES. Config via `EMAIL_PROVIDER`, `SMTP_HOST`, `SMTP_PORT`.
+Abstraction in `src/lib/email/` supports SMTP (Mailpit locally) and SES. Config via `EMAIL_PROVIDER`, `SMTP_HOST`, `SMTP_PORT`. **WSL2**: Use `127.0.0.1` not `localhost` for SMTP_HOST.
 
 ### ZIP Code Lookup
 
@@ -71,6 +71,7 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 
 - **API tests location**: Place in `tests/api/`, NOT `src/pages/api/` (Astro treats files there as routes)
 - **Use static imports**: Prefer `import { POST } from "@/pages/api/foo"` over dynamic `await import()`
+- **Drizzle table names**: Access via `table[Symbol.for("drizzle:Name")]`, not `table._?.name`
 
 ## Shared Utilities
 
