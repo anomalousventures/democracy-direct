@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { type Address, createEmptyAddress } from "../types/representative";
+import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
 
 interface AddressFormProps {
   onChange: (address: Address) => void;
@@ -9,55 +10,31 @@ const STORAGE_KEY = "democracy-direct-address";
 const SAVE_PREF_KEY = "democracy-direct-save-address";
 
 function getSavePreference(): boolean {
-  try {
-    return localStorage.getItem(SAVE_PREF_KEY) === "true";
-  } catch {
-    return false;
-  }
+  return getItem(SAVE_PREF_KEY) === "true";
 }
 
 function setSavePreference(save: boolean): void {
-  try {
-    if (save) {
-      localStorage.setItem(SAVE_PREF_KEY, "true");
-    } else {
-      localStorage.removeItem(SAVE_PREF_KEY);
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // Ignore storage errors
+  if (save) {
+    setItem(SAVE_PREF_KEY, "true");
+  } else {
+    removeItem(SAVE_PREF_KEY);
+    removeItem(STORAGE_KEY);
   }
 }
 
 function loadFromLocalStorage(): Address | null {
-  try {
-    if (!getSavePreference()) return null;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
+  if (!getSavePreference()) return null;
+  return getJSON<Address>(STORAGE_KEY);
 }
 
 function saveToLocalStorage(address: Address): void {
-  try {
-    if (getSavePreference()) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(address));
-    }
-  } catch {
-    // Ignore storage errors
+  if (getSavePreference()) {
+    setJSON(STORAGE_KEY, address);
   }
 }
 
 function clearFromLocalStorage(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore storage errors
-  }
+  removeItem(STORAGE_KEY);
 }
 
 export function AddressForm({ onChange }: AddressFormProps) {

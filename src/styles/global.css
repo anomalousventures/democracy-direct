@@ -368,31 +368,61 @@
 }
 
 @media print {
+  @page {
+    size: 8.5in 11in;
+    margin: 1in;
+  }
+
+  html,
   body {
-    background: white !important;
-    background-image: none !important;
+    background: white;
+    background-image: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   header,
   footer,
   nav,
   .no-print {
-    display: none !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
   }
 
-  .print-preview {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  main {
+    padding: 0;
+    margin: 0;
+    width: 100%;
   }
 
   .print-only {
-    display: block !important;
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    page-break-inside: avoid;
   }
 
-  @page {
-    margin: 1in;
-    size: letter;
+  .print-preview {
+    background: white;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    min-height: auto;
+    width: 100%;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .print-preview .space-y-6 > * + * {
+    margin-top: 1.5em;
   }
 }

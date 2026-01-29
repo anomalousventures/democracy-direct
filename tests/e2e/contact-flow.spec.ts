@@ -95,7 +95,7 @@ test.describe("Phase 3: Contact Flow", () => {
       const month = today.toLocaleDateString("en-US", { month: "long" });
       await expect(preview).toContainText(month);
       await expect(preview).toContainText("This is my letter.");
-      await expect(preview).toContainText(/Dear Representative/);
+      await expect(preview).toContainText(/Jimmy Patronis/);
     });
 
     test("return address fields are editable", async ({ page }) => {

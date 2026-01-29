@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "./ui/input";
+import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
 
 const STORAGE_KEY = "democracy-direct-user-info";
 const SAVE_PREF_KEY = "democracy-direct-save-user-info";
@@ -23,37 +24,34 @@ export function UserInfoInputs({
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [saveEnabled, setSaveEnabled] = useState(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    const savedPref = localStorage.getItem(SAVE_PREF_KEY);
+    const savedPref = getItem(SAVE_PREF_KEY);
     if (savedPref === "true") {
       setSaveEnabled(true);
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = getJSON<UserInfo>(STORAGE_KEY);
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setName(parsed.name || "");
-          setCity(parsed.city || "");
-        } catch {
-          // Invalid JSON, ignore
-        }
+        setName(saved.name || "");
+        setCity(saved.city || "");
       }
     }
   }, []);
 
   useEffect(() => {
-    onChange({ name, city });
+    onChangeRef.current({ name, city });
     if (saveEnabled) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, city }));
+      setJSON(STORAGE_KEY, { name, city });
     }
-  }, [name, city, saveEnabled, onChange]);
+  }, [name, city, saveEnabled]);
 
   const handleSaveToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     setSaveEnabled(checked);
-    localStorage.setItem(SAVE_PREF_KEY, String(checked));
+    setItem(SAVE_PREF_KEY, String(checked));
     if (!checked) {
-      localStorage.removeItem(STORAGE_KEY);
+      removeItem(STORAGE_KEY);
     }
   }, []);
 
