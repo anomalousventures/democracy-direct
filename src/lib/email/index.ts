@@ -24,9 +24,6 @@ export function getEmailConfig(locals: App.Locals): EmailConfig {
 
 export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
   const config = getEmailConfig(locals);
-  console.warn("Email provider:", config.provider);
   const provider = await createEmailProvider(config);
-  const result = await provider.send(message);
-  console.warn("Email send result:", result);
-  return result;
+  return provider.send(message);
 }

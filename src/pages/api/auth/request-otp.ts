@@ -36,13 +36,7 @@ export async function requestOTP(
       .from(emailOtps)
       .where(and(eq(emailOtps.emailHash, emailHash), gte(emailOtps.createdAt, oneHourAgo)));
 
-    console.warn("Rate limit check:", {
-      recentCount: recentRequests.length,
-      limit: RATE_LIMIT_MAX_REQUESTS,
-    });
-
     if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
-      console.warn("Rate limited - skipping email send");
       return { success: true };
     }
 
@@ -61,34 +55,25 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
-    console.warn("Sending OTP email...");
     const sent = await emailSender(emailMessage, locals);
-    console.warn("Email send returned:", sent);
     if (!sent) {
       return { success: false, error: "Failed to send verification email. Please try again." };
     }
-  } else {
-    console.warn("No db connection - skipping email");
   }
 
   return { success: true };
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  console.warn("OTP request received");
-
   const parseResult = await parseJsonBody(request, requestOtpBodySchema);
   if (!parseResult.success) {
-    console.warn("OTP request parse failed:", parseResult.error);
     return badRequest(parseResult.error);
   }
 
   const { email, turnstileToken } = parseResult.data;
-  console.warn("OTP request for email hash:", hashEmail(email).substring(0, 8));
 
   try {
     const config = getConfig(locals);
-    console.warn("Config loaded, email provider:", config.email.provider);
 
     const turnstileResponse = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -109,16 +94,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       "success" in turnstileResult &&
       turnstileResult.success === true;
 
-    console.warn("Turnstile result:", isValidTurnstile);
-
     if (!isValidTurnstile) {
       return forbidden("Verification failed");
     }
 
     const db = createDb(config.database.url);
-    console.warn("Calling requestOTP");
     const result = await requestOTP(email, locals, db);
-    console.warn("requestOTP result:", result);
 
     if (!result.success) {
       return jsonResponse({ success: false, error: result.error }, 500);

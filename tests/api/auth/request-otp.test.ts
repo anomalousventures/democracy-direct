@@ -84,7 +84,7 @@ describe("OTP Request Endpoint", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rate limits after 5 requests per email per hour (silently succeeds to prevent enumeration)", async () => {
+    it("rate limits after 10 requests per email per hour (silently succeeds to prevent enumeration)", async () => {
       const mockDb = {
         insert: vi.fn().mockReturnThis(),
         values: vi.fn().mockResolvedValue(undefined),
@@ -92,7 +92,18 @@ describe("OTP Request Endpoint", () => {
         from: vi.fn().mockReturnThis(),
         where: vi
           .fn()
-          .mockResolvedValue([{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }, { id: "5" }]),
+          .mockResolvedValue([
+            { id: "1" },
+            { id: "2" },
+            { id: "3" },
+            { id: "4" },
+            { id: "5" },
+            { id: "6" },
+            { id: "7" },
+            { id: "8" },
+            { id: "9" },
+            { id: "10" },
+          ]),
       };
 
       const mockEmailSender = vi.fn().mockResolvedValue(true);
