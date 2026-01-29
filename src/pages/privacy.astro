@@ -405,16 +405,17 @@ const user = Astro.locals.user;
                 <span class="text-muted-foreground"
                   ><strong class="text-[var(--color-civic-navy)]">PostHog:</strong> For anonymous website
                   analytics. We use PostHog to understand how visitors use our site (page views, button
-                  clicks). PostHog is configured to discard IP addresses (not used for geolocation or
-                  analytics), and we do not enable session recordings or any features that could identify
-                  individual users.</span
+                  clicks). We configure PostHog to not use IP addresses for geolocation or store them
+                  with analytics data, and we do not enable session recordings or any features that could
+                  identify individual users.</span
                 >
               </li>
             </ul>
             <p class="text-muted-foreground leading-relaxed">
               We do not use advertising networks or social media trackers. Our analytics are
-              configured for privacy: no IP addresses are collected, no cookies are used for
-              cross-site tracking, and no personally identifiable information is captured.
+              configured for privacy: IP addresses are not stored or used for tracking, no cookies
+              are used for cross-site tracking, and no personally identifiable information is
+              captured.
             </p>
           </div>
         </div>
