@@ -154,29 +154,38 @@ jobs:
         id: summary
         env:
           DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           echo "## Accessibility & Performance Audit Results" > audit-summary.md
           echo "" >> audit-summary.md
           echo "**Deployment URL:** ${DEPLOY_URL}" >> audit-summary.md
           echo "" >> audit-summary.md
 
-          echo "### Lighthouse Scores" >> audit-summary.md
+          echo "### Lighthouse Scores (averaged across 3 runs)" >> audit-summary.md
           echo "" >> audit-summary.md
 
           if [ -d ".lighthouseci" ]; then
             echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
             echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
-            for file in .lighthouseci/lhr-*.json; do
-              if [ -f "$file" ]; then
-                url=$(jq -r '.finalUrl' "$file" 2>/dev/null || echo "unknown")
-                perf=$(jq -r '.categories.performance.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
-                a11y=$(jq -r '.categories.accessibility.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
-                bp=$(jq -r '.categories["best-practices"].score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
-                seo=$(jq -r '.categories.seo.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
-                echo "| $url | $perf | $a11y | $bp | $seo |" >> audit-summary.md
-              fi
-            done
+
+            # Group results by URL and calculate averages
+            jq -s '
+              group_by(.finalUrl) |
+              map({
+                url: .[0].finalUrl,
+                perf: ([.[].categories.performance.score] | add / length * 100 | floor),
+                a11y: ([.[].categories.accessibility.score] | add / length * 100 | floor),
+                bp: ([.[].categories["best-practices"].score] | add / length * 100 | floor),
+                seo: ([.[].categories.seo.score] | add / length * 100 | floor)
+              }) |
+              sort_by(.url) |
+              .[] |
+              "| \(.url) | \(.perf) | \(.a11y) | \(.bp) | \(.seo) |"
+            ' .lighthouseci/lhr-*.json >> audit-summary.md 2>/dev/null || echo "Error parsing Lighthouse results" >> audit-summary.md
+
             echo "" >> audit-summary.md
+            echo "[View full Lighthouse reports](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts)" >> audit-summary.md
           else
             echo "No Lighthouse results found." >> audit-summary.md
           fi
