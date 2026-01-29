@@ -107,8 +107,8 @@ const user = Astro.locals.user;
                 <div>
                   <strong class="text-[var(--color-civic-navy)]">IP addresses:</strong>
                   <span class="text-muted-foreground">
-                    We do not store IP addresses in our database. Our analytics provider (PostHog)
-                    receives IPs for geolocation but cannot link them to your identity.
+                    We do not store or log IP addresses in our own database. Our analytics provider
+                    (PostHog) temporarily processes IPs for coarse geolocation only.
                   </span>
                 </div>
               </li>
@@ -163,8 +163,8 @@ const user = Astro.locals.user;
                   <strong class="text-[var(--color-civic-navy)]">Anonymous analytics:</strong>
                   <span class="text-muted-foreground">
                     We collect anonymous usage data (page views, button clicks, general
-                    browser/device type, geographic region) to improve the site. This data cannot be
-                    linked to your identity since we never store email addresses.
+                    browser/device type, geographic region) to improve the site. We do not include
+                    email addresses in analytics, minimizing the ability to link this data to you.
                   </span>
                 </div>
               </li>
@@ -412,8 +412,9 @@ const user = Astro.locals.user;
               </li>
             </ul>
             <p class="text-muted-foreground leading-relaxed">
-              We do not use advertising networks or social media trackers. Because we never store
-              email addresses in our database, analytics data cannot be linked to individual users.
+              We do not use advertising networks or social media trackers. We never store email
+              addresses in our database, minimizing the ability to link analytics to individual
+              users.
             </p>
           </div>
         </div>

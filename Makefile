@@ -3,7 +3,7 @@
 help:
 	@echo "Democracy Direct - Development Commands"
 	@echo ""
-	@echo "  make dev      - Build + start dev server with Mailpit"
+	@echo "  make dev      - Start dev server with Mailpit (hot reload)"
 	@echo "  make start    - Start Mailpit only"
 	@echo "  make stop     - Stop Mailpit"
 	@echo "  make db-push  - Push schema to Neon database"

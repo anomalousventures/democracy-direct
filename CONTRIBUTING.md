@@ -28,7 +28,7 @@ ln -s .dev.vars .env
 # Push database schema
 pnpm db:push
 
-# Start development server (builds + runs with Cloudflare runtime)
+# Start development server with hot reload
 make dev
 ```
 
@@ -36,7 +36,7 @@ The dev server runs at http://localhost:4321. Mailpit (for viewing sent emails) 
 
 ### Cloudflare Runtime
 
-This project uses Cloudflare Pages with edge runtime. The `react-dom/server.edge` alias is conditionally applied only in production builds to fix React 19 compatibility. In dev mode, `astro dev` works normally with `platformProxy` providing Cloudflare bindings.
+This project uses Cloudflare Pages with edge runtime. The `react-dom/server.edge` alias is conditionally applied only in production builds to fix React 19 compatibility. In dev mode, `astro dev` uses the adapter's `platformProxy` feature to simulate Cloudflare runtime APIs locally.
 
 ## Development
 
