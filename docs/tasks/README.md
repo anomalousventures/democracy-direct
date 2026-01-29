@@ -11,16 +11,17 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 ## Tasks
 
-| Task                                      | Status   | Description                           |
-| ----------------------------------------- | -------- | ------------------------------------- |
-| [District Map](./district-map.md)         | Research | Map-based district picker             |
-| [Saved District](./saved-district.md)     | Research | Save district to user profile         |
-| [SEO & Social Sharing](./seo-social.md)   | Research | Optimize meta tags and social sharing |
-| [Share Buttons](./share-buttons.md)       | Research | Add share functionality to pages      |
-| [Voting Records](./voting-records.md)     | Research | Integrate Congress voting records     |
-| [Rep Page Editor](./rep-editor.md)        | Research | Streamline editor/preview/print flow  |
-| [Campaign Finance](./campaign-finance.md) | Research | FEC/OpenSecrets data integration      |
-| [Bill Summaries](./bill-summaries.md)     | Research | Bill tracking and summaries           |
+| Task                                                    | Status   | Description                           |
+| ------------------------------------------------------- | -------- | ------------------------------------- |
+| [District Map](./district-map.md)                       | Research | Map-based district picker             |
+| [Saved District](./saved-district.md)                   | Research | Save district to user profile         |
+| [Lighthouse Optimization](./lighthouse-optimization.md) | Research | Performance, a11y, SEO optimization   |
+| [SEO & Social Sharing](./seo-social.md)                 | Research | Optimize meta tags and social sharing |
+| [Share Buttons](./share-buttons.md)                     | Research | Add share functionality to pages      |
+| [Voting Records](./voting-records.md)                   | Research | Integrate Congress voting records     |
+| [Rep Page Editor](./rep-editor.md)                      | Research | Streamline editor/preview/print flow  |
+| [Campaign Finance](./campaign-finance.md)               | Research | FEC/OpenSecrets data integration      |
+| [Bill Summaries](./bill-summaries.md)                   | Research | Bill tracking and summaries           |
 
 ## How to Use
 
