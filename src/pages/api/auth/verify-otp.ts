@@ -1,5 +1,4 @@
 import type { APIRoute } from "astro";
-import { randomUUID } from "crypto";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { emailOtps, users, sessions } from "@/db/schema";
@@ -56,7 +55,7 @@ export async function verifyOTPRequest(
     userId = userRecords[0].id;
   }
 
-  const sessionId = randomUUID();
+  const sessionId = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await db.insert(sessions).values({
