@@ -90,7 +90,7 @@ test.describe("Template Creation Page", () => {
     await page.waitForLoadState("domcontentloaded");
 
     const titleInput = page.locator("[data-testid='template-title-input']");
-    const bodyInput = page.locator("[data-testid='template-body-input']");
+    const bodyInput = page.locator("[data-testid='tiptap-editor']");
     const submitButton = page.locator("[data-testid='submit-template-button']");
 
     await expect(titleInput).toBeVisible();

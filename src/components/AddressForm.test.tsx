@@ -64,8 +64,23 @@ describe("AddressForm", () => {
   });
 
   describe("localStorage Persistence", () => {
-    it("saves address to localStorage when fields change", () => {
+    it("does not save address by default (opt-in required)", () => {
       render(<AddressForm onChange={() => {}} />);
+
+      const nameInput = screen.getByLabelText(/your name/i);
+      fireEvent.change(nameInput, { target: { value: "Jane Doe" } });
+
+      expect(localStorageMock.setItem).not.toHaveBeenCalledWith(
+        "democracy-direct-address",
+        expect.anything()
+      );
+    });
+
+    it("saves address when opt-in checkbox is enabled", () => {
+      render(<AddressForm onChange={() => {}} />);
+
+      const checkbox = screen.getByRole("checkbox", { name: /remember my address/i });
+      fireEvent.click(checkbox);
 
       const nameInput = screen.getByLabelText(/your name/i);
       fireEvent.change(nameInput, { target: { value: "Jane Doe" } });
@@ -76,7 +91,7 @@ describe("AddressForm", () => {
       );
     });
 
-    it("loads saved address from localStorage on mount", () => {
+    it("loads saved address from localStorage when opt-in was previously enabled", () => {
       const savedAddress = JSON.stringify({
         name: "John Smith",
         street: "123 Main St",
@@ -84,7 +99,11 @@ describe("AddressForm", () => {
         state: "CA",
         zip: "90001",
       });
-      localStorageMock.getItem.mockReturnValue(savedAddress);
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        if (key === "democracy-direct-save-address") return "true";
+        if (key === "democracy-direct-address") return savedAddress;
+        return null;
+      });
 
       render(<AddressForm onChange={() => {}} />);
 
@@ -104,11 +123,32 @@ describe("AddressForm", () => {
     });
 
     it("handles invalid localStorage JSON gracefully", () => {
-      localStorageMock.getItem.mockReturnValue("invalid json{");
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        if (key === "democracy-direct-save-address") return "true";
+        if (key === "democracy-direct-address") return "invalid json{";
+        return null;
+      });
 
       render(<AddressForm onChange={() => {}} />);
 
       expect(screen.getByLabelText(/your name/i)).toHaveValue("");
+    });
+
+    it("clears saved data when opt-in checkbox is unchecked", () => {
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        if (key === "democracy-direct-save-address") return "true";
+        return null;
+      });
+
+      render(<AddressForm onChange={() => {}} />);
+
+      const checkbox = screen.getByRole("checkbox", { name: /remember my address/i });
+      expect(checkbox).toBeChecked();
+
+      fireEvent.click(checkbox);
+
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith("democracy-direct-save-address");
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith("democracy-direct-address");
     });
   });
 

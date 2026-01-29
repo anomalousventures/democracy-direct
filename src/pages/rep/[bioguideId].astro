@@ -30,6 +30,7 @@ const templateSlug =
 let rep: Legislator | null = null;
 let error: string | null = null;
 let templateContent: string | null = null;
+let templateTitle: string | null = null;
 
 const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
 if (isInvalidId) {
@@ -57,7 +58,7 @@ if (!error) {
   if (templateSlug && !error) {
     try {
       const [template] = await db
-        .select({ body: templates.body })
+        .select({ body: templates.body, title: templates.title })
         .from(templates)
         .where(
           and(
@@ -70,6 +71,7 @@ if (!error) {
 
       if (template) {
         templateContent = template.body;
+        templateTitle = template.title;
       }
     } catch (e) {
       console.error("Failed to load template:", e);
@@ -86,7 +88,7 @@ if (!error) {
 >
   <Header currentPath={`/rep/${bioguideId}`} user={user} />
 
-  <main class="flex-1 py-12">
+  <main id="main-content" class="flex-1 py-12">
     <div class="container mx-auto px-4">
       {
         error ? (
@@ -119,7 +121,7 @@ if (!error) {
         ) : (
           rep && (
             <div class="max-w-4xl mx-auto">
-              <article class="card-civic animate-fade-up">
+              <article class="card-civic animate-fade-up no-print">
                 <div class="flex flex-col md:flex-row gap-8">
                   <div class="flex-shrink-0">
                     <div class="relative w-48 h-60 mx-auto md:mx-0 bg-[var(--color-secondary)] overflow-hidden shadow-lg">
@@ -343,10 +345,13 @@ if (!error) {
                     office_address: rep.addressCapitol || undefined,
                   }}
                   initialTemplate={templateContent || undefined}
+                  templateName={templateTitle || undefined}
+                  templateSlug={templateSlug || undefined}
+                  repBioguideId={bioguideId}
                 />
               </div>
 
-              <div class="text-center mt-12">
+              <div class="text-center mt-12 no-print">
                 <a
                   href="/"
                   class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"

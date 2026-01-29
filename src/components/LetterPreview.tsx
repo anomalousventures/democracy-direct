@@ -5,11 +5,18 @@ import {
   formatLetterDate,
 } from "../types/representative";
 
+export interface PrintOptions {
+  includeSalutation: boolean;
+  includeClosing: boolean;
+  includeSignatureLine: boolean;
+}
+
 interface LetterPreviewProps {
   letterContent: string;
   representative: Representative;
   returnAddress: Address;
   className?: string;
+  printOptions?: PrintOptions;
 }
 
 export function LetterPreview({
@@ -17,11 +24,13 @@ export function LetterPreview({
   representative,
   returnAddress,
   className = "",
+  printOptions = { includeSalutation: true, includeClosing: true, includeSignatureLine: true },
 }: LetterPreviewProps) {
   const repTitle = getRepresentativeTitle(representative);
   const addressLines = representative.office_address?.split("\n") ?? [];
   const hasReturnAddress = returnAddress.name || returnAddress.street || returnAddress.city;
   const hasCityStateZip = returnAddress.city || returnAddress.state || returnAddress.zip;
+  const bodyContent = letterContent.trim();
 
   return (
     <div
@@ -54,17 +63,27 @@ export function LetterPreview({
           ))}
         </div>
 
-        <div className="text-sm">
-          Dear {repTitle} {representative.last_name},
-        </div>
+        {printOptions.includeSalutation && (
+          <div className="text-sm">
+            Dear {repTitle} {representative.last_name},
+          </div>
+        )}
 
-        <div className="text-sm whitespace-pre-wrap leading-relaxed">{letterContent}</div>
+        <div className="text-sm whitespace-pre-wrap leading-relaxed">{bodyContent}</div>
 
-        <div className="text-sm space-y-8">
-          <div>Sincerely,</div>
-          <div className="border-b border-gray-400 w-48">&nbsp;</div>
-          {returnAddress.name && <div>{returnAddress.name}</div>}
-        </div>
+        {(printOptions.includeClosing || printOptions.includeSignatureLine) && (
+          <div className="text-sm space-y-8">
+            {printOptions.includeClosing && (
+              <div>
+                <div>Sincerely,</div>
+                {returnAddress.name && <div className="mt-8">{returnAddress.name}</div>}
+              </div>
+            )}
+            {printOptions.includeSignatureLine && (
+              <div className="border-b border-gray-400 w-48">&nbsp;</div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

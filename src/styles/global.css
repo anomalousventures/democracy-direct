@@ -105,6 +105,11 @@
     transform: translateY(0);
   }
 
+  .btn-primary:focus-visible {
+    outline: 3px solid var(--color-civic-gold);
+    outline-offset: 2px;
+  }
+
   .btn-civic {
     @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-sm;
     background: var(--color-civic-navy);
@@ -123,6 +128,11 @@
     transform: translateY(0);
   }
 
+  .btn-civic:focus-visible {
+    outline: 3px solid var(--color-civic-gold);
+    outline-offset: 2px;
+  }
+
   .btn-civic-secondary {
     @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-sm;
     background: transparent;
@@ -138,6 +148,11 @@
 
   .btn-civic-secondary:active {
     background: rgba(30, 58, 95, 0.1);
+  }
+
+  .btn-civic-secondary:focus-visible {
+    outline: 3px solid var(--color-civic-navy);
+    outline-offset: 2px;
   }
 
   .input-civic {
@@ -209,6 +224,12 @@
 }
 
 @layer utilities {
+  @media screen {
+    .print-only {
+      display: none;
+    }
+  }
+
   .animate-fade-up {
     animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
@@ -251,6 +272,80 @@
   }
 }
 
+/* Tiptap Editor Styles */
+.tiptap-container {
+  position: relative;
+}
+
+.tiptap-editor {
+  min-height: 200px;
+}
+
+.tiptap-editor:focus {
+  outline: none;
+  border-color: var(--color-civic-navy);
+  box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.1);
+}
+
+.tiptap-editor.is-editor-empty::before {
+  color: var(--color-muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+}
+
+.tiptap-editor p {
+  margin: 0 0 0.5em 0;
+}
+
+.tiptap-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.tiptap-editor li {
+  margin: 0.25em 0;
+}
+
+.tiptap-editor strong {
+  font-weight: 600;
+}
+
+.tiptap-editor em {
+  font-style: italic;
+}
+
+/* Template Variable Highlighting */
+.template-variable {
+  background-color: rgba(201, 169, 98, 0.25);
+  border: 1px solid var(--color-civic-gold);
+  border-radius: 3px;
+  padding: 0 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  color: var(--color-civic-navy);
+}
+
+/* Bubble Menu */
+.bubble-menu {
+  z-index: 50;
+}
+
+.bubble-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+
 .dark {
   --color-background: #0f1419;
   --color-foreground: #e8e6e3;
@@ -273,31 +368,72 @@
 }
 
 @media print {
+  @page {
+    size: 8.5in 11in;
+    margin: 1in;
+  }
+
+  html,
   body {
-    background: white !important;
-    background-image: none !important;
+    background: white;
+    background-image: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   header,
   footer,
   nav,
-  .no-print {
-    display: none !important;
+  .no-print,
+  .card-civic {
+    display: none;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  main {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  main > div,
+  main > div > div,
+  main > div > div > div {
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-only,
+  .print-only.hidden {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    visibility: visible;
   }
 
   .print-preview {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    background: white;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    min-height: auto;
+    width: 100%;
+    font-size: 12pt;
+    line-height: 1.6;
   }
 
-  .print-only {
-    display: block !important;
-  }
-
-  @page {
-    margin: 1in;
-    size: letter;
+  .print-preview .space-y-6 > * + * {
+    margin-top: 1.25em;
   }
 }

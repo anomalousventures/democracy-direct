@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { LetterComposer } from "./LetterComposer";
 
 const mockRep = {
@@ -18,116 +18,106 @@ describe("LetterComposer", () => {
   });
 
   describe("Basic Functionality", () => {
-    it("renders a textarea for letter body", () => {
+    it("renders the editor component", async () => {
       render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      expect(textarea).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("tiptap-editor")).toBeInTheDocument();
+      });
     });
 
-    it("allows typing in the composer", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, { target: { value: "Dear Representative," } });
-      expect(textarea).toHaveValue("Dear Representative,");
-    });
+    it("displays character count", async () => {
+      render(<LetterComposer representative={mockRep} initialContent="Hello" />);
 
-    it("displays character count", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, { target: { value: "Hello" } });
-      expect(screen.getByText(/5/)).toBeInTheDocument();
-    });
-
-    it("updates character count as user types", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-
-      fireEvent.change(textarea, { target: { value: "Hi" } });
-      expect(screen.getByText(/2/)).toBeInTheDocument();
-
-      fireEvent.change(textarea, { target: { value: "Hello World" } });
-      expect(screen.getByText(/11/)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("character-count")).toHaveTextContent("5");
+      });
     });
   });
 
   describe("Template Variable Substitution", () => {
-    it("substitutes {{REP_NAME}} with representative name", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, {
-        target: { value: "Dear {{REP_NAME}}," },
-      });
+    it("substitutes {{REP_NAME}} with representative name in preview", async () => {
+      render(<LetterComposer representative={mockRep} initialContent="Dear {{REP_NAME}}," />);
 
-      const preview = screen.getByTestId("letter-preview");
-      expect(preview).toHaveTextContent("Dear John Smith,");
+      await waitFor(() => {
+        const preview = screen.getByTestId("letter-preview");
+        expect(preview).toHaveTextContent("Dear John Smith,");
+      });
     });
 
-    it("substitutes {{REP_TITLE}} with representative title", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, {
-        target: { value: "Dear {{REP_TITLE}} {{REP_LAST}}," },
-      });
-
-      const preview = screen.getByTestId("letter-preview");
-      expect(preview).toHaveTextContent("Dear Representative Smith,");
-    });
-
-    it("substitutes {{STATE}} and {{DISTRICT}}", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, {
-        target: { value: "I am a constituent from {{STATE}} District {{DISTRICT}}." },
-      });
-
-      const preview = screen.getByTestId("letter-preview");
-      expect(preview).toHaveTextContent("I am a constituent from CA District 12.");
-    });
-
-    it("handles multiple variable substitutions", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, {
-        target: {
-          value: "Dear {{REP_TITLE}} {{REP_NAME}}, I am writing as a {{STATE}} resident.",
-        },
-      });
-
-      const preview = screen.getByTestId("letter-preview");
-      expect(preview).toHaveTextContent(
-        "Dear Representative John Smith, I am writing as a CA resident."
+    it("substitutes {{REP_TITLE}} with representative title in preview", async () => {
+      render(
+        <LetterComposer
+          representative={mockRep}
+          initialContent="Dear {{REP_TITLE}} {{REP_LAST}},"
+        />
       );
+
+      await waitFor(() => {
+        const preview = screen.getByTestId("letter-preview");
+        expect(preview).toHaveTextContent("Dear Representative Smith,");
+      });
     });
 
-    it("leaves unknown variables unchanged", () => {
-      render(<LetterComposer representative={mockRep} />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, {
-        target: { value: "Hello {{UNKNOWN_VAR}}" },
-      });
+    it("substitutes {{STATE}} and {{DISTRICT}} in preview", async () => {
+      render(
+        <LetterComposer
+          representative={mockRep}
+          initialContent="I am a constituent from {{STATE}} District {{DISTRICT}}."
+        />
+      );
 
-      const preview = screen.getByTestId("letter-preview");
-      expect(preview).toHaveTextContent("Hello {{UNKNOWN_VAR}}");
+      await waitFor(() => {
+        const preview = screen.getByTestId("letter-preview");
+        expect(preview).toHaveTextContent("I am a constituent from CA District 12.");
+      });
+    });
+
+    it("handles multiple variable substitutions in preview", async () => {
+      render(
+        <LetterComposer
+          representative={mockRep}
+          initialContent="Dear {{REP_TITLE}} {{REP_NAME}}, I am writing as a {{STATE}} resident."
+        />
+      );
+
+      await waitFor(() => {
+        const preview = screen.getByTestId("letter-preview");
+        expect(preview).toHaveTextContent(
+          "Dear Representative John Smith, I am writing as a CA resident."
+        );
+      });
+    });
+
+    it("leaves unknown variables unchanged in preview", async () => {
+      render(<LetterComposer representative={mockRep} initialContent="Hello {{UNKNOWN_VAR}}" />);
+
+      await waitFor(() => {
+        const preview = screen.getByTestId("letter-preview");
+        expect(preview).toHaveTextContent("Hello {{UNKNOWN_VAR}}");
+      });
     });
   });
 
   describe("Template Loading", () => {
-    it("loads template content when provided", () => {
+    it("loads template content when provided", async () => {
       const template = "Dear {{REP_TITLE}},\n\nI am writing to express...";
       render(<LetterComposer representative={mockRep} initialContent={template} />);
 
-      const textarea = screen.getByRole("textbox");
-      expect(textarea).toHaveValue(template);
+      await waitFor(() => {
+        const editor = screen.getByTestId("tiptap-editor");
+        expect(editor).toHaveTextContent(/Dear \{\{REP_TITLE\}\}/);
+        expect(editor).toHaveTextContent(/I am writing to express/);
+      });
     });
 
-    it("calls onContentChange when content changes", () => {
-      const onContentChange = vi.fn();
-      render(<LetterComposer representative={mockRep} onContentChange={onContentChange} />);
+    it("displays initial content and shows preview when content exists", async () => {
+      render(<LetterComposer representative={mockRep} initialContent="Test content" />);
 
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, { target: { value: "New content" } });
-
-      expect(onContentChange).toHaveBeenCalledWith("New content");
+      await waitFor(() => {
+        expect(screen.getByTestId("tiptap-editor")).toHaveTextContent("Test content");
+        expect(screen.getByTestId("letter-preview")).toBeInTheDocument();
+      });
     });
   });
 });

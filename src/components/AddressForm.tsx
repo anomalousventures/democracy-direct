@@ -1,49 +1,58 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { type Address, createEmptyAddress } from "../types/representative";
+import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
 
 interface AddressFormProps {
   onChange: (address: Address) => void;
 }
 
 const STORAGE_KEY = "democracy-direct-address";
+const SAVE_PREF_KEY = "democracy-direct-save-address";
 
-function loadFromLocalStorage(): Address {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // Ignore parse errors, return empty address
+function getSavePreference(): boolean {
+  return getItem(SAVE_PREF_KEY) === "true";
+}
+
+function setSavePreference(save: boolean): void {
+  if (save) {
+    setItem(SAVE_PREF_KEY, "true");
+  } else {
+    removeItem(SAVE_PREF_KEY);
+    removeItem(STORAGE_KEY);
   }
-  return createEmptyAddress();
+}
+
+function loadFromLocalStorage(): Address | null {
+  if (!getSavePreference()) return null;
+  return getJSON<Address>(STORAGE_KEY);
 }
 
 function saveToLocalStorage(address: Address): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(address));
-  } catch {
-    // Ignore storage errors
+  if (getSavePreference()) {
+    setJSON(STORAGE_KEY, address);
   }
 }
 
 function clearFromLocalStorage(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore storage errors
-  }
+  removeItem(STORAGE_KEY);
 }
 
 export function AddressForm({ onChange }: AddressFormProps) {
   const [address, setAddress] = useState<Address>(createEmptyAddress);
+  const [saveEnabled, setSaveEnabled] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    const saved = loadFromLocalStorage();
-    setAddress(saved);
-    onChangeRef.current(saved);
+    const prefEnabled = getSavePreference();
+    setSaveEnabled(prefEnabled);
+    if (prefEnabled) {
+      const saved = loadFromLocalStorage();
+      if (saved) {
+        setAddress(saved);
+        onChangeRef.current(saved);
+      }
+    }
   }, []);
 
   const handleChange = useCallback(
@@ -57,6 +66,18 @@ export function AddressForm({ onChange }: AddressFormProps) {
       onChange(newAddress);
     },
     [address, onChange]
+  );
+
+  const handleSaveToggle = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const enabled = e.target.checked;
+      setSaveEnabled(enabled);
+      setSavePreference(enabled);
+      if (enabled) {
+        saveToLocalStorage(address);
+      }
+    },
+    [address]
   );
 
   const handleClear = useCallback(() => {
@@ -91,6 +112,8 @@ export function AddressForm({ onChange }: AddressFormProps) {
           </label>
           <input
             id="address-name"
+            name="name"
+            autoComplete="name"
             type="text"
             value={address.name}
             onChange={handleChange("name")}
@@ -108,6 +131,8 @@ export function AddressForm({ onChange }: AddressFormProps) {
           </label>
           <input
             id="address-street"
+            name="street-address"
+            autoComplete="street-address"
             type="text"
             value={address.street}
             onChange={handleChange("street")}
@@ -126,6 +151,8 @@ export function AddressForm({ onChange }: AddressFormProps) {
             </label>
             <input
               id="address-city"
+              name="city"
+              autoComplete="address-level2"
               type="text"
               value={address.city}
               onChange={handleChange("city")}
@@ -142,6 +169,8 @@ export function AddressForm({ onChange }: AddressFormProps) {
             </label>
             <input
               id="address-state"
+              name="state"
+              autoComplete="address-level1"
               type="text"
               value={address.state}
               onChange={handleChange("state")}
@@ -159,6 +188,8 @@ export function AddressForm({ onChange }: AddressFormProps) {
             </label>
             <input
               id="address-zip"
+              name="postal-code"
+              autoComplete="postal-code"
               type="text"
               value={address.zip}
               onChange={handleChange("zip")}
@@ -170,9 +201,25 @@ export function AddressForm({ onChange }: AddressFormProps) {
         </div>
       </div>
 
-      <p className="text-xs text-[var(--color-muted-foreground)]">
-        Your address is saved locally in your browser and never sent to our servers.
-      </p>
+      <div className="pt-2 border-t border-[var(--color-border)]">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={saveEnabled}
+            onChange={handleSaveToggle}
+            className="mt-1 h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-navy)]"
+          />
+          <div className="text-sm">
+            <span className="font-medium text-[var(--color-civic-navy)]">
+              Remember my address on this device
+            </span>
+            <p className="text-[var(--color-muted-foreground)] mt-1">
+              Your address will be stored only on this device/browser. It won't sync to other
+              devices and is never sent to or stored on our servers.
+            </p>
+          </div>
+        </label>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
 import { LoadingButton } from "./ui/loading-button";
+import { TiptapEditor } from "./TiptapEditor";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
@@ -152,9 +153,17 @@ export function TemplateForm({
           className="input-civic"
           data-testid="template-title-input"
           maxLength={TITLE_MAX_LENGTH}
+          aria-invalid={errors.title ? "true" : undefined}
+          aria-describedby={errors.title ? "title-error" : undefined}
         />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>{errors.title && <span className="text-red-500">{errors.title}</span>}</span>
+          <span>
+            {errors.title && (
+              <span id="title-error" className="text-red-500">
+                {errors.title}
+              </span>
+            )}
+          </span>
           <span>
             {title.length}/{TITLE_MAX_LENGTH}
           </span>
@@ -165,21 +174,22 @@ export function TemplateForm({
         <label htmlFor="body" className="block text-sm font-medium text-[var(--color-civic-navy)]">
           Letter Body
         </label>
-        <textarea
-          id="body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Write your letter template here. You can use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution..."
-          className="input-civic min-h-[300px] resize-y font-mono text-sm"
-          data-testid="template-body-input"
+        <TiptapEditor
+          content={body}
+          onChange={setBody}
+          placeholder="Write your letter template here..."
           maxLength={BODY_MAX_LENGTH}
+          aria-invalid={errors.body ? "true" : undefined}
+          aria-describedby={errors.body ? "body-error" : "body-hint"}
         />
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>
             {errors.body ? (
-              <span className="text-red-500">{errors.body}</span>
+              <span id="body-error" className="text-red-500">
+                {errors.body}
+              </span>
             ) : (
-              <span>Minimum {BODY_MIN_LENGTH} characters</span>
+              <span id="body-hint">Minimum {BODY_MIN_LENGTH} characters</span>
             )}
           </span>
           <span>
@@ -188,16 +198,17 @@ export function TemplateForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-[var(--color-civic-navy)]">
+      <fieldset className="space-y-2">
+        <legend className="block text-sm font-medium text-[var(--color-civic-navy)]">
           Issue Tags (optional)
-        </label>
+        </legend>
         <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector">
           {ISSUE_TAG_OPTIONS.map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
+              aria-pressed={selectedTags.includes(tag)}
               className={`px-3 py-1 text-sm rounded transition-colors ${
                 selectedTags.includes(tag)
                   ? "bg-[var(--color-civic-navy)] text-white"
@@ -208,7 +219,7 @@ export function TemplateForm({
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <div className="pt-4">
         <LoadingButton
