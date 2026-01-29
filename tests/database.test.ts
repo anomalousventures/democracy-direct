@@ -52,8 +52,8 @@ describe("Phase 0.2: Database Connection", () => {
   });
 
   describe("Environment configuration", () => {
-    it("should have DATABASE_URL in .env.example", () => {
-      const envPath = resolve(rootDir, ".env.example");
+    it("should have DATABASE_URL in .dev.vars.example", () => {
+      const envPath = resolve(rootDir, ".dev.vars.example");
       const content = readFileSync(envPath, "utf-8");
       expect(content).toContain("DATABASE_URL");
     });
