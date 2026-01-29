@@ -31,8 +31,9 @@ _To be filled after research._
 ### Database Changes
 
 - Schema already has `savedZip` and `savedDistrict` columns in users table
-- May need to add `savedState` if not derivable from ZIP
-- No migration needed if using existing columns
+- **Only use `savedDistrict` (and add `savedState`) - do NOT save ZIP**
+- ZIP is unnecessarily precise; state+district is sufficient to identify reps
+- May need migration to add `savedState` column
 
 ### API Changes
 
@@ -50,7 +51,8 @@ _To be filled after research._
 
 ### Privacy Considerations
 
-- District is less precise than address but still location data
+- **Never save ZIP code** - too close to address, unnecessary precision
+- State + district is sufficient (identifies ~750k people, not a neighborhood)
 - Make saving opt-in with clear explanation
 - Easy to clear at any time
 
