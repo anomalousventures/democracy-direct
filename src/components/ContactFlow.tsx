@@ -157,6 +157,7 @@ export function ContactFlow({
           representative={representative}
           initialContent={initialTemplate}
           onContentChange={setLetterContent}
+          userInfo={userInfo}
         />
 
         {letterContent && (

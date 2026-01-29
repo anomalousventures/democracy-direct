@@ -17,11 +17,19 @@ const TEMPLATE_VARIABLES = [
   { name: "REP_TITLE", label: "Title", description: "Senator or Representative" },
   { name: "REP_FIRST", label: "First", description: "First name only" },
   { name: "REP_LAST", label: "Last", description: "Last name only" },
+  { name: "REP_PARTY", label: "Party", description: "Political party (e.g., Democrat)" },
   { name: "STATE", label: "State", description: "State abbreviation (e.g., CA)" },
   { name: "DISTRICT", label: "District", description: "District number or At-Large" },
   { name: "USER_NAME", label: "Your Name", description: "Writer's name (from address)" },
   { name: "USER_CITY", label: "Your City", description: "Writer's city (from address)" },
+  { name: "TODAY_DATE", label: "Date", description: "Today's date (e.g., January 1, 2024)" },
 ] as const;
+
+const toolbarButtonClass =
+  "p-2 rounded hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[var(--color-civic-navy)] focus-visible:ring-offset-1 focus-visible:outline-none";
+
+const variableButtonClass =
+  "px-2 py-1 text-xs rounded hover:bg-[var(--color-civic-gold)]/20 text-[var(--color-civic-navy)] font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-civic-navy)] focus-visible:ring-offset-1 focus-visible:outline-none";
 
 interface TiptapEditorProps {
   content: string;
@@ -105,7 +113,7 @@ export function TiptapEditor({
       <div className="flex flex-wrap gap-1 mb-2 p-1 border border-[var(--color-border)] rounded-md bg-white">
         <button
           onClick={toggleBold}
-          className={`p-2 rounded hover:bg-gray-100 ${
+          className={`${toolbarButtonClass} ${
             editor.isActive("bold") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
           }`}
           type="button"
@@ -130,7 +138,7 @@ export function TiptapEditor({
 
         <button
           onClick={toggleItalic}
-          className={`p-2 rounded hover:bg-gray-100 ${
+          className={`${toolbarButtonClass} ${
             editor.isActive("italic") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
           }`}
           type="button"
@@ -159,7 +167,7 @@ export function TiptapEditor({
 
         <button
           onClick={toggleBulletList}
-          className={`p-2 rounded hover:bg-gray-100 ${
+          className={`${toolbarButtonClass} ${
             editor.isActive("bulletList") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
           }`}
           type="button"
@@ -189,7 +197,7 @@ export function TiptapEditor({
 
         <button
           onClick={toggleOrderedList}
-          className={`p-2 rounded hover:bg-gray-100 ${
+          className={`${toolbarButtonClass} ${
             editor.isActive("orderedList") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
           }`}
           type="button"
@@ -227,7 +235,7 @@ export function TiptapEditor({
               <button
                 key={variable.name}
                 onClick={() => insertVariable(variable.name)}
-                className="px-2 py-1 text-xs rounded hover:bg-[var(--color-civic-gold)]/20 text-[var(--color-civic-navy)] font-medium"
+                className={variableButtonClass}
                 type="button"
                 title={variable.description}
                 aria-label={`Insert ${variable.label} variable`}

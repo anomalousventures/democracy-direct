@@ -69,7 +69,7 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
       {availableTags.length > 0 && (
         <fieldset>
           <legend className="sr-only">Filter by issue tags</legend>
-          <div className="flex flex-wrap gap-2" data-testid="tag-filter" role="group">
+          <div className="flex flex-wrap gap-2" data-testid="tag-filter">
             {availableTags.map((tag) => (
               <button
                 key={tag}

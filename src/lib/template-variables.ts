@@ -1,3 +1,13 @@
+import { type Representative, getRepresentativeTitle } from "@/types/representative";
+
+export type { Representative };
+export { getRepresentativeTitle };
+
+export interface TemplateAddress {
+  name?: string;
+  city?: string;
+}
+
 export interface TemplateContext {
   repTitle?: string;
   repName?: string;
@@ -66,29 +76,10 @@ export function isKnownVariable(varName: string): boolean {
   return SUPPORTED_VARIABLES.includes(varName as TemplateVariable);
 }
 
-export interface Representative {
-  first_name: string;
-  last_name: string;
-  party: string;
-  state: string;
-  district: string | null;
-  chamber: "senate" | "house";
-  title?: string;
-}
-
-export interface Address {
-  name: string;
-  city: string;
-}
-
-export function getRepresentativeTitle(rep: Representative): string {
-  if (rep.title) {
-    return rep.title;
-  }
-  return rep.chamber === "senate" ? "Senator" : "Representative";
-}
-
-export function createTemplateContext(rep: Representative, address?: Address): TemplateContext {
+export function createTemplateContext(
+  rep: Representative,
+  address?: TemplateAddress
+): TemplateContext {
   return {
     repTitle: getRepresentativeTitle(rep),
     repName: `${rep.first_name} ${rep.last_name}`,
@@ -105,7 +96,7 @@ export function createTemplateContext(rep: Representative, address?: Address): T
 export function substituteForRepresentative(
   content: string,
   rep: Representative,
-  address?: Address
+  address?: TemplateAddress
 ): string {
   return substituteTemplateVariables(content, createTemplateContext(rep, address));
 }

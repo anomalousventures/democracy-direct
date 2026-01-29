@@ -1,18 +1,20 @@
 import { useState, useCallback, useMemo } from "react";
 import { type Representative, getRepresentativeTitle } from "../types/representative";
-import { substituteForRepresentative } from "@/lib/template-variables";
+import { substituteForRepresentative, type TemplateAddress } from "@/lib/template-variables";
 import { TiptapEditor } from "./TiptapEditor";
 
 interface LetterComposerProps {
   representative: Representative;
   initialContent?: string;
   onContentChange?: (content: string) => void;
+  userInfo?: TemplateAddress;
 }
 
 export function LetterComposer({
   representative,
   initialContent = "",
   onContentChange,
+  userInfo,
 }: LetterComposerProps) {
   const [content, setContent] = useState(initialContent);
 
@@ -25,8 +27,8 @@ export function LetterComposer({
   );
 
   const preview = useMemo(
-    () => substituteForRepresentative(content, representative),
-    [content, representative]
+    () => substituteForRepresentative(content, representative, userInfo),
+    [content, representative, userInfo]
   );
 
   const repTitle = getRepresentativeTitle(representative);

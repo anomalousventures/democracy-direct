@@ -199,7 +199,7 @@ export function TemplateForm({
         <legend className="block text-sm font-medium text-[var(--color-civic-navy)]">
           Issue Tags (optional)
         </legend>
-        <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector" role="group">
+        <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector">
           {ISSUE_TAG_OPTIONS.map((tag) => (
             <button
               key={tag}

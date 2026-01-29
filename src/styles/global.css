@@ -224,8 +224,10 @@
 }
 
 @layer utilities {
-  .print-only {
-    display: none;
+  @media screen {
+    .print-only {
+      display: none;
+    }
   }
 
   .animate-fade-up {
