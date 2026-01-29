@@ -36,6 +36,12 @@ export class SesEmailProvider implements EmailProvider {
 
   async send(message: EmailMessage): Promise<boolean> {
     try {
+      console.info("SES sending email:", {
+        from: this.from,
+        to: message.to,
+        subject: message.subject,
+      });
+
       const boundary = `boundary_${crypto.randomUUID()}`;
       const emailParts = [
         `From: ${this.from}`,
@@ -80,7 +86,10 @@ export class SesEmailProvider implements EmailProvider {
         },
       });
 
-      await this.client.send(command);
+      const result = await this.client.send(command);
+      console.info("SES send success:", {
+        messageId: result.MessageId,
+      });
       return true;
     } catch (error) {
       console.error("SES send error:", error);
