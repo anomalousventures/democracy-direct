@@ -10,7 +10,6 @@ async function createEmailProvider(config: EmailConfig): Promise<EmailProvider> 
       return new SmtpEmailProvider(config);
     }
     case "ses": {
-      await import("@/lib/polyfills/dom-parser");
       const { SesEmailProvider } = await import("./providers/ses");
       return new SesEmailProvider(config);
     }
