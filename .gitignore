@@ -42,3 +42,4 @@ blob-report/
 
 # Ralph loop local state
 .claude/*.local.md
+.dev.vars
