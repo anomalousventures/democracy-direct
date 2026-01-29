@@ -6,7 +6,7 @@
 
 - Node.js 22+
 - pnpm 10+
-- Docker (for local email testing)
+- Docker (for local email testing with Mailpit)
 
 ### Setup
 
@@ -20,7 +20,7 @@ pnpm install
 
 # Copy environment variables
 cp .dev.vars.example .dev.vars
-# Edit .dev.vars with your database URL and secrets
+# Edit .dev.vars with your Neon DATABASE_URL
 
 # Create symlink for tools that read .env
 ln -s .dev.vars .env
@@ -28,21 +28,23 @@ ln -s .dev.vars .env
 # Push database schema
 pnpm db:push
 
-# Import legislators
-pnpm tsx src/scripts/import-legislators.ts
-
-# Start development server with Mailpit
+# Start development server (builds + runs with Cloudflare runtime)
 make dev
 ```
 
-The dev server runs at http://localhost:4321. Mailpit (for viewing emails) runs at http://localhost:8025.
+The dev server runs at http://localhost:4321. Mailpit (for viewing sent emails) runs at http://localhost:8025.
+
+### Why Wrangler?
+
+This project uses Cloudflare Pages with edge runtime. The standard `astro dev` command doesn't provide the Cloudflare runtime environment (`locals.runtime.env`), so we use `wrangler pages dev` for local development. The `make dev` and `pnpm dev` commands handle this automatically.
 
 ## Development
 
 ### Commands
 
 ```bash
-pnpm dev          # Start dev server
+make dev          # Start Mailpit + dev server (recommended)
+pnpm dev          # Build + start dev server (no Mailpit)
 pnpm build        # Production build
 pnpm test         # Run unit tests
 pnpm test:e2e     # Run Playwright E2E tests
@@ -55,41 +57,42 @@ pnpm typecheck    # TypeScript check
 
 ```
 src/
-  components/     # React components
+  components/     # React components (islands)
   db/             # Database schema and queries
   lib/            # Utilities and helpers
   pages/          # Astro pages and API routes
   scripts/        # Data import scripts
 tests/
-  e2e/            # Playwright tests
+  api/            # API endpoint tests
+  e2e/            # Playwright E2E tests
 docs/             # Documentation
 ```
 
 ### Tech Stack
 
 - **Framework**: Astro with React islands
+- **Runtime**: Cloudflare Pages (edge)
 - **Database**: Neon (serverless Postgres) with Drizzle ORM
 - **Styling**: Tailwind CSS
 - **Testing**: Vitest (unit), Playwright (E2E)
-- **Email**: SMTP with provider abstraction (Mailpit for dev)
+- **Email**: SMTP abstraction (Mailpit for dev, SES for prod)
+- **Analytics**: PostHog (privacy-respecting)
 
 ## Pull Requests
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Make your changes
-4. Run tests (`pnpm test && pnpm lint && pnpm typecheck`)
-5. Commit with a descriptive message
-6. Push and open a PR
+1. Create a feature branch (`git checkout -b feature/your-feature`)
+2. Make your changes
+3. Run tests (`pnpm test && pnpm lint && pnpm typecheck`)
+4. Commit with a descriptive message
+5. Push and open a PR
 
 ### Commit Messages
 
-Use conventional commits:
+We use conventional commits:
 
 - `feat:` New feature
 - `fix:` Bug fix
 - `docs:` Documentation
-- `style:` Formatting (no code change)
 - `refactor:` Code restructuring
 - `test:` Adding tests
 - `chore:` Maintenance
@@ -97,7 +100,7 @@ Use conventional commits:
 ## Code Style
 
 - TypeScript strict mode
-- ESLint + Prettier (auto-formatted on commit)
+- ESLint + Prettier (auto-formatted on commit via husky)
 - No `any` types without justification
 - Prefer functional components with hooks
 - Comments explain "why", not "what"
