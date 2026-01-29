@@ -1,11 +1,35 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "@/pages/api/templates/fork";
 
+vi.mock("@/db/client", () => ({
+  createDb: vi.fn(() => mockDb),
+}));
+
+const mockDb = {
+  select: vi.fn().mockReturnThis(),
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  limit: vi.fn(),
+  insert: vi.fn().mockReturnThis(),
+  values: vi.fn().mockReturnThis(),
+  returning: vi.fn(),
+};
+
+function resetMockDb() {
+  Object.values(mockDb).forEach((fn) => fn.mockReset());
+  mockDb.select.mockReturnThis();
+  mockDb.from.mockReturnThis();
+  mockDb.where.mockReturnThis();
+  mockDb.insert.mockReturnThis();
+  mockDb.values.mockReturnThis();
+}
+
 describe("POST /api/templates/fork", () => {
   const mockFetch = vi.fn();
   const originalFetch = global.fetch;
 
   beforeEach(() => {
+    resetMockDb();
     global.fetch = mockFetch;
     mockFetch.mockResolvedValue({
       json: () => Promise.resolve({ success: true }),
@@ -145,5 +169,95 @@ describe("POST /api/templates/fork", () => {
     const data = await response.json();
     expect(data.error).toBe("Validation failed");
     expect(data.errors).toBeDefined();
+  });
+
+  it("returns 404 when source template does not exist", async () => {
+    mockDb.limit.mockResolvedValue([]);
+
+    const response = await POST({
+      request: new Request("http://localhost/api/templates/fork", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Forked Template",
+          body: "This is a forked template body that is long enough to pass validation requirements.",
+          forkedFromId: "non-existent-template-id",
+          turnstileToken: "test-token",
+        }),
+      }),
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+    } as never);
+
+    expect(response.status).toBe(404);
+    const data = await response.json();
+    expect(data.error).toBe("Source template not found");
+  });
+
+  it("returns 404 when source template is private", async () => {
+    mockDb.limit.mockResolvedValue([]);
+
+    const response = await POST({
+      request: new Request("http://localhost/api/templates/fork", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Forked Template",
+          body: "This is a forked template body that is long enough to pass validation requirements.",
+          forkedFromId: "private-template-id",
+          turnstileToken: "test-token",
+        }),
+      }),
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+    } as never);
+
+    expect(response.status).toBe(404);
+    const data = await response.json();
+    expect(data.error).toBe("Source template not found");
+  });
+
+  it("returns 404 when source template is not approved", async () => {
+    mockDb.limit.mockResolvedValue([]);
+
+    const response = await POST({
+      request: new Request("http://localhost/api/templates/fork", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Forked Template",
+          body: "This is a forked template body that is long enough to pass validation requirements.",
+          forkedFromId: "pending-template-id",
+          turnstileToken: "test-token",
+        }),
+      }),
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+    } as never);
+
+    expect(response.status).toBe(404);
+    const data = await response.json();
+    expect(data.error).toBe("Source template not found");
   });
 });

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { eq, and, isNull, gt, lt, sql } from "drizzle-orm";
+import { eq, and, isNull, gt, lt, sql, desc } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { emailOtps, users, sessions } from "@/db/schema";
 import { badRequest, unauthorized, serverError, jsonResponse } from "@/lib/api-response";
@@ -36,7 +36,8 @@ export async function verifyOTPRequest(
         gt(emailOtps.expiresAt, new Date()),
         lt(emailOtps.verificationAttempts, MAX_VERIFICATION_ATTEMPTS)
       )
-    );
+    )
+    .orderBy(desc(emailOtps.createdAt));
 
   if (validOtps.length === 0) {
     return { success: false, error: "Invalid or expired OTP" };
