@@ -73,12 +73,14 @@ export function LetterPreview({
 
         {(printOptions.includeClosing || printOptions.includeSignatureLine) && (
           <div className="text-sm space-y-8">
-            {printOptions.includeClosing && <div>Sincerely,</div>}
+            {printOptions.includeClosing && (
+              <div>
+                <div>Sincerely,</div>
+                {returnAddress.name && <div className="mt-8">{returnAddress.name}</div>}
+              </div>
+            )}
             {printOptions.includeSignatureLine && (
-              <>
-                <div className="border-b border-gray-400 w-48">&nbsp;</div>
-                {returnAddress.name && <div>{returnAddress.name}</div>}
-              </>
+              <div className="border-b border-gray-400 w-48">&nbsp;</div>
             )}
           </div>
         )}

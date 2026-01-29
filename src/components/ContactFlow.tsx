@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { LetterComposer } from "./LetterComposer";
 import { ContactActions } from "./ContactActions";
 import { AddressForm } from "./AddressForm";
@@ -6,31 +6,6 @@ import { LetterPreview, type PrintOptions } from "./LetterPreview";
 import { UserInfoInputs } from "./UserInfoInputs";
 import { type Representative, type Address, createEmptyAddress } from "../types/representative";
 import { substituteForRepresentative, parseTemplateVariables } from "@/lib/template-variables";
-
-const SALUTATION_PATTERNS = [/^dear\s+(senator|representative|rep\.?|sen\.?)/i, /^dear\s+\w+/i];
-
-const CLOSING_PATTERNS = [
-  /sincerely,?\s*$/i,
-  /respectfully,?\s*$/i,
-  /thank\s+you,?\s*$/i,
-  /best\s+regards?,?\s*$/i,
-];
-
-function detectLetterParts(content: string): { hasSalutation: boolean; hasClosing: boolean } {
-  const trimmed = content.trim();
-  const lines = trimmed.split("\n");
-  const firstLine = lines[0]?.trim() || "";
-  const lastNonEmptyLine =
-    [...lines]
-      .reverse()
-      .find((l) => l.trim())
-      ?.trim() || "";
-
-  return {
-    hasSalutation: SALUTATION_PATTERNS.some((p) => p.test(firstLine)),
-    hasClosing: CLOSING_PATTERNS.some((p) => p.test(lastNonEmptyLine)),
-  };
-}
 
 interface ContactFlowProps {
   representative: Representative;
@@ -51,23 +26,14 @@ export function ContactFlow({
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
   const [userInfo, setUserInfo] = useState({ name: "", city: "" });
   const [printOptions, setPrintOptions] = useState<PrintOptions>({
-    includeSalutation: true,
-    includeClosing: true,
-    includeSignatureLine: true,
+    includeSalutation: false,
+    includeClosing: false,
+    includeSignatureLine: false,
   });
 
   const usedVariables = useMemo(() => parseTemplateVariables(letterContent), [letterContent]);
   const needsUserName = usedVariables.includes("USER_NAME");
   const needsUserCity = usedVariables.includes("USER_CITY");
-
-  useEffect(() => {
-    const { hasSalutation, hasClosing } = detectLetterParts(letterContent);
-    setPrintOptions((prev) => ({
-      ...prev,
-      includeSalutation: !hasSalutation,
-      includeClosing: !hasClosing,
-    }));
-  }, [letterContent]);
 
   const handleUserInfoChange = useCallback((info: { name: string; city: string }) => {
     setUserInfo(info);
