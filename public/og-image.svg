@@ -25,14 +25,14 @@
 
   <!-- Logo mark -->
   <rect x="80" y="245" width="80" height="80" rx="12" fill="#d69e2e"/>
-  <text x="120" y="300" dominant-baseline="central" text-anchor="middle"
+  <text x="120" y="285" dominant-baseline="central" text-anchor="middle"
         fill="#1a365d" font-family="Georgia, serif" font-size="52" font-weight="bold">D</text>
 
-  <!-- Title -->
-  <text x="190" y="270" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700">Democracy Direct</text>
+  <!-- Title - aligned with top half of logo box -->
+  <text x="190" y="278" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700">Democracy Direct</text>
 
-  <!-- Tagline -->
-  <text x="190" y="330" fill="#d69e2e" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="500">Your Voice, Your Representatives</text>
+  <!-- Tagline - aligned with bottom half of logo box -->
+  <text x="190" y="312" fill="#d69e2e" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="500">Your Voice, Your Representatives</text>
 
   <!-- Description -->
   <text x="80" y="450" fill="rgba(255,255,255,0.8)" font-family="system-ui, -apple-system, sans-serif" font-size="24">Find and contact your elected officials</text>
