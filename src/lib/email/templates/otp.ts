@@ -6,19 +6,7 @@ export interface OtpEmailParams {
   expiresInMinutes?: number;
 }
 
-function generateDigitCells(otp: string): string {
-  return otp
-    .split("")
-    .map(
-      (digit) =>
-        `<td style="width: 40px; height: 52px; background-color: #ffffff; border: 2px solid #1a365d; border-radius: 6px; text-align: center; vertical-align: middle; font-size: 28px; font-weight: 700; color: #1a365d; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;">${digit}</td>`
-    )
-    .join('<td style="width: 8px;"></td>');
-}
-
 export function createOtpEmail({ to, otp, expiresInMinutes = 10 }: OtpEmailParams): EmailMessage {
-  const digitCells = generateDigitCells(otp);
-
   return {
     to,
     subject: `${otp} is your Democracy Direct code`,
@@ -70,22 +58,15 @@ Privacy: https://democracy-direct.com/privacy`,
               <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #1a365d; text-align: center; letter-spacing: -0.5px;">
                 Your verification code
               </h1>
-              <p style="margin: 0 0 28px 0; font-size: 15px; color: #64748b; line-height: 1.5; text-align: center;">
+              <p style="margin: 0 0 24px 0; font-size: 15px; color: #64748b; line-height: 1.5; text-align: center;">
                 Enter this code to sign in:
               </p>
 
-              <!-- OTP Code Display -->
-              <table cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto 20px auto; background-color: #f8fafc; border-radius: 10px; padding: 16px;">
-                <tr>
-                  ${digitCells}
-                </tr>
-              </table>
-
-              <!-- Copyable OTP -->
+              <!-- OTP Code -->
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td align="center" style="padding: 0 0 24px 0;">
-                    <span role="button" aria-label="Your verification code: ${otp}" style="display: inline-block; background-color: #1a365d; color: #ffffff; font-size: 18px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; letter-spacing: 4px; padding: 14px 28px; border-radius: 8px; text-decoration: none; -webkit-user-select: all; user-select: all;">${otp}</span>
+                    <span role="button" aria-label="Your verification code: ${otp}" style="display: inline-block; background-color: #1a365d; color: #ffffff; font-size: 32px; font-weight: 700; font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; letter-spacing: 8px; padding: 20px 32px; border-radius: 12px; -webkit-user-select: all; user-select: all;">${otp}</span>
                   </td>
                 </tr>
               </table>

@@ -24,15 +24,11 @@ describe("createOtpEmail", () => {
     expect(email.text).toContain("123456");
   });
 
-  it("includes OTP digits in HTML body", () => {
+  it("includes OTP in HTML body as copyable span", () => {
     const email = createOtpEmail(params);
-    expect(email.html).toContain(">1</td>");
-    expect(email.html).toContain(">2</td>");
-    expect(email.html).toContain(">3</td>");
-    expect(email.html).toContain(">4</td>");
-    expect(email.html).toContain(">5</td>");
-    expect(email.html).toContain(">6</td>");
     expect(email.html).toContain(">123456</span>");
+    expect(email.html).toContain('aria-label="Your verification code: 123456"');
+    expect(email.html).toContain("user-select: all");
   });
 
   it("includes expiry time in text body", () => {
