@@ -81,8 +81,10 @@ if (!slug) {
 const isOwner = user && template?.userId === user.id;
 
 function getCleanDescription(body: string): string {
-  const templateVarPattern = /\{\{[^}]+\}\}/g;
-  return body.replace(templateVarPattern, "").slice(0, 155).trim() + "...";
+  const templateVarPattern = /\{\{(\w+)\}\}/g;
+  const cleaned = body.replace(templateVarPattern, "").trim();
+  const truncated = cleaned.slice(0, 155);
+  return truncated + (cleaned.length > 155 ? "..." : "");
 }
 
 const description = template ? getCleanDescription(template.body) : "Template not found";

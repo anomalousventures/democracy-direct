@@ -82,7 +82,7 @@ if (!error) {
 
 <Layout
   title={rep
-    ? `${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName} (${rep.party === "Democrat" ? "D" : rep.party === "Republican" ? "R" : "I"}-${rep.state})`
+    ? `${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName} (${getPartyLabel(rep.party, true)}-${rep.state})`
     : "Representative Not Found"}
   description={rep
     ? `Contact information for ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}, representing ${rep.state}${rep.chamber === "house" && rep.district !== "0" ? `-${rep.district}` : ""}`
