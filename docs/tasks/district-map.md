@@ -14,6 +14,9 @@ Most people don't know their congressional district number. When a ZIP code span
 - [ ] Research reverse geocoding options (click → coordinates → district)
 - [ ] Consider mobile UX for map interactions
 - [ ] Evaluate bundle size impact of map libraries
+- [ ] Research HTML Geolocation element for declarative location permissions
+  - Modern browsers may support declarative permission prompts
+  - Better UX than imperative `navigator.geolocation` API
 
 ## Open Questions
 
