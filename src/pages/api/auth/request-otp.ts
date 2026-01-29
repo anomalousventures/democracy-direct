@@ -36,8 +36,13 @@ export async function requestOTP(
       .from(emailOtps)
       .where(and(eq(emailOtps.emailHash, emailHash), gte(emailOtps.createdAt, oneHourAgo)));
 
+    console.warn("Rate limit check:", {
+      recentCount: recentRequests.length,
+      limit: RATE_LIMIT_MAX_REQUESTS,
+    });
+
     if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
-      // Silently succeed to prevent email enumeration - no OTP created/sent
+      console.warn("Rate limited - skipping email send");
       return { success: true };
     }
 
@@ -56,10 +61,14 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
+    console.warn("Sending OTP email...");
     const sent = await emailSender(emailMessage, locals);
+    console.warn("Email send returned:", sent);
     if (!sent) {
       return { success: false, error: "Failed to send verification email. Please try again." };
     }
+  } else {
+    console.warn("No db connection - skipping email");
   }
 
   return { success: true };
