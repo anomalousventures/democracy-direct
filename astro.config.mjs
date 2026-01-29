@@ -8,7 +8,7 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://democracydirect.us",
+  site: "https://democracy-direct.com",
   integrations: [react(), sitemap()],
 
   vite: {

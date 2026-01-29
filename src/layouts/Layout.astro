@@ -12,7 +12,7 @@ interface Props {
 const config = getConfig(Astro.locals);
 const turnstileSiteKey = config.turnstile.siteKey;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site || "https://democracydirect.us");
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || "https://democracy-direct.com");
 const {
   title,
   description = "Direct access to your democracy.",
