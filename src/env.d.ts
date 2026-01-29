@@ -16,6 +16,8 @@ export interface Env {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   AWS_REGION?: string;
+  AWS_ACCESS_KEY_ID?: string;
+  AWS_SECRET_ACCESS_KEY?: string;
   OPENAI_API_KEY?: string;
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
@@ -39,6 +41,8 @@ declare global {
     readonly SMTP_USER?: string;
     readonly SMTP_PASS?: string;
     readonly AWS_REGION?: string;
+    readonly AWS_ACCESS_KEY_ID?: string;
+    readonly AWS_SECRET_ACCESS_KEY?: string;
     readonly OPENAI_API_KEY?: string;
     readonly TURNSTILE_SITE_KEY?: string;
     readonly TURNSTILE_SECRET_KEY?: string;
