@@ -7,7 +7,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="512" height="512" rx="64" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#bg)"/>
 
   <!-- Logo mark -->
   <rect x="128" y="128" width="256" height="256" rx="32" fill="#d69e2e"/>
