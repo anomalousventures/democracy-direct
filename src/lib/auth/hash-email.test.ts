@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hashEmail } from "./hash-email";
+import { hashEmail, sha256 } from "./hash-email";
 
 describe("hashEmail", () => {
   it("returns consistent hash for same email", () => {
@@ -37,5 +37,15 @@ describe("hashEmail", () => {
     const hash = hashEmail("test@example.com");
     expect(hash).toHaveLength(64);
     expect(hash).toMatch(/^[a-f0-9]+$/);
+  });
+});
+
+describe("sha256", () => {
+  it("returns consistent hash for same input", () => {
+    expect(sha256("test")).toBe(sha256("test"));
+  });
+
+  it("returns different hash for different inputs", () => {
+    expect(sha256("test1")).not.toBe(sha256("test2"));
   });
 });

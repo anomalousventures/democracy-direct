@@ -32,7 +32,13 @@ function resetMockDb(): void {
 function createLocals(userId: string | null) {
   return {
     user: userId ? { id: userId } : null,
-    runtime: { env: { DATABASE_URL: "postgres://test" } },
+    runtime: {
+      env: {
+        DATABASE_URL: "postgres://test",
+        TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+        TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+      },
+    },
   };
 }
 

@@ -22,7 +22,7 @@ If you didn't request this code, you can safely ignore this email.
 Democracy Direct
 Your Voice, Your Representatives
 
-Contact: contact@democracy-direct.com
+Contact: hello@democracy-direct.com
 Privacy: https://democracy-direct.com/privacy`,
 
     html: `<!DOCTYPE html>
@@ -83,7 +83,7 @@ Privacy: https://democracy-direct.com/privacy`,
                 We never store your email address on our servers.
               </p>
               <p style="margin: 0; font-size: 12px; color: #a0aec0; text-align: center;">
-                <a href="mailto:contact@democracy-direct.com" style="color: #4a5568; text-decoration: underline;">Contact</a>
+                <a href="mailto:hello@democracy-direct.com" style="color: #4a5568; text-decoration: underline;">Contact</a>
                 &nbsp;·&nbsp;
                 <a href="https://democracy-direct.com/privacy" style="color: #4a5568; text-decoration: underline;">Privacy</a>
               </p>

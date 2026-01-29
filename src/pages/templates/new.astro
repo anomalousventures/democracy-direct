@@ -5,10 +5,12 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { TemplateCreateClient } from "@/components/TemplateCreateClient";
+import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+const config = getConfig(Astro.locals);
+const turnstileSiteKey = config.turnstile.siteKey;
 ---
 
 <Layout title="Create New Template">
@@ -54,9 +56,3 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
   <Footer currentPath="/templates" />
 </Layout>
-
-{
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}

@@ -38,8 +38,8 @@ describe("Phase 0.1: Project Scaffolding", () => {
       expect(existsSync(prettierPath)).toBe(true);
     });
 
-    it("should have .env.example", () => {
-      const envPath = resolve(rootDir, ".env.example");
+    it("should have .dev.vars.example", () => {
+      const envPath = resolve(rootDir, ".dev.vars.example");
       expect(existsSync(envPath)).toBe(true);
     });
   });

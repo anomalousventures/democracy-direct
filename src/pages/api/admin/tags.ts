@@ -3,23 +3,19 @@ import { eq, desc } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { tagSuggestions } from "@/db/schema";
 import { jsonResponse, badRequest, serverError, notFound } from "@/lib/api-response";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { requireAdmin } from "@/lib/admin";
-import { z } from "zod";
+import { parseJsonBody, adminTagActionBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
-
-const actionSchema = z.object({
-  tagId: z.string().uuid(),
-  action: z.enum(["approve", "reject"]),
-});
 
 export const GET: APIRoute = async ({ locals }) => {
   const adminError = requireAdmin(locals.user);
   if (adminError) return adminError;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const tags = await db
       .select()
       .from(tagSuggestions)
@@ -37,23 +33,17 @@ export const POST: APIRoute = async ({ locals, request }) => {
   const adminError = requireAdmin(locals.user);
   if (adminError) return adminError;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest("Invalid JSON");
+  const parseResult = await parseJsonBody(request, adminTagActionBodySchema);
+  if (!parseResult.success) {
+    return badRequest(parseResult.error);
   }
 
-  const result = actionSchema.safeParse(body);
-  if (!result.success) {
-    return badRequest("Invalid request body");
-  }
-
-  const { tagId, action } = result.data;
+  const { tagId, action } = parseResult.data;
   const newStatus = action === "approve" ? "approved" : "rejected";
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const [updatedTag] = await db
       .update(tagSuggestions)
       .set({

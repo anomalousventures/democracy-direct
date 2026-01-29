@@ -7,7 +7,7 @@ import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 const { slug } = Astro.params;
@@ -32,7 +32,8 @@ if (!slug) {
   error = "Template not found.";
 } else {
   try {
-    const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
 
     const results = await db
       .select({

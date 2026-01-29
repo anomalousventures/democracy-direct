@@ -1,0 +1,241 @@
+name: Accessibility & Performance Audit
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "Deployment URL to audit"
+        required: true
+        type: string
+      pr_number:
+        description: "PR number to comment on (optional)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  deployments: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.deployment.sha }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Lighthouse & Pa11y
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get deployment URL and PR number
+        id: deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let deploymentUrl, prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              deploymentUrl = '${{ inputs.deployment_url }}';
+              prNumber = '${{ inputs.pr_number }}' || null;
+              console.log('Manual trigger');
+            } else {
+              deploymentUrl = context.payload.deployment_status.target_url;
+              const sha = context.payload.deployment.sha;
+
+              console.log(`Commit SHA: ${sha}`);
+
+              // Find PR associated with this commit
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100
+              });
+
+              const pr = prs.find(p => p.head.sha === sha);
+              prNumber = pr ? pr.number : null;
+            }
+
+            console.log(`Deployment URL: ${deploymentUrl}`);
+            console.log(`PR Number: ${prNumber}`);
+
+            core.setOutput('url', deploymentUrl || '');
+            core.setOutput('pr_number', prNumber || '');
+
+      - name: Install audit tools
+        if: steps.deployment.outputs.url != ''
+        run: |
+          npm install -g @lhci/cli pa11y
+          npx puppeteer browsers install chrome
+
+      - name: Run Lighthouse audit
+        if: steps.deployment.outputs.url != ''
+        id: lighthouse
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+        run: |
+          mkdir -p lighthouse-results
+          lhci collect \
+            --url="${DEPLOY_URL}" \
+            --url="${DEPLOY_URL}/about" \
+            --url="${DEPLOY_URL}/privacy" \
+            --url="${DEPLOY_URL}/templates" \
+            --settings.chromeFlags="--no-sandbox --headless" \
+            || true
+
+          lhci upload \
+            --target=filesystem \
+            --outputDir=./lighthouse-results \
+            || true
+
+      - name: Run Pa11y accessibility audit
+        if: steps.deployment.outputs.url != ''
+        id: pa11y
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+        run: |
+          mkdir -p pa11y-results
+
+          # Create pa11y config for Chrome sandbox settings
+          cat > pa11y-config.json << 'EOF'
+          {
+            "chromeLaunchConfig": {
+              "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+            }
+          }
+          EOF
+
+          pa11y "${DEPLOY_URL}" --config pa11y-config.json --reporter json > pa11y-results/home.json || true
+          pa11y "${DEPLOY_URL}/about" --config pa11y-config.json --reporter json > pa11y-results/about.json || true
+          pa11y "${DEPLOY_URL}/privacy" --config pa11y-config.json --reporter json > pa11y-results/privacy.json || true
+          pa11y "${DEPLOY_URL}/templates" --config pa11y-config.json --reporter json > pa11y-results/templates.json || true
+
+      - name: Generate audit summary
+        if: steps.deployment.outputs.url != ''
+        id: summary
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+        run: |
+          echo "## Accessibility & Performance Audit Results" > audit-summary.md
+          echo "" >> audit-summary.md
+          echo "**Deployment URL:** ${DEPLOY_URL}" >> audit-summary.md
+          echo "" >> audit-summary.md
+
+          echo "### Lighthouse Scores" >> audit-summary.md
+          echo "" >> audit-summary.md
+
+          if [ -d ".lighthouseci" ]; then
+            echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
+            echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
+            for file in .lighthouseci/lhr-*.json; do
+              if [ -f "$file" ]; then
+                url=$(jq -r '.finalUrl' "$file" 2>/dev/null || echo "unknown")
+                perf=$(jq -r '.categories.performance.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                a11y=$(jq -r '.categories.accessibility.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                bp=$(jq -r '.categories["best-practices"].score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                seo=$(jq -r '.categories.seo.score * 100 | floor' "$file" 2>/dev/null || echo "N/A")
+                echo "| $url | $perf | $a11y | $bp | $seo |" >> audit-summary.md
+              fi
+            done
+            echo "" >> audit-summary.md
+          else
+            echo "No Lighthouse results found." >> audit-summary.md
+          fi
+
+          echo "" >> audit-summary.md
+          echo "### Pa11y Accessibility Issues" >> audit-summary.md
+          echo "" >> audit-summary.md
+
+          total_issues=0
+          for file in pa11y-results/*.json; do
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              page=$(basename "$file" .json)
+              issues=$(jq -r 'if type == "array" then length else 0 end' "$file" 2>/dev/null)
+              issues=${issues:-0}
+              if [[ "$issues" =~ ^[0-9]+$ ]]; then
+                total_issues=$((total_issues + issues))
+                echo "- **$page**: $issues issues" >> audit-summary.md
+              else
+                echo "- **$page**: parse error" >> audit-summary.md
+              fi
+            elif [ -f "$file" ]; then
+              page=$(basename "$file" .json)
+              echo "- **$page**: no data (audit may have failed)" >> audit-summary.md
+            fi
+          done
+
+          echo "" >> audit-summary.md
+          echo "**Total Pa11y issues: $total_issues**" >> audit-summary.md
+
+          if [ "$total_issues" -gt 0 ]; then
+            echo "" >> audit-summary.md
+            echo "<details>" >> audit-summary.md
+            echo "<summary>View Pa11y Details</summary>" >> audit-summary.md
+            echo "" >> audit-summary.md
+            for file in pa11y-results/*.json; do
+              if [ -f "$file" ]; then
+                page=$(basename "$file" .json)
+                issues=$(jq -r 'if type == "array" then . else [] end | .[] | "- [\(.type)] \(.message)"' "$file" 2>/dev/null || echo "")
+                if [ -n "$issues" ]; then
+                  echo "#### $page" >> audit-summary.md
+                  echo "$issues" >> audit-summary.md
+                  echo "" >> audit-summary.md
+                fi
+              fi
+            done
+            echo "</details>" >> audit-summary.md
+          fi
+
+          cat audit-summary.md
+
+      - name: Post audit results to PR
+        if: steps.deployment.outputs.url != '' && steps.deployment.outputs.pr_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('audit-summary.md', 'utf8');
+            const prNumber = parseInt('${{ steps.deployment.outputs.pr_number }}', 10);
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Accessibility & Performance Audit Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: summary
+              });
+            }
+
+      - name: Upload audit artifacts
+        if: always() && steps.deployment.outputs.url != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: audit-results
+          path: |
+            lighthouse-results/
+            pa11y-results/
+            .lighthouseci/
+          retention-days: 14

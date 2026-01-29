@@ -18,7 +18,7 @@ import {
   formatDate,
 } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 
@@ -37,7 +37,8 @@ if (isInvalidId) {
 }
 
 if (!error) {
-  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
   const [loadedRep, dbError] = await getLegislatorByBioguideId(db, bioguideId!)
     .then((result) => [result, null] as const)
     .catch((e) => {

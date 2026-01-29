@@ -110,6 +110,7 @@ export const templates = pgTable(
     viewCount: integer("view_count").notNull().default(0),
     useCount: integer("use_count").notNull().default(0),
     flagCount: integer("flag_count").notNull().default(0),
+    contentHash: varchar("content_hash", { length: 64 }).unique(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

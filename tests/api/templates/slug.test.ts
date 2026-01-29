@@ -7,7 +7,13 @@ describe("GET /api/templates/[slug]", () => {
       params: {},
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -23,7 +29,13 @@ describe("PUT /api/templates/[slug]", () => {
       params: { slug: "test-template" },
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/templates/test-template", {
         method: "PUT",
@@ -41,7 +53,13 @@ describe("PUT /api/templates/[slug]", () => {
       params: {},
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/templates/test", {
         method: "PUT",
@@ -59,7 +77,13 @@ describe("PUT /api/templates/[slug]", () => {
       params: { slug: "test-template" },
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/templates/test-template", {
         method: "PUT",
@@ -77,7 +101,13 @@ describe("PUT /api/templates/[slug]", () => {
       params: { slug: "test-template" },
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/templates/test-template", {
         method: "PUT",
@@ -95,7 +125,13 @@ describe("PUT /api/templates/[slug]", () => {
       params: { slug: "test-template" },
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/templates/test-template", {
         method: "PUT",
@@ -116,7 +152,13 @@ describe("DELETE /api/templates/[slug]", () => {
       params: { slug: "test-template" },
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -130,7 +172,13 @@ describe("DELETE /api/templates/[slug]", () => {
       params: {},
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 

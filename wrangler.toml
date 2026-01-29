@@ -1,0 +1,27 @@
+name = "democracy-direct"
+pages_build_output_dir = "dist"
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-09-23"
+
+# Default vars for local dev and CI e2e tests
+# Secrets (DATABASE_URL, API keys) must be in .dev.vars locally or CI secrets
+[vars]
+EMAIL_PROVIDER = "smtp"
+EMAIL_FROM = "no-reply@democracy-direct.com"
+SMTP_HOST = "localhost"
+SMTP_PORT = "1025"
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
+
+[env.production.vars]
+EMAIL_PROVIDER = "ses"
+EMAIL_FROM = "no-reply@democracy-direct.com"
+AWS_REGION = "us-west-1"
+TURNSTILE_SITE_KEY = "0x4AAAAAABB4GqN8-8XHC21Y"
+
+[env.preview.vars]
+EMAIL_PROVIDER = "ses"
+EMAIL_FROM = "no-reply@democracy-direct.com"
+AWS_REGION = "us-west-1"
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"

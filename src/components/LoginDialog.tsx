@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -11,6 +11,20 @@ import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+declare global {
+  interface Window {
+    TURNSTILE_SITE_KEY?: string;
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void }
+      ) => string;
+      remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
 
 interface LoginDialogProps {
   open: boolean;
@@ -26,6 +40,28 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  const renderTurnstile = useCallback(() => {
+    if (turnstileRef.current && window.turnstile && window.TURNSTILE_SITE_KEY) {
+      if (widgetIdRef.current) {
+        window.turnstile.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: window.TURNSTILE_SITE_KEY,
+        callback: (token: string) => setTurnstileToken(token),
+      });
+    }
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken(null);
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -34,8 +70,20 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       setOtp("");
       setError(null);
       setIsLoading(false);
+      setTurnstileToken(null);
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && step === "email") {
+      const timer = setTimeout(renderTurnstile, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, step, renderTurnstile]);
 
   const isValidEmail = (email: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -50,19 +98,25 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       return;
     }
 
+    if (!turnstileToken) {
+      setError("Please complete the verification");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await fetch("/api/auth/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(data.error || "Failed to send verification code");
+        resetTurnstile();
         return;
       }
 
@@ -71,6 +125,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
     } catch {
       setError("Network error. Please try again.");
       toast.error("Network error. Please try again.");
+      resetTurnstile();
     } finally {
       setIsLoading(false);
     }
@@ -151,6 +206,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               className="w-full"
               loading={isLoading}
               loadingText="Sending..."
+              disabled={!turnstileToken || !isValidEmail(email)}
             >
               Send Code
             </LoadingButton>
@@ -171,6 +227,12 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               </svg>
               We never store your email address on our servers
             </p>
+
+            <div
+              ref={turnstileRef}
+              data-testid="turnstile-widget"
+              className="flex justify-center"
+            />
           </form>
         ) : (
           <form

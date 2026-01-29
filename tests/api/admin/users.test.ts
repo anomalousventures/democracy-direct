@@ -8,7 +8,13 @@ describe("PATCH /api/admin/users/[userId]", () => {
       params: { userId: "user-123" },
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/users/user-123", {
         method: "PATCH",
@@ -26,7 +32,13 @@ describe("PATCH /api/admin/users/[userId]", () => {
       params: { userId: "user-123" },
       locals: {
         user: { id: "other-user", trustLevel: 1 },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/users/user-123", {
         method: "PATCH",
@@ -44,7 +56,13 @@ describe("PATCH /api/admin/users/[userId]", () => {
       params: {},
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/users/", {
         method: "PATCH",
@@ -62,7 +80,13 @@ describe("PATCH /api/admin/users/[userId]", () => {
       params: { userId: "user-123" },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/users/user-123", {
         method: "PATCH",
@@ -80,7 +104,13 @@ describe("PATCH /api/admin/users/[userId]", () => {
       params: { userId: "admin-123" },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/users/admin-123", {
         method: "PATCH",

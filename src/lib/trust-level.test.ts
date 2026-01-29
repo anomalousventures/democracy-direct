@@ -5,6 +5,10 @@ import {
   getTrustLevelLabel,
   canCreateTemplates,
   canBypassModeration,
+  hasMinTrustLevel,
+  isTrusted,
+  isAdmin,
+  isBanned,
   TRUST_LEVELS,
   APPROVED_TEMPLATES_FOR_TRUST,
 } from "./trust-level";
@@ -100,6 +104,69 @@ describe("Trust Level System", () => {
       expect(canBypassModeration(TRUST_LEVELS.TRUSTED)).toBe(false);
       expect(canBypassModeration(TRUST_LEVELS.NEW_USER)).toBe(false);
       expect(canBypassModeration(TRUST_LEVELS.BANNED)).toBe(false);
+    });
+  });
+
+  describe("hasMinTrustLevel", () => {
+    it.each([
+      { user: null, minLevel: TRUST_LEVELS.NEW_USER, expected: false, desc: "null user" },
+      { user: undefined, minLevel: TRUST_LEVELS.NEW_USER, expected: false, desc: "undefined user" },
+      {
+        user: { trustLevel: TRUST_LEVELS.TRUSTED },
+        minLevel: TRUST_LEVELS.TRUSTED,
+        expected: true,
+        desc: "user meets minimum",
+      },
+      {
+        user: { trustLevel: TRUST_LEVELS.ADMIN },
+        minLevel: TRUST_LEVELS.TRUSTED,
+        expected: true,
+        desc: "user exceeds minimum",
+      },
+      {
+        user: { trustLevel: TRUST_LEVELS.NEW_USER },
+        minLevel: TRUST_LEVELS.TRUSTED,
+        expected: false,
+        desc: "user below minimum",
+      },
+    ])("returns $expected for $desc", ({ user, minLevel, expected }) => {
+      expect(hasMinTrustLevel(user, minLevel)).toBe(expected);
+    });
+  });
+
+  describe("isTrusted", () => {
+    it.each([
+      { user: null, expected: false, desc: "null user" },
+      { user: { trustLevel: TRUST_LEVELS.BANNED }, expected: false, desc: "banned user" },
+      { user: { trustLevel: TRUST_LEVELS.NEW_USER }, expected: false, desc: "new user" },
+      { user: { trustLevel: TRUST_LEVELS.TRUSTED }, expected: true, desc: "trusted user" },
+      { user: { trustLevel: TRUST_LEVELS.ADMIN }, expected: true, desc: "admin" },
+    ])("returns $expected for $desc", ({ user, expected }) => {
+      expect(isTrusted(user)).toBe(expected);
+    });
+  });
+
+  describe("isAdmin", () => {
+    it.each([
+      { user: null, expected: false, desc: "null user" },
+      { user: { trustLevel: TRUST_LEVELS.BANNED }, expected: false, desc: "banned user" },
+      { user: { trustLevel: TRUST_LEVELS.NEW_USER }, expected: false, desc: "new user" },
+      { user: { trustLevel: TRUST_LEVELS.TRUSTED }, expected: false, desc: "trusted user" },
+      { user: { trustLevel: TRUST_LEVELS.ADMIN }, expected: true, desc: "admin" },
+    ])("returns $expected for $desc", ({ user, expected }) => {
+      expect(isAdmin(user)).toBe(expected);
+    });
+  });
+
+  describe("isBanned", () => {
+    it.each([
+      { user: null, expected: false, desc: "null user" },
+      { user: { trustLevel: TRUST_LEVELS.BANNED }, expected: true, desc: "banned user" },
+      { user: { trustLevel: TRUST_LEVELS.NEW_USER }, expected: false, desc: "new user" },
+      { user: { trustLevel: TRUST_LEVELS.TRUSTED }, expected: false, desc: "trusted user" },
+      { user: { trustLevel: TRUST_LEVELS.ADMIN }, expected: false, desc: "admin" },
+    ])("returns $expected for $desc", ({ user, expected }) => {
+      expect(isBanned(user)).toBe(expected);
     });
   });
 });

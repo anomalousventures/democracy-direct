@@ -8,7 +8,7 @@ import { TemplateForkClient } from "@/components/TemplateForkClient";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 const { slug } = Astro.params;
@@ -27,12 +27,14 @@ let originalTemplate: {
 
 let error: string | null = null;
 
+const config = getConfig(Astro.locals);
+
 if (!slug) {
   Astro.response.status = 404;
   error = "Template not found.";
 } else {
   try {
-    const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+    const db = createDb(config.database.url);
 
     const [result] = await db
       .select({
@@ -65,7 +67,7 @@ if (!slug) {
   }
 }
 
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+const turnstileSiteKey = config.turnstile.siteKey;
 ---
 
 <Layout title={originalTemplate ? `Fork: ${originalTemplate.title}` : "Template Not Found"}>
@@ -147,9 +149,3 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
   <Footer currentPath="/templates" />
 </Layout>
-
-{
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}

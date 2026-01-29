@@ -1,12 +1,11 @@
 import type { APIRoute } from "astro";
-import { randomUUID } from "crypto";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { emailOtps, users, sessions } from "@/db/schema";
 import { badRequest, unauthorized, serverError, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { hashOTP } from "@/lib/auth/otp";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { parseJsonBody, verifyOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
@@ -56,7 +55,7 @@ export async function verifyOTPRequest(
     userId = userRecords[0].id;
   }
 
-  const sessionId = randomUUID();
+  const sessionId = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await db.insert(sessions).values({
@@ -77,7 +76,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const { email, otp } = parseResult.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const result = await verifyOTPRequest(email, otp, db);
 
     if (!result.success || !result.sessionId) {

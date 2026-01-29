@@ -6,7 +6,7 @@ import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 export const prerender = false;
 
@@ -24,7 +24,8 @@ let templateList: {
 let availableTags: string[] = [];
 
 try {
-  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
 
   const results = await db
     .select({

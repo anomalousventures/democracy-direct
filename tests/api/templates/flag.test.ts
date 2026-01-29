@@ -11,7 +11,13 @@ describe("Template Flag Endpoint", () => {
 
     const mockLocals = {
       user: null,
-      runtime: { env: { DATABASE_URL: "postgres://test" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+          TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+        },
+      },
     };
 
     const response = await POST({
@@ -34,7 +40,13 @@ describe("Template Flag Endpoint", () => {
 
     const mockLocals = {
       user: { id: "user-123" },
-      runtime: { env: { DATABASE_URL: "postgres://test" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+          TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+        },
+      },
     };
 
     const response = await POST({
@@ -58,7 +70,13 @@ describe("Template Flag Endpoint", () => {
 
     const mockLocals = {
       user: { id: "user-123" },
-      runtime: { env: { DATABASE_URL: "postgres://test" } },
+      runtime: {
+        env: {
+          DATABASE_URL: "postgres://test",
+          TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+          TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+        },
+      },
     };
 
     const response = await POST({

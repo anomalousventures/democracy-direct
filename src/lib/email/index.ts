@@ -1,52 +1,29 @@
-import type { EmailConfig, EmailMessage, EmailProvider } from "./types";
-import { SmtpEmailProvider } from "./providers/smtp";
-import { SesEmailProvider } from "./providers/ses";
-import { getEnv } from "@/lib/env";
+import type { EmailMessage, EmailProvider } from "./types";
+import { getConfig, type EmailConfig } from "@/lib/config";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
-export function createEmailProvider(config: EmailConfig): EmailProvider {
+async function createEmailProvider(config: EmailConfig): Promise<EmailProvider> {
   switch (config.provider) {
-    case "smtp":
+    case "smtp": {
+      const { SmtpEmailProvider } = await import("./providers/smtp");
       return new SmtpEmailProvider(config);
-    case "ses":
+    }
+    case "ses": {
+      const { SesEmailProvider } = await import("./providers/ses");
       return new SesEmailProvider(config);
+    }
     default:
       throw new Error(`Unknown email provider: ${config.provider}`);
   }
 }
 
 export function getEmailConfig(locals: App.Locals): EmailConfig {
-  const provider = (getEnv(locals, "EMAIL_PROVIDER") || "smtp") as EmailConfig["provider"];
-
-  return {
-    provider,
-    from: getEnv(locals, "EMAIL_FROM") || "noreply@democracy-direct.com",
-    smtp:
-      provider === "smtp"
-        ? {
-            host: getEnv(locals, "SMTP_HOST") || "localhost",
-            port: parseInt(getEnv(locals, "SMTP_PORT") || "1025", 10),
-            secure: getEnv(locals, "SMTP_SECURE") === "true",
-            auth:
-              getEnv(locals, "SMTP_USER") && getEnv(locals, "SMTP_PASS")
-                ? {
-                    user: getEnv(locals, "SMTP_USER")!,
-                    pass: getEnv(locals, "SMTP_PASS")!,
-                  }
-                : undefined,
-          }
-        : undefined,
-    ses:
-      provider === "ses"
-        ? {
-            region: getEnv(locals, "AWS_REGION") || "us-east-1",
-          }
-        : undefined,
-  };
+  return getConfig(locals).email;
 }
 
 export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
-  const provider = createEmailProvider(getEmailConfig(locals));
+  const config = getEmailConfig(locals);
+  const provider = await createEmailProvider(config);
   return provider.send(message);
 }

@@ -1,7 +1,8 @@
-import { createHash, randomInt } from "crypto";
+import { randomInt } from "crypto";
+import { sha256 } from "./hash-email";
 
 export function hashOTP(otp: string): string {
-  return createHash("sha256").update(otp).digest("hex");
+  return sha256(otp);
 }
 
 export function generateOTP(): { otp: string; otpHash: string } {

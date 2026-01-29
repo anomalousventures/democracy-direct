@@ -1,7 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "@/pages/api/templates/fork";
 
 describe("POST /api/templates/fork", () => {
+  const mockFetch = vi.fn();
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = mockFetch;
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve({ success: true }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    mockFetch.mockReset();
+  });
+
   it("returns 401 when not authenticated", async () => {
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {
@@ -14,7 +29,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -31,7 +52,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -51,7 +78,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -71,7 +104,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 
@@ -92,7 +131,13 @@ describe("POST /api/templates/fork", () => {
       }),
       locals: {
         user: { id: "user-123" },
-        runtime: { env: { DATABASE_URL: "postgres://test", TURNSTILE_SECRET_KEY: "test-secret" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
     } as never);
 

@@ -7,7 +7,7 @@ import Footer from "@/components/Footer.astro";
 import { createDb } from "@/db/client";
 import { tagSuggestions, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { isAdmin } from "@/lib/admin";
 
 const user = Astro.locals.user;
@@ -32,7 +32,8 @@ type TagItem = {
 let pendingTags: TagItem[] = [];
 
 try {
-  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
 
   const results = await db
     .select({

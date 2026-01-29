@@ -10,7 +10,7 @@ import type { Legislator } from "@/db/schema";
 import zipData from "../../../public/data/zip-districts.json";
 import { getPhotoUrl, getPartyColor, getPartyLabel, getRepTitle } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 
@@ -50,7 +50,8 @@ if (!error && zipEntry) {
   const selectedState = zipEntry.s;
   zipInfo = { state: selectedState, district: selectedDistrict };
 
-  const db = createDb(getRequiredEnv(Astro.locals, "DATABASE_URL"));
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
   const [loadedReps, dbError] = await getLegislatorsByStateAndDistrict(
     db,
     selectedState,

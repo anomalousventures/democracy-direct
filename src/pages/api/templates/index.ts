@@ -3,7 +3,7 @@ import { createDb } from "@/db/client";
 import { templates, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
-import { getRequiredEnv, getOptionalEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
   badRequest,
@@ -37,38 +37,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return validationError(validationErrors);
   }
 
-  const turnstileSecret = getRequiredEnv(locals, "TURNSTILE_SECRET_KEY");
-  if (turnstileSecret && turnstileSecret !== "test-secret") {
-    if (!turnstileToken) {
-      return forbidden("Turnstile verification required");
+  const config = getConfig(locals);
+
+  if (!turnstileToken) {
+    return forbidden("Turnstile verification required");
+  }
+
+  const turnstileResponse = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: config.turnstile.secretKey,
+        response: turnstileToken,
+      }),
     }
+  );
 
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: turnstileSecret,
-          response: turnstileToken,
-        }),
-      }
-    );
+  const turnstileResult: unknown = await turnstileResponse.json();
+  const isValidTurnstile =
+    typeof turnstileResult === "object" &&
+    turnstileResult !== null &&
+    "success" in turnstileResult &&
+    turnstileResult.success === true;
 
-    const turnstileResult: unknown = await turnstileResponse.json();
-    const isValidTurnstile =
-      typeof turnstileResult === "object" &&
-      turnstileResult !== null &&
-      "success" in turnstileResult &&
-      turnstileResult.success === true;
-
-    if (!isValidTurnstile) {
-      return forbidden("Turnstile verification failed");
-    }
+  if (!isValidTurnstile) {
+    return forbidden("Turnstile verification failed");
   }
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const db = createDb(config.database.url);
 
     let trustLevel: number = TRUST_LEVELS.NEW_USER;
     if (user) {
@@ -80,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
     }
 
-    const openaiKey = getOptionalEnv(locals, "OPENAI_API_KEY");
+    const openaiKey = config.moderation.openaiApiKey;
     const contentToModerate = `${title}\n\n${templateBody}`;
     const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
 

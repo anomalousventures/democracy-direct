@@ -7,11 +7,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "html",
-  timeout: 30000,
+  timeout: 60000,
   use: {
-    baseURL: "http://localhost:4321",
+    baseURL: "http://localhost:8788",
     trace: "on-first-retry",
-    actionTimeout: 10000,
+    actionTimeout: 15000,
   },
   projects: [
     {
@@ -20,10 +20,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:4321",
+    command: "pnpm build && pnpm wrangler pages dev dist --port 8788",
+    url: "http://localhost:8788",
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 180000,
     stdout: "pipe",
     stderr: "pipe",
     env: Object.fromEntries(

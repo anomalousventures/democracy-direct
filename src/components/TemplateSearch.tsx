@@ -59,6 +59,7 @@ export function TemplateSearch({ templates, availableTags }: TemplateSearchProps
             value={searchQuery}
             onChange={handleSearchChange}
             className="input-civic"
+            aria-label="Search templates"
             data-testid="template-search-input"
           />
         </div>

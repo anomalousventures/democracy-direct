@@ -911,6 +911,31 @@
 - Vitest: `pnpm build` succeeds
 - Playwright: Production build serves correctly
 
+### 8.9 Dynamic Page SEO Meta
+
+- [ ] Representative profile pages (`/rep/[bioguideId]`) pass dynamic title, description, ogImage
+  - Title: "Rep. [Name] ([Party]-[State]) | Democracy Direct"
+  - Description: "Contact information for [Full Name], [Title] representing [State/District]"
+  - ogImage: Use `https://theunitedstates.io/images/congress/450x550/{bioguideId}.jpg`
+  - Fallback to `/og-default.png` if photo unavailable
+- [ ] Template detail pages (`/templates/[slug]`) pass dynamic title, description
+  - Title: "[Template Title] | Democracy Direct"
+  - Description: First 150 chars of template body
+  - ogImage: Branded template preview or fallback
+- [ ] ZIP results pages (`/zip/[zip]`) pass dynamic title, description
+  - Title: "Your Representatives for [ZIP] | Democracy Direct"
+  - Description: "Find and contact your elected officials for ZIP code [ZIP]"
+- [ ] Create branded OG image fallback (`public/og-default.png`, 1200x630)
+- [ ] Verify all pages render correct meta in HTML source
+- [ ] Test with Facebook Sharing Debugger and Twitter Card Validator
+
+**Tests:**
+
+- Playwright: Rep page has correct og:title containing rep name
+- Playwright: Template page has correct og:description
+- Playwright: ZIP page has correct title tag
+- Vitest: OG image URLs are absolute and valid
+
 ---
 
 ## Phase 9: Security Hardening & Code Quality

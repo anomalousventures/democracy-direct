@@ -63,14 +63,18 @@ test.describe("Authentication UI", () => {
     await expect(otpInput).toBeVisible({ timeout: 10000 });
   });
 
-  test("shows validation error for invalid email", async ({ page }) => {
+  test("disables send button for invalid email", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     await page.getByRole("button", { name: /sign in/i }).click();
-    await page.getByPlaceholder("you@example.com").fill("invalid-email");
-    await page.getByRole("button", { name: /send code/i }).click();
 
-    await expect(page.getByText(/valid email/i)).toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    await page.getByPlaceholder("you@example.com").fill("invalid-email");
+
+    const sendCodeBtn = page.getByRole("button", { name: /send code/i });
+    await expect(sendCodeBtn).toBeDisabled();
   });
 });

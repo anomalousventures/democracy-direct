@@ -19,8 +19,11 @@ cd democracy-direct
 pnpm install
 
 # Copy environment variables
-cp .env.example .env
-# Edit .env with your database URL
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your database URL and secrets
+
+# Create symlink for tools that read .env
+ln -s .dev.vars .env
 
 # Push database schema
 pnpm db:push

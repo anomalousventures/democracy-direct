@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { eq } from "drizzle-orm";
 import { createDb } from "../../../db/client";
 import { sessions } from "../../../db/schema";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 export const prerender = false;
 
@@ -11,7 +11,8 @@ export const POST: APIRoute = async ({ cookies, locals }) => {
 
   if (sessionId) {
     try {
-      const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+      const config = getConfig(locals);
+      const db = createDb(config.database.url);
       await db.delete(sessions).where(eq(sessions.id, sessionId));
     } catch (error) {
       console.error("Logout error:", error);

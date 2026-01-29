@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates, moderationLog } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { jsonResponse, badRequest, notFound, serverError } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/admin";
 import { parseJsonBody } from "@/lib/request-body";
@@ -34,7 +34,8 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const { action, reason } = parseResult.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
 
     const [template] = await db
       .select({

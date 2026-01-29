@@ -8,22 +8,3 @@ export interface EmailMessage {
 export interface EmailProvider {
   send(message: EmailMessage): Promise<boolean>;
 }
-
-export interface EmailConfig {
-  provider: "smtp" | "ses";
-  smtp?: {
-    host: string;
-    port: number;
-    secure?: boolean;
-    auth?: {
-      user: string;
-      pass: string;
-    };
-  };
-  ses?: {
-    region: string;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-  };
-  from: string;
-}

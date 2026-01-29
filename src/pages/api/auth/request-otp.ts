@@ -2,18 +2,18 @@ import type { APIRoute } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { emailOtps } from "@/db/schema";
-import { badRequest, jsonResponse } from "@/lib/api-response";
+import { badRequest, forbidden, jsonResponse } from "@/lib/api-response";
 import { hashEmail } from "@/lib/auth/hash-email";
 import { generateOTP } from "@/lib/auth/otp";
 import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 import { parseJsonBody, requestOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
 
 const OTP_EXPIRY_MINUTES = 10;
-const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_MAX_REQUESTS = 10;
 const RATE_LIMIT_WINDOW_HOURS = 1;
 
 type EmailSender = (
@@ -37,7 +37,6 @@ export async function requestOTP(
       .where(and(eq(emailOtps.emailHash, emailHash), gte(emailOtps.createdAt, oneHourAgo)));
 
     if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
-      // Silently succeed to prevent email enumeration - no OTP created/sent
       return { success: true };
     }
 
@@ -56,14 +55,12 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
-    try {
-      await emailSender(emailMessage, locals);
-    } catch (error) {
-      console.error("Failed to send OTP email:", error);
+    const sent = await emailSender(emailMessage, locals);
+    if (!sent) {
+      return { success: false, error: "Failed to send verification email. Please try again." };
     }
   }
 
-  // Always return success to prevent email enumeration
   return { success: true };
 }
 
@@ -73,17 +70,44 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { email } = parseResult.data;
+  const { email, turnstileToken } = parseResult.data;
 
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
-    await requestOTP(email, locals, db);
+    const config = getConfig(locals);
 
-    // Always return success to prevent email enumeration
+    const turnstileResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: config.turnstile.secretKey,
+          response: turnstileToken,
+        }),
+      }
+    );
+
+    const turnstileResult: unknown = await turnstileResponse.json();
+    const isValidTurnstile =
+      typeof turnstileResult === "object" &&
+      turnstileResult !== null &&
+      "success" in turnstileResult &&
+      turnstileResult.success === true;
+
+    if (!isValidTurnstile) {
+      return forbidden("Verification failed");
+    }
+
+    const db = createDb(config.database.url);
+    const result = await requestOTP(email, locals, db);
+
+    if (!result.success) {
+      return jsonResponse({ success: false, error: result.error }, 500);
+    }
+
     return jsonResponse({ success: true });
   } catch (error) {
     console.error("OTP request error:", error);
-    // Return success even on error to prevent enumeration
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: false, error: "Something went wrong. Please try again." }, 500);
   }
 };

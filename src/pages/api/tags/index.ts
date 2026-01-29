@@ -3,13 +3,14 @@ import { eq } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { tagSuggestions } from "@/db/schema";
 import { jsonResponse, serverError } from "@/lib/api-response";
-import { getRequiredEnv } from "@/lib/env";
+import { getConfig } from "@/lib/config";
 
 export const prerender = false;
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
-    const db = createDb(getRequiredEnv(locals, "DATABASE_URL"));
+    const config = getConfig(locals);
+    const db = createDb(config.database.url);
     const tags = await db
       .select({ name: tagSuggestions.name })
       .from(tagSuggestions)

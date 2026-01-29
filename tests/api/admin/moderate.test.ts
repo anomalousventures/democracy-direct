@@ -8,7 +8,13 @@ describe("POST /api/admin/moderate/[templateId]", () => {
       params: { templateId: "template-123" },
       locals: {
         user: null,
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/moderate/template-123", {
         method: "POST",
@@ -26,7 +32,13 @@ describe("POST /api/admin/moderate/[templateId]", () => {
       params: { templateId: "template-123" },
       locals: {
         user: { id: "user-123", trustLevel: 1 },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/moderate/template-123", {
         method: "POST",
@@ -44,7 +56,13 @@ describe("POST /api/admin/moderate/[templateId]", () => {
       params: {},
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/moderate/", {
         method: "POST",
@@ -62,7 +80,13 @@ describe("POST /api/admin/moderate/[templateId]", () => {
       params: { templateId: "template-123" },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/moderate/template-123", {
         method: "POST",
@@ -80,7 +104,13 @@ describe("POST /api/admin/moderate/[templateId]", () => {
       params: { templateId: "template-123" },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
-        runtime: { env: { DATABASE_URL: "postgres://test" } },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
       },
       request: new Request("http://localhost/api/admin/moderate/template-123", {
         method: "POST",

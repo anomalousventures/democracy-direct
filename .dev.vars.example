@@ -9,7 +9,7 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 # smtp: Use SMTP server (Mailpit for local dev, or production SMTP)
 # ses: Use AWS SES (production)
 EMAIL_PROVIDER=smtp
-EMAIL_FROM=noreply@democracy-direct.com
+EMAIL_FROM=no-reply@democracy-direct.com
 
 # SMTP Configuration (for EMAIL_PROVIDER=smtp)
 # Local dev with Mailpit: docker-compose up -d mailpit
@@ -24,12 +24,18 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=us-east-1
 
+# Admin Users (comma-separated emails for admin access)
+# These users will be created/updated as admins on deploy
+ADMIN_USERS=
+
 # Content Moderation (optional - for template submission)
 OPENAI_API_KEY=
 
 # Cloudflare Turnstile (for bot protection)
-TURNSTILE_SITE_KEY=
-TURNSTILE_SECRET_KEY=
+# Using Cloudflare's testing keys (always pass, works on localhost)
+# Replace with real keys in production
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
 # Data Sources
 CONGRESS_API_KEY=
