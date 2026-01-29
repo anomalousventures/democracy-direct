@@ -78,37 +78,32 @@ test.describe("Template List Page", () => {
 });
 
 test.describe("Template Creation Page", () => {
-  test("redirects to login when not authenticated", async ({ page }) => {
+  test("page loads at /templates/new", async ({ page }) => {
     await page.goto("/templates/new");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
-    const url = page.url();
-    expect(url).toContain("/templates");
+    await expect(page.getByRole("heading", { name: /create new template/i })).toBeVisible();
   });
 
   test("form renders with required fields", async ({ page }) => {
     await page.goto("/templates/new");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     const titleInput = page.locator("[data-testid='template-title-input']");
     const bodyInput = page.locator("[data-testid='template-body-input']");
     const submitButton = page.locator("[data-testid='submit-template-button']");
 
-    if ((await titleInput.count()) > 0) {
-      await expect(titleInput).toBeVisible();
-      await expect(bodyInput).toBeVisible();
-      await expect(submitButton).toBeVisible();
-    }
+    await expect(titleInput).toBeVisible();
+    await expect(bodyInput).toBeVisible();
+    await expect(submitButton).toBeVisible();
   });
 
   test("shows issue tag selector", async ({ page }) => {
     await page.goto("/templates/new");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     const tagSelector = page.locator("[data-testid='issue-tag-selector']");
-    if ((await tagSelector.count()) > 0) {
-      await expect(tagSelector).toBeVisible();
-    }
+    await expect(tagSelector).toBeVisible();
   });
 });
 

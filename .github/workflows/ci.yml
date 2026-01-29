@@ -136,17 +136,27 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
+      - name: Create .dev.vars for wrangler
+        run: |
+          echo "DATABASE_URL=$DATABASE_URL" > .dev.vars
+          echo "EMAIL_PROVIDER=smtp" >> .dev.vars
+          echo "EMAIL_FROM=no-reply@democracy-direct.com" >> .dev.vars
+          echo "SMTP_HOST=localhost" >> .dev.vars
+          echo "SMTP_PORT=1025" >> .dev.vars
+          echo "TURNSTILE_SITE_KEY=1x00000000000000000000AA" >> .dev.vars
+          echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" >> .dev.vars
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .dev.vars
+          echo "CONGRESS_API_KEY=$CONGRESS_API_KEY" >> .dev.vars
+          echo "ADMIN_USERS=$ADMIN_USERS" >> .dev.vars
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
+
       - name: Run Playwright tests
         run: pnpm test:e2e
         timeout-minutes: 10
-        env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
-          EMAIL_PROVIDER: smtp
-          EMAIL_FROM: no-reply@democracy-direct.com
-          SMTP_HOST: localhost
-          SMTP_PORT: "1025"
-          TURNSTILE_SITE_KEY: 1x00000000000000000000AA
-          TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
 
       - uses: actions/upload-artifact@v6
         if: failure()
