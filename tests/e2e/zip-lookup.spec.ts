@@ -66,7 +66,7 @@ test.describe("ZIP Lookup Component", () => {
     await zipInput.fill("00000");
     await page.getByRole("button", { name: /find/i }).click();
 
-    const error = page.getByText(/not found/i);
+    const error = page.getByText(/don't have district data/i);
     await expect(error).toBeVisible();
   });
 
@@ -125,5 +125,32 @@ test.describe("ZIP Lookup Component", () => {
     await zipInput.fill("abc12");
     const value = await zipInput.inputValue();
     expect(value).toMatch(/^\d*$/);
+  });
+
+  test("handles ZIP with leading zeros (Massachusetts)", async ({ page }) => {
+    const zipInput = page.getByPlaceholder(/zip/i);
+    await zipInput.fill("01001");
+    await page.getByRole("button", { name: /find/i }).click();
+
+    await page.waitForURL("**/zip/01001**");
+    await expect(page.getByText(/your representatives/i)).toBeVisible();
+  });
+
+  test("handles DC ZIP code", async ({ page }) => {
+    const zipInput = page.getByPlaceholder(/zip/i);
+    await zipInput.fill("20001");
+    await page.getByRole("button", { name: /find/i }).click();
+
+    await page.waitForURL("**/zip/20001**");
+    await expect(page.getByText("DC At-Large")).toBeVisible();
+  });
+
+  test("handles Puerto Rico ZIP code with leading zeros", async ({ page }) => {
+    const zipInput = page.getByPlaceholder(/zip/i);
+    await zipInput.fill("00601");
+    await page.getByRole("button", { name: /find/i }).click();
+
+    await page.waitForURL("**/zip/00601**");
+    await expect(page.getByText("PR At-Large")).toBeVisible();
   });
 });
