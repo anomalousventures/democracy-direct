@@ -1,18 +1,20 @@
-.PHONY: dev start stop db-push db-seed logs help
+.PHONY: dev preview start stop db-push db-seed logs help
 
 help:
 	@echo "Democracy Direct - Development Commands"
 	@echo ""
-	@echo "  make dev       - Start mailpit + astro dev server"
-	@echo "  make start     - Start mailpit only"
-	@echo "  make stop      - Stop mailpit"
-	@echo "  make db-push   - Push schema to Neon database"
-	@echo "  make db-seed   - Import legislators and zip data"
-	@echo "  make logs      - Follow mailpit logs"
+	@echo "  make dev      - Start mailpit + astro dev server"
+	@echo "  make preview  - Build + run with Cloudflare Workers runtime"
+	@echo "  make start    - Start mailpit only"
+	@echo "  make stop     - Stop mailpit"
+	@echo "  make db-push  - Push schema to Neon database"
+	@echo "  make db-seed  - Import legislators and zip data"
+	@echo "  make logs     - Follow mailpit logs"
 	@echo ""
 	@echo "Services:"
-	@echo "  App:     http://localhost:4321"
-	@echo "  Mailpit: http://localhost:8025"
+	@echo "  App (dev):     http://localhost:4321"
+	@echo "  App (preview): http://localhost:8788"
+	@echo "  Mailpit:       http://localhost:8025"
 	@echo ""
 	@echo "Note: DATABASE_URL must point to a Neon database in .env"
 
@@ -39,3 +41,11 @@ dev:
 	docker-compose down --remove-orphans && docker-compose up -d
 	@echo "Mailpit: http://localhost:8025"
 	@trap 'docker-compose down' EXIT; pnpm dev
+
+preview:
+	docker-compose down --remove-orphans && docker-compose up -d
+	@echo "Mailpit: http://localhost:8025"
+	@echo "Building..."
+	pnpm build
+	@echo "Starting Cloudflare Workers runtime at http://localhost:8788"
+	@trap 'docker-compose down' EXIT; pnpm wrangler pages dev dist --port 8788
