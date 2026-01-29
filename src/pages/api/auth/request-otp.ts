@@ -13,7 +13,7 @@ import { parseJsonBody, requestOtpBodySchema } from "@/lib/request-body";
 export const prerender = false;
 
 const OTP_EXPIRY_MINUTES = 10;
-const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_MAX_REQUESTS = 10;
 const RATE_LIMIT_WINDOW_HOURS = 1;
 
 type EmailSender = (
