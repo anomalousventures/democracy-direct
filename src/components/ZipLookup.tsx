@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { lookupZip, type ZipLookupResult } from "../lib/zip-lookup";
 
 interface ZipLookupProps {
@@ -15,6 +15,34 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoTriggered = useRef(false);
 
+  const triggerLookup = useCallback(
+    async (zipCode: string) => {
+      setIsLoading(true);
+      setError(null);
+      setResult(null);
+
+      try {
+        const lookupResult = await lookupZip(zipCode);
+
+        if (lookupResult.type === "error") {
+          setError(lookupResult.message);
+        } else if (lookupResult.type === "single") {
+          const params = new URLSearchParams();
+          if (templateSlug) params.set("template", templateSlug);
+          const queryString = params.toString();
+          window.location.href = `/zip/${zipCode}${queryString ? `?${queryString}` : ""}`;
+        } else {
+          setResult(lookupResult);
+        }
+      } catch {
+        setError("Failed to look up ZIP code. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [templateSlug]
+  );
+
   useEffect(() => {
     if (autoFocus && inputRef.current && !initialZip) {
       inputRef.current.focus();
@@ -26,30 +54,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
       hasAutoTriggered.current = true;
       triggerLookup(initialZip);
     }
-  }, [initialZip]);
-
-  const triggerLookup = async (zipCode: string) => {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const lookupResult = await lookupZip(zipCode);
-
-      if (lookupResult.type === "error") {
-        setError(lookupResult.message);
-      } else if (lookupResult.type === "single") {
-        const templateParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
-        window.location.href = `/zip/${zipCode}${templateParam}`;
-      } else {
-        setResult(lookupResult);
-      }
-    } catch {
-      setError("Failed to look up ZIP code. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [initialZip, triggerLookup]);
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 5);

@@ -44,7 +44,9 @@ if (!error && !zipEntry) {
 
 const hasMultipleDistricts = zipEntry && zipEntry.d.length > 1 && !district;
 if (hasMultipleDistricts) {
-  return Astro.redirect(`/?ambiguous=${zip}`);
+  const params = new URLSearchParams({ ambiguous: zip });
+  if (templateSlug) params.set("template", templateSlug);
+  return Astro.redirect(`/?${params.toString()}`);
 }
 
 if (!error && zipEntry) {
