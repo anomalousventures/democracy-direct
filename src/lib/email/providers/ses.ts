@@ -12,6 +12,16 @@ export class SesEmailProvider implements EmailProvider {
     }
 
     this.from = config.from;
+
+    const hasAccessKey = Boolean(config.ses.accessKeyId);
+    const hasSecretKey = Boolean(config.ses.secretAccessKey);
+    console.log("SES config:", {
+      region: config.ses.region,
+      hasAccessKey,
+      hasSecretKey,
+      accessKeyPrefix: config.ses.accessKeyId?.substring(0, 4),
+    });
+
     this.client = new SESClient({
       region: config.ses.region,
       credentials:
