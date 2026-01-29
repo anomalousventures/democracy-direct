@@ -15,7 +15,7 @@ export class SesEmailProvider implements EmailProvider {
 
     const hasAccessKey = Boolean(config.ses.accessKeyId);
     const hasSecretKey = Boolean(config.ses.secretAccessKey);
-    console.log("SES config:", {
+    console.warn("SES config:", {
       region: config.ses.region,
       hasAccessKey,
       hasSecretKey,
@@ -36,7 +36,7 @@ export class SesEmailProvider implements EmailProvider {
 
   async send(message: EmailMessage): Promise<boolean> {
     try {
-      console.info("SES sending email:", {
+      console.warn("SES sending email:", {
         from: this.from,
         to: message.to,
         subject: message.subject,
@@ -87,7 +87,7 @@ export class SesEmailProvider implements EmailProvider {
       });
 
       const result = await this.client.send(command);
-      console.info("SES send success:", {
+      console.warn("SES send success:", {
         messageId: result.MessageId,
       });
       return true;
