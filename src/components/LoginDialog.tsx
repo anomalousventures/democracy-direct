@@ -91,12 +91,12 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       return;
     }
 
-    setIsLoading(true);
-
     if (!turnstileToken) {
       setError("Please complete the verification");
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch("/api/auth/request-otp", {
