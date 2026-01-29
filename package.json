@@ -10,9 +10,10 @@
     ]
   },
   "scripts": {
-    "dev": "astro build && wrangler pages dev dist --port 4321",
+    "dev": "astro dev",
+    "dev:wrangler": "astro build && wrangler pages dev dist --port 4321",
     "build": "astro build",
-    "preview": "wrangler pages dev dist --port 8788",
+    "preview": "astro build && wrangler pages dev dist --port 8788",
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",

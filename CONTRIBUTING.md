@@ -34,17 +34,18 @@ make dev
 
 The dev server runs at http://localhost:4321. Mailpit (for viewing sent emails) runs at http://localhost:8025.
 
-### Why Wrangler?
+### Cloudflare Runtime
 
-This project uses Cloudflare Pages with edge runtime. The standard `astro dev` command doesn't provide the Cloudflare runtime environment (`locals.runtime.env`), so we use `wrangler pages dev` for local development. The `make dev` and `pnpm dev` commands handle this automatically.
+This project uses Cloudflare Pages with edge runtime. The `react-dom/server.edge` alias is conditionally applied only in production builds to fix React 19 compatibility. In dev mode, `astro dev` works normally with `platformProxy` providing Cloudflare bindings.
 
 ## Development
 
 ### Commands
 
 ```bash
-make dev          # Start Mailpit + dev server (recommended)
-pnpm dev          # Build + start dev server (no Mailpit)
+make dev          # Start Mailpit + dev server with hot reload (recommended)
+pnpm dev          # Dev server with hot reload
+pnpm dev:wrangler # Build + wrangler dev (fallback if astro dev has issues)
 pnpm build        # Production build
 pnpm test         # Run unit tests
 pnpm test:e2e     # Run Playwright E2E tests

@@ -18,9 +18,11 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        // Fix React 19 MessageChannel error on Cloudflare Workers
+        // Fix React 19 MessageChannel error on Cloudflare Workers (prod only)
         // https://github.com/withastro/astro/issues/12824
-        "react-dom/server": "react-dom/server.edge",
+        ...(process.env.NODE_ENV === "production" && {
+          "react-dom/server": "react-dom/server.edge",
+        }),
         crypto: "node:crypto",
         events: "node:events",
         util: "node:util",

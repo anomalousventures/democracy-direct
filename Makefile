@@ -38,5 +38,5 @@ logs:
 dev:
 	docker-compose down --remove-orphans && docker-compose up -d
 	@echo "Mailpit: http://localhost:8025"
-	@echo "Building and starting dev server..."
+	@echo "Starting dev server with hot reload..."
 	@trap 'docker-compose down' EXIT; pnpm dev

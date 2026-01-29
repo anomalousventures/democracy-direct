@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-make dev                    # Start Mailpit + build + wrangler dev (localhost:4321)
-pnpm dev                    # Build + wrangler dev (Cloudflare runtime required)
+make dev                    # Start Mailpit + dev server with hot reload (localhost:4321)
+pnpm dev                    # Dev server with hot reload (platformProxy for Cloudflare bindings)
+pnpm dev:wrangler           # Build + wrangler dev (fallback)
 
 # Testing
 pnpm test                   # Run unit tests (Vitest)
@@ -28,7 +29,7 @@ make db-seed                # Import legislators + ZIP data
 
 ### Astro + React Islands
 
-Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. **Dev requires wrangler** - `astro dev` lacks Cloudflare runtime (`locals.runtime.env`).
+Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings.
 
 ### Database (Neon + Drizzle)
 
