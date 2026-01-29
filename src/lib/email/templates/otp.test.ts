@@ -13,10 +13,10 @@ describe("createOtpEmail", () => {
     expect(email.to).toBe("test@example.com");
   });
 
-  it("does NOT include OTP in subject line", () => {
+  it("includes OTP in subject line for easy mobile access", () => {
     const email = createOtpEmail(params);
-    expect(email.subject).not.toContain("123456");
-    expect(email.subject).toBe("Your Democracy Direct verification code");
+    expect(email.subject).toContain("123456");
+    expect(email.subject).toBe("123456 is your Democracy Direct code");
   });
 
   it("includes OTP in text body", () => {
@@ -24,9 +24,11 @@ describe("createOtpEmail", () => {
     expect(email.text).toContain("123456");
   });
 
-  it("includes OTP in HTML body", () => {
+  it("includes OTP in HTML body as copyable span", () => {
     const email = createOtpEmail(params);
-    expect(email.html).toContain("1 2 3 4 5 6");
+    expect(email.html).toContain(">123456</span>");
+    expect(email.html).toContain('aria-label="Your verification code: 123456"');
+    expect(email.html).toContain("user-select: all");
   });
 
   it("includes expiry time in text body", () => {

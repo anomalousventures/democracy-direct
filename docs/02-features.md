@@ -913,21 +913,21 @@
 
 ### 8.9 Dynamic Page SEO Meta
 
-- [ ] Representative profile pages (`/rep/[bioguideId]`) pass dynamic title, description, ogImage
+- [x] Representative profile pages (`/rep/[bioguideId]`) pass dynamic title, description, ogImage
   - Title: "Rep. [Name] ([Party]-[State]) | Democracy Direct"
   - Description: "Contact information for [Full Name], [Title] representing [State/District]"
   - ogImage: Use `https://theunitedstates.io/images/congress/450x550/{bioguideId}.jpg`
   - Fallback to `/og-default.png` if photo unavailable
-- [ ] Template detail pages (`/templates/[slug]`) pass dynamic title, description
+- [x] Template detail pages (`/templates/[slug]`) pass dynamic title, description
   - Title: "[Template Title] | Democracy Direct"
   - Description: First 150 chars of template body
   - ogImage: Branded template preview or fallback
-- [ ] ZIP results pages (`/zip/[zip]`) pass dynamic title, description
+- [x] ZIP results pages (`/zip/[zip]`) pass dynamic title, description
   - Title: "Your Representatives for [ZIP] | Democracy Direct"
   - Description: "Find and contact your elected officials for ZIP code [ZIP]"
-- [ ] Create branded OG image fallback (`public/og-default.png`, 1200x630)
-- [ ] Verify all pages render correct meta in HTML source
-- [ ] Test with Facebook Sharing Debugger and Twitter Card Validator
+- [x] Create branded OG image fallback (`public/og-default.png`, 1200x630)
+- [x] Verify all pages render correct meta in HTML source
+- [x] Test with Facebook Sharing Debugger and Twitter Card Validator
 
 **Tests:**
 
@@ -1008,11 +1008,14 @@
 
 ### 9.6 Security & Code Review
 
-- [ ] Audit all API endpoints for proper auth checks
-- [ ] Review input validation across all forms
-- [ ] Check for SQL injection, XSS vulnerabilities
-- [ ] Verify rate limiting on sensitive endpoints
-- [ ] Code simplification pass for maintainability
+- [x] Audit all API endpoints for proper auth checks
+- [x] Review input validation across all forms
+- [x] Check for SQL injection, XSS vulnerabilities
+- [x] Verify rate limiting on sensitive endpoints
+  - Added rate limiting to OTP verification (5 attempts per OTP)
+  - Added rate limiting to tag suggestions (5 per hour per user)
+  - Validated forkedFromId exists and is public/approved before forking
+- [x] Code simplification pass for maintainability
 
 **Tests:**
 

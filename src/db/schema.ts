@@ -78,6 +78,7 @@ export const emailOtps = pgTable("email_otps", {
   otpHash: varchar("otp_hash", { length: 64 }).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
+  verificationAttempts: integer("verification_attempts").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

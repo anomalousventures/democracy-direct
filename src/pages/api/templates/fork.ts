@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
 import {
@@ -9,6 +9,7 @@ import {
   badRequest,
   unauthorized,
   forbidden,
+  notFound,
   serverError,
   validationError,
 } from "@/lib/api-response";
@@ -77,6 +78,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     const db = createDb(config.database.url);
+
+    const [sourceTemplate] = await db
+      .select({ id: templates.id })
+      .from(templates)
+      .where(
+        and(
+          eq(templates.id, forkedFromId),
+          eq(templates.isPublic, true),
+          eq(templates.moderationStatus, "approved")
+        )
+      )
+      .limit(1);
+
+    if (!sourceTemplate) {
+      return notFound("Source template not found");
+    }
 
     const [userRecord] = await db
       .select({ trustLevel: users.trustLevel })
