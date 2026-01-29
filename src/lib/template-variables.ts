@@ -65,3 +65,47 @@ export function getSupportedVariables(): readonly string[] {
 export function isKnownVariable(varName: string): boolean {
   return SUPPORTED_VARIABLES.includes(varName as TemplateVariable);
 }
+
+export interface Representative {
+  first_name: string;
+  last_name: string;
+  party: string;
+  state: string;
+  district: string | null;
+  chamber: "senate" | "house";
+  title?: string;
+}
+
+export interface Address {
+  name: string;
+  city: string;
+}
+
+export function getRepresentativeTitle(rep: Representative): string {
+  if (rep.title) {
+    return rep.title;
+  }
+  return rep.chamber === "senate" ? "Senator" : "Representative";
+}
+
+export function createTemplateContext(rep: Representative, address?: Address): TemplateContext {
+  return {
+    repTitle: getRepresentativeTitle(rep),
+    repName: `${rep.first_name} ${rep.last_name}`,
+    repFirst: rep.first_name,
+    repLast: rep.last_name,
+    repParty: rep.party,
+    state: rep.state,
+    district: rep.district ?? "At-Large",
+    userName: address?.name,
+    userCity: address?.city,
+  };
+}
+
+export function substituteForRepresentative(
+  content: string,
+  rep: Representative,
+  address?: Address
+): string {
+  return substituteTemplateVariables(content, createTemplateContext(rep, address));
+}

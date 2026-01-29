@@ -224,6 +224,10 @@
 }
 
 @layer utilities {
+  .print-only {
+    display: none;
+  }
+
   .animate-fade-up {
     animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
@@ -264,6 +268,80 @@
   50% {
     opacity: 0.7;
   }
+}
+
+/* Tiptap Editor Styles */
+.tiptap-container {
+  position: relative;
+}
+
+.tiptap-editor {
+  min-height: 200px;
+}
+
+.tiptap-editor:focus {
+  outline: none;
+  border-color: var(--color-civic-navy);
+  box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.1);
+}
+
+.tiptap-editor.is-editor-empty::before {
+  color: var(--color-muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+}
+
+.tiptap-editor p {
+  margin: 0 0 0.5em 0;
+}
+
+.tiptap-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.tiptap-editor li {
+  margin: 0.25em 0;
+}
+
+.tiptap-editor strong {
+  font-weight: 600;
+}
+
+.tiptap-editor em {
+  font-style: italic;
+}
+
+/* Template Variable Highlighting */
+.template-variable {
+  background-color: rgba(201, 169, 98, 0.25);
+  border: 1px solid var(--color-civic-gold);
+  border-radius: 3px;
+  padding: 0 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  color: var(--color-civic-navy);
+}
+
+/* Bubble Menu */
+.bubble-menu {
+  z-index: 50;
+}
+
+.bubble-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .dark {

@@ -1,31 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import { type Representative, getRepresentativeTitle } from "../types/representative";
+import { substituteForRepresentative } from "@/lib/template-variables";
+import { TiptapEditor } from "./TiptapEditor";
 
 interface LetterComposerProps {
   representative: Representative;
   initialContent?: string;
   onContentChange?: (content: string) => void;
-}
-
-function substituteVariables(content: string, rep: Representative): string {
-  const variables: Record<string, string> = {
-    REP_NAME: `${rep.first_name} ${rep.last_name}`,
-    REP_FIRST: rep.first_name,
-    REP_LAST: rep.last_name,
-    REP_TITLE: getRepresentativeTitle(rep),
-    REP_PARTY: rep.party,
-    STATE: rep.state,
-    DISTRICT: rep.district || "At-Large",
-    TODAY_DATE: new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-  };
-
-  return content.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
-    return variables[varName] ?? match;
-  });
 }
 
 export function LetterComposer({
@@ -36,8 +17,7 @@ export function LetterComposer({
   const [content, setContent] = useState(initialContent);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newContent = e.target.value;
+    (newContent: string) => {
       setContent(newContent);
       onContentChange?.(newContent);
     },
@@ -45,11 +25,11 @@ export function LetterComposer({
   );
 
   const preview = useMemo(
-    () => substituteVariables(content, representative),
+    () => substituteForRepresentative(content, representative),
     [content, representative]
   );
 
-  const characterCount = content.length;
+  const repTitle = getRepresentativeTitle(representative);
 
   return (
     <div className="space-y-6">
@@ -60,20 +40,11 @@ export function LetterComposer({
         >
           Your Letter
         </label>
-        <textarea
-          id="letter-content"
-          value={content}
+        <TiptapEditor
+          content={content}
           onChange={handleChange}
-          placeholder="Write your letter here. Use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution..."
-          className="input-civic min-h-[200px] resize-y font-mono text-sm"
-          rows={10}
+          placeholder={`Write your letter to ${repTitle} ${representative.last_name}. Use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution...`}
         />
-        <div className="flex justify-between text-sm text-[var(--color-muted-foreground)]">
-          <span>Tip: Variables like {"{{REP_NAME}}"} will be replaced automatically</span>
-          <span>
-            <span className="font-medium">{characterCount}</span> characters
-          </span>
-        </div>
       </div>
 
       {content && (

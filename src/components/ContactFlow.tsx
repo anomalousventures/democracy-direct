@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { LetterComposer } from "./LetterComposer";
 import { ContactActions } from "./ContactActions";
 import { AddressForm } from "./AddressForm";
 import { LetterPreview } from "./LetterPreview";
 import { type Representative, type Address, createEmptyAddress } from "../types/representative";
+import { substituteForRepresentative } from "@/lib/template-variables";
 
 interface ContactFlowProps {
   representative: Representative;
@@ -14,13 +15,22 @@ export function ContactFlow({ representative, initialTemplate = "" }: ContactFlo
   const [letterContent, setLetterContent] = useState(initialTemplate);
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
 
+  const substitutedContent = useMemo(
+    () =>
+      substituteForRepresentative(letterContent, representative, {
+        name: returnAddress.name,
+        city: returnAddress.city,
+      }),
+    [letterContent, representative, returnAddress.name, returnAddress.city]
+  );
+
   function handlePrint(): void {
     window.print();
   }
 
   return (
     <div className="space-y-8">
-      <div className="card-civic">
+      <div className="card-civic no-print">
         <h2 className="text-2xl font-bold mb-6 text-[var(--color-civic-navy)]">
           Write Your Letter
         </h2>
@@ -36,7 +46,7 @@ export function ContactFlow({ representative, initialTemplate = "" }: ContactFlo
             <h3 className="text-lg font-semibold mb-4 text-[var(--color-civic-navy)]">
               Send Your Letter
             </h3>
-            <ContactActions content={letterContent} representative={representative} />
+            <ContactActions content={substitutedContent} representative={representative} />
           </div>
         )}
       </div>
@@ -76,10 +86,20 @@ export function ContactFlow({ representative, initialTemplate = "" }: ContactFlo
           </div>
 
           <LetterPreview
-            letterContent={letterContent}
+            letterContent={substitutedContent}
             representative={representative}
             returnAddress={returnAddress}
             className="mt-8"
+          />
+        </div>
+      )}
+
+      {letterContent && (
+        <div className="print-only hidden">
+          <LetterPreview
+            letterContent={substitutedContent}
+            representative={representative}
+            returnAddress={returnAddress}
           />
         </div>
       )}
