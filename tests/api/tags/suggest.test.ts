@@ -59,12 +59,7 @@ describe("Tag Suggestion API", () => {
       expect(data.tag.status).toBe("pending");
     });
 
-    it("allows anonymous tag suggestions", async () => {
-      mockDb.where.mockResolvedValue([]);
-      mockDb.returning.mockResolvedValue([
-        { id: "1", name: "education", status: "pending", suggestedBy: null },
-      ]);
-
+    it("requires authentication for tag suggestions", async () => {
       const response = await POST({
         locals: createLocals(null),
         request: new Request("http://localhost/api/tags/suggest", {
@@ -73,9 +68,9 @@ describe("Tag Suggestion API", () => {
         }),
       } as never);
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.tag.name).toBe("education");
+      expect(data.error).toContain("Authentication required");
     });
 
     it("returns 400 for invalid tag name", async () => {
@@ -91,7 +86,9 @@ describe("Tag Suggestion API", () => {
     });
 
     it("returns 409 if tag already exists", async () => {
-      mockDb.where.mockResolvedValue([{ id: "existing", name: "healthcare" }]);
+      mockDb.where
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ id: "existing", name: "healthcare" }]);
 
       const response = await POST({
         locals: createLocals("user-123"),
@@ -104,6 +101,28 @@ describe("Tag Suggestion API", () => {
       expect(response.status).toBe(409);
       const data = await response.json();
       expect(data.error).toContain("already exists");
+    });
+
+    it("returns 429 when rate limit exceeded", async () => {
+      mockDb.where.mockResolvedValueOnce([
+        { id: "1" },
+        { id: "2" },
+        { id: "3" },
+        { id: "4" },
+        { id: "5" },
+      ]);
+
+      const response = await POST({
+        locals: createLocals("user-123"),
+        request: new Request("http://localhost/api/tags/suggest", {
+          method: "POST",
+          body: JSON.stringify({ name: "newtag" }),
+        }),
+      } as never);
+
+      expect(response.status).toBe(429);
+      const data = await response.json();
+      expect(data.error).toContain("Too many suggestions");
     });
   });
 });

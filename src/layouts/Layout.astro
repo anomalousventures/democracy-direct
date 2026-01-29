@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { Toaster } from "@/components/ui/sonner";
 import { getConfig } from "@/lib/config";
+import PostHog from "../components/posthog.astro";
 
 interface Props {
   title: string;
@@ -24,6 +25,7 @@ const fullTitle = `${title} | Democracy Direct`;
 <!doctype html>
 <html lang="en">
   <head>
+    <PostHog />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />

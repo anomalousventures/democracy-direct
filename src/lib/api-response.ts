@@ -31,6 +31,10 @@ export function conflict(error: string): Response {
   return errorResponse(error, 409);
 }
 
+export function tooManyRequests(error = "Too many requests"): Response {
+  return errorResponse(error, 429);
+}
+
 export function serverError(error = "Internal server error"): Response {
   return errorResponse(error, 500);
 }

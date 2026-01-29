@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { eq, and, isNull, gt } from "drizzle-orm";
+import { eq, and, isNull, gt, lt, sql } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { emailOtps, users, sessions } from "@/db/schema";
 import { badRequest, unauthorized, serverError, jsonResponse } from "@/lib/api-response";
@@ -9,6 +9,8 @@ import { getConfig } from "@/lib/config";
 import { parseJsonBody, verifyOtpBodySchema } from "@/lib/request-body";
 
 export const prerender = false;
+
+const MAX_VERIFICATION_ATTEMPTS = 5;
 
 interface VerifyResult {
   success: boolean;
@@ -24,25 +26,35 @@ export async function verifyOTPRequest(
   const emailHash = hashEmail(email);
   const otpHash = hashOTP(otp);
 
-  const otpRecords = await db
+  const validOtps = await db
     .select()
     .from(emailOtps)
     .where(
       and(
         eq(emailOtps.emailHash, emailHash),
-        eq(emailOtps.otpHash, otpHash),
         isNull(emailOtps.usedAt),
-        gt(emailOtps.expiresAt, new Date())
+        gt(emailOtps.expiresAt, new Date()),
+        lt(emailOtps.verificationAttempts, MAX_VERIFICATION_ATTEMPTS)
       )
     );
 
-  if (otpRecords.length === 0) {
+  if (validOtps.length === 0) {
     return { success: false, error: "Invalid or expired OTP" };
   }
 
-  const matchingRecord = otpRecords[0];
+  const matchingOtp = validOtps.find((record) => record.otpHash === otpHash);
 
-  await db.update(emailOtps).set({ usedAt: new Date() }).where(eq(emailOtps.id, matchingRecord.id));
+  if (!matchingOtp) {
+    const mostRecentOtp = validOtps[0];
+    await db
+      .update(emailOtps)
+      .set({ verificationAttempts: sql`${emailOtps.verificationAttempts} + 1` })
+      .where(eq(emailOtps.id, mostRecentOtp.id));
+
+    return { success: false, error: "Invalid or expired OTP" };
+  }
+
+  await db.update(emailOtps).set({ usedAt: new Date() }).where(eq(emailOtps.id, matchingOtp.id));
 
   const userRecords = await db.select().from(users).where(eq(users.emailHash, emailHash));
 
