@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
 import { LoadingButton } from "./ui/loading-button";
+import { TiptapEditor } from "./TiptapEditor";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
@@ -173,16 +174,10 @@ export function TemplateForm({
         <label htmlFor="body" className="block text-sm font-medium text-[var(--color-civic-navy)]">
           Letter Body
         </label>
-        <textarea
-          id="body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Write your letter template here. You can use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution..."
-          className="input-civic min-h-[300px] resize-y font-mono text-sm"
-          data-testid="template-body-input"
-          maxLength={BODY_MAX_LENGTH}
-          aria-invalid={errors.body ? "true" : undefined}
-          aria-describedby={errors.body ? "body-error" : "body-hint"}
+        <TiptapEditor
+          content={body}
+          onChange={setBody}
+          placeholder="Write your letter template here..."
         />
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>

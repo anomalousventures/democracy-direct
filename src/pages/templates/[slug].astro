@@ -11,6 +11,8 @@ import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 const { slug } = Astro.params;
+const rawRepId = Astro.url.searchParams.get("rep");
+const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
 
 let template: {
   id: string;
@@ -120,7 +122,7 @@ const isOwner = user && template?.userId === user.id;
             <div class="max-w-4xl mx-auto">
               <div class="mb-6">
                 <a
-                  href="/templates"
+                  href={repBioguideId ? `/templates?rep=${repBioguideId}` : "/templates"}
                   class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
                 >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,42 +174,65 @@ const isOwner = user && template?.userId === user.id;
                   </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-border">
-                  <a
-                    href={`/?template=${template.slug}`}
-                    data-testid="use-template-button"
-                    class="btn-primary text-center"
-                  >
-                    Use This Template
-                  </a>
-
-                  {user ? (
-                    <a
-                      href={`/templates/fork/${template.slug}`}
-                      data-testid="fork-button"
-                      class="btn-secondary text-center"
-                    >
-                      Fork Template
-                    </a>
+                <div class="flex flex-col gap-4 pt-6 border-t border-border">
+                  {repBioguideId ? (
+                    <div class="flex flex-col sm:flex-row gap-4">
+                      <a
+                        href={`/rep/${repBioguideId}?template=${template.slug}`}
+                        data-testid="use-template-button"
+                        class="btn-primary text-center flex-1 sm:flex-none"
+                      >
+                        Use This Template
+                      </a>
+                      <a href={`/rep/${repBioguideId}`} class="btn-secondary text-center">
+                        Return Without Template
+                      </a>
+                    </div>
                   ) : (
-                    <button
-                      type="button"
-                      data-testid="fork-button-login"
-                      class="btn-secondary text-center opacity-75"
-                      onclick="document.querySelector('[data-testid=sign-in-button]')?.click()"
-                    >
-                      Sign in to Fork
-                    </button>
+                    <div class="space-y-3">
+                      <a
+                        href={`/?template=${template.slug}`}
+                        data-testid="use-template-button"
+                        class="btn-primary text-center block sm:inline-block"
+                      >
+                        Use This Template
+                      </a>
+                      <p class="text-sm text-muted-foreground">
+                        You'll enter your ZIP code to find your representatives, then customize and
+                        send your letter.
+                      </p>
+                    </div>
                   )}
 
-                  <button
-                    type="button"
-                    data-testid="report-button"
-                    class="btn-secondary text-center text-[var(--color-civic-red)] border-[var(--color-civic-red)]/30 hover:bg-[var(--color-civic-red)]/10"
-                    onclick={`window.reportTemplate && window.reportTemplate('${template.slug}')`}
-                  >
-                    Report
-                  </button>
+                  <div class="flex flex-wrap gap-4 mt-4 pt-4 border-t border-border/50">
+                    {user ? (
+                      <a
+                        href={`/templates/fork/${template.slug}`}
+                        data-testid="fork-button"
+                        class="btn-secondary text-center"
+                      >
+                        Fork Template
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        data-testid="fork-button-login"
+                        class="btn-secondary text-center opacity-75"
+                        onclick="document.querySelector('[data-testid=sign-in-button]')?.click()"
+                      >
+                        Sign in to Fork
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      data-testid="report-button"
+                      class="btn-secondary text-center text-[var(--color-civic-red)] border-[var(--color-civic-red)]/30 hover:bg-[var(--color-civic-red)]/10"
+                      onclick={`window.reportTemplate && window.reportTemplate('${template.slug}')`}
+                    >
+                      Report
+                    </button>
+                  </div>
                 </div>
 
                 {isOwner && (

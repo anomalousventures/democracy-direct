@@ -30,6 +30,7 @@ const templateSlug =
 let rep: Legislator | null = null;
 let error: string | null = null;
 let templateContent: string | null = null;
+let templateTitle: string | null = null;
 
 const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
 if (isInvalidId) {
@@ -57,7 +58,7 @@ if (!error) {
   if (templateSlug && !error) {
     try {
       const [template] = await db
-        .select({ body: templates.body })
+        .select({ body: templates.body, title: templates.title })
         .from(templates)
         .where(
           and(
@@ -70,6 +71,7 @@ if (!error) {
 
       if (template) {
         templateContent = template.body;
+        templateTitle = template.title;
       }
     } catch (e) {
       console.error("Failed to load template:", e);
@@ -343,6 +345,9 @@ if (!error) {
                     office_address: rep.addressCapitol || undefined,
                   }}
                   initialTemplate={templateContent || undefined}
+                  templateName={templateTitle || undefined}
+                  templateSlug={templateSlug || undefined}
+                  repBioguideId={bioguideId}
                 />
               </div>
 

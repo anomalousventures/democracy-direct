@@ -3,16 +3,29 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useCallback, useEffect } from "react";
 
+const TEMPLATE_VARIABLES = [
+  { name: "REP_NAME", label: "Rep Name", description: "Full name (e.g., John Smith)" },
+  { name: "REP_TITLE", label: "Title", description: "Senator or Representative" },
+  { name: "REP_FIRST", label: "First", description: "First name only" },
+  { name: "REP_LAST", label: "Last", description: "Last name only" },
+  { name: "STATE", label: "State", description: "State abbreviation (e.g., CA)" },
+  { name: "DISTRICT", label: "District", description: "District number or At-Large" },
+  { name: "USER_NAME", label: "Your Name", description: "Writer's name (from address)" },
+  { name: "USER_CITY", label: "Your City", description: "Writer's city (from address)" },
+] as const;
+
 interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
+  showVariableButtons?: boolean;
 }
 
 export function TiptapEditor({
   content,
   onChange,
   placeholder = "Write your letter here...",
+  showVariableButtons = true,
 }: TiptapEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -63,6 +76,13 @@ export function TiptapEditor({
     editor?.chain().focus().toggleOrderedList().run();
   }, [editor]);
 
+  const insertVariable = useCallback(
+    (varName: string) => {
+      editor?.chain().focus().insertContent(`{{${varName}}}`).run();
+    },
+    [editor]
+  );
+
   if (!editor) {
     return null;
   }
@@ -71,7 +91,7 @@ export function TiptapEditor({
 
   return (
     <div className="tiptap-container">
-      <div className="flex gap-1 mb-2 p-1 border border-[var(--color-border)] rounded-md bg-white">
+      <div className="flex flex-wrap gap-1 mb-2 p-1 border border-[var(--color-border)] rounded-md bg-white">
         <button
           onClick={toggleBold}
           className={`p-2 rounded hover:bg-gray-100 ${
@@ -185,14 +205,33 @@ export function TiptapEditor({
             <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
           </svg>
         </button>
+
+        {showVariableButtons && (
+          <>
+            <div className="w-px bg-gray-200 mx-1" />
+            <span className="flex items-center px-2 text-xs text-[var(--color-muted-foreground)]">
+              Insert:
+            </span>
+            {TEMPLATE_VARIABLES.map((variable) => (
+              <button
+                key={variable.name}
+                onClick={() => insertVariable(variable.name)}
+                className="px-2 py-1 text-xs rounded hover:bg-[var(--color-civic-gold)]/20 text-[var(--color-civic-navy)] font-medium"
+                type="button"
+                title={variable.description}
+                aria-label={`Insert ${variable.label} variable`}
+              >
+                {variable.label}
+              </button>
+            ))}
+          </>
+        )}
       </div>
 
       <EditorContent editor={editor} />
 
       <div className="flex justify-between text-sm text-[var(--color-muted-foreground)] mt-2">
-        <span>
-          Tip: Use {"{{REP_NAME}}"}, {"{{STATE}}"} for auto-substitution
-        </span>
+        <span>Variables like {"{{REP_NAME}}"} will be replaced with actual values</span>
         <span>
           <span className="font-medium" data-testid="character-count">
             {characterCount}

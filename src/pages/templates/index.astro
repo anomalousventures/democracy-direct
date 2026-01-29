@@ -4,13 +4,16 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
-import { templates } from "@/db/schema";
+import { templates, legislators } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 
 export const prerender = false;
 
 const user = Astro.locals.user;
+const rawRepId = Astro.url.searchParams.get("rep");
+const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
+let repName: string | null = null;
 
 let templateList: {
   id: string;
@@ -44,6 +47,17 @@ try {
 
   const allTags = results.flatMap((t) => t.issueTags || []);
   availableTags = [...new Set(allTags)].sort();
+
+  if (repBioguideId) {
+    const [rep] = await db
+      .select({ firstName: legislators.firstName, lastName: legislators.lastName })
+      .from(legislators)
+      .where(eq(legislators.bioguideId, repBioguideId))
+      .limit(1);
+    if (rep) {
+      repName = `${rep.firstName} ${rep.lastName}`;
+    }
+  }
 } catch (error) {
   console.error("Failed to load templates:", error);
 }
@@ -55,6 +69,32 @@ try {
   <main id="main-content" class="flex-1 py-12">
     <div class="container mx-auto px-4">
       <div class="max-w-4xl mx-auto">
+        {
+          repBioguideId && repName && (
+            <div class="mb-6 p-4 bg-[var(--color-civic-gold)]/10 border border-[var(--color-civic-gold)]/30 rounded-md">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p class="text-sm text-[var(--color-civic-navy)]">
+                  Choosing a template to contact <span class="font-semibold">{repName}</span>
+                </p>
+                <a
+                  href={`/rep/${repBioguideId}`}
+                  class="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-civic-navy)] hover:text-[var(--color-civic-gold)] transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Return without template
+                </a>
+              </div>
+            </div>
+          )
+        }
+
         <div class="text-center mb-12">
           <h1 class="text-3xl md:text-4xl font-bold mb-4 text-[var(--color-civic-navy)]">
             Letter Templates
@@ -67,7 +107,12 @@ try {
         </div>
 
         <div data-testid="template-list">
-          <TemplateSearch client:load templates={templateList} availableTags={availableTags} />
+          <TemplateSearch
+            client:load
+            templates={templateList}
+            availableTags={availableTags}
+            repBioguideId={repBioguideId}
+          />
         </div>
       </div>
     </div>

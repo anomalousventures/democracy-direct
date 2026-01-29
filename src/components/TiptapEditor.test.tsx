@@ -45,7 +45,7 @@ describe("TiptapEditor", () => {
       render(<TiptapEditor content="" onChange={vi.fn()} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Use.*REP_NAME/)).toBeInTheDocument();
+        expect(screen.getByText(/Variables like.*REP_NAME/)).toBeInTheDocument();
       });
     });
   });

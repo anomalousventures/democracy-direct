@@ -13,9 +13,10 @@ interface Template {
 interface TemplateSearchProps {
   templates: Template[];
   availableTags: string[];
+  repBioguideId?: string | null;
 }
 
-export function TemplateSearch({ templates, availableTags }: TemplateSearchProps) {
+export function TemplateSearch({ templates, availableTags, repBioguideId }: TemplateSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -91,38 +92,43 @@ export function TemplateSearch({ templates, availableTags }: TemplateSearchProps
 
       <div data-testid="template-search-results" className="space-y-6">
         {filteredTemplates.length > 0 ? (
-          filteredTemplates.map((template) => (
-            <article
-              key={template.id}
-              data-testid="template-card"
-              className="card-civic hover:-translate-y-1 transition-transform duration-300"
-            >
-              <a href={`/templates/${template.slug}`} className="block">
-                <h2 className="text-xl font-semibold mb-2 text-[var(--color-civic-navy)] hover:text-[var(--color-civic-navy)]/80">
-                  {template.title}
-                </h2>
-                <p className="text-muted-foreground mb-4 line-clamp-2">
-                  {truncateBody(template.body)}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-2">
-                    {template.issueTags?.map((tag) => (
-                      <span
-                        key={tag}
-                        data-testid="issue-tag"
-                        className="px-2 py-1 text-xs bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+          filteredTemplates.map((template) => {
+            const templateUrl = repBioguideId
+              ? `/templates/${template.slug}?rep=${repBioguideId}`
+              : `/templates/${template.slug}`;
+            return (
+              <article
+                key={template.id}
+                data-testid="template-card"
+                className="card-civic hover:-translate-y-1 transition-transform duration-300"
+              >
+                <a href={templateUrl} className="block">
+                  <h2 className="text-xl font-semibold mb-2 text-[var(--color-civic-navy)] hover:text-[var(--color-civic-navy)]/80">
+                    {template.title}
+                  </h2>
+                  <p className="text-muted-foreground mb-4 line-clamp-2">
+                    {truncateBody(template.body)}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-2">
+                      {template.issueTags?.map((tag) => (
+                        <span
+                          key={tag}
+                          data-testid="issue-tag"
+                          className="px-2 py-1 text-xs bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {template.viewCount.toLocaleString()} views
+                    </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {template.viewCount.toLocaleString()} views
-                  </span>
-                </div>
-              </a>
-            </article>
-          ))
+                </a>
+              </article>
+            );
+          })
         ) : (
           <div className="text-center py-12" data-testid="no-results">
             <p className="text-muted-foreground">
