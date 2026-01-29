@@ -81,10 +81,15 @@ if (!error) {
 ---
 
 <Layout
-  title={rep ? `${rep.firstName} ${rep.lastName}` : "Representative Not Found"}
+  title={rep
+    ? `${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName} (${getPartyLabel(rep.party, true)}-${rep.state})`
+    : "Representative Not Found"}
   description={rep
-    ? `Contact information and details for ${rep.firstName} ${rep.lastName}, ${rep.chamber === "senate" ? "Senator" : "Representative"} from ${rep.state}`
+    ? `Contact information for ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}, representing ${rep.state}${rep.chamber === "house" && rep.district !== "0" ? `-${rep.district}` : ""}`
     : "Representative not found"}
+  ogImage={rep
+    ? `https://theunitedstates.io/images/congress/450x550/${rep.bioguideId}.jpg`
+    : undefined}
 >
   <Header currentPath={`/rep/${bioguideId}`} user={user} />
 
