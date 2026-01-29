@@ -14,6 +14,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | Task                                      | Status   | Description                           |
 | ----------------------------------------- | -------- | ------------------------------------- |
 | [District Map](./district-map.md)         | Research | Map-based district picker             |
+| [Saved District](./saved-district.md)     | Research | Save district to user profile         |
 | [SEO & Social Sharing](./seo-social.md)   | Research | Optimize meta tags and social sharing |
 | [Share Buttons](./share-buttons.md)       | Research | Add share functionality to pages      |
 | [Voting Records](./voting-records.md)     | Research | Integrate Congress voting records     |
