@@ -105,6 +105,11 @@
     transform: translateY(0);
   }
 
+  .btn-primary:focus-visible {
+    outline: 3px solid var(--color-civic-gold);
+    outline-offset: 2px;
+  }
+
   .btn-civic {
     @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-sm;
     background: var(--color-civic-navy);
@@ -123,6 +128,11 @@
     transform: translateY(0);
   }
 
+  .btn-civic:focus-visible {
+    outline: 3px solid var(--color-civic-gold);
+    outline-offset: 2px;
+  }
+
   .btn-civic-secondary {
     @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-sm;
     background: transparent;
@@ -138,6 +148,11 @@
 
   .btn-civic-secondary:active {
     background: rgba(30, 58, 95, 0.1);
+  }
+
+  .btn-civic-secondary:focus-visible {
+    outline: 3px solid var(--color-civic-navy);
+    outline-offset: 2px;
   }
 
   .input-civic {

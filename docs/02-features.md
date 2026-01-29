@@ -985,11 +985,21 @@
 
 ### 9.5 Site-Wide Design Review
 
-- [ ] Review all pages for consistent styling
-- [ ] Check responsive design on mobile/tablet/desktop
-- [ ] Verify accessibility (WCAG 2.1 AA)
-- [ ] Review copy for clarity and consistency
-- [ ] Test all interactive elements
+- [x] Review all pages for consistent styling
+- [x] Check responsive design on mobile/tablet/desktop
+- [x] Verify accessibility (WCAG 2.1 AA)
+- [x] Review copy for clarity and consistency
+- [x] Test all interactive elements
+
+**Accessibility Improvements (2026-01-28):**
+
+- Added skip-to-main-content link in Layout.astro
+- Added `id="main-content"` to all page `<main>` elements
+- Added `aria-pressed` to toggle buttons (tag filters in TemplateSearch and TemplateForm)
+- Added `aria-invalid` and `aria-describedby` to form inputs with validation errors
+- Wrapped tag groups in `<fieldset>` with `<legend>` for screen readers
+- Added `aria-atomic="true"` to toast notifications
+- Added `:focus-visible` outlines to `.btn-primary`, `.btn-civic`, and `.btn-civic-secondary`
 
 **Tests:**
 

@@ -123,6 +123,7 @@ export function ContactActions({ content, representative }: ContactActionsProps)
           }`}
           role="status"
           aria-live="polite"
+          aria-atomic="true"
         >
           {toast.message}
         </div>

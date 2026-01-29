@@ -85,7 +85,7 @@ const isOwner = user && template?.userId === user.id;
 >
   <Header currentPath="/templates" user={user} />
 
-  <main class="flex-1 py-12">
+  <main id="main-content" class="flex-1 py-12">
     <div class="container mx-auto px-4">
       {
         error ? (

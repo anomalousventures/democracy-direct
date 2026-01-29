@@ -66,23 +66,27 @@ export function TemplateSearch({ templates, availableTags }: TemplateSearchProps
       </div>
 
       {availableTags.length > 0 && (
-        <div className="flex flex-wrap gap-2" data-testid="tag-filter">
-          {availableTags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                selectedTags.includes(tag)
-                  ? "bg-[var(--color-civic-navy)] text-white"
-                  : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]/80"
-              }`}
-              data-testid="tag-filter-button"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
+        <fieldset>
+          <legend className="sr-only">Filter by issue tags</legend>
+          <div className="flex flex-wrap gap-2" data-testid="tag-filter" role="group">
+            {availableTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                aria-pressed={selectedTags.includes(tag)}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  selectedTags.includes(tag)
+                    ? "bg-[var(--color-civic-navy)] text-white"
+                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]/80"
+                }`}
+                data-testid="tag-filter-button"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </fieldset>
       )}
 
       <div data-testid="template-search-results" className="space-y-6">
