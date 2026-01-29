@@ -1,10 +1,36 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { LetterComposer } from "./LetterComposer";
 import { ContactActions } from "./ContactActions";
 import { AddressForm } from "./AddressForm";
-import { LetterPreview } from "./LetterPreview";
+import { LetterPreview, type PrintOptions } from "./LetterPreview";
+import { UserInfoInputs } from "./UserInfoInputs";
 import { type Representative, type Address, createEmptyAddress } from "../types/representative";
-import { substituteForRepresentative } from "@/lib/template-variables";
+import { substituteForRepresentative, parseTemplateVariables } from "@/lib/template-variables";
+
+const SALUTATION_PATTERNS = [/^dear\s+(senator|representative|rep\.?|sen\.?)/i, /^dear\s+\w+/i];
+
+const CLOSING_PATTERNS = [
+  /sincerely,?\s*$/i,
+  /respectfully,?\s*$/i,
+  /thank\s+you,?\s*$/i,
+  /best\s+regards?,?\s*$/i,
+];
+
+function detectLetterParts(content: string): { hasSalutation: boolean; hasClosing: boolean } {
+  const trimmed = content.trim();
+  const lines = trimmed.split("\n");
+  const firstLine = lines[0]?.trim() || "";
+  const lastNonEmptyLine =
+    [...lines]
+      .reverse()
+      .find((l) => l.trim())
+      ?.trim() || "";
+
+  return {
+    hasSalutation: SALUTATION_PATTERNS.some((p) => p.test(firstLine)),
+    hasClosing: CLOSING_PATTERNS.some((p) => p.test(lastNonEmptyLine)),
+  };
+}
 
 interface ContactFlowProps {
   representative: Representative;
@@ -23,14 +49,49 @@ export function ContactFlow({
 }: ContactFlowProps) {
   const [letterContent, setLetterContent] = useState(initialTemplate);
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
+  const [userInfo, setUserInfo] = useState({ name: "", city: "" });
+  const [printOptions, setPrintOptions] = useState<PrintOptions>({
+    includeSalutation: true,
+    includeClosing: true,
+    includeSignatureLine: true,
+  });
+
+  const usedVariables = useMemo(() => parseTemplateVariables(letterContent), [letterContent]);
+  const needsUserName = usedVariables.includes("USER_NAME");
+  const needsUserCity = usedVariables.includes("USER_CITY");
+
+  useEffect(() => {
+    const { hasSalutation, hasClosing } = detectLetterParts(letterContent);
+    setPrintOptions((prev) => ({
+      ...prev,
+      includeSalutation: !hasSalutation,
+      includeClosing: !hasClosing,
+    }));
+  }, [letterContent]);
+
+  const handleUserInfoChange = useCallback((info: { name: string; city: string }) => {
+    setUserInfo(info);
+    setReturnAddress((prev) => ({
+      ...prev,
+      name: info.name || prev.name,
+      city: info.city || prev.city,
+    }));
+  }, []);
 
   const substitutedContent = useMemo(
     () =>
       substituteForRepresentative(letterContent, representative, {
-        name: returnAddress.name,
-        city: returnAddress.city,
+        name: userInfo.name || returnAddress.name,
+        city: userInfo.city || returnAddress.city,
       }),
-    [letterContent, representative, returnAddress.name, returnAddress.city]
+    [
+      letterContent,
+      representative,
+      userInfo.name,
+      userInfo.city,
+      returnAddress.name,
+      returnAddress.city,
+    ]
   );
 
   function handlePrint(): void {
@@ -82,6 +143,16 @@ export function ContactFlow({
           </div>
         </div>
 
+        {(needsUserName || needsUserCity) && (
+          <div className="mb-6">
+            <UserInfoInputs
+              onChange={handleUserInfoChange}
+              showName={needsUserName}
+              showCity={needsUserCity}
+            />
+          </div>
+        )}
+
         <LetterComposer
           representative={representative}
           initialContent={initialTemplate}
@@ -105,10 +176,51 @@ export function ContactFlow({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <AddressForm onChange={setReturnAddress} />
 
-            <div className="flex flex-col justify-end">
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-[var(--color-civic-navy)]">
+                  Letter Format Options
+                </p>
+                <div className="space-y-2 text-sm">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeSalutation}
+                      onChange={(e) =>
+                        setPrintOptions((p) => ({ ...p, includeSalutation: e.target.checked }))
+                      }
+                      className="rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-gold)]"
+                    />
+                    <span>Add "Dear Representative..." salutation</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeClosing}
+                      onChange={(e) =>
+                        setPrintOptions((p) => ({ ...p, includeClosing: e.target.checked }))
+                      }
+                      className="rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-gold)]"
+                    />
+                    <span>Add "Sincerely," closing</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeSignatureLine}
+                      onChange={(e) =>
+                        setPrintOptions((p) => ({ ...p, includeSignatureLine: e.target.checked }))
+                      }
+                      className="rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-gold)]"
+                    />
+                    <span>Add signature line</span>
+                  </label>
+                </div>
+              </div>
+
               <button
                 onClick={handlePrint}
-                className="btn-civic flex items-center justify-center gap-2"
+                className="btn-civic flex items-center justify-center gap-2 mt-auto"
                 type="button"
               >
                 <svg
@@ -136,6 +248,7 @@ export function ContactFlow({
             letterContent={substitutedContent}
             representative={representative}
             returnAddress={returnAddress}
+            printOptions={printOptions}
             className="mt-8"
           />
         </div>
@@ -147,6 +260,7 @@ export function ContactFlow({
             letterContent={substitutedContent}
             representative={representative}
             returnAddress={returnAddress}
+            printOptions={printOptions}
           />
         </div>
       )}

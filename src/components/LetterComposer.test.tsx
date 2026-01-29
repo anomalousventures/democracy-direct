@@ -106,7 +106,8 @@ describe("LetterComposer", () => {
 
       await waitFor(() => {
         const editor = screen.getByTestId("tiptap-editor");
-        expect(editor).toHaveTextContent("Dear {{REP_TITLE}}, I am writing to express...");
+        expect(editor).toHaveTextContent(/Dear \{\{REP_TITLE\}\}/);
+        expect(editor).toHaveTextContent(/I am writing to express/);
       });
     });
 

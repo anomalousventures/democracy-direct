@@ -1,7 +1,16 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+
+function textToHtml(text: string): string {
+  if (!text) return "";
+  const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escaped
+    .split(/\n\n+/)
+    .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
 
 const TEMPLATE_VARIABLES = [
   { name: "REP_NAME", label: "Rep Name", description: "Full name (e.g., John Smith)" },
@@ -27,6 +36,8 @@ export function TiptapEditor({
   placeholder = "Write your letter here...",
   showVariableButtons = true,
 }: TiptapEditorProps) {
+  const initialHtml = useMemo(() => textToHtml(content), [content]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -41,7 +52,7 @@ export function TiptapEditor({
         emptyEditorClass: "is-editor-empty",
       }),
     ],
-    content,
+    content: initialHtml,
     onUpdate: ({ editor }) => {
       onChange(editor.getText());
     },
@@ -56,7 +67,7 @@ export function TiptapEditor({
 
   useEffect(() => {
     if (editor && content !== editor.getText()) {
-      editor.commands.setContent(content);
+      editor.commands.setContent(textToHtml(content));
     }
   }, [content, editor]);
 
@@ -230,9 +241,11 @@ export function TiptapEditor({
 
       <EditorContent editor={editor} />
 
-      <div className="flex justify-between text-sm text-[var(--color-muted-foreground)] mt-2">
-        <span>Variables like {"{{REP_NAME}}"} will be replaced with actual values</span>
-        <span>
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-sm text-[var(--color-muted-foreground)] mt-2">
+        <span className="text-xs sm:text-sm">
+          Variables like {"{{REP_NAME}}"} will be replaced with actual values
+        </span>
+        <span className="text-xs sm:text-sm">
           <span className="font-medium" data-testid="character-count">
             {characterCount}
           </span>{" "}

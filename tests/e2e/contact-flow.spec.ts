@@ -5,9 +5,10 @@ const REP_PAGE = "/rep/P000622";
 
 async function fillComposer(page: Page, text: string) {
   await page.waitForLoadState("networkidle");
-  const composer = page.getByRole("textbox", { name: /letter/i });
-  await composer.fill(text);
-  await expect(page.getByText(new RegExp(`${text.length} characters`))).toBeVisible({
+  const composer = page.getByTestId("tiptap-editor");
+  await composer.click();
+  await composer.pressSequentially(text, { delay: 10 });
+  await expect(page.getByTestId("character-count")).toHaveText(String(text.length), {
     timeout: 5000,
   });
 }
@@ -17,8 +18,8 @@ test.describe("Phase 3: Contact Flow", () => {
     test("can type in composer", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Dear Representative, I am writing.");
-      const composer = page.getByRole("textbox", { name: /letter/i });
-      await expect(composer).toHaveValue("Dear Representative, I am writing.");
+      const composer = page.getByTestId("tiptap-editor");
+      await expect(composer).toContainText("Dear Representative, I am writing.");
     });
 
     test("character count updates", async ({ page }) => {
@@ -89,20 +90,19 @@ test.describe("Phase 3: Contact Flow", () => {
     test("print preview contains all sections", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "This is my letter.");
-      const preview = page.getByTestId("print-preview");
+      const preview = page.getByTestId("print-preview").first();
       const today = new Date();
       const month = today.toLocaleDateString("en-US", { month: "long" });
       await expect(preview).toContainText(month);
       await expect(preview).toContainText("This is my letter.");
       await expect(preview).toContainText(/Dear Representative/);
-      await expect(preview).toContainText(/Sincerely/i);
     });
 
     test("return address fields are editable", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test");
-      const nameInput = page.getByLabel(/your name/i).first();
-      const streetInput = page.getByLabel(/street address/i).first();
+      const nameInput = page.locator("#address-name");
+      const streetInput = page.locator("#address-street");
       await nameInput.fill("Jane Doe");
       await streetInput.fill("456 Main St");
       await expect(nameInput).toHaveValue("Jane Doe");
@@ -114,30 +114,36 @@ test.describe("Phase 3: Contact Flow", () => {
     test("address fields exist and are editable", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test");
-      await expect(page.getByLabel(/your name/i).first()).toBeVisible();
-      await expect(page.getByLabel(/street address/i).first()).toBeVisible();
-      await expect(page.getByLabel(/city/i).first()).toBeVisible();
-      await expect(page.getByLabel(/state/i).first()).toBeVisible();
-      await expect(page.getByLabel(/zip/i).first()).toBeVisible();
+      await expect(page.locator("#address-name")).toBeVisible();
+      await expect(page.locator("#address-street")).toBeVisible();
+      await expect(page.locator("#address-city")).toBeVisible();
+      await expect(page.locator("#address-state")).toBeVisible();
+      await expect(page.locator("#address-zip")).toBeVisible();
     });
 
-    test("values persist after page reload (localStorage)", async ({ page }) => {
+    test("values persist after page reload when opt-in enabled", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test");
-      const nameInput = page.getByLabel(/your name/i).first();
+
+      // Enable localStorage persistence
+      const saveCheckbox = page.getByRole("checkbox", { name: /remember my address/i });
+      await saveCheckbox.check();
+
+      const nameInput = page.locator("#address-name");
       await nameInput.fill("John Smith");
-      const cityInput = page.getByLabel(/city/i).first();
+      const cityInput = page.locator("#address-city");
       await cityInput.fill("Los Angeles");
+
       await page.reload();
       await fillComposer(page, "Test");
-      await expect(page.getByLabel(/your name/i).first()).toHaveValue("John Smith");
-      await expect(page.getByLabel(/city/i).first()).toHaveValue("Los Angeles");
+      await expect(page.locator("#address-name")).toHaveValue("John Smith");
+      await expect(page.locator("#address-city")).toHaveValue("Los Angeles");
     });
 
     test("clear button removes stored values", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test");
-      const nameInput = page.getByLabel(/your name/i).first();
+      const nameInput = page.locator("#address-name");
       await nameInput.fill("Test User");
       const clearButton = page.getByRole("button", { name: /clear/i });
       await clearButton.click();

@@ -42,7 +42,8 @@ describe("ContactFlow", () => {
 
     await waitFor(() => {
       const editor = screen.getByTestId("tiptap-editor");
-      expect(editor).toHaveTextContent("Dear {{REP_NAME}}, I am writing to express my concern...");
+      expect(editor).toHaveTextContent(/Dear \{\{REP_NAME\}\}/);
+      expect(editor).toHaveTextContent(/I am writing to express my concern/);
     });
   });
 
