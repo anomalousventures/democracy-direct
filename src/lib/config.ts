@@ -20,6 +20,8 @@ const rawEmailSchema = z.object({
   from: z.string().default("no-reply@democracy-direct.com"),
   smtp: rawSmtpSchema.optional(),
   awsRegion: z.string().default("us-east-1"),
+  awsAccessKeyId: z.string().optional(),
+  awsSecretAccessKey: z.string().optional(),
 });
 
 const emailSchema = rawEmailSchema.transform((raw) => ({
@@ -37,7 +39,14 @@ const emailSchema = rawEmailSchema.transform((raw) => ({
               : undefined,
         }
       : undefined,
-  ses: raw.provider === "ses" ? { region: raw.awsRegion } : undefined,
+  ses:
+    raw.provider === "ses"
+      ? {
+          region: raw.awsRegion,
+          accessKeyId: raw.awsAccessKeyId,
+          secretAccessKey: raw.awsSecretAccessKey,
+        }
+      : undefined,
 }));
 
 const moderationSchema = z.object({
@@ -91,6 +100,8 @@ export function getConfig(locals: App.Locals): Config {
         pass: getRawEnv(locals, "SMTP_PASS"),
       },
       awsRegion: getRawEnv(locals, "AWS_REGION"),
+      awsAccessKeyId: getRawEnv(locals, "AWS_ACCESS_KEY_ID"),
+      awsSecretAccessKey: getRawEnv(locals, "AWS_SECRET_ACCESS_KEY"),
     },
     moderation: {
       openaiApiKey: getRawEnv(locals, "OPENAI_API_KEY"),

@@ -14,6 +14,13 @@ export class SesEmailProvider implements EmailProvider {
     this.from = config.from;
     this.client = new SESClient({
       region: config.ses.region,
+      credentials:
+        config.ses.accessKeyId && config.ses.secretAccessKey
+          ? {
+              accessKeyId: config.ses.accessKeyId,
+              secretAccessKey: config.ses.secretAccessKey,
+            }
+          : undefined,
     });
   }
 

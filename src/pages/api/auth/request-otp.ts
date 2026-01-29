@@ -56,14 +56,12 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
-    try {
-      await emailSender(emailMessage, locals);
-    } catch (error) {
-      console.error("Failed to send OTP email:", error);
+    const sent = await emailSender(emailMessage, locals);
+    if (!sent) {
+      return { success: false, error: "Failed to send verification email. Please try again." };
     }
   }
 
-  // Always return success to prevent email enumeration
   return { success: true };
 }
 
@@ -102,13 +100,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(config.database.url);
-    await requestOTP(email, locals, db);
+    const result = await requestOTP(email, locals, db);
 
-    // Always return success to prevent email enumeration
+    if (!result.success) {
+      return jsonResponse({ success: false, error: result.error }, 500);
+    }
+
     return jsonResponse({ success: true });
   } catch (error) {
     console.error("OTP request error:", error);
-    // Return success even on error to prevent enumeration
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: false, error: "Something went wrong. Please try again." }, 500);
   }
 };
