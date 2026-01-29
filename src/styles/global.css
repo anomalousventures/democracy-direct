@@ -389,10 +389,12 @@
   header,
   footer,
   nav,
-  .no-print {
+  .no-print,
+  .card-civic {
     display: none;
-    visibility: hidden;
     height: 0;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
   }
 
@@ -402,12 +404,21 @@
     width: 100%;
   }
 
-  .print-only {
+  main > div,
+  main > div > div,
+  main > div > div > div {
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-only,
+  .print-only.hidden {
     display: block;
-    position: relative;
     width: 100%;
     height: auto;
-    page-break-inside: avoid;
+    margin: 0;
+    padding: 0;
+    visibility: visible;
   }
 
   .print-preview {
@@ -419,10 +430,10 @@
     min-height: auto;
     width: 100%;
     font-size: 12pt;
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   .print-preview .space-y-6 > * + * {
-    margin-top: 1.5em;
+    margin-top: 1.25em;
   }
 }
