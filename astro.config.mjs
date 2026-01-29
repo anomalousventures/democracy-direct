@@ -13,6 +13,25 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    ssr: {
+      external: [
+        "node:crypto",
+        "node:events",
+        "node:util",
+        "node:url",
+        "node:net",
+        "node:dns",
+        "node:fs",
+        "node:os",
+        "node:child_process",
+        "node:http",
+        "node:https",
+        "node:zlib",
+        "node:stream",
+        "node:path",
+        "node:tls",
+      ],
+    },
   },
 
   adapter: cloudflare({
