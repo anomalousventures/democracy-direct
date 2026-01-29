@@ -14,23 +14,26 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     ssr: {
-      external: [
-        "node:crypto",
-        "node:events",
-        "node:util",
-        "node:url",
-        "node:net",
-        "node:dns",
-        "node:fs",
-        "node:os",
-        "node:child_process",
-        "node:http",
-        "node:https",
-        "node:zlib",
-        "node:stream",
-        "node:path",
-        "node:tls",
-      ],
+      external: ["nodemailer", "node:crypto"],
+    },
+    resolve: {
+      alias: {
+        crypto: "node:crypto",
+        events: "node:events",
+        util: "node:util",
+        url: "node:url",
+        net: "node:net",
+        dns: "node:dns",
+        fs: "node:fs",
+        os: "node:os",
+        child_process: "node:child_process",
+        http: "node:http",
+        https: "node:https",
+        zlib: "node:zlib",
+        stream: "node:stream",
+        path: "node:path",
+        tls: "node:tls",
+      },
     },
   },
 
@@ -38,5 +41,6 @@ export default defineConfig({
     platformProxy: {
       enabled: true,
     },
+    imageService: "compile",
   }),
 });
