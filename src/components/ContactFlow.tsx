@@ -144,8 +144,12 @@ export function ContactFlow({
             <AddressForm onChange={setReturnAddress} />
 
             <div className="flex flex-col gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[var(--color-civic-navy)]">
+              <fieldset className="space-y-2">
+                <legend className="sr-only">Letter Format Options</legend>
+                <p
+                  className="text-sm font-medium text-[var(--color-civic-navy)]"
+                  aria-hidden="true"
+                >
                   Letter Format Options
                 </p>
                 <div className="space-y-2 text-sm">
@@ -183,7 +187,7 @@ export function ContactFlow({
                     <span>Add signature line</span>
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               <button
                 onClick={handlePrint}

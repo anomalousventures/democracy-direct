@@ -37,6 +37,7 @@ interface TiptapEditorProps {
   placeholder?: string;
   showVariableButtons?: boolean;
   maxLength?: number;
+  id?: string;
   "aria-invalid"?: "true" | "false";
   "aria-describedby"?: string;
 }
@@ -47,6 +48,7 @@ export function TiptapEditor({
   placeholder = "Write your letter here...",
   showVariableButtons = true,
   maxLength,
+  id,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: TiptapEditorProps) {
@@ -75,6 +77,7 @@ export function TiptapEditor({
         class:
           "tiptap-editor input-civic min-h-[200px] resize-y text-sm focus:outline-none prose prose-sm max-w-none",
         "data-testid": "tiptap-editor",
+        ...(id && { id }),
         ...(ariaInvalid && { "aria-invalid": ariaInvalid }),
         ...(ariaDescribedBy && { "aria-describedby": ariaDescribedBy }),
       },
@@ -127,6 +130,7 @@ export function TiptapEditor({
           type="button"
           title="Bold (Ctrl+B)"
           aria-label="Bold"
+          aria-pressed={editor.isActive("bold")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -152,6 +156,7 @@ export function TiptapEditor({
           type="button"
           title="Italic (Ctrl+I)"
           aria-label="Italic"
+          aria-pressed={editor.isActive("italic")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -181,6 +186,7 @@ export function TiptapEditor({
           type="button"
           title="Bullet List"
           aria-label="Bullet List"
+          aria-pressed={editor.isActive("bulletList")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -211,6 +217,7 @@ export function TiptapEditor({
           type="button"
           title="Numbered List"
           aria-label="Numbered List"
+          aria-pressed={editor.isActive("orderedList")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

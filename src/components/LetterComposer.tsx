@@ -43,6 +43,7 @@ export function LetterComposer({
           Your Letter
         </label>
         <TiptapEditor
+          id="letter-content"
           content={content}
           onChange={handleChange}
           placeholder={`Write your letter to ${repTitle} ${representative.last_name}. Use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution...`}
