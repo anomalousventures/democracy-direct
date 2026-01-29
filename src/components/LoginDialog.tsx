@@ -56,6 +56,13 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
     }
   }, []);
 
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken(null);
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) {
       setStep("email");
@@ -109,6 +116,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
 
       if (!response.ok) {
         setError(data.error || "Failed to send verification code");
+        resetTurnstile();
         return;
       }
 
@@ -117,6 +125,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
     } catch {
       setError("Network error. Please try again.");
       toast.error("Network error. Please try again.");
+      resetTurnstile();
     } finally {
       setIsLoading(false);
     }

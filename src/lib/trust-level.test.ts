@@ -5,6 +5,10 @@ import {
   getTrustLevelLabel,
   canCreateTemplates,
   canBypassModeration,
+  hasMinTrustLevel,
+  isTrusted,
+  isAdmin,
+  isBanned,
   TRUST_LEVELS,
   APPROVED_TEMPLATES_FOR_TRUST,
 } from "./trust-level";
@@ -100,6 +104,82 @@ describe("Trust Level System", () => {
       expect(canBypassModeration(TRUST_LEVELS.TRUSTED)).toBe(false);
       expect(canBypassModeration(TRUST_LEVELS.NEW_USER)).toBe(false);
       expect(canBypassModeration(TRUST_LEVELS.BANNED)).toBe(false);
+    });
+  });
+
+  describe("hasMinTrustLevel", () => {
+    it("returns false for null user", () => {
+      expect(hasMinTrustLevel(null, TRUST_LEVELS.NEW_USER)).toBe(false);
+    });
+
+    it("returns false for undefined user", () => {
+      expect(hasMinTrustLevel(undefined, TRUST_LEVELS.NEW_USER)).toBe(false);
+    });
+
+    it("returns true when user meets minimum level", () => {
+      expect(hasMinTrustLevel({ trustLevel: TRUST_LEVELS.TRUSTED }, TRUST_LEVELS.TRUSTED)).toBe(
+        true
+      );
+    });
+
+    it("returns true when user exceeds minimum level", () => {
+      expect(hasMinTrustLevel({ trustLevel: TRUST_LEVELS.ADMIN }, TRUST_LEVELS.TRUSTED)).toBe(true);
+    });
+
+    it("returns false when user is below minimum level", () => {
+      expect(hasMinTrustLevel({ trustLevel: TRUST_LEVELS.NEW_USER }, TRUST_LEVELS.TRUSTED)).toBe(
+        false
+      );
+    });
+  });
+
+  describe("isTrusted", () => {
+    it("returns false for null user", () => {
+      expect(isTrusted(null)).toBe(false);
+    });
+
+    it("returns false for new user", () => {
+      expect(isTrusted({ trustLevel: TRUST_LEVELS.NEW_USER })).toBe(false);
+    });
+
+    it("returns true for trusted user", () => {
+      expect(isTrusted({ trustLevel: TRUST_LEVELS.TRUSTED })).toBe(true);
+    });
+
+    it("returns true for admin", () => {
+      expect(isTrusted({ trustLevel: TRUST_LEVELS.ADMIN })).toBe(true);
+    });
+
+    it("returns false for banned user", () => {
+      expect(isTrusted({ trustLevel: TRUST_LEVELS.BANNED })).toBe(false);
+    });
+  });
+
+  describe("isAdmin", () => {
+    it("returns false for null user", () => {
+      expect(isAdmin(null)).toBe(false);
+    });
+
+    it("returns false for trusted user", () => {
+      expect(isAdmin({ trustLevel: TRUST_LEVELS.TRUSTED })).toBe(false);
+    });
+
+    it("returns true for admin", () => {
+      expect(isAdmin({ trustLevel: TRUST_LEVELS.ADMIN })).toBe(true);
+    });
+  });
+
+  describe("isBanned", () => {
+    it("returns false for null user", () => {
+      expect(isBanned(null)).toBe(false);
+    });
+
+    it("returns false for new user", () => {
+      expect(isBanned({ trustLevel: TRUST_LEVELS.NEW_USER })).toBe(false);
+    });
+
+    it("returns true for banned user", () => {
+      expect(isBanned({ trustLevel: TRUST_LEVELS.BANNED })).toBe(true);
     });
   });
 });
