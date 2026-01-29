@@ -55,6 +55,7 @@ export function TiptapEditor({
   const initialHtml = useMemo(() => textToHtml(content), [content]);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: false,

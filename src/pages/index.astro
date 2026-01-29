@@ -8,6 +8,7 @@ export const prerender = false;
 
 const user = Astro.locals.user;
 const templateSlug = Astro.url.searchParams.get("template") || undefined;
+const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
 ---
 
 <Layout title="Home">
@@ -50,7 +51,7 @@ const templateSlug = Astro.url.searchParams.get("template") || undefined;
           </p>
 
           <div class="animate-fade-up-delay-3">
-            <ZipLookup client:load templateSlug={templateSlug} />
+            <ZipLookup client:load templateSlug={templateSlug} initialZip={ambiguousZip} />
           </div>
         </div>
       </div>

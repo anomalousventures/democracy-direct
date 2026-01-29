@@ -4,20 +4,52 @@ import { lookupZip, type ZipLookupResult } from "../lib/zip-lookup";
 interface ZipLookupProps {
   autoFocus?: boolean;
   templateSlug?: string;
+  initialZip?: string;
 }
 
-export function ZipLookup({ autoFocus = true, templateSlug }: ZipLookupProps) {
-  const [zip, setZip] = useState("");
+export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLookupProps) {
+  const [zip, setZip] = useState(initialZip || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ZipLookupResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasAutoTriggered = useRef(false);
 
   useEffect(() => {
-    if (autoFocus && inputRef.current) {
+    if (autoFocus && inputRef.current && !initialZip) {
       inputRef.current.focus();
     }
-  }, [autoFocus]);
+  }, [autoFocus, initialZip]);
+
+  useEffect(() => {
+    if (initialZip && initialZip.length === 5 && !hasAutoTriggered.current) {
+      hasAutoTriggered.current = true;
+      triggerLookup(initialZip);
+    }
+  }, [initialZip]);
+
+  const triggerLookup = async (zipCode: string) => {
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const lookupResult = await lookupZip(zipCode);
+
+      if (lookupResult.type === "error") {
+        setError(lookupResult.message);
+      } else if (lookupResult.type === "single") {
+        const templateParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
+        window.location.href = `/zip/${zipCode}${templateParam}`;
+      } else {
+        setResult(lookupResult);
+      }
+    } catch {
+      setError("Failed to look up ZIP code. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 5);
@@ -32,27 +64,7 @@ export function ZipLookup({ autoFocus = true, templateSlug }: ZipLookupProps) {
       setError("Invalid ZIP code format. Please enter a 5-digit ZIP code.");
       return;
     }
-
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const lookupResult = await lookupZip(zip);
-
-      if (lookupResult.type === "error") {
-        setError(lookupResult.message);
-      } else if (lookupResult.type === "single") {
-        const templateParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
-        window.location.href = `/zip/${zip}${templateParam}`;
-      } else {
-        setResult(lookupResult);
-      }
-    } catch {
-      setError("Failed to look up ZIP code. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    triggerLookup(zip);
   };
 
   const handleDistrictSelect = (district: string) => {
@@ -203,7 +215,7 @@ export function ZipLookup({ autoFocus = true, templateSlug }: ZipLookupProps) {
                         {option.district === "0" ? "At-Large" : option.district}
                       </span>
                       <span className="ml-3 text-sm text-[var(--color-muted-foreground)]">
-                        {Math.round(option.proportion * 100)}% of ZIP area
+                        {parseFloat((option.proportion * 100).toFixed(2))}% of ZIP area
                       </span>
                     </div>
                     <svg

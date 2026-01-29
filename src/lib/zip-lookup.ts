@@ -39,7 +39,6 @@ export function clearCache(): void {
 }
 
 const ZIP_REGEX = /^\d{5}$/;
-const UNAMBIGUOUS_THRESHOLD = 0.95;
 
 export async function lookupZip(zip: string): Promise<ZipLookupResult> {
   const normalizedZip = zip.trim();
@@ -57,14 +56,15 @@ export async function lookupZip(zip: string): Promise<ZipLookupResult> {
   if (!zipEntry || !zipEntry.d || zipEntry.d.length === 0) {
     return {
       type: "error",
-      message: "ZIP code not found. Please check the ZIP code and try again.",
+      message:
+        "We don't have district data for this ZIP code. This may be a PO Box, military, or very new ZIP. You can find your representatives at congress.gov by searching your address.",
     };
   }
 
   const state = zipEntry.s;
   const sortedDistricts = [...zipEntry.d].sort((a, b) => b.p - a.p);
 
-  if (sortedDistricts[0].p >= UNAMBIGUOUS_THRESHOLD) {
+  if (sortedDistricts.length === 1) {
     return {
       type: "single",
       state,
