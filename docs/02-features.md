@@ -632,14 +632,14 @@
 - Vitest: Owner can delete
 - Playwright: Confirmation dialog shown
 
-### 5.12 Rich Text Editor Enhancement (Optional)
+### 5.12 Rich Text Editor Enhancement
 
-- [ ] Replace plain textarea with Tiptap editor
-- [ ] Markdown export for template storage
-- [ ] Variable placeholder highlighting
-- [ ] Toolbar with basic formatting (bold, italic, lists)
+- [x] Replace plain textarea with Tiptap editor
+- [x] Variable placeholder highlighting (toolbar buttons for insertion)
+- [x] Toolbar with basic formatting (bold, italic, bullet/numbered lists)
+- [x] Character count display with maxLength warning
 
-**Notes:** Tiptap recommended over Lexical for better Markdown support and faster integration
+**Notes:** Implemented using Tiptap with StarterKit and Placeholder extensions. Variables inserted via toolbar buttons rather than custom highlighting extension for simplicity
 
 ---
 
@@ -1019,17 +1019,24 @@
 - Vitest: Security-focused test suite
 - Manual: Penetration testing checklist
 
-### 9.7 Tiptap Rich Text Editor (Optional)
+### 9.7 Tiptap Rich Text Editor
 
-- [ ] Replace plain textarea with Tiptap editor in LetterComposer
-- [ ] Basic formatting: bold, italic, lists
-- [ ] Export to plain text for contact forms
-- [ ] Preserve Markdown-style variable syntax ({{VAR}})
+- [x] Replace plain textarea with Tiptap editor in LetterComposer
+- [x] Basic formatting: bold, italic, bullet/numbered lists
+- [x] Export to plain text for contact forms (clipboard copy)
+- [x] Preserve Markdown-style variable syntax ({{VAR}})
+- [x] Variable toolbar buttons for REP_TITLE, REP_NAME, REP_FIRST, REP_LAST, REP_PARTY, STATE, DISTRICT, USER_NAME, USER_CITY, TODAY_DATE
+- [x] UserInfoInputs component for USER_NAME/USER_CITY with opt-in localStorage
+- [x] Print format options (salutation, closing, signature line checkboxes)
+- [x] Accessibility: focus-visible styles, aria-invalid/aria-describedby
+- [x] Created `src/lib/local-storage.ts` for safe localStorage helpers
 
 **Tests:**
 
-- Vitest: Tiptap component renders and handles input
+- Vitest: TiptapEditor component renders and handles input
+- Vitest: UserInfoInputs localStorage persistence
 - Playwright: User can format text and variables still work
+- Playwright: Print preview shows correct content
 
 ---
 
