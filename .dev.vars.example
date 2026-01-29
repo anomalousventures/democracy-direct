@@ -1,44 +1,30 @@
-# Database
-# Production: Use Neon or other hosted Postgres
+# Database (Neon serverless Postgres)
 DATABASE_URL=postgresql://user:password@host:5432/database
 
-# Local development: Use docker-compose postgres
-# DATABASE_URL=postgresql://democracy:democracy@localhost:5432/democracy_direct
-
 # Email Provider: "smtp" | "ses"
-# smtp: Use SMTP server (Mailpit for local dev, or production SMTP)
-# ses: Use AWS SES (production)
 EMAIL_PROVIDER=smtp
 EMAIL_FROM=no-reply@democracy-direct.com
 
-# SMTP Configuration (for EMAIL_PROVIDER=smtp)
-# Local dev with Mailpit: docker-compose up -d mailpit
-SMTP_HOST=localhost
+# SMTP Configuration (for local dev with Mailpit)
+# Use 127.0.0.1 instead of localhost for WSL2 compatibility
+SMTP_HOST=127.0.0.1
 SMTP_PORT=1025
-# SMTP_SECURE=false
-# SMTP_USER=
-# SMTP_PASS=
 
-# AWS SES Configuration (for EMAIL_PROVIDER=ses)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
+# AWS SES Configuration (for EMAIL_PROVIDER=ses in production)
+# AWS_ACCESS_KEY_ID=
+# AWS_SECRET_ACCESS_KEY=
+# AWS_REGION=us-west-1
 
-# Admin Users (comma-separated emails for admin access)
-# These users will be created/updated as admins on deploy
-ADMIN_USERS=
+# Admin Users (comma-separated email hashes for admin access)
+# ADMIN_USERS=
 
-# Content Moderation (optional - for template submission)
-OPENAI_API_KEY=
+# Content Moderation
+# OPENAI_API_KEY=
 
-# Cloudflare Turnstile (for bot protection)
-# Using Cloudflare's testing keys (always pass, works on localhost)
-# Replace with real keys in production
+# Cloudflare Turnstile (bot protection)
+# Testing keys below always pass and work on localhost
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
 # Data Sources
-CONGRESS_API_KEY=
-
-# Analytics (optional)
-PLAUSIBLE_DOMAIN=democracy-direct.com
+# CONGRESS_API_KEY=

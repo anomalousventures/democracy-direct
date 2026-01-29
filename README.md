@@ -1,5 +1,7 @@
 # Democracy Direct
 
+![Democracy Direct](public/og-default.png)
+
 This is the source code for [democracy-direct.com](https://democracy-direct.com).
 
 ## Your representatives work for you

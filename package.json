@@ -11,8 +11,9 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:wrangler": "astro build && wrangler pages dev dist --port 4321",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro build && wrangler pages dev dist --port 8788",
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
