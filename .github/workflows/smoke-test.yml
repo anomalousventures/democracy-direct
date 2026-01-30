@@ -23,16 +23,15 @@ jobs:
        github.event.check_run.head_branch == 'main')
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
-          node-version-file: .nvmrc
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -42,13 +41,13 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Wait for deployment propagation
-        run: sleep 30
+        run: sleep 60
 
       - name: Run smoke tests
         run: pnpm exec playwright test tests/e2e/smoke.spec.ts --config=playwright.smoke.config.ts
 
       - name: Upload test results on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: smoke-test-report
@@ -60,6 +59,11 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
