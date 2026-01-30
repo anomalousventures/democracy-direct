@@ -19,6 +19,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Saved District](./saved-district.md)                       | In Progress | Save district to user profile                   |
 | [SEO & Social Sharing](./seo-social.md)                     | Complete    | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Complete    | Add share functionality to pages                |
+| [Template Descriptions](./template-descriptions.md)         | Ready       | Add short descriptions to templates             |
 | [Voting Records](./voting-records.md)                       | Ready       | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready       | Bill tracking and summaries                     |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready       | Performance, a11y, SEO optimization             |
@@ -41,6 +42,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 1. **SEO & Social Sharing** - Simple meta tag updates
 2. **Share Buttons** - Standalone component, no backend
 3. **Saved District** - Schema exists, clear scope
+4. **Template Descriptions** - Short summaries for templates
 
 ### Phase 2: Congress Data
 
