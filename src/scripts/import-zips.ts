@@ -220,29 +220,27 @@ export async function importZipDistricts(force: boolean = false): Promise<Import
   const sourceInfo = await checkSourceHeaders();
   const currentLastModified = sourceInfo.lastModified;
 
+  const [existingMeta] = await db
+    .select()
+    .from(dataSourceMeta)
+    .where(eq(dataSourceMeta.id, "zip_districts"));
+
   if (!force) {
     if (!currentLastModified) {
       console.warn(
         "Warning: Census API did not return Last-Modified header; skipping change detection and proceeding with full import."
       );
-    } else {
-      const [existingMeta] = await db
-        .select()
-        .from(dataSourceMeta)
-        .where(eq(dataSourceMeta.id, "zip_districts"));
-
-      if (existingMeta?.lastModified === currentLastModified) {
-        const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
-        console.log(`No changes detected (Last-Modified: ${currentLastModified})`);
-        return {
-          source: "census",
-          changed: false,
-          recordsProcessed: 0,
-          recordsInserted: 0,
-          duration,
-          lastModified: currentLastModified,
-        };
-      }
+    } else if (existingMeta?.lastModified === currentLastModified) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+      console.log(`No changes detected (Last-Modified: ${currentLastModified})`);
+      return {
+        source: "census",
+        changed: false,
+        recordsProcessed: 0,
+        recordsInserted: 0,
+        duration,
+        lastModified: currentLastModified,
+      };
     }
   }
 
@@ -279,11 +277,6 @@ export async function importZipDistricts(force: boolean = false): Promise<Import
     inserted += batch.length;
     console.log(`Inserted ${inserted} / ${zipDistrictsData.length} records...`);
   }
-
-  const [existingMeta] = await db
-    .select()
-    .from(dataSourceMeta)
-    .where(eq(dataSourceMeta.id, "zip_districts"));
 
   const sourceChanged = currentLastModified && existingMeta?.lastModified !== currentLastModified;
 
@@ -330,7 +323,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   importZipDistricts(force)
     .then((result) => {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result));
       process.exit(0);
     })
     .catch((error) => {

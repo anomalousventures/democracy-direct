@@ -306,29 +306,27 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
   console.log("Checking GitHub for changes...");
   const currentCommitSha = await checkGitHubCommitSha();
 
+  const [existingMeta] = await db
+    .select()
+    .from(dataSourceMeta)
+    .where(eq(dataSourceMeta.id, "legislators"));
+
   if (!force) {
     if (!currentCommitSha) {
       console.warn(
         "Warning: Unable to retrieve latest GitHub commit SHA; skipping change detection and proceeding with full import."
       );
-    } else {
-      const [existingMeta] = await db
-        .select()
-        .from(dataSourceMeta)
-        .where(eq(dataSourceMeta.id, "legislators"));
-
-      if (existingMeta?.lastModified === currentCommitSha) {
-        const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
-        console.log(`No changes detected (SHA: ${currentCommitSha.substring(0, 7)})`);
-        return {
-          source: "github",
-          changed: false,
-          recordsProcessed: 0,
-          recordsUpserted: 0,
-          duration,
-          commitSha: currentCommitSha,
-        };
-      }
+    } else if (existingMeta?.lastModified === currentCommitSha) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+      console.log(`No changes detected (SHA: ${currentCommitSha.substring(0, 7)})`);
+      return {
+        source: "github",
+        changed: false,
+        recordsProcessed: 0,
+        recordsUpserted: 0,
+        duration,
+        commitSha: currentCommitSha,
+      };
     }
   }
 
@@ -409,11 +407,6 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
     console.log(`Upserted ${upserted} / ${transformed.length} legislators...`);
   }
 
-  const [existingMeta] = await db
-    .select()
-    .from(dataSourceMeta)
-    .where(eq(dataSourceMeta.id, "legislators"));
-
   const sourceChanged = currentCommitSha && existingMeta?.lastModified !== currentCommitSha;
 
   await db
@@ -457,7 +450,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   importLegislators(force)
     .then((result) => {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result));
       process.exit(0);
     })
     .catch((error) => {
