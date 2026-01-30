@@ -20,6 +20,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [SEO & Social Sharing](./seo-social.md)                     | Complete    | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Complete    | Add share functionality to pages                |
 | [Template Descriptions](./template-descriptions.md)         | Ready       | Add short descriptions to templates             |
+| [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Ready       | Add rep and template pages to sitemap           |
 | [Voting Records](./voting-records.md)                       | Ready       | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready       | Bill tracking and summaries                     |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready       | Performance, a11y, SEO optimization             |
@@ -43,6 +44,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 2. **Share Buttons** - Standalone component, no backend
 3. **Saved District** - Schema exists, clear scope
 4. **Template Descriptions** - Short summaries for templates
+5. **Sitemap Dynamic Pages** - Add rep/template pages for SEO
 
 ### Phase 2: Congress Data
 
