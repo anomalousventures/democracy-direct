@@ -25,7 +25,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Legislation Search](./legislation-search.md)               | Research | Search bills, find who voted how                |
 | [Template Bill Linking](./template-bill-linking.md)         | Research | Link templates to specific bills                |
 | [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
-| [Campaign Finance](./campaign-finance.md)                   | Research | FEC/campaign finance data (API TBD)             |
+| [Campaign Finance](./campaign-finance.md)                   | Ready    | ProPublica Campaign Finance API integration     |
 | [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
 
 ## Suggested Implementation Order
@@ -53,18 +53,16 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 11. **Lighthouse Optimization** - Audit and improve (partially implemented)
 12. **Rep Page Editor** - UX improvements
-13. **Campaign Finance** - FEC API integration (OpenSecrets deprecated)
+13. **Campaign Finance** - ProPublica Campaign Finance API
 14. **District Map** - MapLibre + TIGERweb integration
 
 ## External API Summary
 
-| API          | Tasks Using It                 | Rate Limit     | Status                                 |
-| ------------ | ------------------------------ | -------------- | -------------------------------------- |
-| Congress.gov | Voting Records, Bill Summaries | 5,000/hour     | Active (`CONGRESS_API_KEY` configured) |
-| FEC/OpenFEC  | Campaign Finance               | Varies by tier | Active (key needed)                    |
-| TIGERweb     | District Map                   | None           | Active (no key needed)                 |
-
-**Note:** OpenSecrets API is deprecated - Campaign Finance task needs revision to use FEC API instead.
+| API          | Tasks Using It                 | Rate Limit | Status                                 |
+| ------------ | ------------------------------ | ---------- | -------------------------------------- |
+| Congress.gov | Voting Records, Bill Summaries | 5,000/hour | Active (`CONGRESS_API_KEY` configured) |
+| ProPublica   | Campaign Finance               | 5,000/day  | Active (key via email request)         |
+| TIGERweb     | District Map                   | None       | Active (no key needed)                 |
 
 ## How to Use
 
