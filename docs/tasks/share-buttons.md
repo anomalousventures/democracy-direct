@@ -1,6 +1,6 @@
 # Share Buttons
 
-## Status: In Progress
+## Status: Complete
 
 ## Problem Statement
 
@@ -80,15 +80,15 @@ Users who find useful templates or want to encourage others to contact their rep
 
 ## Verification
 
-- [ ] Share buttons visible on template detail pages
-- [ ] Share buttons visible on rep profile pages
-- [ ] Mobile shows native share sheet via Web Share API
-- [ ] Desktop shows explicit platform buttons
-- [ ] Twitter share opens with correct pre-filled text
-- [ ] Facebook share shows correct OG preview
-- [ ] Reddit share works correctly
-- [ ] Email share opens mail client with subject/body
-- [ ] Copy link works and shows confirmation toast
-- [ ] PostHog events fire on share clicks
-- [ ] Unit tests pass for share URL generators
-- [ ] E2E tests pass for share button interactions
+- [x] Share buttons visible on template detail pages
+- [x] Share buttons visible on rep profile pages
+- [x] Mobile shows native share sheet via Web Share API
+- [x] Desktop shows explicit platform buttons
+- [x] Twitter share opens with correct pre-filled text
+- [x] Facebook share shows correct OG preview
+- [x] Reddit share works correctly
+- [x] Email share opens mail client with subject/body
+- [x] Copy link works and shows confirmation toast
+- [x] PostHog events fire on share clicks
+- [x] Unit tests pass for share URL generators (16 tests)
+- [x] E2E tests pass for share button interactions (5 tests)
