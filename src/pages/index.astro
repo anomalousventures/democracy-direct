@@ -4,12 +4,16 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import AstroCard from "../components/ui/AstroCard.astro";
 import { ZipLookup } from "../components/ZipLookup";
+import { SavedDistrictBanner } from "../components/SavedDistrictBanner";
 
 export const prerender = false;
 
 const user = Astro.locals.user;
 const templateSlug = Astro.url.searchParams.get("template") || undefined;
 const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
+
+const serverSavedState = user?.savedState ?? null;
+const serverSavedDistrict = user?.savedDistrict ?? null;
 ---
 
 <Layout
@@ -26,6 +30,14 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
       </div>
 
       <div class="container-page relative">
+        <div class="container-medium">
+          <SavedDistrictBanner
+            client:load
+            serverSavedState={serverSavedState}
+            serverSavedDistrict={serverSavedDistrict}
+            isLoggedIn={!!user}
+          />
+        </div>
         <div class="container-medium text-center">
           <div class="hero-badge mb-8 animate-fade-up">
             <span class="accent-dot"></span>
