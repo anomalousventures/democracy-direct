@@ -11,13 +11,6 @@ Currently, users start by finding their representative and then can see how they
 - Voting Records integration (must be complete first - provides vote data for both chambers)
 - Bill Summaries integration (provides bill metadata for search)
 
-## Scope
-
-**Bicameral**: Supports both House and Senate votes using the hybrid data sources from Voting Records:
-
-- House votes: Congress.gov API
-- Senate votes: Senate.gov XML
-
 ## Research Completed
 
 - [x] Design search UX: keyword search vs browse by topic vs both
