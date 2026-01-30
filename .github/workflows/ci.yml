@@ -100,7 +100,7 @@ jobs:
     steps:
       - name: Get branch name
         id: branch_name
-        uses: tj-actions/branch-names@v8
+        uses: tj-actions/branch-names@dde14ac574a8b9b1cedc59a1cf312788af43d8d8 # v8
 
   create-preview-db:
     name: Create Preview Database
@@ -112,7 +112,7 @@ jobs:
     steps:
       - name: Create Neon Branch
         id: create_branch
-        uses: neondatabase/create-branch-action@v6
+        uses: neondatabase/create-branch-action@72ed4f69a12b6be9c16aebfad893f6a21e9aba8b # v6
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
@@ -243,7 +243,7 @@ jobs:
 
       - name: Create backup branch before migration
         id: create_backup
-        uses: neondatabase/create-branch-action@v6
+        uses: neondatabase/create-branch-action@72ed4f69a12b6be9c16aebfad893f6a21e9aba8b # v6
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: backup/pre-migration-${{ github.sha }}
@@ -261,7 +261,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete Neon Branch
-        uses: neondatabase/delete-branch-action@v3
+        uses: neondatabase/delete-branch-action@c2005bb7d7caeba12ba3ec63857e9c9f9a4d695a # v3
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
