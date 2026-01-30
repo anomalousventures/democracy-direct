@@ -6,7 +6,6 @@ test.describe("Share Buttons", () => {
       await page.goto("/templates");
       const firstTemplate = page.locator("[data-testid='template-card']").first();
 
-      // Templates must exist - fail if they don't
       await expect(firstTemplate).toBeVisible();
 
       const href = await firstTemplate.locator("a").getAttribute("href");
@@ -14,7 +13,6 @@ test.describe("Share Buttons", () => {
 
       await page.goto(href!);
 
-      // Platform buttons should always be visible
       await expect(page.locator('button[aria-label="Share on X (Twitter)"]')).toBeVisible();
       await expect(page.locator('button[aria-label="Share on Facebook"]')).toBeVisible();
       await expect(page.locator('button[aria-label="Share on Reddit"]')).toBeVisible();
@@ -33,14 +31,12 @@ test.describe("Share Buttons", () => {
 
       await page.goto(href!);
 
-      // Grant clipboard permissions
       await page.context().grantPermissions(["clipboard-write"]);
 
       const copyButton = page.locator('button[aria-label="Copy link to clipboard"]');
       await expect(copyButton).toBeVisible();
       await copyButton.click();
 
-      // Should show success toast
       await expect(page.locator('text="Link copied to clipboard!"')).toBeVisible();
     });
 
@@ -58,10 +54,9 @@ test.describe("Share Buttons", () => {
       const twitterButton = page.locator('button[aria-label="Share on X (Twitter)"]');
       await expect(twitterButton).toBeVisible();
 
-      // Click should open a new tab
       const [newPage] = await Promise.all([context.waitForEvent("page"), twitterButton.click()]);
 
-      expect(newPage.url()).toContain("twitter.com");
+      expect(newPage.url()).toContain("x.com");
       await newPage.close();
     });
   });
@@ -70,7 +65,6 @@ test.describe("Share Buttons", () => {
     test("displays share buttons on rep profile", async ({ page }) => {
       await page.goto("/rep/S000033");
 
-      // Platform buttons should always be visible
       await expect(page.locator('button[aria-label="Share on X (Twitter)"]').first()).toBeVisible();
       await expect(page.locator('button[aria-label="Share on Facebook"]').first()).toBeVisible();
       await expect(page.locator('button[aria-label="Share on Reddit"]').first()).toBeVisible();
@@ -83,14 +77,12 @@ test.describe("Share Buttons", () => {
     test("copy link button shows success toast on rep page", async ({ page }) => {
       await page.goto("/rep/S000033");
 
-      // Grant clipboard permissions
       await page.context().grantPermissions(["clipboard-write"]);
 
       const copyButton = page.locator('button[aria-label="Copy link to clipboard"]').first();
       await expect(copyButton).toBeVisible();
       await copyButton.click();
 
-      // Should show success toast
       await expect(page.locator('text="Link copied to clipboard!"')).toBeVisible();
     });
   });
