@@ -1,103 +1,135 @@
 # Public Roadmap
 
-## Status: Research
+## Status: Ready
 
 ## Problem Statement
 
 Users visiting the site may want to know what features are planned. A public roadmap builds trust, sets expectations, and encourages community engagement. It also provides transparency about the project's direction and allows users to see that the project is actively developed.
 
-## Research Needed
+## Research Completed
 
-- [ ] Review roadmap implementations on similar civic/open-source projects
-- [ ] Evaluate roadmap display formats (timeline, kanban, list)
-- [ ] Determine which tasks from docs/tasks/ should be public-facing
-- [ ] Consider how to word technical tasks for general audience
-- [ ] Evaluate auto-sync vs manual curation approach
+- [x] Review roadmap implementations on similar civic/open-source projects
+  - Most civic tech projects use simple list-based roadmaps
+  - CalMatters, OpenSecrets use phase-based groupings
+  - Simplicity and clarity more important than fancy visualizations
+- [x] Evaluate roadmap display formats (timeline, kanban, list)
+  - **Recommendation: Phased list** - matches existing about.astro structure
+  - Timeline requires dates (project avoids time estimates)
+  - Kanban is overkill for ~15 features
+- [x] Determine which tasks from docs/tasks/ should be public-facing
+  - All user-facing features (voting records, campaign finance, etc.)
+  - Exclude infrastructure tasks (smoke tests, data refresh optimization)
+  - Exclude internal tooling
+- [x] Consider how to word technical tasks for general audience
+  - Focus on user benefit, not implementation
+  - "See how your reps voted" not "Integrate Congress.gov API"
+  - One sentence per feature
+- [x] Evaluate auto-sync vs manual curation approach
+  - **Recommendation: Manual curation**
+  - Task docs contain technical details not suitable for public
+  - Updates infrequent (only when features ship)
+  - Public-facing descriptions need editorial control
 
-## Open Questions
+## Open Questions - Resolved
 
-- Should the roadmap be static markdown or dynamic from task docs?
-- Should users be able to vote/request features?
-- How much detail to show (full implementation plans vs high-level features)?
-- Should it show estimated timelines or just "planned/in-progress/done"?
-- Where should the roadmap link appear (footer, about page, dedicated page)?
+| Question            | Decision                  | Rationale                                        |
+| ------------------- | ------------------------- | ------------------------------------------------ |
+| Static or dynamic?  | **Static page**           | Simpler, manual curation needed anyway           |
+| Feature voting?     | **No, link to GitHub**    | Adds complexity; GitHub Discussions for feedback |
+| How much detail?    | **One-liner per feature** | Public wants overview, not implementation plans  |
+| Timeline estimates? | **No, just status**       | Project avoids time estimates per guidelines     |
+| Where to link?      | **Footer + About page**   | Not prominent enough for main nav                |
 
 ## Proposed Approach
 
-_To be filled after research._
-
-### Display Options
-
-1. **Static page** - Manually curated `/roadmap` page with planned features
-2. **Generated from task docs** - Build script that extracts task summaries
-3. **External service** - Use GitHub Projects or similar (links out)
-
-### Content Strategy
-
-Public-friendly descriptions of:
-
-- Phase 1: Quick wins (SEO, sharing, saved preferences)
-- Phase 2: Congress data (voting records, bill tracking)
-- Phase 3: Enhanced features (campaign finance, interactive maps)
+1. Create static `/roadmap` page following about.astro patterns
+2. Group features by phase (Now Building, Up Next, Planned, Completed)
+3. Write user-friendly one-liner for each feature
+4. Link to GitHub Discussions for feature suggestions
+5. Add link in footer and mention on about page
 
 ## Implementation Tasks
 
-_To be filled after research._
-
 ### Page Creation
 
-- [ ] Create `src/pages/roadmap.astro` page
-- [ ] Design roadmap layout (phases, status indicators)
-- [ ] Write public-friendly descriptions for each feature
-- [ ] Add "suggest a feature" link (GitHub Discussions or email)
+1. Create `src/pages/roadmap.astro` using Layout component (same pattern as about.astro)
+2. Use semantic sections with phase headings:
+   - "Now Building" (in-progress features)
+   - "Up Next" (ready for implementation)
+   - "Planned" (researched but not started)
+   - "Completed" (shipped features)
+3. Write user-friendly one-liner for each feature (see Content section below)
+4. Add status indicators using civic colors:
+   - In Progress: blue badge
+   - Ready: green badge
+   - Planned: gray badge
+   - Complete: checkmark
 
-### Navigation
+### Navigation Updates
 
-- [ ] Add roadmap link to footer
-- [ ] Consider adding to main navigation or about page
+5. Add "Roadmap" link to footer in `src/components/Footer.astro`
+6. Add brief mention + link in about.astro ("See our roadmap for planned features")
 
-### Content Management
+### Feature Suggestions
 
-- [ ] Decide: manual updates vs auto-generation
-- [ ] If auto-generated: create build script to extract from task docs
-- [ ] If manual: document update process
+7. Enable GitHub Discussions on repository (Settings → Features → Discussions)
+8. Create "Feature Requests" discussion category
+9. Add "Suggest a feature" link at bottom of roadmap page pointing to Discussions
 
-### Styling
+### SEO
 
-- [ ] Phase/status indicators with civic color scheme
-- [ ] Mobile-responsive layout
-- [ ] Consistent with site design language
+10. Add meta title: "Roadmap | Democracy Direct"
+11. Add meta description: "See what features we're building to help you engage with your representatives"
 
-## Example Roadmap Content
+## Roadmap Content
 
-```markdown
-# Roadmap
+### Completed Features
 
-## Now Building
+| Feature          | Public Description                                              |
+| ---------------- | --------------------------------------------------------------- |
+| ZIP Code Lookup  | Find your representatives instantly by entering your ZIP code   |
+| Letter Templates | Browse community-contributed templates for contacting your reps |
+| Rep Profiles     | View contact info and social media for all members of Congress  |
+| Accessibility    | Screen reader support, keyboard navigation, and high contrast   |
 
-- **Bill Tracking** - See what legislation your representatives sponsor
+### Now Building (In Progress)
 
-## Up Next
+_None currently - use this section when actively working on a feature_
 
-- **Voting Records** - View how your reps voted on key bills
-- **Share Buttons** - Easily share templates on social media
+### Up Next (Ready for Implementation)
 
-## Planned
+| Feature        | Public Description                                               | Task Doc          |
+| -------------- | ---------------------------------------------------------------- | ----------------- |
+| Share Buttons  | Share templates easily on social media                           | share-buttons.md  |
+| Save District  | Remember your district so you don't have to look it up each time | saved-district.md |
+| Voting Records | See how your representatives voted on key legislation            | voting-records.md |
+| Bill Summaries | Track bills your representatives sponsor and co-sponsor          | bill-summaries.md |
 
-- **Campaign Finance** - See who funds your representatives
-- **Interactive District Map** - Find your district visually
+### Planned (Researched)
 
-## Completed
+| Feature          | Public Description                                | Task Doc            |
+| ---------------- | ------------------------------------------------- | ------------------- |
+| Campaign Finance | See who funds your representatives' campaigns     | campaign-finance.md |
+| District Map     | Find your district visually on an interactive map | district-map.md     |
 
-- **Letter Templates** - Community-contributed letter templates
-- **ZIP Code Lookup** - Find your representatives by ZIP
-```
+### Infrastructure (Not on Public Roadmap)
+
+These tasks improve reliability but aren't user-facing features:
+
+- Prod Smoke Tests (prod-smoke-tests.md)
+- Data Refresh Optimization (data-refresh-optimization.md)
 
 ## Verification
 
 - [ ] Roadmap page accessible at `/roadmap`
-- [ ] All planned features accurately described
-- [ ] Status indicators reflect current progress
-- [ ] Mobile-responsive design
-- [ ] Link visible in footer/navigation
+- [ ] Page uses Layout component with proper meta tags
+- [ ] Features grouped by status (Now Building, Up Next, Planned, Completed)
+- [ ] Each feature has user-friendly one-liner description
+- [ ] Status badges use consistent civic color scheme
+- [ ] Mobile-responsive layout (test on mobile viewport)
+- [ ] Footer contains "Roadmap" link
+- [ ] About page mentions roadmap with link
+- [ ] GitHub Discussions enabled with "Feature Requests" category
+- [ ] "Suggest a feature" link works and goes to Discussions
 - [ ] Content is understandable to non-technical users
+- [ ] No time estimates or dates shown
