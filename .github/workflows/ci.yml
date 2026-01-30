@@ -121,7 +121,7 @@ jobs:
   test-e2e:
     name: E2E Tests
     needs: [create-preview-db]
-    if: github.event.action != 'closed'
+    if: always() && github.event.action != 'closed' && (needs.create-preview-db.result == 'success' || needs.create-preview-db.result == 'skipped')
     runs-on: ubuntu-latest
     services:
       mailpit:
