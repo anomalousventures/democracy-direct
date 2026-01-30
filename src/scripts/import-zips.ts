@@ -1,4 +1,14 @@
 import "dotenv/config";
+import { eq } from "drizzle-orm";
+
+export interface ImportResult {
+  source: "census";
+  changed: boolean;
+  recordsProcessed: number;
+  recordsInserted: number;
+  duration: string;
+  lastModified: string | null;
+}
 
 const STATE_FIPS_TO_ABBREV: Record<string, string> = {
   "01": "AL",
@@ -167,6 +177,24 @@ export function calculateProportions(records: CensusRecord[]): ZipDistrictRecord
 const CENSUS_CD119_ZCTA_URL =
   "https://www2.census.gov/geo/docs/maps-data/data/rel2020/cd-sld/tab20_cd11920_zcta520_natl.txt";
 
+export interface SourceInfo {
+  lastModified: string | null;
+  contentLength: number | null;
+}
+
+export async function checkSourceHeaders(): Promise<SourceInfo> {
+  const response = await fetch(CENSUS_CD119_ZCTA_URL, { method: "HEAD" });
+  if (!response.ok) {
+    throw new Error(`Failed to check Census headers: ${response.statusText}`);
+  }
+  return {
+    lastModified: response.headers.get("last-modified"),
+    contentLength: response.headers.get("content-length")
+      ? parseInt(response.headers.get("content-length")!, 10)
+      : null,
+  };
+}
+
 export async function fetchZctaCdData(): Promise<string> {
   console.log(`Fetching from ${CENSUS_CD119_ZCTA_URL}...`);
   const response = await fetch(CENSUS_CD119_ZCTA_URL);
@@ -176,12 +204,10 @@ export async function fetchZctaCdData(): Promise<string> {
   return response.text();
 }
 
-export async function importZipDistricts(): Promise<{
-  total: number;
-  inserted: number;
-}> {
+export async function importZipDistricts(force: boolean = false): Promise<ImportResult> {
+  const startTime = Date.now();
   const { createDb } = await import("@/db/client");
-  const { zipDistricts: zipDistrictsTable } = await import("@/db/schema");
+  const { zipDistricts: zipDistrictsTable, dataSourceMeta } = await import("@/db/schema");
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -189,6 +215,30 @@ export async function importZipDistricts(): Promise<{
   }
 
   const db = createDb(databaseUrl);
+
+  console.log("Checking Census source for changes...");
+  const sourceInfo = await checkSourceHeaders();
+  const currentLastModified = sourceInfo.lastModified;
+
+  if (!force) {
+    const [existingMeta] = await db
+      .select()
+      .from(dataSourceMeta)
+      .where(eq(dataSourceMeta.id, "zip_districts"));
+
+    if (existingMeta?.lastModified === currentLastModified) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+      console.log(`No changes detected (Last-Modified: ${currentLastModified})`);
+      return {
+        source: "census",
+        changed: false,
+        recordsProcessed: 0,
+        recordsInserted: 0,
+        duration,
+        lastModified: currentLastModified,
+      };
+    }
+  }
 
   console.log("Fetching ZCTA-CD relationship data from Census Bureau...");
   const csvData = await fetchZctaCdData();
@@ -224,14 +274,50 @@ export async function importZipDistricts(): Promise<{
     console.log(`Inserted ${inserted} / ${zipDistrictsData.length} records...`);
   }
 
+  await db
+    .insert(dataSourceMeta)
+    .values({
+      id: "zip_districts",
+      sourceUrl: CENSUS_CD119_ZCTA_URL,
+      lastModified: currentLastModified,
+      contentLength: sourceInfo.contentLength,
+      lastChecked: new Date(),
+      lastChanged: new Date(),
+      recordCount: inserted,
+    })
+    .onConflictDoUpdate({
+      target: dataSourceMeta.id,
+      set: {
+        lastModified: currentLastModified,
+        contentLength: sourceInfo.contentLength,
+        lastChecked: new Date(),
+        lastChanged: new Date(),
+        recordCount: inserted,
+      },
+    });
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
   console.log(`Import complete: ${inserted} records inserted`);
-  return { total: zipDistrictsData.length, inserted };
+
+  return {
+    source: "census",
+    changed: true,
+    recordsProcessed: records.length,
+    recordsInserted: inserted,
+    duration,
+    lastModified: currentLastModified,
+  };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  importZipDistricts()
+  const force = process.argv.includes("--force");
+  if (force) {
+    console.log("Force mode: bypassing change detection");
+  }
+
+  importZipDistricts(force)
     .then((result) => {
-      console.log("Import successful:", result);
+      console.log(JSON.stringify(result, null, 2));
       process.exit(0);
     })
     .catch((error) => {

@@ -29,12 +29,110 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Import legislators
-        run: pnpm import:legislators
+        id: legislators
+        run: |
+          OUTPUT=$(pnpm import:legislators 2>&1) || true
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if echo "$OUTPUT" | grep -q "Import failed"; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
 
       - name: Import ZIP districts
-        run: pnpm import:zips
+        id: zips
+        run: |
+          OUTPUT=$(pnpm import:zips 2>&1) || true
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if echo "$OUTPUT" | grep -q "Import failed"; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          LEGISLATORS_RESULT: ${{ steps.legislators.outputs.result }}
+          LEGISLATORS_FAILED: ${{ steps.legislators.outputs.failed }}
+          ZIPS_RESULT: ${{ steps.zips.outputs.result }}
+          ZIPS_FAILED: ${{ steps.zips.outputs.failed }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Parse results
+          LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
+          LEG_COUNT=$(echo "$LEGISLATORS_RESULT" | jq -r '.recordsUpserted // 0')
+          LEG_DURATION=$(echo "$LEGISLATORS_RESULT" | jq -r '.duration // "0s"')
+          LEG_SHA=$(echo "$LEGISLATORS_RESULT" | jq -r '.commitSha // "unknown"' | cut -c1-7)
+
+          ZIPS_CHANGED=$(echo "$ZIPS_RESULT" | jq -r '.changed // false')
+          ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
+          ZIPS_DURATION=$(echo "$ZIPS_RESULT" | jq -r '.duration // "0s"')
+          ZIPS_MODIFIED=$(echo "$ZIPS_RESULT" | jq -r '.lastModified // "unknown"')
+
+          # Determine overall status
+          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ]; then
+            TITLE="🚨 Data Refresh Failed"
+            COLOR=16711680
+          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ]; then
+            TITLE="📊 Data Refresh Complete"
+            COLOR=65280
+          else
+            TITLE="✅ Data Refresh - No Changes"
+            COLOR=8421504
+          fi
+
+          # Build status lines
+          if [ "$LEGISLATORS_FAILED" = "true" ]; then
+            LEG_STATUS="❌ **Legislators**: Failed"
+          elif [ "$LEG_CHANGED" = "true" ]; then
+            LEG_STATUS="✅ **Legislators**: ${LEG_COUNT} upserted (SHA: ${LEG_SHA})"
+          else
+            LEG_STATUS="⏭️ **Legislators**: Unchanged (SHA: ${LEG_SHA})"
+          fi
+
+          if [ "$ZIPS_FAILED" = "true" ]; then
+            ZIPS_STATUS="❌ **ZIP Districts**: Failed"
+          elif [ "$ZIPS_CHANGED" = "true" ]; then
+            ZIPS_STATUS="✅ **ZIP Districts**: ${ZIPS_COUNT} inserted"
+          else
+            ZIPS_STATUS="⏭️ **ZIP Districts**: Unchanged"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --argjson color "$COLOR" \
+            --arg leg_status "$LEG_STATUS" \
+            --arg zips_status "$ZIPS_STATUS" \
+            --arg gh_run "$GH_RUN" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "Results", value: ($leg_status + "\n" + $zips_status), inline: false },
+                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
+                ],
+                timestamp: $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
