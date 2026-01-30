@@ -119,6 +119,7 @@ jobs:
             --url="${DEPLOY_URL}/about" \
             --url="${DEPLOY_URL}/privacy" \
             --url="${DEPLOY_URL}/templates" \
+            --url="${DEPLOY_URL}/roadmap" \
             --settings.chromeFlags="--no-sandbox --headless" \
             || true
 
@@ -148,6 +149,7 @@ jobs:
           pa11y "${DEPLOY_URL}/about" --config pa11y-config.json --reporter json > pa11y-results/about.json || true
           pa11y "${DEPLOY_URL}/privacy" --config pa11y-config.json --reporter json > pa11y-results/privacy.json || true
           pa11y "${DEPLOY_URL}/templates" --config pa11y-config.json --reporter json > pa11y-results/templates.json || true
+          pa11y "${DEPLOY_URL}/roadmap" --config pa11y-config.json --reporter json > pa11y-results/roadmap.json || true
 
       - name: Generate audit summary
         if: steps.deployment.outputs.url != ''

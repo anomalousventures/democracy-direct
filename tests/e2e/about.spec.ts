@@ -36,4 +36,12 @@ test.describe("About Page", () => {
     });
     await expect(congressLink).toBeVisible();
   });
+
+  test("contains roadmap link in content", async ({ page }) => {
+    await page.goto("/about");
+    const mainContent = page.locator("main");
+    const roadmapLink = mainContent.getByRole("link", { name: /roadmap/i });
+    await expect(roadmapLink).toBeVisible();
+    await expect(roadmapLink).toHaveAttribute("href", "/roadmap");
+  });
 });
