@@ -15,9 +15,9 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | ----------------------------------------------------------- | ----------- | ----------------------------------------------- |
 | [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete    | Post-deploy smoke tests + Discord alerts        |
 | [Data Refresh Optimization](./data-refresh-optimization.md) | Complete    | Optimize import scripts + Discord notifications |
-| [Public Roadmap](./public-roadmap.md)                       | In Progress | Public-facing feature roadmap page              |
+| [Public Roadmap](./public-roadmap.md)                       | Complete    | Public-facing feature roadmap page              |
 | [Saved District](./saved-district.md)                       | Ready       | Save district to user profile                   |
-| [SEO & Social Sharing](./seo-social.md)                     | Ready       | Optimize meta tags and social sharing           |
+| [SEO & Social Sharing](./seo-social.md)                     | In Progress | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Ready       | Add share functionality to pages                |
 | [Voting Records](./voting-records.md)                       | Ready       | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready       | Bill tracking and summaries                     |
