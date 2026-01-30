@@ -1,6 +1,6 @@
 # Template Bill Linking
 
-## Status: Research
+## Status: Ready
 
 ## Problem Statement
 

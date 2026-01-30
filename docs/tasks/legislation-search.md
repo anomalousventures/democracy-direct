@@ -1,6 +1,6 @@
 # Legislation Search
 
-## Status: Research
+## Status: Ready
 
 ## Problem Statement
 
@@ -8,8 +8,15 @@ Currently, users start by finding their representative and then can see how they
 
 ## Dependencies
 
-- Voting Records integration (must be complete first - provides vote data)
+- Voting Records integration (must be complete first - provides vote data for both chambers)
 - Bill Summaries integration (provides bill metadata for search)
+
+## Scope
+
+**Bicameral**: Supports both House and Senate votes using the hybrid data sources from Voting Records:
+
+- House votes: Congress.gov API
+- Senate votes: Senate.gov XML
 
 ## Research Completed
 
