@@ -5,12 +5,9 @@ test.describe("Share Buttons", () => {
     test("displays share buttons on template detail page", async ({ page }) => {
       await page.goto("/templates");
       const firstTemplate = page.locator("[data-testid='template-card']").first();
-      const templateCount = await firstTemplate.count();
 
-      if (templateCount === 0) {
-        test.skip(true, "No templates available in database");
-        return;
-      }
+      // Templates must exist - fail if they don't
+      await expect(firstTemplate).toBeVisible();
 
       const href = await firstTemplate.locator("a").getAttribute("href");
       expect(href).toBeTruthy();
@@ -29,12 +26,7 @@ test.describe("Share Buttons", () => {
       await page.goto("/templates");
 
       const firstTemplate = page.locator("[data-testid='template-card']").first();
-      const templateCount = await firstTemplate.count();
-
-      if (templateCount === 0) {
-        test.skip(true, "No templates available in database");
-        return;
-      }
+      await expect(firstTemplate).toBeVisible();
 
       const href = await firstTemplate.locator("a").getAttribute("href");
       expect(href).toBeTruthy();
@@ -56,12 +48,7 @@ test.describe("Share Buttons", () => {
       await page.goto("/templates");
 
       const firstTemplate = page.locator("[data-testid='template-card']").first();
-      const templateCount = await firstTemplate.count();
-
-      if (templateCount === 0) {
-        test.skip(true, "No templates available in database");
-        return;
-      }
+      await expect(firstTemplate).toBeVisible();
 
       const href = await firstTemplate.locator("a").getAttribute("href");
       expect(href).toBeTruthy();
