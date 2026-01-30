@@ -14,10 +14,11 @@ Configuration errors (like wrong Turnstile keys) can slip into production and br
   - Filter for `github.event.check_run.app.slug == 'cloudflare-workers-and-pages'`
   - Existing `accessibility.yml` already uses this pattern successfully
 - [x] Evaluate running Playwright against production vs simple fetch tests
-  - **Recommendation: Simple fetch tests for smoke testing**
-  - Playwright is heavier, better suited for E2E (already runs in CI)
-  - Fetch tests are fast, lightweight, and sufficient for health checks
-  - Can test API endpoints, page loads, and basic responses
+  - **Recommendation: Playwright for smoke testing**
+  - Reuses existing E2E infrastructure and test patterns
+  - Can verify JavaScript loads correctly (Turnstile, React hydration)
+  - Catches issues that fetch-only tests would miss
+  - Already have Playwright configured in the project
 - [x] Research Discord webhook setup and message formatting
   - Discord webhooks accept JSON with `content` and optional `embeds`
   - Use `tsickert/discord-webhook` GitHub Action for easy integration
@@ -51,7 +52,7 @@ Configuration errors (like wrong Turnstile keys) can slip into production and br
 
 1. Create smoke test workflow triggered by Cloudflare check_run completion
 2. Filter for production deployments only (main branch)
-3. Run lightweight fetch-based tests against production URL
+3. Run Playwright tests against production URL
 4. Send Discord notification only on failure
 5. Include manual rollback link in failure notification
 
@@ -79,16 +80,16 @@ Configuration errors (like wrong Turnstile keys) can slip into production and br
    - Run smoke tests
    - Send Discord notification on failure
 
-### Smoke Test Script
+### Smoke Test Spec
 
-10. Create `scripts/smoke-test.sh` (or inline in workflow) that tests:
-    - `GET /api/health` returns 200 with `status: "ok"`
-    - `GET /` returns 200 and contains expected content
-    - `GET /templates` returns 200
-    - `GET /api/auth/request-otp` returns 400 (missing body, not 500)
-    - Homepage HTML contains Turnstile script tag
-11. Return non-zero exit code on any failure
-12. Collect failure details for Discord message
+10. Create `tests/e2e/smoke.spec.ts` with tests for:
+    - `/api/health` returns 200 with `status: "ok"`
+    - Homepage loads and contains expected content
+    - `/templates` page loads
+    - Turnstile script is present and loads
+    - Key interactive elements are visible
+11. Configure Playwright to run against production URL via `BASE_URL` env var
+12. Use existing Playwright reporter for failure details
 
 ### Notification Formatting
 
@@ -122,63 +123,42 @@ jobs:
       github.event.check_run.head_branch == 'main'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Wait for deployment propagation
         run: sleep 30
 
       - name: Run smoke tests
         id: smoke
         env:
-          PROD_URL: https://democracy-direct.com
-        run: |
-          FAILURES=""
-
-          # Test 1: Health endpoint
-          HEALTH=$(curl -sf "$PROD_URL/api/health" || echo "FAIL")
-          if [[ "$HEALTH" == "FAIL" ]] || ! echo "$HEALTH" | jq -e '.status == "ok"' > /dev/null; then
-            FAILURES="${FAILURES}- /api/health failed\n"
-          fi
-
-          # Test 2: Homepage loads
-          if ! curl -sf "$PROD_URL" > /dev/null; then
-            FAILURES="${FAILURES}- Homepage failed to load\n"
-          fi
-
-          # Test 3: Templates page
-          if ! curl -sf "$PROD_URL/templates" > /dev/null; then
-            FAILURES="${FAILURES}- /templates failed to load\n"
-          fi
-
-          # Test 4: Auth endpoint responds (400 expected, not 500)
-          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$PROD_URL/api/auth/request-otp")
-          if [[ "$AUTH_STATUS" == "500" ]] || [[ "$AUTH_STATUS" == "000" ]]; then
-            FAILURES="${FAILURES}- /api/auth/request-otp returned $AUTH_STATUS\n"
-          fi
-
-          # Test 5: Turnstile script present
-          if ! curl -sf "$PROD_URL" | grep -q "challenges.cloudflare.com/turnstile"; then
-            FAILURES="${FAILURES}- Turnstile script not found\n"
-          fi
-
-          if [[ -n "$FAILURES" ]]; then
-            echo "failures<<EOF" >> $GITHUB_OUTPUT
-            echo -e "$FAILURES" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-          echo "All smoke tests passed!"
+          BASE_URL: https://democracy-direct.com
+        run: pnpm exec playwright test tests/e2e/smoke.spec.ts --reporter=list
 
       - name: Send Discord notification on failure
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          FAILURES="${{ steps.smoke.outputs.failures }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           PAYLOAD=$(jq -n \
-            --arg failures "$FAILURES" \
             --arg timestamp "$TIMESTAMP" \
             --arg gh_run "$GH_RUN" \
             '{
@@ -186,8 +166,8 @@ jobs:
                 title: "🚨 Production Smoke Test Failed",
                 color: 16711680,
                 fields: [
-                  { name: "Failed Tests", value: $failures },
-                  { name: "Links", value: "[\($gh_run)](GitHub Action) | [Production Site](https://democracy-direct.com) | [Cloudflare Dashboard](https://dash.cloudflare.com)" }
+                  { name: "Details", value: "One or more smoke tests failed against production." },
+                  { name: "Links", value: "[GitHub Action](\($gh_run)) | [Production Site](https://democracy-direct.com) | [Cloudflare Dashboard](https://dash.cloudflare.com)" }
                 ],
                 timestamp: $timestamp
               }]
@@ -236,14 +216,15 @@ curl -X POST \
 
 ## Verification
 
+- [ ] `tests/e2e/smoke.spec.ts` created with production smoke tests
+- [ ] Smoke tests pass locally with `BASE_URL=https://democracy-direct.com pnpm test:e2e tests/e2e/smoke.spec.ts`
 - [ ] Workflow triggers only for production (main branch) deployments
 - [ ] Workflow does NOT trigger for preview deployments
-- [ ] All 5 smoke tests execute correctly
+- [ ] Playwright runs successfully in workflow
 - [ ] Failed tests are properly detected
 - [ ] Discord notification sent on failure with correct format
 - [ ] Discord notification NOT sent on success
 - [ ] Links in notification work (GitHub Action, production site)
 - [ ] Tests complete within 2 minutes
-- [ ] Retry logic prevents alert fatigue from transient failures
 - [ ] `DISCORD_WEBHOOK_URL` secret is configured
 - [ ] Manual rollback process documented and tested
