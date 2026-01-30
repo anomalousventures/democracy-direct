@@ -6,6 +6,7 @@ import {
   supportsWebShare,
   triggerWebShare,
 } from "@/lib/share";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type PageType = "template" | "rep";
 
@@ -29,6 +30,7 @@ type ToastState = {
 export function ShareButtons({ url, title, description, pageType, repInfo }: ShareButtonsProps) {
   const [toast, setToast] = useState<ToastState>(null);
   const [hasWebShare, setHasWebShare] = useState(false);
+  const { capture } = useAnalytics();
 
   useEffect(() => {
     setHasWebShare(supportsWebShare());
@@ -51,18 +53,13 @@ export function ShareButtons({ url, title, description, pageType, repInfo }: Sha
 
   const trackShare = useCallback(
     (platform: string) => {
-      if (typeof window !== "undefined" && "posthog" in window) {
-        const posthog = window.posthog as {
-          capture: (event: string, properties?: Record<string, unknown>) => void;
-        };
-        posthog.capture("share_clicked", {
-          platform,
-          pageType,
-          url,
-        });
-      }
+      capture("share_clicked", {
+        platform,
+        pageType,
+        url,
+      });
     },
-    [pageType, url]
+    [capture, pageType, url]
   );
 
   const handleNativeShare = useCallback(async () => {
