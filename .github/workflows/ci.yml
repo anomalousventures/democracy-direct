@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, closed]
 
 permissions:
   contents: read
@@ -17,6 +18,7 @@ concurrency:
 jobs:
   lint:
     name: Lint
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -41,6 +43,7 @@ jobs:
 
   typecheck:
     name: Type Check
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -62,6 +65,7 @@ jobs:
 
   test:
     name: Unit Tests
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -88,8 +92,36 @@ jobs:
           json-summary-path: ./coverage/coverage-summary.json
           json-final-path: ./coverage/coverage-final.json
 
+  setup-branch-name:
+    name: Setup Branch Name
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch_name.outputs.current_branch }}
+    steps:
+      - name: Get branch name
+        id: branch_name
+        uses: tj-actions/branch-names@v8
+
+  create-preview-db:
+    name: Create Preview Database
+    needs: setup-branch-name
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      db_url: ${{ steps.create_branch.outputs.db_url_with_pooler }}
+    steps:
+      - name: Create Neon Branch
+        id: create_branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
   test-e2e:
     name: E2E Tests
+    needs: [create-preview-db]
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     services:
       mailpit:
@@ -115,26 +147,26 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Push database schema
-        run: pnpm drizzle-kit push --force
+      - name: Run database migrations
+        run: pnpm db:migrate
         env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Ensure admin users
         run: pnpm ensure:admins
         env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
           ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
 
       - name: Seed E2E test data
         run: pnpm seed:e2e
         env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Import legislators
         run: pnpm tsx src/scripts/import-legislators.ts
         env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Create .dev.vars for wrangler
         run: |
@@ -149,7 +181,7 @@ jobs:
           echo "CONGRESS_API_KEY=$CONGRESS_API_KEY" >> .dev.vars
           echo "ADMIN_USERS=$ADMIN_USERS" >> .dev.vars
         env:
-          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
           ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
@@ -167,6 +199,7 @@ jobs:
 
   build:
     name: Build
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -188,3 +221,48 @@ jobs:
         env:
           TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+
+  deploy-migrations:
+    name: Run Production Migrations
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create backup branch before migration
+        id: create_backup
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: backup/pre-migration-${{ github.sha }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Run migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  cleanup-preview-db:
+    name: Delete Preview Database
+    needs: setup-branch-name
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon Branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
