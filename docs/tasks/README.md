@@ -11,22 +11,22 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 ## Tasks
 
-| Task                                                        | Status   | Description                                     |
-| ----------------------------------------------------------- | -------- | ----------------------------------------------- |
-| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete | Post-deploy smoke tests + Discord alerts        |
-| [Data Refresh Optimization](./data-refresh-optimization.md) | Complete | Optimize import scripts + Discord notifications |
-| [Public Roadmap](./public-roadmap.md)                       | Ready    | Public-facing feature roadmap page              |
-| [Saved District](./saved-district.md)                       | Ready    | Save district to user profile                   |
-| [SEO & Social Sharing](./seo-social.md)                     | Ready    | Optimize meta tags and social sharing           |
-| [Share Buttons](./share-buttons.md)                         | Ready    | Add share functionality to pages                |
-| [Voting Records](./voting-records.md)                       | Ready    | Integrate voting records (House + Senate)       |
-| [Bill Summaries](./bill-summaries.md)                       | Ready    | Bill tracking and summaries                     |
-| [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready    | Performance, a11y, SEO optimization             |
-| [Legislation Search](./legislation-search.md)               | Ready    | Search bills, find who voted how                |
-| [Template Bill Linking](./template-bill-linking.md)         | Ready    | Link templates to specific bills                |
-| [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
-| [Campaign Finance](./campaign-finance.md)                   | Ready    | ProPublica Campaign Finance API integration     |
-| [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
+| Task                                                        | Status      | Description                                     |
+| ----------------------------------------------------------- | ----------- | ----------------------------------------------- |
+| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete    | Post-deploy smoke tests + Discord alerts        |
+| [Data Refresh Optimization](./data-refresh-optimization.md) | Complete    | Optimize import scripts + Discord notifications |
+| [Public Roadmap](./public-roadmap.md)                       | In Progress | Public-facing feature roadmap page              |
+| [Saved District](./saved-district.md)                       | Ready       | Save district to user profile                   |
+| [SEO & Social Sharing](./seo-social.md)                     | Ready       | Optimize meta tags and social sharing           |
+| [Share Buttons](./share-buttons.md)                         | Ready       | Add share functionality to pages                |
+| [Voting Records](./voting-records.md)                       | Ready       | Integrate voting records (House + Senate)       |
+| [Bill Summaries](./bill-summaries.md)                       | Ready       | Bill tracking and summaries                     |
+| [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready       | Performance, a11y, SEO optimization             |
+| [Legislation Search](./legislation-search.md)               | Ready       | Search bills, find who voted how                |
+| [Template Bill Linking](./template-bill-linking.md)         | Ready       | Link templates to specific bills                |
+| [Rep Page Editor](./rep-editor.md)                          | Research    | Streamline editor/preview/print flow            |
+| [Campaign Finance](./campaign-finance.md)                   | Ready       | ProPublica Campaign Finance API integration     |
+| [District Map](./district-map.md)                           | Ready       | Map-based district picker via TIGERweb          |
 
 ## Suggested Implementation Order
 
