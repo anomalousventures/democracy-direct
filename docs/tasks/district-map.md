@@ -13,60 +13,137 @@ Users may not know their congressional district number. A map-based interface wo
   - Leaflet: simpler but ~40KB, raster-based
   - Mapbox GL JS: proprietary license since v2 (2020)
   - OpenLayers: powerful but steeper learning curve
-- [x] Evaluate congressional district GeoJSON sources
-  - **unitedstates/districts** - public domain, current districts
-  - JeffreyBLewis/congressional-district-boundaries - historical + current
-  - US Census TIGER files - official source, larger files
+- [x] Evaluate congressional district data sources
+  - **TIGERweb MapServer RECOMMENDED** - official Census Bureau service
+  - Layer 0: 119th Congressional Districts (current!)
+  - Supports GeoJSON query output
+  - No API key, no rate limits, always up to date
+  - Query/Identify endpoints for click-to-identify
 - [x] Analyze bundle size impact
-  - MapLibre GL JS: ~220KB gzipped (larger than Leaflet's 40KB)
-  - District GeoJSON: ~5-10MB raw, ~1-2MB simplified
+  - MapLibre GL JS: ~220KB gzipped
+  - **No GeoJSON hosting needed** - query TIGERweb on demand
   - **Mitigation**: dynamic import, lazy load map component
-- [x] Determine feature scope for MVP
-  - Click to identify district
-  - Link to rep page from clicked district
-  - Optional: show all district boundaries colored by party
 
 ## Open Questions - Resolved
 
 | Question                | Decision                          | Rationale                                     |
 | ----------------------- | --------------------------------- | --------------------------------------------- |
 | Which library?          | **MapLibre GL JS**                | Open source, vector tiles, active development |
-| GeoJSON source?         | **unitedstates/districts**        | Public domain, current, well-maintained       |
-| Simplify geometry?      | **Yes, use mapshaper**            | Reduce file size for web                      |
-| Self-host tiles?        | **No, use free tile providers**   | Simpler, no infrastructure cost               |
+| Data source?            | **TIGERweb MapServer**            | Official, always current, no hosting needed   |
+| Self-host GeoJSON?      | **No**                            | Query TIGERweb directly, simpler architecture |
 | Full page or embedded?  | **Dedicated page + embed option** | Maximum flexibility                           |
 | Show rep info on hover? | **Yes, tooltip with name/party**  | Quick context without navigating              |
+
+## TIGERweb Service Details
+
+**Base URL:** `https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer`
+
+**Key Layers:**
+
+- Layer 0: 119th Congressional Districts (current)
+- Layer 1: State Legislative Districts - Upper
+- Layer 2: State Legislative Districts - Lower
+
+**Useful Endpoints:**
+
+- `/0/query` - Query districts by geometry or attributes
+- `/identify` - Click-to-identify district at coordinates
+- `/export` - Get map image tiles
+
+**Query Example:**
+
+```
+/0/query?where=1=1&outFields=*&f=geojson
+→ Returns all districts as GeoJSON
+
+/0/query?geometry=-122.4,37.8&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outFields=*&f=geojson
+→ Returns district containing point (lng, lat)
+```
+
+**Response Fields:**
+
+- `STATEFP` - State FIPS code
+- `CD119FP` - District number (00 = at-large)
+- `NAMELSAD` - Full name ("Congressional District 12")
+- `GEOID` - Unique ID (state + district)
 
 ## Proposed Approach
 
 1. Create map page with MapLibre GL JS (lazy loaded)
-2. Download and simplify district GeoJSON
-3. Overlay districts on base map with click handlers
-4. Show tooltip on hover with district info
-5. Link to rep page on click
-6. Optionally color districts by party
+2. Load district boundaries from TIGERweb as GeoJSON source
+3. Style districts with semi-transparent fill
+4. On click, query TIGERweb identify endpoint for district info
+5. Show tooltip and link to rep page
 
 ## Implementation Tasks
 
 1. Install MapLibre GL JS: `pnpm add maplibre-gl`
-2. Download current district GeoJSON from unitedstates/districts repo
-3. Simplify GeoJSON using mapshaper CLI to reduce file size (target: <2MB)
-4. Store simplified GeoJSON in `public/data/districts.geojson`
+2. Create `src/lib/tigerweb.ts` with typed API wrapper for TIGERweb queries
+3. Add `queryDistrictAtPoint(lng, lat)` function returning district info
+4. Add `getAllDistricts()` function returning GeoJSON FeatureCollection
 5. Create `src/components/DistrictMap.tsx` as lazy-loaded React component
-6. Set up MapLibre with free tile provider (e.g., MapTiler free tier, or Stadia Maps)
-7. Add district layer to map from GeoJSON source
-8. Style districts with semi-transparent fill, visible borders
-9. Add hover handler showing tooltip with state, district number, and rep name
-10. Add click handler navigating to `/reps/[state]/[district]` or `/rep/[bioguideId]`
-11. Create `src/pages/map.astro` as the map page
-12. Add dynamic import wrapper in Astro page for client-only loading
-13. Create `src/db/queries/districts.ts` with `getRepsByDistrict(state, district)` query
-14. Add API endpoint `/api/district/[state]/[district]` returning rep info for map tooltips
-15. Add "Find on map" link to ZIP lookup results page
-16. Add map link to main navigation
-17. Add loading skeleton/spinner while map initializes
-18. Test performance on mobile devices
-19. Add e2e test in `tests/e2e/district-map.spec.ts` for click-to-navigate flow
+6. Set up MapLibre with free base tile provider (Stadia Maps or MapTiler free tier)
+7. Fetch district GeoJSON from TIGERweb on map load
+8. Add district layer with semi-transparent fill, visible borders
+9. Style districts by state or party (optional color coding)
+10. Add click handler that queries TIGERweb identify endpoint
+11. Create `src/components/DistrictTooltip.tsx` showing state, district, rep info
+12. Query local database to get rep name/party for district (join on state + district)
+13. Add "View Representative →" link in tooltip navigating to rep page
+14. Create `src/pages/map.astro` as the map page
+15. Add dynamic import wrapper in Astro for client-only loading
+16. Add "Find on map" link to ZIP lookup results page
+17. Add map link to main navigation
+18. Add loading skeleton while map and data load
+19. Handle TIGERweb errors gracefully (show message, suggest ZIP lookup)
+20. Add e2e test in `tests/e2e/district-map.spec.ts` for click-to-navigate flow
+
+## TIGERweb API Wrapper
+
+```typescript
+// src/lib/tigerweb.ts
+const TIGERWEB_BASE =
+  "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer";
+
+interface DistrictInfo {
+  state: string; // e.g., "06" (FIPS)
+  district: string; // e.g., "12" or "00" for at-large
+  name: string; // e.g., "Congressional District 12"
+  geoid: string; // e.g., "0612"
+}
+
+export async function queryDistrictAtPoint(lng: number, lat: number): Promise<DistrictInfo | null> {
+  const url = new URL(`${TIGERWEB_BASE}/0/query`);
+  url.searchParams.set("geometry", `${lng},${lat}`);
+  url.searchParams.set("geometryType", "esriGeometryPoint");
+  url.searchParams.set("spatialRel", "esriSpatialRelIntersects");
+  url.searchParams.set("outFields", "STATEFP,CD119FP,NAMELSAD,GEOID");
+  url.searchParams.set("f", "geojson");
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!data.features?.length) return null;
+
+  const props = data.features[0].properties;
+  return {
+    state: props.STATEFP,
+    district: props.CD119FP,
+    name: props.NAMELSAD,
+    geoid: props.GEOID,
+  };
+}
+
+export async function getAllDistrictsGeoJSON(): Promise<GeoJSON.FeatureCollection> {
+  const url = new URL(`${TIGERWEB_BASE}/0/query`);
+  url.searchParams.set("where", "1=1");
+  url.searchParams.set("outFields", "STATEFP,CD119FP,NAMELSAD,GEOID");
+  url.searchParams.set("f", "geojson");
+
+  const res = await fetch(url);
+  return res.json();
+}
+```
 
 ## Bundle Size Strategy
 
@@ -74,65 +151,54 @@ MapLibre is ~220KB which is significant. Mitigate with:
 
 1. **Dynamic import**: Only load when user visits `/map`
 2. **No SSR**: Map component is client-only
-3. **Lazy load GeoJSON**: Fetch after map initializes
-4. **Preconnect**: Add preconnect hints for tile server
+3. **No local GeoJSON**: Fetch from TIGERweb on demand
+4. **Preconnect**: Add hints for tile server and TIGERweb
 
 ```astro
-<!-- In map.astro -->
-<script>
-  // Dynamic import - only loads when needed
-  const { DistrictMap } = await import("../components/DistrictMap");
-</script>
+<!-- In map.astro head -->
+<link rel="preconnect" href="https://tiles.stadiamaps.com" />
+<link rel="preconnect" href="https://tigerweb.geo.census.gov" />
 ```
 
-## Free Tile Providers
+## Free Base Map Tile Providers
 
 | Provider    | Free Tier     | Notes                                |
 | ----------- | ------------- | ------------------------------------ |
-| MapTiler    | 100k loads/mo | Good free tier, requires attribution |
 | Stadia Maps | 200k tiles/mo | No API key for small usage           |
-| CartoCDN    | Limited       | Attribution required                 |
-| OpenFreeMap | Unlimited     | Community project, may be unstable   |
+| MapTiler    | 100k loads/mo | Good free tier, requires attribution |
+| OpenFreeMap | Unlimited     | Community project                    |
 
-**Recommendation**: Start with Stadia Maps for simplicity (no API key needed for small sites), upgrade to MapTiler if traffic grows.
+**Recommendation**: Stadia Maps - no API key needed for small sites.
 
-## GeoJSON Processing
+## State FIPS to Abbreviation
 
-```bash
-# Download current districts
-curl -O https://raw.githubusercontent.com/unitedstates/districts/gh-pages/cds/2024/all-states.geojson
+Need mapping to convert TIGERweb FIPS codes to state abbreviations for rep lookup:
 
-# Simplify with mapshaper (install: npm install -g mapshaper)
-mapshaper all-states.geojson -simplify 10% -o format=geojson districts.geojson
-
-# Check file size
-ls -lh districts.geojson
+```typescript
+const FIPS_TO_STATE: Record<string, string> = {
+  "01": "AL",
+  "02": "AK",
+  "04": "AZ",
+  "05": "AR",
+  "06": "CA",
+  "08": "CO",
+  "09": "CT",
+  "10": "DE",
+  "11": "DC",
+  "12": "FL",
+  // ... etc
+};
 ```
-
-Target: <2MB after simplification (original may be 10-15MB).
-
-## UI Components
-
-### DistrictMap
-
-- Full viewport map with zoom controls
-- Semi-transparent district fill (varies by party?)
-- Hover: tooltip with "CA-12: Nancy Pelosi (D)"
-- Click: navigate to rep page
-
-### MapTooltip
-
-- District name: "California District 12"
-- Rep name and party: "Rep. Nancy Pelosi (D)"
-- Small link: "View profile →"
 
 ## Verification
 
 - [ ] Map loads without blocking page render
-- [ ] District boundaries display correctly
-- [ ] Hover shows district tooltip with rep info
-- [ ] Click navigates to rep page
+- [ ] District boundaries display correctly from TIGERweb
+- [ ] Click identifies correct district
+- [ ] Tooltip shows district name and rep info
+- [ ] "View Representative" link navigates correctly
 - [ ] Works on mobile (touch interaction)
+- [ ] Handles TIGERweb errors gracefully
 - [ ] Map is accessible (keyboard navigation)
 - [ ] Bundle size impact is acceptable (<250KB additional)
 - [ ] Performance is smooth on mid-range devices

@@ -1,6 +1,8 @@
 # Campaign Finance Data Integration
 
-## Status: Ready
+## Status: Research
+
+> ⚠️ **API Status Update**: OpenSecrets API is deprecated and no longer issuing new API keys. This task needs revision to use FEC/OpenFEC API or ProPublica Campaign Finance API instead.
 
 ## Problem Statement
 
@@ -15,11 +17,13 @@ Understanding who funds representatives helps voters make informed decisions abo
   - Raw transaction-level data - requires aggregation work
   - Complex API with many endpoints
 - [x] Evaluate OpenSecrets API for processed/aggregated data
-  - **RECOMMENDED for MVP** - pre-aggregated summaries
-  - Rate limit: 200 calls/day (default) - low but sufficient with caching
+  - ~~**RECOMMENDED for MVP** - pre-aggregated summaries~~
+  - ⚠️ **DEPRECATED** - API no longer maintained, new keys not being issued
+  - Rate limit: 200 calls/day (default)
   - Provides: top contributors, top industries, contribution totals
   - Data already categorized and processed
   - Creative Commons license (requires attribution)
+  - **Status: Not recommended - use FEC or ProPublica instead**
 - [x] Evaluate ProPublica Campaign Finance API
   - 5,000 requests/day
   - Active (unlike their Congress API)
@@ -35,11 +39,11 @@ Understanding who funds representatives helps voters make informed decisions abo
 
 ## API Comparison
 
-| API         | Rate Limit | Data Type            | Recommendation      |
-| ----------- | ---------- | -------------------- | ------------------- |
-| OpenSecrets | 200/day    | Aggregated summaries | **Use for MVP**     |
-| ProPublica  | 5,000/day  | Processed FEC data   | Backup option       |
-| FEC/OpenFEC | Varies     | Raw transactions     | Too complex for MVP |
+| API         | Rate Limit | Data Type            | Recommendation       |
+| ----------- | ---------- | -------------------- | -------------------- |
+| OpenSecrets | 200/day    | Aggregated summaries | ⚠️ **DEPRECATED**    |
+| ProPublica  | 5,000/day  | Processed FEC data   | **Consider for MVP** |
+| FEC/OpenFEC | Varies     | Raw transactions     | Official source      |
 
 ## Open Questions - Resolved
 

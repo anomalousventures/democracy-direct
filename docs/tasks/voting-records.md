@@ -2,6 +2,8 @@
 
 ## Status: Ready
 
+> ⚠️ **Important Limitation**: Congress.gov API only provides House Roll Call Votes. Senate voting endpoints do not exist. This implementation will be **House-only** until Senate API becomes available.
+
 ## Problem Statement
 
 Understanding how representatives vote on legislation is essential for informed civic engagement. Currently, rep profile pages show contact information but no voting history. Users must leave the site to research voting records, creating friction in the contact process.
@@ -12,7 +14,8 @@ Understanding how representatives vote on legislation is essential for informed 
   - **RECOMMENDED**: Official API, actively maintained
   - Rate limit: 5,000 requests/hour
   - Free API key from Data.gov (already in GitHub secrets as `CONGRESS_API_KEY`)
-  - House Roll Call Votes beta endpoints available (added May 2025)
+  - House Roll Call Votes endpoints available (added May 2025, now GA)
+  - ⚠️ **Senate voting endpoints do NOT exist** - only House votes available via API
   - Covers current Congress (119th) and historical data
 - [x] Evaluate ProPublica Congress API as alternative
   - **DEPRECATED**: No longer available, no new API keys issued

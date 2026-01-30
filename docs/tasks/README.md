@@ -15,17 +15,18 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | ----------------------------------------------------------- | -------- | ----------------------------------------------- |
 | [Prod Smoke Tests](./prod-smoke-tests.md)                   | Research | Post-deploy smoke tests + Discord alerts        |
 | [Data Refresh Optimization](./data-refresh-optimization.md) | Research | Optimize import scripts + Discord notifications |
+| [Public Roadmap](./public-roadmap.md)                       | Research | Public-facing feature roadmap page              |
 | [Saved District](./saved-district.md)                       | Ready    | Save district to user profile                   |
 | [SEO & Social Sharing](./seo-social.md)                     | Ready    | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Ready    | Add share functionality to pages                |
-| [Voting Records](./voting-records.md)                       | Ready    | Integrate Congress voting records               |
+| [Voting Records](./voting-records.md)                       | Ready    | Integrate Congress voting records (House only)  |
 | [Bill Summaries](./bill-summaries.md)                       | Ready    | Bill tracking and summaries                     |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready    | Performance, a11y, SEO optimization             |
 | [Legislation Search](./legislation-search.md)               | Research | Search bills, find who voted how                |
 | [Template Bill Linking](./template-bill-linking.md)         | Research | Link templates to specific bills                |
 | [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
-| [Campaign Finance](./campaign-finance.md)                   | Research | FEC/OpenSecrets data integration                |
-| [District Map](./district-map.md)                           | Research | Map-based district picker                       |
+| [Campaign Finance](./campaign-finance.md)                   | Research | FEC/campaign finance data (API TBD)             |
+| [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
 
 ## Suggested Implementation Order
 
@@ -33,36 +34,49 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 1. **Prod Smoke Tests** - Catch issues early, Discord alerts
 2. **Data Refresh Optimization** - Reduce DB churn, Discord notifications
+3. **Public Roadmap** - Show users what's coming
 
 ### Phase 1: Quick Wins
 
-2. **SEO & Social Sharing** - Simple meta tag updates
-3. **Share Buttons** - Standalone component, no backend
-4. **Saved District** - Schema exists, clear scope
+4. **SEO & Social Sharing** - Simple meta tag updates
+5. **Share Buttons** - Standalone component, no backend
+6. **Saved District** - Schema exists, clear scope
 
 ### Phase 2: Congress Data
 
-5. **Voting Records** - Foundation for legislation features
-6. **Bill Summaries** - Builds on Congress API work
-7. **Legislation Search** - Depends on voting records + bills
-8. **Template Bill Linking** - Connects templates to legislation
+7. **Voting Records** - House roll call votes (Senate API not available)
+8. **Bill Summaries** - Builds on Congress API work
+9. **Legislation Search** - Depends on voting records + bills
+10. **Template Bill Linking** - Connects templates to legislation
 
 ### Phase 3: Polish & Enhancement
 
-9. **Lighthouse Optimization** - Audit and improve
-10. **Rep Page Editor** - UX improvements
-11. **Campaign Finance** - New external API integration
-12. **District Map** - Complex frontend, new dependencies
+11. **Lighthouse Optimization** - Audit and improve (partially implemented)
+12. **Rep Page Editor** - UX improvements
+13. **Campaign Finance** - FEC API integration (OpenSecrets deprecated)
+14. **District Map** - MapLibre + TIGERweb integration
+
+## External API Summary
+
+| API          | Tasks Using It                 | Rate Limit     | Status                                 |
+| ------------ | ------------------------------ | -------------- | -------------------------------------- |
+| Congress.gov | Voting Records, Bill Summaries | 5,000/hour     | Active (`CONGRESS_API_KEY` configured) |
+| FEC/OpenFEC  | Campaign Finance               | Varies by tier | Active (key needed)                    |
+| TIGERweb     | District Map                   | None           | Active (no key needed)                 |
+
+**Note:** OpenSecrets API is deprecated - Campaign Finance task needs revision to use FEC API instead.
 
 ## How to Use
 
-1. Pick a task in "Ready" status
+**For tasks in "Ready" status:**
+
+1. Pick a task from the table above
 2. Read the full task document
 3. Follow implementation tasks in order
 4. Run verification checklist
 5. Update status to "Complete" when done
 
-For tasks in "Research" status:
+**For tasks in "Research" status:**
 
 1. Complete research tasks to gather information
 2. Answer open questions and propose an approach
