@@ -370,7 +370,7 @@
 @media print {
   @page {
     size: 8.5in 11in;
-    margin: 1in;
+    margin: 0;
   }
 
   html,
@@ -425,10 +425,11 @@
     background: white;
     border: none;
     box-shadow: none;
-    padding: 0;
+    padding: 1in;
     margin: 0;
     min-height: auto;
     width: 100%;
+    box-sizing: border-box;
     font-size: 12pt;
     line-height: 1.6;
   }
