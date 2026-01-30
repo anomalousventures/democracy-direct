@@ -1,6 +1,6 @@
 # Data Refresh Optimization
 
-## Status: Ready
+## Status: In Progress
 
 ## Problem Statement
 
