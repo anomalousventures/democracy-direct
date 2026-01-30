@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   refresh-data:
@@ -58,6 +59,46 @@ jobs:
           fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Export ZIP data if changed
+        id: export
+        if: steps.zips.outputs.failed != 'true'
+        run: |
+          ZIPS_CHANGED=$(echo '${{ steps.zips.outputs.result }}' | jq -r '.changed // false')
+          if [ "$ZIPS_CHANGED" = "true" ]; then
+            echo "ZIP data changed, exporting..."
+            pnpm export:zips
+            echo "exported=true" >> $GITHUB_OUTPUT
+          else
+            echo "No ZIP changes, skipping export"
+            echo "exported=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Create PR for data updates
+        if: steps.export.outputs.exported == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet public/data/zip-districts.json; then
+            echo "No changes to zip-districts.json"
+            exit 0
+          fi
+
+          BRANCH="data/zip-districts-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add public/data/zip-districts.json
+          git commit -m "data: Update zip-districts.json from Census"
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "data: Update zip-districts.json" \
+            --body "Automated update of ZIP-district mappings from Census Bureau data." \
+            --base main \
+            --head "$BRANCH"
 
       - name: Send Discord notification
         if: always()
