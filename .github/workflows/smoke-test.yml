@@ -1,0 +1,85 @@
+name: Production Smoke Tests
+
+on:
+  check_run:
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-test-${{ github.event.check_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    name: Smoke Test Production
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.check_run.app.slug == 'cloudflare-workers-and-pages' &&
+       github.event.check_run.conclusion == 'success' &&
+       github.event.check_run.head_branch == 'main')
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Wait for deployment propagation
+        run: sleep 60
+
+      - name: Run smoke tests
+        run: pnpm exec playwright test tests/e2e/smoke.spec.ts --config=playwright.smoke.config.ts
+
+      - name: Upload test results on failure
+        uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: smoke-test-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Send Discord notification on failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          PAYLOAD=$(jq -n \
+            --arg timestamp "$TIMESTAMP" \
+            --arg gh_run "$GH_RUN" \
+            '{
+              embeds: [{
+                title: "🚨 Production Smoke Test Failed",
+                color: 16711680,
+                fields: [
+                  { name: "Details", value: "One or more smoke tests failed against production." },
+                  { name: "Links", value: "[GitHub Action](\($gh_run)) | [Production](https://democracy-direct.com) | [Cloudflare](https://dash.cloudflare.com)" }
+                ],
+                timestamp: $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
