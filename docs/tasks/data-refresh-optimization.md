@@ -1,6 +1,6 @@
 # Data Refresh Optimization
 
-## Status: In Progress
+## Status: Complete
 
 ## Problem Statement
 
@@ -249,17 +249,17 @@ Duration: 0.8s | [View Run](link)
 
 ## Verification
 
-- [ ] dataSourceMeta table created and migrated
-- [ ] ZIP import checks Last-Modified header before downloading
-- [ ] ZIP import skips when data unchanged
-- [ ] ZIP import updates dataSourceMeta after successful import
-- [ ] Legislators import checks GitHub commit SHA before downloading
-- [ ] Legislators import skips when data unchanged
-- [ ] Legislators import uses batched upserts (~11 queries instead of ~540)
-- [ ] Both scripts support `--force` flag to bypass cache
-- [ ] Scripts output JSON stats for workflow consumption
-- [ ] Discord notification sent after each run
-- [ ] Notification shows accurate stats
-- [ ] Notification differentiates success/no-changes/failure
-- [ ] Database operations reduced by >90% on typical runs
-- [ ] Workflow handles partial failures gracefully
+- [x] dataSourceMeta table created and migrated
+- [x] ZIP import checks Last-Modified header before downloading
+- [x] ZIP import skips when data unchanged
+- [x] ZIP import updates dataSourceMeta after successful import
+- [x] Legislators import checks GitHub commit SHA before downloading
+- [x] Legislators import skips when data unchanged
+- [x] Legislators import uses batched upserts (~11 queries instead of ~540)
+- [x] Both scripts support `--force` flag to bypass cache
+- [x] Scripts output JSON stats for workflow consumption
+- [x] Discord notification sent after each run
+- [x] Notification shows accurate stats
+- [x] Notification differentiates success/no-changes/failure
+- [x] Database operations reduced by >90% on typical runs
+- [x] Workflow handles partial failures gracefully
