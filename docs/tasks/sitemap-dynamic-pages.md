@@ -159,3 +159,21 @@ Medium-High - Good SEO improvement with relatively low effort. Should be done be
 - Database must be accessible at build time
 - Legislators data must be seeded
 - Templates must exist in database
+
+## Cloudflare Build Environment
+
+**Key Question:** Are Cloudflare secrets (DATABASE_URL) available at build time?
+
+**Answer:** Yes, environment variables set in Cloudflare Pages dashboard (Settings > Environment Variables) are available during the build process. Both "plaintext" and "encrypted" variables are accessible.
+
+**Verification needed:**
+
+- [ ] Confirm DATABASE_URL is set in Cloudflare Pages environment variables (not just wrangler.toml)
+- [ ] Test that build process can connect to Neon database
+- [ ] Ensure connection string uses pooled connection for build (not direct)
+
+**Fallback if build-time DB access fails:**
+
+1. Create a pre-deploy script that generates sitemap and commits to repo
+2. Or create a GitHub Action that generates sitemap on data refresh
+3. Or use a static export of legislators (JSON file) that's updated on data refresh
