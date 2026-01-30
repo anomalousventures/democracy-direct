@@ -32,11 +32,14 @@ jobs:
       - name: Import legislators
         id: legislators
         run: |
-          OUTPUT=$(pnpm import:legislators 2>&1) || true
+          set +e
+          OUTPUT=$(pnpm import:legislators 2>&1)
+          EXIT_CODE=$?
+          set -e
           echo "$OUTPUT"
           JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
           echo "result=$JSON" >> $GITHUB_OUTPUT
-          if echo "$OUTPUT" | grep -q "Import failed"; then
+          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Import failed"; then
             echo "failed=true" >> $GITHUB_OUTPUT
           else
             echo "failed=false" >> $GITHUB_OUTPUT
@@ -48,11 +51,14 @@ jobs:
       - name: Import ZIP districts
         id: zips
         run: |
-          OUTPUT=$(pnpm import:zips 2>&1) || true
+          set +e
+          OUTPUT=$(pnpm import:zips 2>&1)
+          EXIT_CODE=$?
+          set -e
           echo "$OUTPUT"
           JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
           echo "result=$JSON" >> $GITHUB_OUTPUT
-          if echo "$OUTPUT" | grep -q "Import failed"; then
+          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Import failed"; then
             echo "failed=true" >> $GITHUB_OUTPUT
           else
             echo "failed=false" >> $GITHUB_OUTPUT
@@ -120,13 +126,10 @@ jobs:
           # Parse results
           LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
           LEG_COUNT=$(echo "$LEGISLATORS_RESULT" | jq -r '.recordsUpserted // 0')
-          LEG_DURATION=$(echo "$LEGISLATORS_RESULT" | jq -r '.duration // "0s"')
           LEG_SHA=$(echo "$LEGISLATORS_RESULT" | jq -r '.commitSha // "unknown"' | cut -c1-7)
 
           ZIPS_CHANGED=$(echo "$ZIPS_RESULT" | jq -r '.changed // false')
           ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
-          ZIPS_DURATION=$(echo "$ZIPS_RESULT" | jq -r '.duration // "0s"')
-          ZIPS_MODIFIED=$(echo "$ZIPS_RESULT" | jq -r '.lastModified // "unknown"')
 
           # Determine overall status
           if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ]; then
@@ -177,3 +180,9 @@ jobs:
             }')
 
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+
+      - name: Fail workflow if imports failed
+        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true'
+        run: |
+          echo "One or more imports failed"
+          exit 1
