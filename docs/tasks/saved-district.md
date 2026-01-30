@@ -1,6 +1,6 @@
 # Saved District Preference
 
-## Status: In Progress
+## Status: Complete
 
 ## Problem Statement
 
@@ -67,15 +67,15 @@ Users who have identified their congressional district through ZIP lookup or map
 
 ## Verification
 
-- [ ] Logged-in user can save their district after lookup
-- [ ] Saved district persists across sessions (DB)
-- [ ] User can clear saved district
-- [ ] User with saved district sees banner on homepage
-- [ ] "View My Reps" navigates to correct representatives
-- [ ] Anonymous users can save to localStorage
-- [ ] Anonymous saved district shows on homepage
-- [ ] No ZIP codes stored anywhere
-- [ ] Unit tests pass for API endpoints
-- [ ] Unit tests pass for localStorage helpers
-- [ ] E2E tests pass for anonymous save/clear flow
-- [ ] E2E tests pass for authenticated save/clear flow
+- [x] Logged-in user can save their district after lookup
+- [x] Saved district persists across sessions (DB)
+- [x] User can clear saved district
+- [x] User with saved district sees banner on homepage
+- [x] "View My Reps" navigates to correct representatives
+- [x] Anonymous users can save to localStorage
+- [x] Anonymous saved district shows on homepage
+- [x] No ZIP codes stored anywhere (removed savedZip column)
+- [x] Unit tests pass for API endpoints (11 tests)
+- [x] Unit tests pass for localStorage helpers (11 tests)
+- [x] E2E tests pass for anonymous save/clear flow (7 tests)
+- [x] E2E tests pass for authenticated save/clear flow (5 tests, skip if no session)
