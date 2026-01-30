@@ -1,5 +1,15 @@
 import "dotenv/config";
 import YAML from "yaml";
+import { eq, sql } from "drizzle-orm";
+
+export interface ImportResult {
+  source: "github";
+  changed: boolean;
+  recordsProcessed: number;
+  recordsUpserted: number;
+  duration: string;
+  commitSha: string | null;
+}
 
 export interface RawLegislatorId {
   bioguide: string;
@@ -187,6 +197,45 @@ export function transformLegislator(raw: RawLegislator): TransformedLegislator {
   };
 }
 
+interface GitHubCommit {
+  sha: string;
+  commit: {
+    message: string;
+    committer: {
+      date: string;
+    };
+  };
+}
+
+export async function checkGitHubCommitSha(): Promise<string | null> {
+  const url =
+    "https://api.github.com/repos/unitedstates/congress-legislators/commits?path=legislators-current.yaml&per_page=1";
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "democracy-direct-data-refresh",
+  };
+
+  const githubToken = process.env.GITHUB_TOKEN;
+  if (githubToken) {
+    headers["Authorization"] = `Bearer ${githubToken}`;
+  }
+
+  const response = await fetch(url, { headers });
+
+  if (!response.ok) {
+    console.warn(`Failed to check GitHub commits: ${response.statusText}`);
+    return null;
+  }
+
+  const commits = (await response.json()) as GitHubCommit[];
+  if (commits.length === 0) {
+    return null;
+  }
+
+  return commits[0].sha;
+}
+
 export async function fetchLegislatorsYaml(): Promise<string> {
   const url =
     "https://raw.githubusercontent.com/unitedstates/congress-legislators/main/legislators-current.yaml";
@@ -238,12 +287,14 @@ export function mergeSocialMedia(
   }));
 }
 
-export async function importLegislators(): Promise<{
-  total: number;
-  upserted: number;
-}> {
+const BATCH_SIZE = 50;
+const GITHUB_LEGISLATORS_URL =
+  "https://github.com/unitedstates/congress-legislators/blob/main/legislators-current.yaml";
+
+export async function importLegislators(force: boolean = false): Promise<ImportResult> {
+  const startTime = Date.now();
   const { createDb } = await import("@/db/client");
-  const { legislators } = await import("@/db/schema");
+  const { legislators, dataSourceMeta } = await import("@/db/schema");
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -251,6 +302,33 @@ export async function importLegislators(): Promise<{
   }
 
   const db = createDb(databaseUrl);
+
+  console.log("Checking GitHub for changes...");
+  const currentCommitSha = await checkGitHubCommitSha();
+
+  const [existingMeta] = await db
+    .select()
+    .from(dataSourceMeta)
+    .where(eq(dataSourceMeta.id, "legislators"));
+
+  if (!force) {
+    if (!currentCommitSha) {
+      console.warn(
+        "Warning: Unable to retrieve latest GitHub commit SHA; skipping change detection and proceeding with full import."
+      );
+    } else if (existingMeta?.lastModified === currentCommitSha) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+      console.log(`No changes detected (SHA: ${currentCommitSha.substring(0, 7)})`);
+      return {
+        source: "github",
+        changed: false,
+        recordsProcessed: 0,
+        recordsUpserted: 0,
+        duration,
+        commitSha: currentCommitSha,
+      };
+    }
+  }
 
   console.log("Fetching legislators from GitHub...");
   const [legislatorsYaml, socialYaml] = await Promise.all([
@@ -266,37 +344,17 @@ export async function importLegislators(): Promise<{
 
   const transformed = rawLegislators.map(transformLegislator);
 
-  console.log("Upserting legislators to database...");
+  console.log(`Upserting legislators in batches of ${BATCH_SIZE}...`);
+  let upserted = 0;
 
-  for (const leg of transformed) {
+  for (let i = 0; i < transformed.length; i += BATCH_SIZE) {
+    const batch = transformed.slice(i, i + BATCH_SIZE);
+
     await db
       .insert(legislators)
-      .values({
-        bioguideId: leg.bioguideId,
-        firstName: leg.firstName,
-        lastName: leg.lastName,
-        fullName: leg.fullName,
-        party: leg.party,
-        state: leg.state,
-        district: leg.district,
-        chamber: leg.chamber,
-        title: leg.title,
-        termStart: leg.termStart,
-        termEnd: leg.termEnd,
-        phoneCapitol: leg.phoneCapitol,
-        phoneDistrict: leg.phoneDistrict,
-        fax: leg.fax,
-        addressCapitol: leg.addressCapitol,
-        addressDistrict: leg.addressDistrict,
-        contactFormUrl: leg.contactFormUrl,
-        website: leg.website,
-        twitterHandle: leg.twitterHandle,
-        facebookId: leg.facebookId,
-        youtubeId: leg.youtubeId,
-      })
-      .onConflictDoUpdate({
-        target: legislators.bioguideId,
-        set: {
+      .values(
+        batch.map((leg) => ({
+          bioguideId: leg.bioguideId,
           firstName: leg.firstName,
           lastName: leg.lastName,
           fullName: leg.fullName,
@@ -317,19 +375,82 @@ export async function importLegislators(): Promise<{
           twitterHandle: leg.twitterHandle,
           facebookId: leg.facebookId,
           youtubeId: leg.youtubeId,
+        }))
+      )
+      .onConflictDoUpdate({
+        target: legislators.bioguideId,
+        set: {
+          firstName: sql`excluded.first_name`,
+          lastName: sql`excluded.last_name`,
+          fullName: sql`excluded.full_name`,
+          party: sql`excluded.party`,
+          state: sql`excluded.state`,
+          district: sql`excluded.district`,
+          chamber: sql`excluded.chamber`,
+          title: sql`excluded.title`,
+          termStart: sql`excluded.term_start`,
+          termEnd: sql`excluded.term_end`,
+          phoneCapitol: sql`excluded.phone_capitol`,
+          phoneDistrict: sql`excluded.phone_district`,
+          fax: sql`excluded.fax`,
+          addressCapitol: sql`excluded.address_capitol`,
+          addressDistrict: sql`excluded.address_district`,
+          contactFormUrl: sql`excluded.contact_form_url`,
+          website: sql`excluded.website`,
+          twitterHandle: sql`excluded.twitter_handle`,
+          facebookId: sql`excluded.facebook_id`,
+          youtubeId: sql`excluded.youtube_id`,
         },
       });
+
+    upserted += batch.length;
+    console.log(`Upserted ${upserted} / ${transformed.length} legislators...`);
   }
 
-  console.log(`Import complete: ${transformed.length} legislators upserted`);
+  const sourceChanged = currentCommitSha && existingMeta?.lastModified !== currentCommitSha;
 
-  return { total: transformed.length, upserted: transformed.length };
+  await db
+    .insert(dataSourceMeta)
+    .values({
+      id: "legislators",
+      sourceUrl: GITHUB_LEGISLATORS_URL,
+      lastModified: currentCommitSha,
+      lastChecked: new Date(),
+      lastChanged: sourceChanged ? new Date() : (existingMeta?.lastChanged ?? new Date()),
+      recordCount: upserted,
+    })
+    .onConflictDoUpdate({
+      target: dataSourceMeta.id,
+      set: {
+        lastModified: currentCommitSha,
+        lastChecked: new Date(),
+        ...(sourceChanged ? { lastChanged: new Date() } : {}),
+        recordCount: upserted,
+      },
+    });
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+  console.log(`Import complete: ${upserted} legislators upserted`);
+
+  return {
+    source: "github",
+    changed: true,
+    recordsProcessed: rawLegislators.length,
+    recordsUpserted: upserted,
+    duration,
+    commitSha: currentCommitSha,
+  };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  importLegislators()
+  const force = process.argv.includes("--force");
+  if (force) {
+    console.log("Force mode: bypassing change detection");
+  }
+
+  importLegislators(force)
     .then((result) => {
-      console.log(`Import successful: ${result.upserted} of ${result.total} legislators`);
+      console.log(JSON.stringify(result));
       process.exit(0);
     })
     .catch((error) => {

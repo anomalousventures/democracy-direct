@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   refresh-data:
@@ -29,12 +30,160 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Import legislators
-        run: pnpm import:legislators
+        id: legislators
+        run: |
+          set +e
+          OUTPUT=$(pnpm import:legislators 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Import failed"; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Import ZIP districts
-        run: pnpm import:zips
+        id: zips
+        run: |
+          set +e
+          OUTPUT=$(pnpm import:zips 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Import failed"; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Export ZIP data if changed
+        id: export
+        if: steps.zips.outputs.failed != 'true'
+        run: |
+          ZIPS_CHANGED=$(echo '${{ steps.zips.outputs.result }}' | jq -r '.changed // false')
+          if [ "$ZIPS_CHANGED" = "true" ]; then
+            echo "ZIP data changed, exporting..."
+            pnpm export:zips
+            echo "exported=true" >> $GITHUB_OUTPUT
+          else
+            echo "No ZIP changes, skipping export"
+            echo "exported=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Create PR for data updates
+        if: steps.export.outputs.exported == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet public/data/zip-districts.json; then
+            echo "No changes to zip-districts.json"
+            exit 0
+          fi
+
+          BRANCH="data/zip-districts-$(date +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add public/data/zip-districts.json
+          git commit -m "data: Update zip-districts.json from Census"
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "data: Update zip-districts.json" \
+            --body "Automated update of ZIP-district mappings from Census Bureau data." \
+            --base main \
+            --head "$BRANCH"
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          LEGISLATORS_RESULT: ${{ steps.legislators.outputs.result }}
+          LEGISLATORS_FAILED: ${{ steps.legislators.outputs.failed }}
+          ZIPS_RESULT: ${{ steps.zips.outputs.result }}
+          ZIPS_FAILED: ${{ steps.zips.outputs.failed }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Parse results
+          LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
+          LEG_COUNT=$(echo "$LEGISLATORS_RESULT" | jq -r '.recordsUpserted // 0')
+          LEG_SHA=$(echo "$LEGISLATORS_RESULT" | jq -r '.commitSha // null | if . == null then "unknown" else .[0:7] end')
+
+          ZIPS_CHANGED=$(echo "$ZIPS_RESULT" | jq -r '.changed // false')
+          ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
+
+          # Determine overall status
+          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ]; then
+            TITLE="🚨 Data Refresh Failed"
+            COLOR=16711680
+          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ]; then
+            TITLE="📊 Data Refresh Complete"
+            COLOR=65280
+          else
+            TITLE="✅ Data Refresh - No Changes"
+            COLOR=8421504
+          fi
+
+          # Build status lines
+          if [ "$LEGISLATORS_FAILED" = "true" ]; then
+            LEG_STATUS="❌ **Legislators**: Failed"
+          elif [ "$LEG_CHANGED" = "true" ]; then
+            LEG_STATUS="✅ **Legislators**: ${LEG_COUNT} upserted (SHA: ${LEG_SHA})"
+          else
+            LEG_STATUS="⏭️ **Legislators**: Unchanged (SHA: ${LEG_SHA})"
+          fi
+
+          if [ "$ZIPS_FAILED" = "true" ]; then
+            ZIPS_STATUS="❌ **ZIP Districts**: Failed"
+          elif [ "$ZIPS_CHANGED" = "true" ]; then
+            ZIPS_STATUS="✅ **ZIP Districts**: ${ZIPS_COUNT} inserted"
+          else
+            ZIPS_STATUS="⏭️ **ZIP Districts**: Unchanged"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --argjson color "$COLOR" \
+            --arg leg_status "$LEG_STATUS" \
+            --arg zips_status "$ZIPS_STATUS" \
+            --arg gh_run "$GH_RUN" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "Results", value: ($leg_status + "\n" + $zips_status), inline: false },
+                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
+                ],
+                timestamp: $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+
+      - name: Fail workflow if imports failed
+        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true'
+        run: |
+          echo "One or more imports failed"
+          exit 1
