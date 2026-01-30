@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   generateShareUrls,
+  generateTypedShareUrls,
   generateTwitterUrl,
   generateEmailUrl,
   generateTemplateShareText,
@@ -36,6 +37,68 @@ describe("share utilities", () => {
       expect(urls.facebook).toContain(
         encodeURIComponent("https://example.com/page?foo=bar&baz=qux")
       );
+    });
+  });
+
+  describe("generateTypedShareUrls", () => {
+    describe("template page type", () => {
+      it("generates platform-specific messages for templates", () => {
+        const urls = generateTypedShareUrls({
+          url: "https://example.com/templates/healthcare",
+          title: "Healthcare Access Letter",
+          pageType: "template",
+        });
+
+        expect(urls.twitter).toContain(encodeURIComponent("#CivicEngagement"));
+        expect(urls.twitter).toContain(encodeURIComponent("#ContactCongress"));
+        expect(urls.twitter).toContain(encodeURIComponent("Healthcare Access Letter"));
+        expect(urls.email).toContain(encodeURIComponent("contacting Congress"));
+        expect(urls.reddit).toContain(encodeURIComponent("Letter template:"));
+      });
+
+      it("includes the template title in share messages", () => {
+        const urls = generateTypedShareUrls({
+          url: "https://example.com/templates/test",
+          title: "My Test Template",
+          pageType: "template",
+        });
+
+        expect(urls.twitter).toContain(encodeURIComponent("My Test Template"));
+        expect(urls.reddit).toContain(encodeURIComponent("My Test Template"));
+      });
+    });
+
+    describe("rep page type", () => {
+      it("generates platform-specific messages for reps", () => {
+        const urls = generateTypedShareUrls({
+          url: "https://example.com/rep/S000033",
+          title: "Contact Bernie Sanders",
+          pageType: "rep",
+          repName: "Bernie Sanders",
+          repParty: "I",
+          repState: "VT",
+        });
+
+        expect(urls.twitter).toContain(encodeURIComponent("#ContactCongress"));
+        expect(urls.twitter).toContain(encodeURIComponent("Bernie Sanders"));
+        expect(urls.twitter).toContain(encodeURIComponent("(I-VT)"));
+        expect(urls.email).toContain(encodeURIComponent("Bernie Sanders (I-VT)"));
+        expect(urls.reddit).toContain(encodeURIComponent("Bernie Sanders"));
+      });
+
+      it("includes party and state information", () => {
+        const urls = generateTypedShareUrls({
+          url: "https://example.com/rep/P000197",
+          title: "Contact Nancy Pelosi",
+          pageType: "rep",
+          repName: "Nancy Pelosi",
+          repParty: "D",
+          repState: "CA",
+        });
+
+        expect(urls.twitter).toContain(encodeURIComponent("(D-CA)"));
+        expect(urls.facebook).toContain(encodeURIComponent("(D-CA)"));
+      });
     });
   });
 
