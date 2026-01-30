@@ -58,7 +58,7 @@ async function seedE2E() {
   console.log("Seeding E2E test data...\n");
 
   const [adminUser] = await db
-    .select()
+    .select({ id: users.id })
     .from(users)
     .where(eq(users.trustLevel, TRUST_LEVELS.ADMIN))
     .limit(1);
