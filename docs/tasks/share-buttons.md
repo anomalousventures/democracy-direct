@@ -13,13 +13,10 @@ Users who find useful templates or want to encourage others to contact their rep
   - **Custom implementation**: Simple, smaller, full control
   - **Recommendation**: Custom implementation - share URLs are just URL patterns
 - [x] Evaluate Web Share API browser support
-  - ✅ iOS Safari (all versions)
-  - ✅ Android Chrome
-  - ✅ macOS Safari
-  - ✅ Windows Edge
-  - ❌ Desktop Chrome (not supported)
-  - ❌ Desktop Firefox (not supported)
-  - **Strategy**: Use Web Share API on mobile, explicit buttons on desktop
+  - ✅ iOS Safari, Android Chrome, macOS Safari, Windows Edge
+  - ✅ Desktop Chrome (supported since v89, Feb 2021)
+  - ⚠️ Desktop Firefox (behind flag, inconsistent)
+  - **Strategy**: Feature detection with `navigator.share`, fallback to explicit buttons
 - [x] Evaluate which platforms to support
   - X/Twitter, Facebook, Reddit, Email, Copy Link
   - LinkedIn optional (less relevant for civic content)
