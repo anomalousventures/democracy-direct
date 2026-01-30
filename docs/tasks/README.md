@@ -13,7 +13,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 | Task                                                        | Status   | Description                                     |
 | ----------------------------------------------------------- | -------- | ----------------------------------------------- |
-| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Research | Post-deploy smoke tests + Discord alerts        |
+| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Ready    | Post-deploy smoke tests + Discord alerts        |
 | [Data Refresh Optimization](./data-refresh-optimization.md) | Research | Optimize import scripts + Discord notifications |
 | [Public Roadmap](./public-roadmap.md)                       | Research | Public-facing feature roadmap page              |
 | [Saved District](./saved-district.md)                       | Ready    | Save district to user profile                   |
