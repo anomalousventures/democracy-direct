@@ -58,11 +58,12 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 ## External API Summary
 
-| API          | Tasks Using It                 | Rate Limit | Status                                 |
-| ------------ | ------------------------------ | ---------- | -------------------------------------- |
-| Congress.gov | Voting Records, Bill Summaries | 5,000/hour | Active (`CONGRESS_API_KEY` configured) |
-| ProPublica   | Campaign Finance               | 5,000/day  | Active (key via email request)         |
-| TIGERweb     | District Map                   | None       | Active (no key needed)                 |
+| API          | Tasks Using It                         | Rate Limit | Status                                 |
+| ------------ | -------------------------------------- | ---------- | -------------------------------------- |
+| Congress.gov | Voting Records (House), Bill Summaries | 5,000/hour | Active (`CONGRESS_API_KEY` configured) |
+| Senate.gov   | Voting Records (Senate)                | None       | Active (XML, no key needed)            |
+| ProPublica   | Campaign Finance                       | 5,000/day  | Active (key via email request)         |
+| TIGERweb     | District Map                           | None       | Active (no key needed)                 |
 
 ## How to Use
 
