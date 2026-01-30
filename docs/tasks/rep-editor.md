@@ -1,5 +1,7 @@
 # Rep Page Editor/Preview Streamlining
 
+## Status: Research
+
 ## Problem Statement
 
 The current flow from selecting a representative to composing, previewing, and printing a letter may have friction points. Users need a smooth experience to compose letters, preview them with substituted variables, and print formatted letters for mailing. Any unnecessary steps or confusing UX reduces civic participation.
