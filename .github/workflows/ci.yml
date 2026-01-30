@@ -12,7 +12,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -240,14 +240,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Create backup branch before migration
-        id: create_backup
-        uses: neondatabase/create-branch-action@72ed4f69a12b6be9c16aebfad893f6a21e9aba8b # v6
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch_name: backup/pre-migration-${{ github.sha }}
-          api_key: ${{ secrets.NEON_API_KEY }}
 
       - name: Run migrations
         run: pnpm db:migrate
