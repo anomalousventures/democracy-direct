@@ -57,7 +57,10 @@ export async function verifyOTPRequest(
 
   await db.update(emailOtps).set({ usedAt: new Date() }).where(eq(emailOtps.id, matchingOtp.id));
 
-  const userRecords = await db.select().from(users).where(eq(users.emailHash, emailHash));
+  const userRecords = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.emailHash, emailHash));
 
   let userId: string;
 
@@ -108,6 +111,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     return jsonResponse({ success: true });
   } catch (error) {
     console.error("OTP verification error:", error);
+    if (error instanceof Error && error.cause) {
+      console.error("OTP verification error cause:", error.cause);
+    }
     return serverError("Internal error");
   }
 };
