@@ -21,6 +21,8 @@ const {
   ogImage = "/og-default.png",
 } = Astro.props;
 const fullTitle = `${title} | Democracy Direct`;
+
+const ogImageUrl = ogImage.startsWith("http") ? ogImage : new URL(ogImage, canonicalURL).href;
 ---
 
 <!doctype html>
@@ -40,14 +42,14 @@ const fullTitle = `${title} | Democracy Direct`;
     <meta property="og:url" content={canonicalURL.href} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(ogImage, canonicalURL).href} />
+    <meta property="og:image" content={ogImageUrl} />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL.href} />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(ogImage, canonicalURL).href} />
+    <meta property="twitter:image" content={ogImageUrl} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

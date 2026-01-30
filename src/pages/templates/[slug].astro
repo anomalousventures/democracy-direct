@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
@@ -170,6 +171,16 @@ const description = template ? getCleanDescription(template.body) : "Template no
                     ))}
                   </div>
                 )}
+
+                <div class="mb-6">
+                  <ShareButtons
+                    client:load
+                    url={Astro.url.href}
+                    title={template.title}
+                    description={description}
+                    pageType="template"
+                  />
+                </div>
 
                 <div class="mb-8">
                   <div

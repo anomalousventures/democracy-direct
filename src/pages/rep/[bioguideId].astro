@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
 import { templates } from "@/db/schema";
@@ -161,6 +162,21 @@ if (!error) {
                       >
                         {getPartyLabel(rep.party)}
                       </span>
+                    </div>
+
+                    <div class="mb-4">
+                      <ShareButtons
+                        client:load
+                        url={Astro.url.href}
+                        title={`${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}`}
+                        description={`Contact information for ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}, representing ${rep.state}${rep.chamber === "house" && rep.district !== "0" ? `-${rep.district}` : ""}`}
+                        pageType="rep"
+                        repInfo={{
+                          name: `${rep.firstName} ${rep.lastName}`,
+                          party: rep.party,
+                          state: rep.state,
+                        }}
+                      />
                     </div>
 
                     {rep.termStart && (
