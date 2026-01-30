@@ -1,6 +1,6 @@
 # Template Bill Linking
 
-## Status: Ready
+## Status: Research
 
 ## Problem Statement
 
@@ -55,7 +55,7 @@ Letter templates are more powerful when connected to specific legislation. Users
 6. Add BillPicker to template create form in `src/pages/templates/new.astro`
 7. Add BillPicker to template edit form (if exists, or create it)
 8. Handle `?bill=X` query param in `/templates/new` to pre-select bill
-9. Add auto-detect feature: scan template body on blur, suggest unlinkned bills found
+9. Add auto-detect feature: scan template body on blur, suggest unlinked bills found
 10. Display linked bills on template detail page `src/pages/templates/[slug].astro`
 11. Add bill filter param support to templates index page `src/pages/templates/index.astro`
 12. Show bill context banner on `/templates?bill=X`: "Showing templates for H.R.1234: [Title]"

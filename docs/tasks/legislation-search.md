@@ -1,6 +1,6 @@
 # Legislation Search
 
-## Status: Ready
+## Status: Research
 
 ## Problem Statement
 

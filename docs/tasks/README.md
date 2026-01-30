@@ -19,7 +19,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Saved District](./saved-district.md)                       | Ready    | Save district to user profile                   |
 | [SEO & Social Sharing](./seo-social.md)                     | Ready    | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Ready    | Add share functionality to pages                |
-| [Voting Records](./voting-records.md)                       | Ready    | Integrate Congress voting records (House only)  |
+| [Voting Records](./voting-records.md)                       | Ready    | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready    | Bill tracking and summaries                     |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready    | Performance, a11y, SEO optimization             |
 | [Legislation Search](./legislation-search.md)               | Research | Search bills, find who voted how                |
@@ -38,23 +38,23 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 ### Phase 1: Quick Wins
 
-4. **SEO & Social Sharing** - Simple meta tag updates
-5. **Share Buttons** - Standalone component, no backend
-6. **Saved District** - Schema exists, clear scope
+1. **SEO & Social Sharing** - Simple meta tag updates
+2. **Share Buttons** - Standalone component, no backend
+3. **Saved District** - Schema exists, clear scope
 
 ### Phase 2: Congress Data
 
-7. **Voting Records** - House roll call votes (Senate API not available)
-8. **Bill Summaries** - Builds on Congress API work
-9. **Legislation Search** - Depends on voting records + bills
-10. **Template Bill Linking** - Connects templates to legislation
+1. **Voting Records** - House + Senate roll call votes
+2. **Bill Summaries** - Builds on Congress API work
+3. **Legislation Search** - Depends on voting records + bills
+4. **Template Bill Linking** - Connects templates to legislation
 
 ### Phase 3: Polish & Enhancement
 
-11. **Lighthouse Optimization** - Audit and improve (partially implemented)
-12. **Rep Page Editor** - UX improvements
-13. **Campaign Finance** - ProPublica Campaign Finance API
-14. **District Map** - MapLibre + TIGERweb integration
+1. **Lighthouse Optimization** - Audit and improve (partially implemented)
+2. **Rep Page Editor** - UX improvements
+3. **Campaign Finance** - ProPublica Campaign Finance API
+4. **District Map** - MapLibre + TIGERweb integration
 
 ## External API Summary
 

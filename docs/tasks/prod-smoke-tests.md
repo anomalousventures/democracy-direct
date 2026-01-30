@@ -175,26 +175,25 @@ jobs:
         run: |
           FAILURES="${{ steps.smoke.outputs.failures }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          curl -H "Content-Type: application/json" \
-            -d "{
-              \"embeds\": [{
-                \"title\": \"🚨 Production Smoke Test Failed\",
-                \"color\": 16711680,
-                \"fields\": [
-                  {
-                    \"name\": \"Failed Tests\",
-                    \"value\": \"$FAILURES\"
-                  },
-                  {
-                    \"name\": \"Links\",
-                    \"value\": \"[GitHub Action](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) | [Production Site](https://democracy-direct.com) | [Cloudflare Dashboard](https://dash.cloudflare.com)\"
-                  }
+          PAYLOAD=$(jq -n \
+            --arg failures "$FAILURES" \
+            --arg timestamp "$TIMESTAMP" \
+            --arg gh_run "$GH_RUN" \
+            '{
+              embeds: [{
+                title: "🚨 Production Smoke Test Failed",
+                color: 16711680,
+                fields: [
+                  { name: "Failed Tests", value: $failures },
+                  { name: "Links", value: "[\($gh_run)](GitHub Action) | [Production Site](https://democracy-direct.com) | [Cloudflare Dashboard](https://dash.cloudflare.com)" }
                 ],
-                \"timestamp\": \"$TIMESTAMP\"
+                timestamp: $timestamp
               }]
-            }" \
-            "$DISCORD_WEBHOOK"
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
 ```
 
 ## Discord Notification Format
