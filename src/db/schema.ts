@@ -164,6 +164,16 @@ export const userTemplates = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.templateId] })]
 );
 
+export const dataSourceMeta = pgTable("data_source_meta", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  sourceUrl: varchar("source_url", { length: 500 }),
+  lastModified: varchar("last_modified", { length: 100 }),
+  contentLength: integer("content_length"),
+  lastChecked: timestamp("last_checked"),
+  lastChanged: timestamp("last_changed"),
+  recordCount: integer("record_count"),
+});
+
 export const tagSuggestions = pgTable(
   "tag_suggestions",
   {
@@ -201,3 +211,5 @@ export type UserTemplate = typeof userTemplates.$inferSelect;
 export type NewUserTemplate = typeof userTemplates.$inferInsert;
 export type TagSuggestion = typeof tagSuggestions.$inferSelect;
 export type NewTagSuggestion = typeof tagSuggestions.$inferInsert;
+export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
+export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;

@@ -1,6 +1,6 @@
 # Public Roadmap
 
-## Status: Complete
+## Status: In Progress
 
 ## Problem Statement
 
@@ -121,17 +121,15 @@ These tasks improve reliability but aren't user-facing features:
 
 ## Verification
 
-- [x] Roadmap page accessible at `/roadmap`
-- [x] Page uses Layout component with proper meta tags
-- [x] Features grouped by status (Completed, Up Next, Planned)
-- [x] Each feature has user-friendly one-liner description
-- [x] Status badges use consistent civic color scheme
-- [x] Mobile-responsive layout (test on mobile viewport)
-- [x] Footer contains "Roadmap" link
-- [x] About page mentions roadmap with link
-- [ ] GitHub Discussions enabled with "Feature Requests" category (manual step)
-- [x] "Suggest a feature" link works and goes to Discussions URL
-- [x] Content is understandable to non-technical users
-- [x] No time estimates or dates shown
-- [x] Semantic h2 headings for accessibility
-- [x] E2E tests added (roadmap.spec.ts)
+- [ ] Roadmap page accessible at `/roadmap`
+- [ ] Page uses Layout component with proper meta tags
+- [ ] Features grouped by status (Now Building, Up Next, Planned, Completed)
+- [ ] Each feature has user-friendly one-liner description
+- [ ] Status badges use consistent civic color scheme
+- [ ] Mobile-responsive layout (test on mobile viewport)
+- [ ] Footer contains "Roadmap" link
+- [ ] About page mentions roadmap with link
+- [ ] GitHub Discussions enabled with "Feature Requests" category
+- [ ] "Suggest a feature" link works and goes to Discussions
+- [ ] Content is understandable to non-technical users
+- [ ] No time estimates or dates shown
