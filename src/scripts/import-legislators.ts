@@ -210,12 +210,18 @@ interface GitHubCommit {
 export async function checkGitHubCommitSha(): Promise<string | null> {
   const url =
     "https://api.github.com/repos/unitedstates/congress-legislators/commits?path=legislators-current.yaml&per_page=1";
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "democracy-direct-data-refresh",
-    },
-  });
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "democracy-direct-data-refresh",
+  };
+
+  const githubToken = process.env.GITHUB_TOKEN;
+  if (githubToken) {
+    headers["Authorization"] = `Bearer ${githubToken}`;
+  }
+
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     console.warn(`Failed to check GitHub commits: ${response.statusText}`);
@@ -300,23 +306,29 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
   console.log("Checking GitHub for changes...");
   const currentCommitSha = await checkGitHubCommitSha();
 
-  if (!force && currentCommitSha) {
-    const [existingMeta] = await db
-      .select()
-      .from(dataSourceMeta)
-      .where(eq(dataSourceMeta.id, "legislators"));
+  if (!force) {
+    if (!currentCommitSha) {
+      console.warn(
+        "Warning: Unable to retrieve latest GitHub commit SHA; skipping change detection and proceeding with full import."
+      );
+    } else {
+      const [existingMeta] = await db
+        .select()
+        .from(dataSourceMeta)
+        .where(eq(dataSourceMeta.id, "legislators"));
 
-    if (existingMeta?.lastModified === currentCommitSha) {
-      const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
-      console.log(`No changes detected (SHA: ${currentCommitSha.substring(0, 7)})`);
-      return {
-        source: "github",
-        changed: false,
-        recordsProcessed: 0,
-        recordsUpserted: 0,
-        duration,
-        commitSha: currentCommitSha,
-      };
+      if (existingMeta?.lastModified === currentCommitSha) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+        console.log(`No changes detected (SHA: ${currentCommitSha.substring(0, 7)})`);
+        return {
+          source: "github",
+          changed: false,
+          recordsProcessed: 0,
+          recordsUpserted: 0,
+          duration,
+          commitSha: currentCommitSha,
+        };
+      }
     }
   }
 
@@ -397,27 +409,32 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
     console.log(`Upserted ${upserted} / ${transformed.length} legislators...`);
   }
 
-  if (currentCommitSha) {
-    await db
-      .insert(dataSourceMeta)
-      .values({
-        id: "legislators",
-        sourceUrl: GITHUB_LEGISLATORS_URL,
+  const [existingMeta] = await db
+    .select()
+    .from(dataSourceMeta)
+    .where(eq(dataSourceMeta.id, "legislators"));
+
+  const sourceChanged = currentCommitSha && existingMeta?.lastModified !== currentCommitSha;
+
+  await db
+    .insert(dataSourceMeta)
+    .values({
+      id: "legislators",
+      sourceUrl: GITHUB_LEGISLATORS_URL,
+      lastModified: currentCommitSha,
+      lastChecked: new Date(),
+      lastChanged: sourceChanged ? new Date() : (existingMeta?.lastChanged ?? new Date()),
+      recordCount: upserted,
+    })
+    .onConflictDoUpdate({
+      target: dataSourceMeta.id,
+      set: {
         lastModified: currentCommitSha,
         lastChecked: new Date(),
-        lastChanged: new Date(),
+        ...(sourceChanged ? { lastChanged: new Date() } : {}),
         recordCount: upserted,
-      })
-      .onConflictDoUpdate({
-        target: dataSourceMeta.id,
-        set: {
-          lastModified: currentCommitSha,
-          lastChecked: new Date(),
-          lastChanged: new Date(),
-          recordCount: upserted,
-        },
-      });
-  }
+      },
+    });
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
   console.log(`Import complete: ${upserted} legislators upserted`);

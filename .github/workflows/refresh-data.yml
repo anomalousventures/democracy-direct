@@ -47,6 +47,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Import ZIP districts
         id: zips
@@ -126,7 +127,7 @@ jobs:
           # Parse results
           LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
           LEG_COUNT=$(echo "$LEGISLATORS_RESULT" | jq -r '.recordsUpserted // 0')
-          LEG_SHA=$(echo "$LEGISLATORS_RESULT" | jq -r '.commitSha // "unknown"' | cut -c1-7)
+          LEG_SHA=$(echo "$LEGISLATORS_RESULT" | jq -r '.commitSha // null | if . == null then "unknown" else .[0:7] end')
 
           ZIPS_CHANGED=$(echo "$ZIPS_RESULT" | jq -r '.changed // false')
           ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
