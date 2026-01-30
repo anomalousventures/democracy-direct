@@ -56,7 +56,7 @@ async function ensureAdmins() {
     const maskedEmail = email.replace(/(.{2}).*@/, "$1***@");
 
     const existingUser = await db
-      .select()
+      .select({ id: users.id, trustLevel: users.trustLevel })
       .from(users)
       .where(eq(users.emailHash, emailHash))
       .limit(1);
