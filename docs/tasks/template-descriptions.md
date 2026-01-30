@@ -28,12 +28,12 @@ Currently, the template detail page strips template variables from the body and 
 
 ## Open Questions - Resolved
 
-| Question                 | Decision                           | Rationale                                |
-| ------------------------ | ---------------------------------- | ---------------------------------------- |
-| Optional or required?    | **Optional**                       | Don't break existing templates           |
-| Max length?              | **200 chars**                      | Fits meta description limits             |
-| Fallback if empty?       | **Truncated body (current logic)** | Backwards compatible                     |
-| Seed existing templates? | **No**                             | Let authors add descriptions organically |
+| Question                 | Decision                           | Rationale                                       |
+| ------------------------ | ---------------------------------- | ----------------------------------------------- |
+| Optional or required?    | **Optional**                       | Don't break existing templates                  |
+| Max length?              | **200 chars**                      | Fits meta description limits                    |
+| Fallback if empty?       | **Truncated body (current logic)** | Backwards compatible                            |
+| Seed existing templates? | **Yes**                            | Better UX, SEO, and social sharing from day one |
 
 ## Proposed Approach
 
@@ -46,18 +46,38 @@ Currently, the template detail page strips template variables from the body and 
 
 ## Implementation Tasks
 
+### Schema & Migration
+
 1. Add `description: varchar("description", { length: 200 })` to templates table in `src/db/schema.ts`
-2. Run migration with `pnpm db:push`
-3. Update `src/pages/templates/new.astro` form to include description textarea with 200-char limit
-4. Update `src/pages/templates/[slug]/edit.astro` form to include description textarea
-5. Update `src/pages/api/templates/create.ts` to accept and validate description field
-6. Update `src/pages/api/templates/[slug]/update.ts` to accept and validate description field
+2. Run migration with `pnpm db:push` (dev)
+
+### API Updates
+
+3. Update `src/pages/api/templates/create.ts` to accept and validate description field
+4. Update `src/pages/api/templates/[slug]/update.ts` to accept and validate description field
+
+### Form Updates
+
+5. Update `src/pages/templates/new.astro` form to include description textarea with 200-char limit
+6. Update `src/pages/templates/[slug]/edit.astro` form to include description textarea
+
+### Display Updates
+
 7. Update `src/components/TemplateSearch.tsx` to display description (fallback to truncated body)
 8. Update `src/pages/templates/[slug].astro` to use description for meta tags when available
 9. Update `src/pages/templates/index.astro` query to select description field
-10. Update `src/scripts/seed-templates.ts` to include descriptions for seed templates
-11. Add unit tests for API endpoint description validation
-12. Add e2e test for description display in template list and detail pages
+
+### Seed Data
+
+10. Update `src/scripts/seed-templates.ts` to include descriptions for all seed templates
+11. Write meaningful descriptions for each seed template (concise, action-oriented)
+12. Re-seed dev database: `pnpm db:seed` or equivalent
+13. Re-seed prod database after deployment
+
+### Testing
+
+14. Add unit tests for API endpoint description validation
+15. Add e2e test for description display in template list and detail pages
 
 ## Character Limit Rationale
 
@@ -77,5 +97,8 @@ Currently, the template detail page strips template variables from the body and 
 - [ ] Fallback to truncated body for meta when description empty
 - [ ] Description limited to 200 characters in form
 - [ ] Existing templates without description continue to work
+- [ ] All seed templates have descriptions
+- [ ] Dev database re-seeded with descriptions
+- [ ] Prod database re-seeded with descriptions after deployment
 - [ ] Unit tests pass for API validation
 - [ ] E2E tests pass for description display
