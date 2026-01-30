@@ -71,18 +71,26 @@ Create an API route that generates sitemap XML on demand.
 2. Review Astro sitemap customization options (`customPages`, `serialize`)
 3. Determine build-time database access pattern
 
+### Drizzle Queries
+
+4. Create `src/db/queries/sitemap.ts` with Drizzle queries for sitemap data:
+   - `getAllLegislatorBioguideIds()` - returns all bioguide IDs for rep pages
+   - `getPublicTemplateSlugs()` - returns slugs for public, approved templates
+5. Queries should select only the fields needed (bioguideId, slug, updatedAt for lastmod)
+6. Add unit tests for sitemap queries in `src/db/queries/sitemap.test.ts`
+
 ### Sitemap Generation
 
-4. Create `src/lib/sitemap.ts` with functions to fetch sitemap entries
-5. Query all legislators for rep page URLs
-6. Query all public, approved templates for template page URLs
-7. Configure sitemap integration to include dynamic pages
+7. Create `src/lib/sitemap.ts` that uses the Drizzle queries via DATABASE_URL
+8. Connect to database using `createDb(process.env.DATABASE_URL)` at build time
+9. Generate sitemap entries with proper URLs and lastmod dates
+10. Configure Astro sitemap integration to include dynamic pages
 
 ### Build Integration
 
-8. Ensure database connection works at build time
-9. Add sitemap generation to build process
-10. Verify sitemap includes all expected URLs
+11. Astro build uses DATABASE_URL from Cloudflare Pages environment
+12. Sitemap generation runs as part of standard `astro build`
+13. Verify sitemap includes all expected URLs
 
 ### Validation
 
@@ -141,6 +149,9 @@ If `@astrojs/sitemap` doesn't support build-time DB queries, create a custom sol
 
 ## Verification
 
+- [ ] Drizzle queries return correct data
+- [ ] Unit tests pass for sitemap queries
+- [ ] Build connects to DATABASE_URL successfully
 - [ ] Sitemap includes all static pages
 - [ ] Sitemap includes all legislator rep pages (~535)
 - [ ] Sitemap includes all public approved templates

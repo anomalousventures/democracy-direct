@@ -112,9 +112,11 @@ Understanding what legislation representatives sponsor and support is key to inf
 ### SEO: Sitemap Integration
 
 22. Create bill detail page at `/bills/[congress]/[type]/[number]` (e.g., `/bills/119/hr/1234`)
-23. Add bill pages to sitemap generation (current Congress only to limit size)
-24. Query bills from current Congress (119th) at build time for sitemap entries
-25. Include bill title in sitemap `<lastmod>` based on latestActionDate
+23. Add Drizzle query `getCurrentCongressBillsForSitemap()` to `src/db/queries/sitemap.ts`
+    - Select billType, billNumber, congress, latestActionDate for current Congress (119th)
+    - Returns data needed to generate `/bills/119/hr/1234` style URLs
+24. Update sitemap generation to include bill pages (uses DATABASE_URL at build time)
+25. Include `<lastmod>` based on latestActionDate for each bill
 
 ## Data Schema
 
