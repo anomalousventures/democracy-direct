@@ -4,7 +4,7 @@
 
 ## Problem Statement
 
-Currently, users start by finding their representative and then can see how they voted. But many users start with an issue - they want to know who voted for or against a specific bill, then contact those representatives. This "legislation-first" flow is essential for issue-based advocacy and civic organizing.
+Currently, users can find their representative and view contact information. Once Voting Records is implemented, users will be able to see how their reps voted. But many users start with an issue - they want to know who voted for or against a specific bill, then contact those representatives. This "legislation-first" flow is essential for issue-based advocacy and civic organizing.
 
 ## Dependencies
 
