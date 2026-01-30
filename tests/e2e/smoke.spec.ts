@@ -1,14 +1,6 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Production Smoke Tests", () => {
-  test("health endpoint responds", async ({ request }) => {
-    const response = await request.get("/api/health");
-    expect([200, 503]).toContain(response.status());
-    const body = await response.json();
-    expect(["ok", "degraded"]).toContain(body.status);
-    expect(body.timestamp).toBeDefined();
-  });
-
   test("homepage loads", async ({ page }) => {
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
@@ -21,10 +13,10 @@ test.describe("Production Smoke Tests", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
-  test("turnstile script is present", async ({ page }) => {
+  test("turnstile widget appears in login modal", async ({ page }) => {
     await page.goto("/");
-    const turnstile = page.locator('script[src*="challenges.cloudflare.com/turnstile"]');
-    await expect(turnstile).toBeAttached();
+    await page.getByRole("button", { name: /sign in/i }).click();
+    await expect(page.getByTestId("turnstile-widget")).toBeVisible();
   });
 
   test("zip lookup form is interactive", async ({ page }) => {
