@@ -11,7 +11,10 @@ const templateSlug = Astro.url.searchParams.get("template") || undefined;
 const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
 ---
 
-<Layout title="Home">
+<Layout
+  title="Your Voice, Your Representatives"
+  description="Find and contact your elected officials with privacy-first letter templates. No account required. No data harvested."
+>
   <Header currentPath="/" user={user} />
 
   <main id="main-content" class="flex-1">
