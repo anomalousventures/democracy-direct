@@ -1,58 +1,215 @@
 # Voting Records Integration
 
+## Status: Ready
+
 ## Problem Statement
 
 Understanding how representatives vote on legislation is essential for informed civic engagement. Currently, rep profile pages show contact information but no voting history. Users must leave the site to research voting records, creating friction in the contact process.
 
-## Research Needed
+## Research Completed
 
-- [ ] Evaluate Congress.gov API for voting data availability and rate limits
-- [ ] Evaluate ProPublica Congress API as alternative (rate limits, data freshness)
-- [ ] Evaluate GovTrack API for voting records
-- [ ] Understand data structure: roll call votes, bill references, member positions
-- [ ] Research caching strategy for vote data (how often to refresh)
-- [ ] Determine storage approach (database vs API-on-demand)
+- [x] Evaluate Congress.gov API for voting data availability and rate limits
+  - **RECOMMENDED for House**: Official API, actively maintained
+  - Rate limit: 5,000 requests/hour
+  - Free API key from Data.gov (already in GitHub secrets as `CONGRESS_API_KEY`)
+  - House Roll Call Votes endpoints available (added May 2025, now GA)
+  - Senate voting endpoints do NOT exist in Congress.gov API
+  - Covers current Congress (119th) and historical data
+- [x] Evaluate Senate.gov XML for Senate votes
+  - **RECOMMENDED for Senate**: Official source, direct XML access
+  - No API key required, no documented rate limits
+  - URL pattern: `https://www.senate.gov/legislative/LIS/roll_call_votes/vote{congress}{session}/vote_{congress}_{session}_{voteNumber}.xml`
+  - Vote menu available: `https://www.senate.gov/legislative/LIS/roll_call_lists/vote_menu_{congress}_{session}.xml`
+  - Includes: vote number, date, question, result, individual member votes with party
+- [x] Evaluate ProPublica Congress API as alternative
+  - **DEPRECATED**: No longer available, no new API keys issued
+- [x] Evaluate GovTrack API for voting records
+  - **DEPRECATED**: Bulk data/API ended ~2017, now redirects to official sources
+- [x] Evaluate unitedstates/congress scraper
+  - Open source Python scrapers for both chambers
+  - Outputs JSON/XML, but requires running scraper infrastructure
+  - Good reference for data structures
+- [x] Understand data structure: roll call votes, bill references, member positions
+  - Both sources provide: roll call number, date, question, result, member positions (Yea/Nay/Not Voting/Present)
+  - Links to associated bills when applicable
+  - Party breakdown available
+- [x] Research caching strategy
+  - **Recommendation**: Cache in database, refresh daily via GitHub Action
+  - Votes don't change after recorded, so aggressive caching is safe
+- [x] Determine storage approach
+  - **Recommendation**: Store in database for fast queries and reduce API/fetch calls
+- [x] Review existing GitHub Actions
+  - `.github/workflows/refresh-data.yml` already runs daily at 6am UTC
+  - Already has `CONGRESS_API_KEY` secret configured
+  - Pattern: add `pnpm sync:votes` step
+- [x] Rate limit analysis
+  - House: ~300-400 roll call votes per year, Congress.gov API limit 5,000/hour ✅
+  - Senate: ~300-400 roll call votes per year, Senate.gov XML no documented limit ✅
+  - **Full sync ~700 requests** - well within limits
 
-## Open Questions
+## Data Sources
 
-- Which API provides the best data quality and reliability?
-- How far back should voting history go (current session only, or multiple)?
-- How to categorize/filter votes by topic/issue?
-- Should votes link to full bill information?
-- How to handle missing or delayed vote data?
-- Store votes in database or fetch on-demand with caching?
+| Chamber | Source           | Format | Auth                 | Rate Limit      |
+| ------- | ---------------- | ------ | -------------------- | --------------- |
+| House   | Congress.gov API | JSON   | API key (configured) | 5,000/hour      |
+| Senate  | Senate.gov       | XML    | None                 | None documented |
+
+### Senate.gov XML URL Patterns
+
+```
+# List all votes in a session
+https://www.senate.gov/legislative/LIS/roll_call_lists/vote_menu_119_1.xml
+
+# Individual vote details
+https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001.xml
+
+# Pattern breakdown:
+# vote_menu_{congress}_{session}.xml
+# vote_{congress}_{session}_{voteNumber (5 digits, zero-padded)}.xml
+```
+
+## Open Questions - Resolved
+
+| Question                  | Decision                              | Rationale                                   |
+| ------------------------- | ------------------------------------- | ------------------------------------------- |
+| Which API?                | **Hybrid: Congress.gov + Senate.gov** | Only way to get both chambers               |
+| How far back?             | **Current Congress only**             | Simpler, most relevant to users             |
+| Categorize by topic?      | **Use bill subjects**                 | Congress.gov provides subject tags on bills |
+| Link to full bill?        | **Yes**                               | Congress.gov URLs are predictable           |
+| Store vs fetch on-demand? | **Store in database**                 | Better performance, less API dependency     |
+| Sync mechanism?           | **GitHub Action cron**                | Already exists, simpler than worker         |
+| Rate limiting concern?    | **Not an issue**                      | ~700 requests total, well within limits     |
 
 ## Proposed Approach
 
-_To be filled after research._
+1. Create database tables for votes and member positions
+2. Build sync script with two data fetchers:
+   - House: Congress.gov API (JSON)
+   - Senate: Senate.gov XML (parse with fast-xml-parser or similar)
+3. Add sync step to existing `refresh-data.yml` GitHub Action
+4. Add votes section to rep profile page with filtering
 
 ## Implementation Tasks
 
-_To be filled after research._
+### Database Schema
 
-### Data Points to Consider
+1. Create `src/db/schema.ts` additions: `votes` table with rollCall, chamber, congress, session, date, question, result, billNumber, billTitle, billSubjects, sourceUrl
+2. Create `src/db/schema.ts` additions: `memberVotes` table linking votes to legislators with position (yea/nay/not_voting/present)
+3. Run database migration with `pnpm db:push`
 
-- Bill name/number
-- Vote date
-- Member's position (Yea/Nay/Not Voting/Present)
-- Bill category/topic
-- Vote outcome (Passed/Failed)
-- Link to full bill text
+### Data Fetching
 
-### UI Considerations
+4. Create `src/lib/congress-api.ts` with typed fetch wrapper for Congress.gov API (House votes)
+5. Create `src/lib/senate-votes.ts` with XML fetcher and parser for Senate.gov
+   - Install XML parser: `pnpm add fast-xml-parser`
+   - Fetch vote menu XML to get list of votes
+   - Fetch individual vote XMLs for member positions
+6. Create `src/scripts/sync-votes.ts` script that:
+   - Fetches House votes from Congress.gov API
+   - Fetches Senate votes from Senate.gov XML
+   - Normalizes both to common schema
+   - Upserts to database
+7. Add `"sync:votes": "tsx src/scripts/sync-votes.ts"` to package.json scripts
+8. Add `pnpm sync:votes` step to `.github/workflows/refresh-data.yml` after legislators import
 
-- Tabbed section on rep profile page
-- Filter by issue/topic
-- Sort by date (most recent first)
-- Pagination or "load more" for long histories
-- Visual indicators for vote position (green/red/gray)
+### Queries & Components
+
+9. Create `src/db/queries/votes.ts` with `getVotesByMember(bioguideId, limit)` query
+10. Create `src/components/VotingRecord.tsx` component that displays vote history with bill links
+11. Add VotingRecord component to `src/pages/rep/[bioguideId].astro` as a tabbed section
+12. Add filter controls for chamber (House/Senate)
+13. Add filter controls for topic/category using bill subjects
+14. Add pagination or "load more" for long vote histories
+
+### Testing
+
+15. Add unit tests for Congress API wrapper in `src/lib/congress-api.test.ts`
+16. Add unit tests for Senate XML parser in `src/lib/senate-votes.test.ts`
+17. Add unit tests for vote queries in `src/db/queries/votes.test.ts`
+18. Add e2e test in `tests/e2e/voting-records.spec.ts` that verifies votes display on rep page
+
+## Data Schema
+
+```typescript
+// votes table
+{
+  id: uuid,
+  rollCall: number,
+  chamber: 'house' | 'senate',
+  congress: number,
+  session: number,
+  date: date,
+  question: string,
+  result: string,
+  billNumber: string | null,
+  billTitle: string | null,
+  billSubjects: string[] | null,
+  sourceUrl: string, // Congress.gov or Senate.gov URL
+  createdAt: timestamp,
+}
+
+// memberVotes table
+{
+  voteId: uuid (FK),
+  bioguideId: string (FK to legislators),
+  position: 'yea' | 'nay' | 'not_voting' | 'present',
+}
+```
+
+## API/Data Endpoints Used
+
+### House (Congress.gov API)
+
+- `GET /v3/house-vote/{congress}/{session}/{rollCallNumber}` - House vote details
+- Member positions included in vote response
+
+### Senate (Senate.gov XML)
+
+- `GET /legislative/LIS/roll_call_lists/vote_menu_{congress}_{session}.xml` - Vote listing
+- `GET /legislative/LIS/roll_call_votes/vote{congress}{session}/vote_{congress}_{session}_{rollCall}.xml` - Vote details
+- XML includes `<members>` with `<member>` elements containing vote position
+
+## Senate XML Structure (Reference)
+
+```xml
+<roll_call_vote>
+  <congress>119</congress>
+  <session>1</session>
+  <vote_number>00001</vote_number>
+  <vote_date>January 3, 2025</vote_date>
+  <question>On the Motion</question>
+  <result>Motion Agreed to</result>
+  <vote_tally>
+    <yeas>99</yeas>
+    <nays>0</nays>
+  </vote_tally>
+  <members>
+    <member>
+      <member_full>Baldwin (D-WI)</member_full>
+      <last_name>Baldwin</last_name>
+      <party>D</party>
+      <state>WI</state>
+      <vote_cast>Yea</vote_cast>
+      <lis_member_id>S354</lis_member_id>
+    </member>
+    <!-- ... more members ... -->
+  </members>
+</roll_call_vote>
+```
 
 ## Verification
 
-- [ ] Voting history displays on rep profile pages
+- [ ] Voting history displays on rep profile pages for both chambers
+- [ ] House votes fetched from Congress.gov API
+- [ ] Senate votes fetched from Senate.gov XML
 - [ ] Votes show correct position for each member
+- [ ] Clicking vote links to official source (Congress.gov or Senate.gov)
+- [ ] Filter by chamber works
 - [ ] Filter by topic/category works
-- [ ] Links to full bill information work
 - [ ] Data loads within acceptable time (<2s)
-- [ ] Handles API rate limits gracefully
-- [ ] Displays appropriate message when no votes available
+- [ ] GitHub Action sync step runs successfully
+- [ ] Handles missing data gracefully
+- [ ] Unit tests pass for House API wrapper
+- [ ] Unit tests pass for Senate XML parser
+- [ ] Unit tests pass for database queries
+- [ ] E2E tests pass for vote display

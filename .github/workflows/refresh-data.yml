@@ -1,8 +1,6 @@
 name: Refresh Data
 
 on:
-  push:
-    branches: [main]
   schedule:
     # Run daily at 6am UTC
     - cron: "0 6 * * *"
