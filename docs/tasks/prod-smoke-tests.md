@@ -1,6 +1,6 @@
 # Production Smoke Tests
 
-## Status: Ready
+## Status: Complete
 
 ## Problem Statement
 
@@ -216,15 +216,15 @@ curl -X POST \
 
 ## Verification
 
-- [ ] `tests/e2e/smoke.spec.ts` created with production smoke tests
-- [ ] Smoke tests pass locally with `BASE_URL=https://democracy-direct.com pnpm test:e2e tests/e2e/smoke.spec.ts`
-- [ ] Workflow triggers only for production (main branch) deployments
-- [ ] Workflow does NOT trigger for preview deployments
-- [ ] Playwright runs successfully in workflow
-- [ ] Failed tests are properly detected
-- [ ] Discord notification sent on failure with correct format
-- [ ] Discord notification NOT sent on success
-- [ ] Links in notification work (GitHub Action, production site)
-- [ ] Tests complete within 2 minutes
-- [ ] `DISCORD_WEBHOOK_URL` secret is configured
-- [ ] Manual rollback process documented and tested
+- [x] `tests/e2e/smoke.spec.ts` created with production smoke tests
+- [x] Smoke tests pass locally with `BASE_URL=https://democracy-direct.com pnpm test:e2e tests/e2e/smoke.spec.ts`
+- [x] Workflow triggers only for production (main branch) deployments
+- [x] Workflow does NOT trigger for preview deployments
+- [x] Playwright runs successfully in workflow
+- [x] Failed tests are properly detected
+- [x] Discord notification sent on failure with correct format
+- [x] Discord notification NOT sent on success
+- [x] Links in notification work (GitHub Action, production site)
+- [x] Tests complete within 2 minutes
+- [x] `DISCORD_WEBHOOK_URL` secret is configured
+- [x] Manual rollback process documented and tested
