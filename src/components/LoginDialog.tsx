@@ -239,10 +239,12 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
         ) : (
           <form
             onSubmit={handleOtpSubmit}
-            className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200"
+            className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200 text-center"
           >
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification Code</Label>
+            <div className="space-y-3">
+              <Label htmlFor="otp" className="block">
+                Verification Code
+              </Label>
               <InputOTP
                 id="otp"
                 maxLength={6}
@@ -269,20 +271,26 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               </p>
             )}
 
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
-                Back
-              </Button>
+            <div className="flex flex-col gap-2 pt-2">
               <LoadingButton
                 type="submit"
                 variant="civic"
-                className="flex-1"
+                className="w-full"
                 loading={isLoading}
                 loadingText="Verifying..."
                 disabled={otp.length !== 6}
               >
                 Verify
               </LoadingButton>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleBack}
+                disabled={isLoading}
+                className="w-full text-muted-foreground"
+              >
+                Back
+              </Button>
             </div>
           </form>
         )}
