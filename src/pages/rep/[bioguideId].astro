@@ -4,6 +4,8 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
@@ -95,14 +97,14 @@ if (!error) {
   <Header currentPath={`/rep/${bioguideId}`} user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
+    <div class="container-page">
       {
         error ? (
-          <div class="max-w-2xl mx-auto text-center">
-            <div class="card-civic">
-              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
                 <svg
-                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  class="w-8 h-8 text-destructive"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -115,32 +117,29 @@ if (!error) {
                   />
                 </svg>
               </div>
-              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <h1 class="heading-card-lg">{error}</h1>
               <p class="text-muted-foreground mb-8">
                 The representative you're looking for couldn't be found.
               </p>
-              <a href="/" class="btn-primary inline-block">
+              <AstroButton href="/" variant="civic">
                 Find Your Representatives
-              </a>
-            </div>
+              </AstroButton>
+            </AstroCard>
           </div>
         ) : (
           rep && (
-            <div class="max-w-4xl mx-auto">
-              <article class="card-civic animate-fade-up no-print">
+            <div class="container-wide">
+              <AstroCard variant="civicLg" class="animate-fade-up no-print block">
                 <div class="flex flex-col md:flex-row gap-8">
                   <div class="flex-shrink-0">
-                    <div class="relative w-48 h-60 mx-auto md:mx-0 bg-[var(--color-secondary)] overflow-hidden shadow-lg">
+                    <div class="rep-photo-lg">
                       <img
                         src={getPhotoUrl(rep.bioguideId)}
                         alt={`${rep.firstName} ${rep.lastName}`}
                         class="w-full h-full object-cover object-top"
                         onerror="this.style.display='none'"
                       />
-                      <div
-                        class="absolute inset-0 flex items-center justify-center text-6xl font-bold text-[var(--color-muted-foreground)]/30"
-                        style="font-family: var(--font-display)"
-                      >
+                      <div class="rep-photo-fallback-lg" style="font-family: var(--font-display)">
                         {rep.firstName[0]}
                         {rep.lastName[0]}
                       </div>
@@ -157,9 +156,7 @@ if (!error) {
                           {getRepTitle(rep.chamber, rep.state, rep.district)}
                         </p>
                       </div>
-                      <span
-                        class={`${getPartyColor(rep.party)} text-white px-4 py-2 text-sm font-semibold`}
-                      >
+                      <span class={`${getPartyColor(rep.party)} party-badge-lg`}>
                         {getPartyLabel(rep.party)}
                       </span>
                     </div>
@@ -180,7 +177,7 @@ if (!error) {
                     </div>
 
                     {rep.termStart && (
-                      <div class="mb-6 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
+                      <div class="mb-6 p-4 bg-secondary border border-border">
                         <p class="text-sm text-muted-foreground">
                           <span class="font-medium">Current Term:</span> {formatDate(rep.termStart)}
                           {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
@@ -192,10 +189,10 @@ if (!error) {
                       <h2 class="text-xl font-semibold">Contact Information</h2>
 
                       {rep.phoneCapitol && (
-                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
-                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                        <div class="info-item">
+                          <div class="icon-box-sm">
                             <svg
-                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              class="w-5 h-5 text-accent"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -212,7 +209,7 @@ if (!error) {
                             <p class="font-medium">DC Office Phone</p>
                             <a
                               href={`tel:${rep.phoneCapitol}`}
-                              class="text-[var(--color-civic-navy)] hover:underline text-lg"
+                              class="text-primary hover:underline text-lg"
                             >
                               {rep.phoneCapitol}
                             </a>
@@ -221,10 +218,10 @@ if (!error) {
                       )}
 
                       {sanitizeExternalUrl(rep.contactFormUrl) && (
-                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
-                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                        <div class="info-item">
+                          <div class="icon-box-sm">
                             <svg
-                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              class="w-5 h-5 text-accent"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -243,7 +240,7 @@ if (!error) {
                               href={sanitizeExternalUrl(rep.contactFormUrl)!}
                               target="_blank"
                               rel="noopener noreferrer"
-                              class="inline-flex items-center gap-1 text-[var(--color-civic-navy)] hover:underline"
+                              class="inline-flex items-center gap-1 text-primary hover:underline"
                             >
                               <span>Send a message</span>
                               <svg
@@ -265,10 +262,10 @@ if (!error) {
                       )}
 
                       {rep.addressCapitol && (
-                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
-                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                        <div class="info-item">
+                          <div class="icon-box-sm">
                             <svg
-                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              class="w-5 h-5 text-accent"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -297,10 +294,10 @@ if (!error) {
                       )}
 
                       {(rep.twitterHandle || rep.facebookId) && (
-                        <div class="flex items-start gap-4 p-4 bg-[var(--color-secondary)] border border-[var(--color-border)]">
-                          <div class="w-10 h-10 flex-shrink-0 bg-[var(--color-civic-navy)] flex items-center justify-center">
+                        <div class="info-item">
+                          <div class="icon-box-sm">
                             <svg
-                              class="w-5 h-5 text-[var(--color-civic-gold)]"
+                              class="w-5 h-5 text-accent"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -321,7 +318,7 @@ if (!error) {
                                   href={`https://twitter.com/${rep.twitterHandle}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
+                                  class="inline-flex items-center gap-2 text-primary hover:underline"
                                 >
                                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -334,7 +331,7 @@ if (!error) {
                                   href={`https://facebook.com/${rep.facebookId}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  class="inline-flex items-center gap-2 text-[var(--color-civic-navy)] hover:underline"
+                                  class="inline-flex items-center gap-2 text-primary hover:underline"
                                 >
                                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -349,7 +346,7 @@ if (!error) {
                     </div>
                   </div>
                 </div>
-              </article>
+              </AstroCard>
 
               <div class="mt-8 animate-fade-up-delay-1">
                 <ContactFlow
@@ -373,10 +370,7 @@ if (!error) {
               </div>
 
               <div class="text-center mt-12 no-print">
-                <a
-                  href="/"
-                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
-                >
+                <a href="/" class="link-back">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       stroke-linecap="round"

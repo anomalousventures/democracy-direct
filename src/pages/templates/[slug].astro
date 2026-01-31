@@ -4,6 +4,8 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
@@ -95,14 +97,14 @@ const description = template ? getCleanDescription(template.body) : "Template no
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
+    <div class="container-page">
       {
         error ? (
-          <div class="max-w-2xl mx-auto text-center">
-            <div class="card-civic">
-              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
                 <svg
-                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  class="w-8 h-8 text-destructive"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -115,22 +117,22 @@ const description = template ? getCleanDescription(template.body) : "Template no
                   />
                 </svg>
               </div>
-              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <h1 class="heading-card-lg">{error}</h1>
               <p class="text-muted-foreground mb-8">
                 The template you're looking for couldn't be found or may have been removed.
               </p>
-              <a href="/templates" class="btn-primary inline-block">
+              <AstroButton href="/templates" variant="civic">
                 Browse Templates
-              </a>
-            </div>
+              </AstroButton>
+            </AstroCard>
           </div>
         ) : (
           template && (
-            <div class="max-w-4xl mx-auto">
+            <div class="container-wide">
               <div class="mb-6">
                 <a
                   href={repBioguideId ? `/templates?rep=${repBioguideId}` : "/templates"}
-                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                  class="link-back"
                 >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -144,11 +146,11 @@ const description = template ? getCleanDescription(template.body) : "Template no
                 </a>
               </div>
 
-              <article class="card-civic">
+              <AstroCard variant="civicLg" class="block">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                   <h1
                     data-testid="template-title"
-                    class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]"
+                    class="text-2xl md:text-3xl font-bold text-primary"
                   >
                     {template.title}
                   </h1>
@@ -164,7 +166,7 @@ const description = template ? getCleanDescription(template.body) : "Template no
                     {template.issueTags.map((tag) => (
                       <span
                         data-testid="issue-tag"
-                        class="px-3 py-1 text-sm bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
+                        class="px-3 py-1 text-sm bg-secondary text-muted-foreground rounded"
                       >
                         {tag}
                       </span>
@@ -194,26 +196,32 @@ const description = template ? getCleanDescription(template.body) : "Template no
                 <div class="flex flex-col gap-4 pt-6 border-t border-border">
                   {repBioguideId ? (
                     <div class="flex flex-col sm:flex-row gap-4">
-                      <a
+                      <AstroButton
                         href={`/rep/${repBioguideId}?template=${template.slug}`}
                         data-testid="use-template-button"
-                        class="btn-primary text-center flex-1 sm:flex-none"
+                        variant="civic"
+                        class="text-center flex-1 sm:flex-none"
                       >
                         Use This Template
-                      </a>
-                      <a href={`/rep/${repBioguideId}`} class="btn-secondary text-center">
+                      </AstroButton>
+                      <AstroButton
+                        href={`/rep/${repBioguideId}`}
+                        variant="civicSecondary"
+                        class="text-center"
+                      >
                         Return Without Template
-                      </a>
+                      </AstroButton>
                     </div>
                   ) : (
                     <div class="space-y-3">
-                      <a
+                      <AstroButton
                         href={`/?template=${template.slug}`}
                         data-testid="use-template-button"
-                        class="btn-primary text-center block sm:inline-block"
+                        variant="civic"
+                        class="text-center block sm:inline-block"
                       >
                         Use This Template
-                      </a>
+                      </AstroButton>
                       <p class="text-sm text-muted-foreground">
                         You'll enter your ZIP code to find your representatives, then customize and
                         send your letter.
@@ -223,32 +231,35 @@ const description = template ? getCleanDescription(template.body) : "Template no
 
                   <div class="flex flex-wrap gap-4 mt-4 pt-4 border-t border-border/50">
                     {user ? (
-                      <a
+                      <AstroButton
                         href={`/templates/fork/${template.slug}`}
                         data-testid="fork-button"
-                        class="btn-secondary text-center"
+                        variant="civicSecondary"
+                        class="text-center"
                       >
                         Fork Template
-                      </a>
+                      </AstroButton>
                     ) : (
-                      <button
+                      <AstroButton
                         type="button"
                         data-testid="fork-button-login"
-                        class="btn-secondary text-center opacity-75"
+                        variant="civicSecondary"
+                        class="text-center opacity-75"
                         onclick="document.querySelector('[data-testid=sign-in-button]')?.click()"
                       >
                         Sign in to Fork
-                      </button>
+                      </AstroButton>
                     )}
 
-                    <button
+                    <AstroButton
                       type="button"
                       data-testid="report-button"
-                      class="btn-secondary text-center text-[var(--color-civic-red)] border-[var(--color-civic-red)]/30 hover:bg-[var(--color-civic-red)]/10"
+                      variant="destructive"
+                      class="text-center"
                       onclick={`window.reportTemplate && window.reportTemplate('${template.slug}')`}
                     >
                       Report
-                    </button>
+                    </AstroButton>
                   </div>
                 </div>
 
@@ -256,13 +267,17 @@ const description = template ? getCleanDescription(template.body) : "Template no
                   <div class="mt-6 pt-6 border-t border-border">
                     <p class="text-sm text-muted-foreground mb-4">You created this template</p>
                     <div class="flex gap-4">
-                      <a href={`/templates/${template.slug}/edit`} class="btn-secondary text-sm">
+                      <AstroButton
+                        href={`/templates/${template.slug}/edit`}
+                        variant="civicSecondary"
+                        size="sm"
+                      >
                         Edit
-                      </a>
+                      </AstroButton>
                     </div>
                   </div>
                 )}
-              </article>
+              </AstroCard>
 
               {template.forkedFrom && (
                 <p class="mt-4 text-sm text-muted-foreground text-center">

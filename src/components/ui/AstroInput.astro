@@ -1,0 +1,58 @@
+---
+import { type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { inputVariants } from "./variants";
+
+type InputVariants = VariantProps<typeof inputVariants>;
+
+interface Props extends InputVariants {
+  class?: string;
+  type?: string;
+  name?: string;
+  id?: string;
+  placeholder?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  readonly?: boolean;
+  autocomplete?: string;
+  maxlength?: number;
+  minlength?: number;
+  pattern?: string;
+}
+
+const {
+  variant,
+  class: className,
+  type = "text",
+  name,
+  id,
+  placeholder,
+  value,
+  required,
+  disabled,
+  readonly,
+  autocomplete,
+  maxlength,
+  minlength,
+  pattern,
+  ...rest
+} = Astro.props;
+---
+
+<input
+  type={type}
+  name={name}
+  id={id}
+  placeholder={placeholder}
+  value={value}
+  required={required}
+  disabled={disabled}
+  readonly={readonly}
+  autocomplete={autocomplete}
+  maxlength={maxlength}
+  minlength={minlength}
+  pattern={pattern}
+  class={cn(inputVariants({ variant }), className)}
+  {...rest}
+/>

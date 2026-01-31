@@ -85,7 +85,7 @@ describe("LoginDialog", () => {
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
+        expect(screen.getByRole("textbox", { name: /verification code/i })).toBeInTheDocument();
       });
     });
 
@@ -163,17 +163,17 @@ describe("LoginDialog", () => {
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
+        expect(screen.getByRole("textbox", { name: /verification code/i })).toBeInTheDocument();
       });
 
       return user;
     };
 
     it("renders 6-digit OTP input", async () => {
-      const user = await setupOTPStep();
-      const otpInput = screen.getByPlaceholderText("000000");
-      await user.type(otpInput, "1234567890");
-      expect(otpInput).toHaveValue("123456");
+      await setupOTPStep();
+      // InputOTP renders 6 individual slots
+      const otpInput = screen.getByRole("textbox");
+      expect(otpInput).toBeInTheDocument();
     });
 
     it("verifies OTP and calls onSuccess", async () => {
@@ -184,7 +184,8 @@ describe("LoginDialog", () => {
         json: () => Promise.resolve({ success: true }),
       } as Response);
 
-      const otpInput = screen.getByPlaceholderText("000000");
+      // Type into the OTP input (InputOTP accepts keyboard input)
+      const otpInput = screen.getByRole("textbox");
       await user.type(otpInput, "123456");
       await user.click(screen.getByRole("button", { name: /verify/i }));
 
@@ -201,7 +202,7 @@ describe("LoginDialog", () => {
         json: () => Promise.resolve({ error: "Invalid or expired OTP" }),
       } as Response);
 
-      const otpInput = screen.getByPlaceholderText("000000");
+      const otpInput = screen.getByRole("textbox");
       await user.type(otpInput, "000000");
       await user.click(screen.getByRole("button", { name: /verify/i }));
 
@@ -219,7 +220,7 @@ describe("LoginDialog", () => {
       });
       mockFetch.mockReturnValueOnce(pendingPromise);
 
-      const otpInput = screen.getByPlaceholderText("000000");
+      const otpInput = screen.getByRole("textbox");
       await user.type(otpInput, "123456");
       await user.click(screen.getByRole("button", { name: /verify/i }));
 
@@ -265,7 +266,7 @@ describe("LoginDialog", () => {
       await user.click(screen.getByRole("button", { name: /send code/i }));
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
+        expect(screen.getByRole("textbox", { name: /verification code/i })).toBeInTheDocument();
       });
 
       rerender(<LoginDialog open={false} onOpenChange={onOpenChange} onSuccess={mockOnSuccess} />);

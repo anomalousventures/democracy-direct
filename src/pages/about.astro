@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import AstroCard from "../components/ui/AstroCard.astro";
 
 export const prerender = false;
 
@@ -12,30 +13,20 @@ const user = Astro.locals.user;
   <Header currentPath="/about" user={user} />
 
   <main id="main-content" class="flex-1">
-    <section class="relative py-16 md:py-24 overflow-hidden">
-      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div
-          class="absolute top-0 right-1/4 w-96 h-96 bg-[var(--color-civic-navy)]/5 rounded-full blur-3xl"
-        >
-        </div>
-        <div
-          class="absolute bottom-0 left-1/4 w-96 h-96 bg-[var(--color-civic-gold)]/10 rounded-full blur-3xl"
-        >
-        </div>
+    <section class="section-page">
+      <div class="backdrop-container" aria-hidden="true">
+        <div class="backdrop-blob-primary top-0 right-1/4"></div>
+        <div class="backdrop-blob-accent bottom-0 left-1/4"></div>
       </div>
 
-      <div class="container mx-auto px-4 relative">
-        <div class="max-w-3xl mx-auto">
-          <div
-            class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-8 animate-fade-up"
-          >
-            <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)]"></span>
+      <div class="container-page relative">
+        <div class="container-medium">
+          <div class="hero-badge mb-8 animate-fade-up">
+            <span class="accent-dot"></span>
             <span>Our Mission</span>
           </div>
 
-          <h1
-            class="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight animate-fade-up-delay-1"
-          >
+          <h1 class="heading-page animate-fade-up-delay-1">
             About <span class="text-gradient">Democracy Direct</span>
           </h1>
 
@@ -48,15 +39,13 @@ const user = Astro.locals.user;
 
     <div class="divider-civic"></div>
 
-    <section class="py-12 md:py-16">
-      <div class="container mx-auto px-4">
-        <div class="max-w-3xl mx-auto">
-          <div class="card-civic mb-8">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
-            >
+    <section class="section-content">
+      <div class="container-page">
+        <div class="container-medium">
+          <AstroCard variant="civicLg" class="mb-8">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -69,21 +58,19 @@ const user = Astro.locals.user;
                 ></path>
               </svg>
             </div>
-            <h2 class="text-2xl font-bold mb-4">The Problem</h2>
-            <p class="text-muted-foreground leading-relaxed">
+            <h2 class="heading-card-lg">The Problem</h2>
+            <p class="text-body">
               Contacting elected representatives is unnecessarily difficult. Finding who represents
               you requires navigating multiple government websites. Representatives don't publish
               email addresses. Most people don't know how to write an effective letter. Existing
               tools require accounts and track usage.
             </p>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic mb-8">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
-            >
+          <AstroCard variant="civicLg" class="mb-8">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -96,20 +83,18 @@ const user = Astro.locals.user;
                 ></path>
               </svg>
             </div>
-            <h2 class="text-2xl font-bold mb-4">Privacy First</h2>
-            <p class="text-muted-foreground leading-relaxed">
+            <h2 class="heading-card-lg">Privacy First</h2>
+            <p class="text-body">
               We believe civic participation should not require surveillance. We don't store your
               email address—when you log in, we hash it using SHA-256 and store only the hash. We
               don't log your ZIP code lookups. We never see your letters.
             </p>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6"
-            >
+          <AstroCard variant="civicLg">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -122,54 +107,47 @@ const user = Astro.locals.user;
                 ></path>
               </svg>
             </div>
-            <h2 class="text-2xl font-bold mb-4">Data Sources</h2>
-            <p class="text-muted-foreground leading-relaxed mb-4">
-              All representative data comes from public sources:
-            </p>
+            <h2 class="heading-card-lg">Data Sources</h2>
+            <p class="text-body mb-4">All representative data comes from public sources:</p>
             <ul class="space-y-3">
-              <li class="flex items-start gap-3">
-                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
-                ></span>
+              <li class="list-item-bullet">
+                <span class="list-bullet"></span>
                 <span class="text-muted-foreground">
                   <a
                     href="https://github.com/unitedstates/congress-legislators"
                     target="_blank"
                     rel="noopener"
-                    class="text-[var(--color-civic-navy)] hover:text-[var(--color-civic-gold)] transition-colors underline underline-offset-2"
+                    class="text-primary hover:text-accent transition-colors underline underline-offset-2"
                   >
                     unitedstates/congress-legislators
                   </a> — Legislator information
                 </span>
               </li>
-              <li class="flex items-start gap-3">
-                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
-                ></span>
+              <li class="list-item-bullet">
+                <span class="list-bullet"></span>
                 <span class="text-muted-foreground">Census Bureau — ZIP-to-district mapping</span>
               </li>
-              <li class="flex items-start gap-3">
-                <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)] mt-2 shrink-0"
-                ></span>
+              <li class="list-item-bullet">
+                <span class="list-bullet"></span>
                 <span class="text-muted-foreground"
                   >Congress.gov — Voting records (coming soon)</span
                 >
               </li>
             </ul>
-            <p class="text-muted-foreground leading-relaxed mt-6">
+            <p class="text-body mt-6">
               See our <a
                 href="/roadmap"
-                class="text-[var(--color-civic-navy)] hover:text-[var(--color-civic-gold)] transition-colors underline underline-offset-2"
+                class="text-primary hover:text-accent transition-colors underline underline-offset-2"
                 >roadmap</a
               > for planned features.
             </p>
-          </div>
+          </AstroCard>
         </div>
       </div>
     </section>
 
-    <section
-      class="py-16 md:py-24 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] relative overflow-hidden"
-    >
-      <div class="absolute inset-0 opacity-10" aria-hidden="true">
+    <section class="section-cta">
+      <div class="cta-grid-pattern" aria-hidden="true">
         <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
@@ -178,17 +156,10 @@ const user = Astro.locals.user;
         </svg>
       </div>
 
-      <div class="container mx-auto px-4 relative">
-        <div class="max-w-3xl mx-auto text-center">
-          <div
-            class="inline-flex items-center justify-center w-16 h-16 bg-[var(--color-civic-gold)]/20 mb-8"
-          >
-            <svg
-              class="w-8 h-8 text-[var(--color-civic-gold)]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+      <div class="container-page relative">
+        <div class="container-medium text-center">
+          <div class="icon-box-accent mb-8">
+            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -198,10 +169,8 @@ const user = Astro.locals.user;
             </svg>
           </div>
 
-          <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[var(--color-civic-cream)]">
-            Get In Touch
-          </h2>
-          <p class="text-[var(--color-civic-cream)]/80 text-lg leading-relaxed mb-8">
+          <h2 class="heading-section text-primary-foreground mb-6">Get In Touch</h2>
+          <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
             Have questions or feedback? We'd love to hear from you. Open an issue on our GitHub
             repository or contribute to make civic engagement even better.
           </p>
@@ -210,7 +179,7 @@ const user = Astro.locals.user;
             href="https://github.com/anomalousventures/democracy-direct"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 text-[var(--color-civic-gold)] hover:text-[var(--color-civic-gold)]/80 transition-colors font-medium"
+            class="link-accent"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path

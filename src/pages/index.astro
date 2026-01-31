@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import AstroCard from "../components/ui/AstroCard.astro";
 import { ZipLookup } from "../components/ZipLookup";
 
 export const prerender = false;
@@ -18,30 +19,20 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
   <Header currentPath="/" user={user} />
 
   <main id="main-content" class="flex-1">
-    <section data-testid="hero" class="relative py-20 md:py-32 overflow-hidden">
-      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div
-          class="absolute top-0 left-1/4 w-96 h-96 bg-[var(--color-civic-navy)]/5 rounded-full blur-3xl"
-        >
-        </div>
-        <div
-          class="absolute bottom-0 right-1/4 w-96 h-96 bg-[var(--color-civic-gold)]/10 rounded-full blur-3xl"
-        >
-        </div>
+    <section data-testid="hero" class="section-hero">
+      <div class="backdrop-container" aria-hidden="true">
+        <div class="backdrop-blob-primary top-0 left-1/4"></div>
+        <div class="backdrop-blob-accent bottom-0 right-1/4"></div>
       </div>
 
-      <div class="container mx-auto px-4 relative">
-        <div class="max-w-3xl mx-auto text-center">
-          <div
-            class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-8 animate-fade-up"
-          >
-            <span class="w-2 h-2 rounded-full bg-[var(--color-civic-gold)]"></span>
+      <div class="container-page relative">
+        <div class="container-medium text-center">
+          <div class="hero-badge mb-8 animate-fade-up">
+            <span class="accent-dot"></span>
             <span>Free • Private • Non-partisan</span>
           </div>
 
-          <h1
-            class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight animate-fade-up-delay-1"
-          >
+          <h1 class="heading-page lg:text-7xl animate-fade-up-delay-1">
             Your Voice,<br />
             <span class="text-gradient">Your Representatives</span>
           </h1>
@@ -62,23 +53,21 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
 
     <div class="divider-civic"></div>
 
-    <section class="py-16 md:py-24">
-      <div class="container mx-auto px-4">
+    <section class="section-default">
+      <div class="container-page">
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-          <p class="text-muted-foreground max-w-2xl mx-auto">
+          <h2 class="heading-section">How It Works</h2>
+          <p class="text-body container-narrow">
             Democracy shouldn't require a civics degree. We make it simple to find and contact your
             elected officials.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <div class="card-civic group hover:-translate-y-1 transition-transform duration-300">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
-            >
+        <div class="grid-features container-xl">
+          <AstroCard variant="civic">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -96,19 +85,17 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Enter Your ZIP</h3>
-            <p class="text-muted-foreground leading-relaxed">
+            <h3 class="heading-card">Enter Your ZIP</h3>
+            <p class="text-body">
               Your ZIP code determines your congressional district. We instantly match you with your
               two senators and one representative.
             </p>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic group hover:-translate-y-1 transition-transform duration-300">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
-            >
+          <AstroCard variant="civic">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -121,19 +108,17 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
                 ></path>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Choose a Template</h3>
-            <p class="text-muted-foreground leading-relaxed">
+            <h3 class="heading-card">Choose a Template</h3>
+            <p class="text-body">
               Browse community-contributed letter templates for common issues, or write your own
               personalized message from scratch.
             </p>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic group hover:-translate-y-1 transition-transform duration-300">
-            <div
-              class="w-14 h-14 bg-[var(--color-civic-navy)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
-            >
+          <AstroCard variant="civic">
+            <div class="icon-box mb-6">
               <svg
-                class="w-7 h-7 text-[var(--color-civic-gold)]"
+                class="w-7 h-7 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -146,20 +131,18 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
                 ></path>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Make Contact</h3>
-            <p class="text-muted-foreground leading-relaxed">
+            <h3 class="heading-card">Make Contact</h3>
+            <p class="text-body">
               Copy your message directly to their contact form, call their office, or print a letter
               to mail. Your choice.
             </p>
-          </div>
+          </AstroCard>
         </div>
       </div>
     </section>
 
-    <section
-      class="py-16 md:py-24 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] relative overflow-hidden"
-    >
-      <div class="absolute inset-0 opacity-10" aria-hidden="true">
+    <section class="section-cta">
+      <div class="cta-grid-pattern" aria-hidden="true">
         <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
@@ -168,17 +151,10 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
         </svg>
       </div>
 
-      <div class="container mx-auto px-4 relative">
-        <div class="max-w-3xl mx-auto text-center">
-          <div
-            class="inline-flex items-center justify-center w-16 h-16 bg-[var(--color-civic-gold)]/20 mb-8"
-          >
-            <svg
-              class="w-8 h-8 text-[var(--color-civic-gold)]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+      <div class="container-page relative">
+        <div class="container-medium text-center">
+          <div class="icon-box-accent mb-8">
+            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -188,19 +164,14 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
             </svg>
           </div>
 
-          <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[var(--color-civic-cream)]">
-            Privacy by Design
-          </h2>
-          <p class="text-[var(--color-civic-cream)]/80 text-lg leading-relaxed mb-8">
+          <h2 class="heading-section text-primary-foreground mb-6">Privacy by Design</h2>
+          <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
             We believe civic participation shouldn't require surveillance. Your ZIP code lookups,
             letters, and personal information are never stored on our servers. Everything happens in
             your browser.
           </p>
 
-          <a
-            href="/privacy"
-            class="inline-flex items-center gap-2 text-[var(--color-civic-gold)] hover:text-[var(--color-civic-gold)]/80 transition-colors font-medium"
-          >
+          <a href="/privacy" class="link-accent">
             <span>Read our privacy policy</span>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
