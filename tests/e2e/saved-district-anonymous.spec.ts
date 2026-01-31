@@ -12,7 +12,7 @@ test.describe("Saved District - Anonymous User", () => {
 
     const saveButton = page.getByTestId("save-district-button");
     await expect(saveButton).toBeVisible();
-    await expect(saveButton).toContainText("Save NY-12");
+    await expect(saveButton).toContainText("Save District");
   });
 
   test("saves district to localStorage when clicked", async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe("Saved District - Anonymous User", () => {
     expect(parsed.district).toBe("12");
   });
 
-  test("shows saved district banner on homepage after saving", async ({ page }) => {
+  test("shows district badge in header after saving", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.setItem(
@@ -43,13 +43,12 @@ test.describe("Saved District - Anonymous User", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    const banner = page.getByTestId("saved-district-banner");
-    await expect(banner).toBeVisible();
-    await expect(banner).toContainText("NY-12");
-    await expect(banner).toContainText("New York");
+    const badge = page.getByTestId("district-badge");
+    await expect(badge).toBeVisible();
+    await expect(badge).toContainText("NY-12");
   });
 
-  test("View My Reps button navigates to correct district", async ({ page }) => {
+  test("View My Reps link in badge dropdown navigates to correct district", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.setItem(
@@ -61,12 +60,15 @@ test.describe("Saved District - Anonymous User", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    const viewRepsButton = page.getByTestId("view-my-reps-button");
-    await expect(viewRepsButton).toBeVisible();
-    await expect(viewRepsButton).toHaveAttribute("href", "/reps/ny/12");
+    const badge = page.getByTestId("district-badge");
+    await badge.click();
+
+    const viewRepsLink = page.getByRole("menuitem", { name: "View My Reps" });
+    await expect(viewRepsLink).toBeVisible();
+    await expect(viewRepsLink).toHaveAttribute("href", "/reps/ny/12");
   });
 
-  test("Change button clears saved district", async ({ page }) => {
+  test("Change District clears saved district", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.setItem(
@@ -78,10 +80,13 @@ test.describe("Saved District - Anonymous User", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    const changeButton = page.getByTestId("change-district-button");
+    const badge = page.getByTestId("district-badge");
+    await badge.click();
+
+    const changeButton = page.getByRole("menuitem", { name: "Change District" });
     await changeButton.click();
 
-    await expect(page.getByTestId("saved-district-banner")).not.toBeVisible();
+    await expect(page.getByTestId("district-badge")).not.toBeVisible();
 
     const stored = await page.evaluate(() => localStorage.getItem("democracy-direct-district"));
     expect(stored).toBeNull();
@@ -107,7 +112,7 @@ test.describe("Saved District - Anonymous User", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    const banner = page.getByTestId("saved-district-banner");
-    await expect(banner).toContainText("WY At-Large");
+    const badge = page.getByTestId("district-badge");
+    await expect(badge).toContainText("WY At-Large");
   });
 });

@@ -45,6 +45,7 @@ interface TemplateFormProps {
     title: string;
     body: string;
     issueTags: string[];
+    isPublic?: boolean;
   };
   onSubmit: (data: {
     title: string;
@@ -70,7 +71,7 @@ export function TemplateForm({
   const [title, setTitle] = useState(initialData?.title || "");
   const [body, setBody] = useState(initialData?.body || "");
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.issueTags || []);
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);

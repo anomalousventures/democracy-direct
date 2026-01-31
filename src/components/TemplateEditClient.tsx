@@ -8,6 +8,7 @@ interface TemplateEditClientProps {
     title: string;
     body: string;
     issueTags: string[];
+    isPublic: boolean;
   };
 }
 
@@ -17,7 +18,7 @@ export function TemplateEditClient({ slug, initialData }: TemplateEditClientProp
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[] }) => {
+    async (data: { title: string; body: string; issueTags: string[]; isPublic?: boolean }) => {
       setIsSubmitting(true);
       setError(null);
 
@@ -85,6 +86,7 @@ export function TemplateEditClient({ slug, initialData }: TemplateEditClientProp
         onSubmit={handleSubmit}
         submitLabel="Save Changes"
         isSubmitting={isSubmitting}
+        isAuthenticated={true}
       />
     </div>
   );

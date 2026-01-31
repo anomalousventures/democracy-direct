@@ -26,6 +26,7 @@ let template: {
   body: string;
   issueTags: string[] | null;
   userId: string | null;
+  isPublic: boolean;
 } | null = null;
 
 let error: string | null = null;
@@ -46,6 +47,7 @@ if (!slug) {
         body: templates.body,
         issueTags: templates.issueTags,
         userId: templates.userId,
+        isPublic: templates.isPublic,
       })
       .from(templates)
       .where(eq(templates.slug, slug))
@@ -132,6 +134,7 @@ if (!slug) {
                       title: template.title,
                       body: template.body,
                       issueTags: template.issueTags || [],
+                      isPublic: template.isPublic,
                     }}
                   />
                 </AstroCard>

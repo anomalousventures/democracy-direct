@@ -118,7 +118,7 @@ if (!error && zipEntry) {
         ) : (
           <>
             <div class="container-wide">
-              <div class="text-center mb-12 animate-fade-up">
+              <div class="text-center mb-8 animate-fade-up">
                 <div class="hero-badge mb-6">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -142,6 +142,17 @@ if (!error && zipEntry) {
                   {zipInfo?.district !== "0" ? `District ${zipInfo?.district}` : "At-Large"}
                 </p>
               </div>
+
+              {zipInfo && (
+                <div class="mb-8 animate-fade-up" style="animation-delay: 50ms">
+                  <SaveDistrictPrompt
+                    client:load
+                    state={zipInfo.state}
+                    district={zipInfo.district}
+                    isLoggedIn={!!user}
+                  />
+                </div>
+              )}
 
               <div class="grid gap-6">
                 {reps.map((rep, index) => (
@@ -273,15 +284,6 @@ if (!error && zipEntry) {
                   </AstroCard>
                 ))}
               </div>
-
-              {zipInfo && (
-                <SaveDistrictPrompt
-                  client:load
-                  state={zipInfo.state}
-                  district={zipInfo.district}
-                  isLoggedIn={!!user}
-                />
-              )}
 
               <div class="text-center mt-12">
                 <a href="/" class="link-back">

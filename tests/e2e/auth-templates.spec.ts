@@ -1,9 +1,8 @@
 import { test, expect } from "./fixtures/auth";
+import { E2E_PRIVATE_TEMPLATE_SLUG } from "./global-setup";
 
 test.describe("Authenticated Template Creation", () => {
-  test("authenticated user sees isPublic checkbox", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("authenticated user sees isPublic checkbox", async ({ userPage }) => {
     await userPage.goto("/templates/new");
     await userPage.waitForLoadState("domcontentloaded");
 
@@ -19,9 +18,7 @@ test.describe("Authenticated Template Creation", () => {
     await expect(checkbox).not.toBeVisible();
   });
 
-  test("isPublic checkbox is checked by default", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("isPublic checkbox is checked by default", async ({ userPage }) => {
     await userPage.goto("/templates/new");
     await userPage.waitForLoadState("domcontentloaded");
 
@@ -30,14 +27,16 @@ test.describe("Authenticated Template Creation", () => {
     await expect(checkbox).toHaveAttribute("data-state", "checked");
   });
 
-  test("user can toggle isPublic checkbox", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("user can toggle isPublic checkbox", async ({ userPage }) => {
     await userPage.goto("/templates/new");
-    await userPage.waitForLoadState("domcontentloaded");
+    await userPage.waitForLoadState("load");
 
     const checkbox = userPage.locator("[data-testid='is-public-checkbox']");
+    await expect(checkbox).toBeVisible();
     await expect(checkbox).toHaveAttribute("data-state", "checked");
+
+    // Wait for hydration - the checkbox needs React to be fully loaded
+    await userPage.waitForTimeout(1000);
 
     await checkbox.click();
     await expect(checkbox).toHaveAttribute("data-state", "unchecked");
@@ -48,9 +47,7 @@ test.describe("Authenticated Template Creation", () => {
 });
 
 test.describe("My Templates Page", () => {
-  test("shows visibility badge on templates", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("shows visibility badge on templates", async ({ userPage }) => {
     await userPage.goto("/templates/mine");
     await userPage.waitForLoadState("networkidle");
 
@@ -67,9 +64,7 @@ test.describe("My Templates Page", () => {
     }
   });
 
-  test("shows both status and visibility badges", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("shows both status and visibility badges", async ({ userPage }) => {
     await userPage.goto("/templates/mine");
     await userPage.waitForLoadState("networkidle");
 
@@ -83,16 +78,15 @@ test.describe("My Templates Page", () => {
     }
   });
 
-  test("user can see My Templates in header when logged in", async ({
-    userPage,
-    userSessionId,
-  }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("user can see My Templates in user menu when logged in", async ({ userPage }) => {
     await userPage.goto("/");
     await userPage.waitForLoadState("networkidle");
 
-    const myTemplatesLink = userPage.getByRole("link", { name: /my templates/i });
+    const userMenuTrigger = userPage.locator("[data-testid='user-menu-trigger']");
+    await expect(userMenuTrigger).toBeVisible();
+    await userMenuTrigger.click();
+
+    const myTemplatesLink = userPage.getByRole("menuitem", { name: /my templates/i });
     await expect(myTemplatesLink).toBeVisible();
   });
 
@@ -100,18 +94,16 @@ test.describe("My Templates Page", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const myTemplatesLink = page.getByRole("link", { name: /my templates/i });
-    await expect(myTemplatesLink).not.toBeVisible();
+    const userMenuTrigger = page.locator("[data-testid='user-menu-trigger']");
+    await expect(userMenuTrigger).not.toBeVisible();
+
+    const signInButton = page.locator("[data-testid='sign-in-button']");
+    await expect(signInButton).toBeVisible();
   });
 });
 
 test.describe("Template Fork Page", () => {
-  test("authenticated user sees isPublic checkbox on fork page", async ({
-    userPage,
-    userSessionId,
-  }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("authenticated user sees isPublic checkbox on fork page", async ({ userPage }) => {
     await userPage.goto("/templates");
     await userPage.waitForLoadState("networkidle");
 
@@ -133,17 +125,22 @@ test.describe("Template Fork Page", () => {
 });
 
 test.describe("Private Template Access Control", () => {
-  test("non-owner cannot access private template directly", async ({ page }) => {
-    const response = await page.goto("/templates/nonexistent-private-template-xyz");
+  test("owner can access their private template", async ({ adminPage }) => {
+    const response = await adminPage.goto(`/templates/${E2E_PRIVATE_TEMPLATE_SLUG}`);
+    expect(response?.status()).toBe(200);
+  });
+
+  test("non-owner gets 404 for private template", async ({ userPage }) => {
+    const response = await userPage.goto(`/templates/${E2E_PRIVATE_TEMPLATE_SLUG}`);
     expect(response?.status()).toBe(404);
   });
 
-  test("owner can view their own templates on /templates/mine", async ({
-    userPage,
-    userSessionId,
-  }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
+  test("anonymous user gets 404 for private template", async ({ page }) => {
+    const response = await page.goto(`/templates/${E2E_PRIVATE_TEMPLATE_SLUG}`);
+    expect(response?.status()).toBe(404);
+  });
 
+  test("owner can view their own templates on /templates/mine", async ({ userPage }) => {
     await userPage.goto("/templates/mine");
     await userPage.waitForLoadState("networkidle");
 
@@ -152,9 +149,7 @@ test.describe("Private Template Access Control", () => {
 });
 
 test.describe("Template Edit and Delete", () => {
-  test("edit button visible on user templates", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("edit button visible on user templates", async ({ userPage }) => {
     await userPage.goto("/templates/mine");
     await userPage.waitForLoadState("networkidle");
 
@@ -167,9 +162,7 @@ test.describe("Template Edit and Delete", () => {
     }
   });
 
-  test("delete button visible on user templates", async ({ userPage, userSessionId }) => {
-    test.skip(!userSessionId, "Requires user session - run 'pnpm seed:e2e' first");
-
+  test("delete button visible on user templates", async ({ userPage }) => {
     await userPage.goto("/templates/mine");
     await userPage.waitForLoadState("networkidle");
 
