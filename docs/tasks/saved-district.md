@@ -9,7 +9,7 @@ Users who have identified their congressional district through ZIP lookup or map
 ## Research Completed
 
 - [x] Review current user schema for existing district fields
-  - `savedZip` and `savedDistrict` already exist in users table
+  - `savedDistrict` exists in users table (`savedZip` was removed for privacy)
   - **Decision**: Only use `savedDistrict` + add `savedState` - do NOT save ZIP (privacy)
 - [x] Determine if we need `savedState` or can derive from ZIP
   - **Need `savedState`** - can't derive without ZIP, and we're not storing ZIP

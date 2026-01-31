@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,20 @@ import {
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { useAnalytics } from "@/hooks/useAnalytics";
+
+declare global {
+  interface Window {
+    TURNSTILE_SITE_KEY?: string;
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void }
+      ) => string;
+      remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
 
 const FLAG_REASONS = [
   { value: "spam", label: "Spam or promotional content" },
@@ -34,7 +48,48 @@ export function TemplateReportButton({
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
   const { capture } = useAnalytics();
+
+  const renderTurnstile = useCallback(() => {
+    if (turnstileRef.current && window.turnstile && window.TURNSTILE_SITE_KEY) {
+      if (widgetIdRef.current) {
+        window.turnstile.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: window.TURNSTILE_SITE_KEY,
+        callback: (token: string) => setTurnstileToken(token),
+      });
+    }
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken(null);
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedReason("");
+      setDetails("");
+      setTurnstileToken(null);
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(renderTurnstile, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, renderTurnstile]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -42,6 +97,11 @@ export function TemplateReportButton({
 
       if (!selectedReason) {
         toast.error("Please select a reason");
+        return;
+      }
+
+      if (!turnstileToken) {
+        toast.error("Please complete the verification");
         return;
       }
 
@@ -54,12 +114,14 @@ export function TemplateReportButton({
           body: JSON.stringify({
             reason: selectedReason,
             details: details.trim() || undefined,
+            turnstileToken,
           }),
         });
 
         const result = await response.json();
 
         if (!response.ok) {
+          resetTurnstile();
           throw new Error(result.error || "Failed to report template");
         }
 
@@ -70,8 +132,6 @@ export function TemplateReportButton({
 
         toast.success(result.message || "Template reported successfully");
         setIsOpen(false);
-        setSelectedReason("");
-        setDetails("");
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to report template";
         toast.error(message);
@@ -79,7 +139,7 @@ export function TemplateReportButton({
         setIsSubmitting(false);
       }
     },
-    [templateSlug, selectedReason, details, capture]
+    [templateSlug, selectedReason, details, turnstileToken, capture, resetTurnstile]
   );
 
   return (
@@ -135,6 +195,12 @@ export function TemplateReportButton({
               />
             </div>
 
+            <div
+              ref={turnstileRef}
+              data-testid="report-turnstile-widget"
+              className="flex justify-center"
+            />
+
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
@@ -144,7 +210,7 @@ export function TemplateReportButton({
                 variant="destructive"
                 loading={isSubmitting}
                 loadingText="Reporting..."
-                disabled={!selectedReason}
+                disabled={!selectedReason || !turnstileToken}
               >
                 Submit Report
               </LoadingButton>

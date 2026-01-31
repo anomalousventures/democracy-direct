@@ -65,6 +65,7 @@ export const users = pgTable(
     trustLevel: integer("trust_level").notNull().default(0),
     approvedTemplatesCount: integer("approved_templates_count").notNull().default(0),
     savedDistrict: varchar("saved_district", { length: 5 }),
+    savedState: varchar("saved_state", { length: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
