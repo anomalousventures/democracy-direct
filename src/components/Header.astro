@@ -1,68 +1,68 @@
 ---
-import { AuthButton } from "./AuthButton";
+import { UserMenu } from "./UserMenu";
 import { isAdmin } from "@/lib/trust-level";
 
 interface Props {
   currentPath?: string;
-  user: { id: string; trustLevel?: number } | null;
+  user: {
+    id: string;
+    trustLevel?: number;
+    savedState?: string | null;
+    savedDistrict?: string | null;
+  } | null;
 }
 
 const { currentPath = "/", user } = Astro.props;
 
 const showAdminLink = isAdmin(user);
 
-const navLinks = [
+const publicNavLinks = [
   { href: "/about", label: "About" },
   { href: "/templates", label: "Templates" },
 ];
+
+const savedState = user?.savedState ?? null;
+const savedDistrict = user?.savedDistrict ?? null;
 ---
 
 <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
   <div class="container mx-auto px-4 py-4">
     <nav class="flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 bg-[var(--color-civic-navy)] flex items-center justify-center">
-          <span
-            class="text-[var(--color-civic-gold)] text-xl font-bold"
-            style="font-family: var(--font-display)">D</span
-          >
-        </div>
-        <span class="font-semibold text-[var(--color-civic-navy)] hidden sm:inline"
-          >Democracy Direct</span
-        >
-      </a>
+      <div class="flex items-center gap-4">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-primary flex items-center justify-center">
+            <span class="text-accent text-xl font-bold" style="font-family: var(--font-display)"
+              >D</span
+            >
+          </div>
+          <span class="font-semibold text-primary hidden sm:inline">Democracy Direct</span>
+        </a>
+      </div>
       <div class="flex items-center gap-6">
-        {
-          navLinks.map((link) => (
-            <a
-              href={link.href}
-              class:list={[
-                "text-sm transition-colors",
-                currentPath === link.href
-                  ? "text-[var(--color-civic-navy)] font-medium"
-                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
-              ]}
-            >
-              {link.label}
-            </a>
-          ))
-        }
-        {
-          showAdminLink && (
-            <a
-              href="/admin"
-              class:list={[
-                "text-sm transition-colors",
-                currentPath.startsWith("/admin")
-                  ? "text-[var(--color-civic-navy)] font-medium"
-                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
-              ]}
-            >
-              Admin
-            </a>
-          )
-        }
-        <AuthButton isLoggedIn={!!user} client:load />
+        <div class="hidden md:flex items-center gap-6">
+          {
+            publicNavLinks.map((link) => (
+              <a
+                href={link.href}
+                class:list={[
+                  "text-sm transition-colors",
+                  currentPath === link.href
+                    ? "text-primary font-medium"
+                    : "text-muted-foreground hover:text-primary",
+                ]}
+              >
+                {link.label}
+              </a>
+            ))
+          }
+        </div>
+        <UserMenu
+          client:load
+          isLoggedIn={!!user}
+          savedState={savedState}
+          savedDistrict={savedDistrict}
+          isAdmin={showAdminLink}
+        />
       </div>
     </nav>
   </div>

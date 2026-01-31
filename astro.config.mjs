@@ -9,6 +9,7 @@ import cloudflare from "@astrojs/cloudflare";
 // https://astro.build/config
 export default defineConfig({
   site: "https://democracy-direct.com",
+  output: "server",
   integrations: [
     react(),
     sitemap({
@@ -30,8 +31,8 @@ export default defineConfig({
         // https://github.com/withastro/astro/issues/12824
         ...(process.env.NODE_ENV === "production" && {
           "react-dom/server": "react-dom/server.edge",
+          crypto: "node:crypto",
         }),
-        crypto: "node:crypto",
         events: "node:events",
         util: "node:util",
         url: "node:url",

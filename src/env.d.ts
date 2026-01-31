@@ -24,7 +24,17 @@ export interface Env {
   CONGRESS_API_KEY?: string;
 }
 
+interface PostHogInstance {
+  capture: (event: string, properties?: Record<string, unknown>) => void;
+  identify: (distinctId: string, properties?: Record<string, unknown>) => void;
+  reset: () => void;
+}
+
 declare global {
+  interface Window {
+    posthog?: PostHogInstance;
+  }
+
   namespace App {
     interface Locals extends Runtime {
       user: SessionUser | null;

@@ -4,6 +4,8 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroBadge from "@/components/ui/AstroBadge.astro";
 import { createDb } from "@/db/client";
 import { users, templates } from "@/db/schema";
 import { desc, count, inArray } from "drizzle-orm";
@@ -82,14 +84,16 @@ function formatDate(date: Date): string {
   });
 }
 
-function getTrustLevelBadge(level: number): { label: string; color: string } {
-  const badges: Record<number, { label: string; color: string }> = {
-    [TRUST_LEVELS.BANNED]: { label: "Banned", color: "bg-red-100 text-red-700" },
-    [TRUST_LEVELS.NEW_USER]: { label: "New User", color: "bg-gray-100 text-gray-700" },
-    [TRUST_LEVELS.TRUSTED]: { label: "Trusted", color: "bg-blue-100 text-blue-700" },
-    [TRUST_LEVELS.ADMIN]: { label: "Admin", color: "bg-purple-100 text-purple-700" },
+type BadgeVariant = "destructive" | "secondary" | "default" | "outline" | "success" | "warning";
+
+function getTrustLevelBadge(level: number): { label: string; variant: BadgeVariant } {
+  const badges: Record<number, { label: string; variant: BadgeVariant }> = {
+    [TRUST_LEVELS.BANNED]: { label: "Banned", variant: "destructive" },
+    [TRUST_LEVELS.NEW_USER]: { label: "New User", variant: "secondary" },
+    [TRUST_LEVELS.TRUSTED]: { label: "Trusted", variant: "default" },
+    [TRUST_LEVELS.ADMIN]: { label: "Admin", variant: "outline" },
   };
-  return badges[level] ?? { label: `Level ${level}`, color: "bg-gray-100 text-gray-700" };
+  return badges[level] ?? { label: `Level ${level}`, variant: "secondary" };
 }
 
 function truncateId(id: string): string {
@@ -102,16 +106,14 @@ function truncateId(id: string): string {
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
+    <div class="container-page">
+      <div class="container-xl">
+        <div class="flex-between mb-8">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
-              User Management
-            </h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-primary">User Management</h1>
             <p class="text-muted-foreground mt-1">{userItems.length} users</p>
           </div>
-          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+          <AstroButton href="/admin" variant="secondary">Back to Dashboard</AstroButton>
         </div>
 
         <div class="mb-6">
@@ -120,47 +122,63 @@ function truncateId(id: string): string {
             type="text"
             id="user-search"
             placeholder="Search by user ID..."
-            class="w-full max-w-md px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-[var(--color-civic-navy)] focus:border-transparent"
+            class="w-full max-w-md px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
-        <div data-testid="user-list" class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-border">
-              <tr>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">User ID</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Trust Level</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Templates</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Approved</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Joined</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+        <div
+          data-testid="user-list"
+          class="relative w-full overflow-auto rounded-lg border border-border"
+        >
+          <table class="w-full caption-bottom text-sm">
+            <thead class="[&_tr]:border-b">
+              <tr class="border-b transition-colors hover:bg-muted/50">
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >User ID</th
+                >
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >Trust Level</th
+                >
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >Templates</th
+                >
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >Approved</th
+                >
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >Joined</th
+                >
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                  >Actions</th
+                >
               </tr>
             </thead>
-            <tbody class="divide-y divide-border" id="user-tbody">
+            <tbody class="[&_tr:last-child]:border-0" id="user-tbody">
               {
                 userItems.map((u) => {
                   const trust = getTrustLevelBadge(u.trustLevel);
                   return (
-                    <tr data-testid="user-row" data-user-id={u.id} class="hover:bg-gray-50">
-                      <td class="px-4 py-3 text-sm font-mono" title={u.id}>
+                    <tr
+                      data-testid="user-row"
+                      data-user-id={u.id}
+                      class="border-b transition-colors hover:bg-muted/50"
+                    >
+                      <td class="p-4 align-middle font-mono text-sm" title={u.id}>
                         {truncateId(u.id)}
                       </td>
-                      <td class="px-4 py-3">
-                        <span
-                          class={`px-2 py-1 text-xs rounded ${trust.color}`}
-                          data-testid="trust-badge"
-                        >
+                      <td class="p-4 align-middle">
+                        <AstroBadge variant={trust.variant} data-testid="trust-badge">
                           {trust.label}
-                        </span>
+                        </AstroBadge>
                       </td>
-                      <td class="px-4 py-3 text-sm">{u.templateCount}</td>
-                      <td class="px-4 py-3 text-sm">{u.approvedTemplatesCount}</td>
-                      <td class="px-4 py-3 text-sm text-muted-foreground">
+                      <td class="p-4 align-middle">{u.templateCount}</td>
+                      <td class="p-4 align-middle">{u.approvedTemplatesCount}</td>
+                      <td class="p-4 align-middle text-muted-foreground">
                         {formatDate(u.createdAt)}
                       </td>
-                      <td class="px-4 py-3">
+                      <td class="p-4 align-middle">
                         <select
-                          class="text-sm border border-border rounded px-2 py-1 focus:ring-2 focus:ring-[var(--color-civic-navy)] trust-select"
+                          class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 trust-select"
                           data-testid="trust-select"
                           aria-label={`Change trust level for user ${truncateId(u.id)}`}
                         >

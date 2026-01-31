@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 
 declare global {
@@ -203,6 +204,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
 
             <LoadingButton
               type="submit"
+              variant="civic"
               className="w-full"
               loading={isLoading}
               loadingText="Sending..."
@@ -237,22 +239,30 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
         ) : (
           <form
             onSubmit={handleOtpSubmit}
-            className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200"
+            className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200 text-center"
           >
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification Code</Label>
-              <Input
+            <div className="space-y-3">
+              <Label htmlFor="otp" className="block">
+                Verification Code
+              </Label>
+              <InputOTP
                 id="otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="000000"
+                maxLength={6}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(value) => setOtp(value)}
                 disabled={isLoading}
                 autoComplete="one-time-code"
-                className="text-center text-2xl tracking-widest font-mono"
-              />
+                containerClassName="justify-center"
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             {error && (
@@ -261,19 +271,26 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               </p>
             )}
 
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
-                Back
-              </Button>
+            <div className="flex flex-col gap-2 pt-2">
               <LoadingButton
                 type="submit"
-                className="flex-1"
+                variant="civic"
+                className="w-full"
                 loading={isLoading}
                 loadingText="Verifying..."
                 disabled={otp.length !== 6}
               >
                 Verify
               </LoadingButton>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleBack}
+                disabled={isLoading}
+                className="w-full text-muted-foreground"
+              >
+                Back
+              </Button>
             </div>
           </form>
         )}

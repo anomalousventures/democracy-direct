@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroAlert from "@/components/ui/AstroAlert.astro";
 import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
 import { templates, legislators } from "@/db/schema";
@@ -70,18 +72,18 @@ try {
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl mx-auto">
+    <div class="container-page">
+      <div class="container-wide">
         {
           repBioguideId && repName && (
-            <div class="mb-6 p-4 bg-[var(--color-civic-gold)]/10 border border-[var(--color-civic-gold)]/30 rounded-md">
+            <AstroAlert variant="info" class="mb-6">
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p class="text-sm text-[var(--color-civic-navy)]">
+                <p class="text-sm text-primary">
                   Choosing a template to contact <span class="font-semibold">{repName}</span>
                 </p>
                 <a
                   href={`/rep/${repBioguideId}`}
-                  class="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-civic-navy)] hover:text-[var(--color-civic-gold)] transition-colors"
+                  class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-accent transition-colors"
                 >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -94,19 +96,17 @@ try {
                   Return without template
                 </a>
               </div>
-            </div>
+            </AstroAlert>
           )
         }
 
         <div class="text-center mb-12">
-          <h1 class="text-3xl md:text-4xl font-bold mb-4 text-[var(--color-civic-navy)]">
-            Letter Templates
-          </h1>
-          <p class="text-muted-foreground max-w-2xl mx-auto mb-6">
+          <h1 class="heading-section">Letter Templates</h1>
+          <p class="text-body max-w-2xl mx-auto mb-6">
             Browse community-contributed letter templates for common issues. Use them as a starting
             point or inspiration for your own message to Congress.
           </p>
-          <a href="/templates/new" class="btn-primary inline-block"> Create New Template </a>
+          <AstroButton href="/templates/new">Create New Template</AstroButton>
         </div>
 
         <div data-testid="template-list">

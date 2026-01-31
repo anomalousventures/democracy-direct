@@ -35,7 +35,7 @@ export function LetterPreview({
   return (
     <div
       data-testid="print-preview"
-      className={`print-preview bg-white border border-[var(--color-border)] p-8 min-h-[400px] font-serif ${className}`}
+      className={`print-preview bg-white border border-border p-8 min-h-[400px] font-serif ${className}`}
     >
       <div className="space-y-6">
         {hasReturnAddress && (

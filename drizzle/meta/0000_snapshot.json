@@ -928,15 +928,15 @@
           "notNull": true,
           "default": 0
         },
-        "saved_zip": {
-          "name": "saved_zip",
+        "saved_district": {
+          "name": "saved_district",
           "type": "varchar(5)",
           "primaryKey": false,
           "notNull": false
         },
-        "saved_district": {
-          "name": "saved_district",
-          "type": "varchar(5)",
+        "saved_state": {
+          "name": "saved_state",
+          "type": "varchar(2)",
           "primaryKey": false,
           "notNull": false
         },

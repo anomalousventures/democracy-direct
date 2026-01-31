@@ -16,9 +16,11 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete | Post-deploy smoke tests + Discord alerts        |
 | [Data Refresh Optimization](./data-refresh-optimization.md) | Complete | Optimize import scripts + Discord notifications |
 | [Public Roadmap](./public-roadmap.md)                       | Complete | Public-facing feature roadmap page              |
-| [Saved District](./saved-district.md)                       | Ready    | Save district to user profile                   |
+| [Saved District](./saved-district.md)                       | Complete | Save district to user profile                   |
 | [SEO & Social Sharing](./seo-social.md)                     | Complete | Optimize meta tags and social sharing           |
-| [Share Buttons](./share-buttons.md)                         | Ready    | Add share functionality to pages                |
+| [Share Buttons](./share-buttons.md)                         | Complete | Add share functionality to pages                |
+| [Template Descriptions](./template-descriptions.md)         | Ready    | Add short descriptions to templates             |
+| [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Ready    | Add rep and template pages to sitemap           |
 | [Voting Records](./voting-records.md)                       | Ready    | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready    | Bill tracking and summaries                     |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready    | Performance, a11y, SEO optimization             |
@@ -27,6 +29,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
 | [Campaign Finance](./campaign-finance.md)                   | Ready    | ProPublica Campaign Finance API integration     |
 | [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
+| [State Legislators](./state-legislators.md)                 | Research | Add state-level representatives                 |
+| [Local Officials](./local-officials.md)                     | Research | Add mayors, city council, school boards         |
 
 ## Suggested Implementation Order
 
@@ -41,6 +45,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 1. **SEO & Social Sharing** - Simple meta tag updates
 2. **Share Buttons** - Standalone component, no backend
 3. **Saved District** - Schema exists, clear scope
+4. **Template Descriptions** - Short summaries for templates
+5. **Sitemap Dynamic Pages** - Add rep/template pages for SEO
 
 ### Phase 2: Congress Data
 
@@ -56,6 +62,11 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 3. **Campaign Finance** - ProPublica Campaign Finance API
 4. **District Map** - MapLibre + TIGERweb integration
 
+### Phase 4: Expansion
+
+1. **State Legislators** - Add state senate and state house/assembly members
+2. **Local Officials** - Add mayors, city council, county commissioners, school boards
+
 ## External API Summary
 
 | API          | Tasks Using It                         | Rate Limit | Status                                 |
@@ -64,6 +75,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | Senate.gov   | Voting Records (Senate)                | None       | Active (XML, no key needed)            |
 | ProPublica   | Campaign Finance                       | 5,000/day  | Active (key via email request)         |
 | TIGERweb     | District Map                           | None       | Active (no key needed)                 |
+| Open States  | State Legislators                      | 100/min    | Needs research (free tier available)   |
+| Google Civic | Local Officials                        | 25,000/day | Needs research (has gaps in coverage)  |
 
 ## How to Use
 

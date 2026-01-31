@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { title, body: templateBody, issueTags, turnstileToken } = parseResult.data;
+  const { title, body: templateBody, issueTags, turnstileToken, isPublic } = parseResult.data;
 
   if (!title || !templateBody) {
     return badRequest("Title and body are required");
@@ -85,6 +85,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const slug = generateSlug(title);
 
+    const templateIsPublic = user ? (isPublic ?? true) : true;
+
     const [newTemplate] = await db
       .insert(templates)
       .values({
@@ -93,7 +95,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         userId: user?.id ?? null,
-        isPublic: true,
+        isPublic: templateIsPublic,
         moderationStatus: moderation.status,
         moderationScores: moderation.scores,
       })

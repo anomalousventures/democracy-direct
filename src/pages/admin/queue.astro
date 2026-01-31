@@ -4,6 +4,9 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroBadge from "@/components/ui/AstroBadge.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -73,12 +76,14 @@ function formatDate(date: Date): string {
   });
 }
 
-function getStatusBadge(status: string): { label: string; color: string } {
-  const badges: Record<string, { label: string; color: string }> = {
-    pending: { label: "Pending Review", color: "bg-yellow-100 text-yellow-700" },
-    flagged: { label: "Flagged", color: "bg-red-100 text-red-700" },
+type BadgeVariant = "destructive" | "secondary" | "default" | "outline" | "success" | "warning";
+
+function getStatusBadge(status: string): { label: string; variant: BadgeVariant } {
+  const badges: Record<string, { label: string; variant: BadgeVariant }> = {
+    pending: { label: "Pending Review", variant: "warning" },
+    flagged: { label: "Flagged", variant: "destructive" },
   };
-  return badges[status] ?? { label: status, color: "bg-gray-100 text-gray-700" };
+  return badges[status] ?? { label: status, variant: "secondary" };
 }
 
 function formatScores(scores: Record<string, number> | null): string {
@@ -96,18 +101,16 @@ function formatScores(scores: Record<string, number> | null): string {
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
+    <div class="container-page">
+      <div class="container-xl">
+        <div class="flex-between mb-8">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
-              Moderation Queue
-            </h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-primary">Moderation Queue</h1>
             <p class="text-muted-foreground mt-1">
               {queueItems.length} items awaiting review
             </p>
           </div>
-          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+          <AstroButton href="/admin" variant="secondary">Back to Dashboard</AstroButton>
         </div>
 
         <div data-testid="queue-items" class="space-y-6">
@@ -116,20 +119,14 @@ function formatScores(scores: Record<string, number> | null): string {
               queueItems.map((item) => {
                 const status = getStatusBadge(item.moderationStatus);
                 return (
-                  <article data-testid="queue-item" class="card-civic" data-template-id={item.id}>
+                  <AstroCard variant="civic" data-testid="queue-item" data-template-id={item.id}>
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
                       <div class="flex-1">
                         <div class="flex items-center gap-3 mb-2">
-                          <h2 class="text-xl font-semibold text-[var(--color-civic-navy)]">
-                            {item.title}
-                          </h2>
-                          <span class={`px-2 py-1 text-xs rounded ${status.color}`}>
-                            {status.label}
-                          </span>
+                          <h2 class="text-xl font-semibold text-primary">{item.title}</h2>
+                          <AstroBadge variant={status.variant}>{status.label}</AstroBadge>
                           {item.flagCount > 0 && (
-                            <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
-                              {item.flagCount} flags
-                            </span>
+                            <AstroBadge variant="destructive">{item.flagCount} flags</AstroBadge>
                           )}
                         </div>
                         <p class="text-muted-foreground whitespace-pre-wrap">
@@ -148,25 +145,27 @@ function formatScores(scores: Record<string, number> | null): string {
                         Created {formatDate(item.createdAt)}
                       </div>
                       <div class="flex gap-2">
-                        <button
-                          type="button"
-                          class="btn-primary text-sm bg-green-600 hover:bg-green-700 moderation-btn"
+                        <AstroButton
+                          variant="success"
+                          size="sm"
+                          class="moderation-btn"
                           data-testid="approve-button"
                           data-action="approve"
                         >
                           Approve
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-secondary text-sm text-red-600 hover:bg-red-50 moderation-btn"
+                        </AstroButton>
+                        <AstroButton
+                          variant="destructive"
+                          size="sm"
+                          class="moderation-btn"
                           data-testid="reject-button"
                           data-action="reject"
                         >
                           Reject
-                        </button>
+                        </AstroButton>
                       </div>
                     </div>
-                  </article>
+                  </AstroCard>
                 );
               })
             ) : (

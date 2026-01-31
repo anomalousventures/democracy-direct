@@ -4,6 +4,9 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroBadge from "@/components/ui/AstroBadge.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -21,6 +24,7 @@ let userTemplates: {
   title: string;
   body: string;
   issueTags: string[] | null;
+  isPublic: boolean;
   moderationStatus: string;
   viewCount: number;
   createdAt: Date;
@@ -37,6 +41,7 @@ try {
       title: templates.title,
       body: templates.body,
       issueTags: templates.issueTags,
+      isPublic: templates.isPublic,
       moderationStatus: templates.moderationStatus,
       viewCount: templates.viewCount,
       createdAt: templates.createdAt,
@@ -53,16 +58,18 @@ function truncateBody(body: string, maxLength: number = 100): string {
   return body.slice(0, maxLength).trim() + "...";
 }
 
-function getStatusBadge(status: string): { label: string; color: string } {
+type BadgeVariant = "destructive" | "secondary" | "default" | "outline" | "success" | "warning";
+
+function getStatusBadge(status: string): { label: string; variant: BadgeVariant } {
   switch (status) {
     case "approved":
-      return { label: "Published", color: "bg-green-100 text-green-700" };
+      return { label: "Published", variant: "success" };
     case "pending":
-      return { label: "Under Review", color: "bg-yellow-100 text-yellow-700" };
+      return { label: "Under Review", variant: "warning" };
     case "rejected":
-      return { label: "Rejected", color: "bg-red-100 text-red-700" };
+      return { label: "Rejected", variant: "destructive" };
     default:
-      return { label: status, color: "bg-gray-100 text-gray-700" };
+      return { label: status, variant: "secondary" };
   }
 }
 
@@ -79,16 +86,14 @@ function formatDate(date: Date): string {
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
+    <div class="container-page">
+      <div class="container-wide">
+        <div class="flex-between mb-8">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
-              My Templates
-            </h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-primary">My Templates</h1>
             <p class="text-muted-foreground mt-1">Manage your letter templates</p>
           </div>
-          <a href="/templates/new" class="btn-primary">Create New</a>
+          <AstroButton href="/templates/new">Create New</AstroButton>
         </div>
 
         <div data-testid="user-templates" class="space-y-6">
@@ -97,19 +102,20 @@ function formatDate(date: Date): string {
               userTemplates.map((template) => {
                 const status = getStatusBadge(template.moderationStatus);
                 return (
-                  <article data-testid="user-template-card" class="card-civic">
+                  <AstroCard variant="civic" data-testid="user-template-card">
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                       <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                          <h2 class="text-xl font-semibold text-[var(--color-civic-navy)]">
-                            {template.title}
-                          </h2>
-                          <span
-                            class={`px-2 py-1 text-xs rounded ${status.color}`}
-                            data-testid="template-status"
-                          >
+                        <div class="flex items-center gap-3 mb-2 flex-wrap">
+                          <h2 class="text-xl font-semibold text-primary">{template.title}</h2>
+                          <AstroBadge variant={status.variant} data-testid="template-status">
                             {status.label}
-                          </span>
+                          </AstroBadge>
+                          <AstroBadge
+                            variant={template.isPublic ? "outline" : "secondary"}
+                            data-testid="template-visibility"
+                          >
+                            {template.isPublic ? "Public" : "Private"}
+                          </AstroBadge>
                         </div>
                         <p class="text-muted-foreground line-clamp-2">
                           {truncateBody(template.body)}
@@ -126,36 +132,41 @@ function formatDate(date: Date): string {
                       </div>
                       <div class="flex gap-2">
                         {template.moderationStatus === "approved" && (
-                          <a href={`/templates/${template.slug}`} class="btn-secondary text-sm">
+                          <AstroButton
+                            href={`/templates/${template.slug}`}
+                            variant="secondary"
+                            size="sm"
+                          >
                             View
-                          </a>
+                          </AstroButton>
                         )}
-                        <a
+                        <AstroButton
                           href={`/templates/${template.slug}/edit`}
-                          class="btn-secondary text-sm"
+                          variant="secondary"
+                          size="sm"
                           data-testid="edit-template-button"
                         >
                           Edit
-                        </a>
-                        <button
-                          type="button"
-                          class="btn-secondary text-sm text-red-600 hover:bg-red-50"
+                        </AstroButton>
+                        <AstroButton
+                          variant="destructive"
+                          size="sm"
                           data-testid="delete-template-button"
                           data-template-slug={template.slug}
                           onclick={`window.confirmDeleteTemplate && window.confirmDeleteTemplate('${template.slug}')`}
                         >
                           Delete
-                        </button>
+                        </AstroButton>
                       </div>
                     </div>
-                  </article>
+                  </AstroCard>
                 );
               })
             ) : (
               <div class="text-center py-12">
-                <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-secondary)] flex items-center justify-center rounded-full">
+                <div class="w-16 h-16 mx-auto mb-6 bg-secondary flex items-center justify-center rounded-full">
                   <svg
-                    class="w-8 h-8 text-[var(--color-muted-foreground)]"
+                    class="w-8 h-8 text-muted-foreground"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -169,9 +180,7 @@ function formatDate(date: Date): string {
                   </svg>
                 </div>
                 <p class="text-muted-foreground mb-4">You haven't created any templates yet.</p>
-                <a href="/templates/new" class="btn-primary inline-block">
-                  Create Your First Template
-                </a>
+                <AstroButton href="/templates/new">Create Your First Template</AstroButton>
               </div>
             )
           }
@@ -182,7 +191,7 @@ function formatDate(date: Date): string {
             <div class="text-center mt-8">
               <a
                 href="/templates"
-                class="text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                class="text-muted-foreground hover:text-primary transition-colors"
               >
                 Browse all templates
               </a>

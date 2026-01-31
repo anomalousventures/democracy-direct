@@ -7,6 +7,7 @@ import {
   jsonResponse,
   badRequest,
   unauthorized,
+  forbidden,
   notFound,
   serverError,
   conflict,
@@ -46,7 +47,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { reason, details } = parseResult.data;
+  const { reason, details, turnstileToken } = parseResult.data;
 
   if (!reason || !FLAG_REASONS.includes(reason as FlagReason)) {
     return jsonResponse(
@@ -60,6 +61,30 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   try {
     const config = getConfig(locals);
+
+    const turnstileResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: config.turnstile.secretKey,
+          response: turnstileToken,
+        }),
+      }
+    );
+
+    const turnstileResult: unknown = await turnstileResponse.json();
+    const isValidTurnstile =
+      typeof turnstileResult === "object" &&
+      turnstileResult !== null &&
+      "success" in turnstileResult &&
+      turnstileResult.success === true;
+
+    if (!isValidTurnstile) {
+      return forbidden("Verification failed");
+    }
+
     const db = createDb(config.database.url);
 
     const [template] = await db

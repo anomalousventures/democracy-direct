@@ -111,8 +111,8 @@ CREATE TABLE "users" (
 	"email_hash" varchar(64) NOT NULL,
 	"trust_level" integer DEFAULT 0 NOT NULL,
 	"approved_templates_count" integer DEFAULT 0 NOT NULL,
-	"saved_zip" varchar(5),
 	"saved_district" varchar(5),
+	"saved_state" varchar(2),
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_hash_unique" UNIQUE("email_hash")

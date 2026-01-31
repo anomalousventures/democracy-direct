@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { TemplateForm } from "./TemplateForm";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface TemplateForkClientProps {
   forkedFromId: string;
@@ -9,19 +10,28 @@ interface TemplateForkClientProps {
     issueTags: string[];
   };
   turnstileSiteKey: string;
+  isAuthenticated?: boolean;
 }
 
 export function TemplateForkClient({
   forkedFromId,
   initialData,
   turnstileSiteKey,
+  isAuthenticated = false,
 }: TemplateForkClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
+    async (data: {
+      title: string;
+      body: string;
+      issueTags: string[];
+      turnstileToken?: string;
+      isPublic?: boolean;
+    }) => {
       setIsSubmitting(true);
       setError(null);
 
@@ -41,6 +51,12 @@ export function TemplateForkClient({
           throw new Error(result.error || "Failed to create forked template");
         }
 
+        capture("template_forked", {
+          forkedFromId,
+          newTemplateId: result.template?.id,
+          tagCount: data.issueTags.length,
+        });
+
         setSuccess(true);
         setTimeout(() => {
           window.location.href = `/templates/mine`;
@@ -51,7 +67,7 @@ export function TemplateForkClient({
         setIsSubmitting(false);
       }
     },
-    [forkedFromId]
+    [forkedFromId, capture]
   );
 
   if (success) {
@@ -92,6 +108,7 @@ export function TemplateForkClient({
         submitLabel="Create Fork"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );

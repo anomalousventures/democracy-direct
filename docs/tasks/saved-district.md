@@ -1,6 +1,6 @@
 # Saved District Preference
 
-## Status: Ready
+## Status: Complete
 
 ## Problem Statement
 
@@ -9,7 +9,7 @@ Users who have identified their congressional district through ZIP lookup or map
 ## Research Completed
 
 - [x] Review current user schema for existing district fields
-  - `savedZip` and `savedDistrict` already exist in users table
+  - `savedDistrict` exists in users table (`savedZip` was removed for privacy)
   - **Decision**: Only use `savedDistrict` + add `savedState` - do NOT save ZIP (privacy)
 - [x] Determine if we need `savedState` or can derive from ZIP
   - **Need `savedState`** - can't derive without ZIP, and we're not storing ZIP
@@ -48,11 +48,11 @@ Users who have identified their congressional district through ZIP lookup or map
 5. Add DELETE handler to `src/pages/api/user/district.ts` that clears savedState and savedDistrict
 6. Create `src/lib/saved-district.ts` with localStorage helpers: `getSavedDistrict()`, `setSavedDistrict(state, district)`, `clearSavedDistrict()`
 7. Create `src/components/SaveDistrictPrompt.tsx` with checkbox that saves to API (logged in) or localStorage (anonymous)
-8. Add SaveDistrictPrompt component to `/zip/[zip].astro` below the rep cards
+8. Add SaveDistrictPrompt component to `/zip/[zip].astro` above the representatives grid
 9. Create `src/pages/reps/[state]/[district].astro` route that displays reps without needing a ZIP code
-10. Create `src/components/SavedDistrictBanner.tsx` showing saved district with "View My Reps" and "Change" buttons
-11. Add SavedDistrictBanner to `src/pages/index.astro` that checks user record (logged in) or localStorage (anonymous)
-12. Add unit tests for the district API endpoints in `tests/api/user-district.test.ts`
+10. Add saved district display to `src/components/UserMenu.tsx` header dropdown with "View My Reps" and "Change District" options
+11. UserMenu shows saved district in header menu for logged-in users (from DB) or anonymous users (from localStorage)
+12. Add unit tests for the district API endpoints in `tests/api/user/district.test.ts`
 13. Add unit tests for localStorage helpers in `src/lib/saved-district.test.ts`
 14. Add e2e test for anonymous user save flow in `tests/e2e/saved-district-anonymous.spec.ts`
 15. Add e2e test for authenticated user save flow in `tests/e2e/saved-district-authenticated.spec.ts`
@@ -67,15 +67,15 @@ Users who have identified their congressional district through ZIP lookup or map
 
 ## Verification
 
-- [ ] Logged-in user can save their district after lookup
-- [ ] Saved district persists across sessions (DB)
-- [ ] User can clear saved district
-- [ ] User with saved district sees banner on homepage
-- [ ] "View My Reps" navigates to correct representatives
-- [ ] Anonymous users can save to localStorage
-- [ ] Anonymous saved district shows on homepage
-- [ ] No ZIP codes stored anywhere
-- [ ] Unit tests pass for API endpoints
-- [ ] Unit tests pass for localStorage helpers
-- [ ] E2E tests pass for anonymous save/clear flow
-- [ ] E2E tests pass for authenticated save/clear flow
+- [x] Logged-in user can save their district after lookup
+- [x] Saved district persists across sessions (DB)
+- [x] User can clear saved district
+- [x] User with saved district sees district in header menu
+- [x] "View My Reps" navigates to correct representatives
+- [x] Anonymous users can save to localStorage
+- [x] Anonymous saved district shows on homepage
+- [x] No ZIP codes stored anywhere (removed savedZip column)
+- [x] Unit tests pass for API endpoints (11 tests)
+- [x] Unit tests pass for localStorage helpers (11 tests)
+- [x] E2E tests pass for anonymous save/clear flow (7 tests)
+- [x] E2E tests pass for authenticated save/clear flow (5 tests, uses Playwright global-setup for session)

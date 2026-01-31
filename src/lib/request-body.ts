@@ -29,6 +29,7 @@ export const templateBodySchema = z.object({
   issueTags: z.array(z.string()).optional(),
   turnstileToken: z.string().optional(),
   forkedFromId: z.string().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export type TemplateBody = z.infer<typeof templateBodySchema>;
@@ -36,6 +37,7 @@ export type TemplateBody = z.infer<typeof templateBodySchema>;
 export const flagBodySchema = z.object({
   reason: z.string().min(1),
   details: z.string().max(2000).optional(),
+  turnstileToken: z.string().min(1),
 });
 
 export type FlagBody = z.infer<typeof flagBodySchema>;

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { TemplateForm } from "./TemplateForm";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface TemplateCreateClientProps {
   turnstileSiteKey: string;
@@ -14,9 +15,16 @@ export function TemplateCreateClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
+    async (data: {
+      title: string;
+      body: string;
+      issueTags: string[];
+      turnstileToken?: string;
+      isPublic?: boolean;
+    }) => {
       setIsSubmitting(true);
       setError(null);
 
@@ -32,6 +40,12 @@ export function TemplateCreateClient({
         if (!response.ok) {
           throw new Error(result.error || "Failed to create template");
         }
+
+        capture("template_created", {
+          templateId: result.template.id,
+          templateSlug: result.template.slug,
+          tagCount: data.issueTags.length,
+        });
 
         setSuccess(true);
         toast.success("Template created successfully!");
@@ -49,7 +63,7 @@ export function TemplateCreateClient({
         setIsSubmitting(false);
       }
     },
-    []
+    [capture, isAuthenticated]
   );
 
   if (success) {
@@ -89,6 +103,7 @@ export function TemplateCreateClient({
         submitLabel="Create Template"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );
