@@ -13,9 +13,9 @@ test.describe("Share Buttons", () => {
 
       await page.goto(href!);
 
-      await expect(page.locator('button[aria-label="Share on X (Twitter)"]')).toBeVisible();
-      await expect(page.locator('button[aria-label="Share on Facebook"]')).toBeVisible();
-      await expect(page.locator('button[aria-label="Share on Reddit"]')).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on X (Twitter)"]')).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on Facebook"]')).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on Reddit"]')).toBeVisible();
       await expect(page.locator('a[aria-label="Share via Email"]')).toBeVisible();
       await expect(page.locator('button[aria-label="Copy link to clipboard"]')).toBeVisible();
     });
@@ -51,10 +51,10 @@ test.describe("Share Buttons", () => {
 
       await page.goto(href!);
 
-      const twitterButton = page.locator('button[aria-label="Share on X (Twitter)"]');
-      await expect(twitterButton).toBeVisible();
+      const twitterLink = page.locator('a[aria-label="Share on X (Twitter)"]');
+      await expect(twitterLink).toBeVisible();
 
-      const [newPage] = await Promise.all([context.waitForEvent("page"), twitterButton.click()]);
+      const [newPage] = await Promise.all([context.waitForEvent("page"), twitterLink.click()]);
 
       expect(newPage.url()).toContain("x.com");
       await newPage.close();
@@ -65,9 +65,9 @@ test.describe("Share Buttons", () => {
     test("displays share buttons on rep profile", async ({ page }) => {
       await page.goto("/rep/S000033");
 
-      await expect(page.locator('button[aria-label="Share on X (Twitter)"]').first()).toBeVisible();
-      await expect(page.locator('button[aria-label="Share on Facebook"]').first()).toBeVisible();
-      await expect(page.locator('button[aria-label="Share on Reddit"]').first()).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on X (Twitter)"]').first()).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on Facebook"]').first()).toBeVisible();
+      await expect(page.locator('a[aria-label="Share on Reddit"]').first()).toBeVisible();
       await expect(page.locator('a[aria-label="Share via Email"]').first()).toBeVisible();
       await expect(
         page.locator('button[aria-label="Copy link to clipboard"]').first()

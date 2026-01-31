@@ -116,14 +116,6 @@ export function ShareButtons(props: ShareButtonsProps) {
 
   const shareUrls = getShareUrls(props);
 
-  const handlePlatformClick = useCallback(
-    (platform: string, shareUrl: string) => {
-      trackShare(platform);
-      window.open(shareUrl, "_blank", "noopener,noreferrer");
-    },
-    [trackShare]
-  );
-
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -140,15 +132,17 @@ export function ShareButtons(props: ShareButtonsProps) {
         )}
 
         {platformButtons.map(({ key, icon: Icon, label, displayName }) => (
-          <Button
-            key={key}
-            onClick={() => handlePlatformClick(key, shareUrls[key])}
-            variant="outline"
-            size="sm"
-            aria-label={label}
-          >
-            <Icon className="size-4" aria-hidden="true" />
-            <span className="hidden sm:inline">{displayName}</span>
+          <Button key={key} variant="outline" size="sm" asChild>
+            <a
+              href={shareUrls[key]}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              onClick={() => trackShare(key)}
+            >
+              <Icon className="size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">{displayName}</span>
+            </a>
           </Button>
         ))}
 

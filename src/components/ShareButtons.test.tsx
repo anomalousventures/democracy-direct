@@ -98,10 +98,7 @@ describe("ShareButtons", () => {
       });
     });
 
-    it("opens Twitter share in new window", () => {
-      const mockOpen = vi.fn();
-      vi.stubGlobal("open", mockOpen);
-
+    it("renders Twitter share as link with correct href", () => {
       render(
         <ShareButtons
           url="https://example.com/templates/test"
@@ -110,22 +107,16 @@ describe("ShareButtons", () => {
         />
       );
 
-      const twitterButton = screen.getByLabelText("Share on X (Twitter)");
-      fireEvent.click(twitterButton);
-
-      expect(mockOpen).toHaveBeenCalledWith(
-        expect.stringContaining("twitter.com/intent/tweet"),
-        "_blank",
-        "noopener,noreferrer"
+      const twitterLink = screen.getByLabelText("Share on X (Twitter)");
+      expect(twitterLink).toHaveAttribute(
+        "href",
+        expect.stringContaining("twitter.com/intent/tweet")
       );
-
-      vi.unstubAllGlobals();
+      expect(twitterLink).toHaveAttribute("target", "_blank");
+      expect(twitterLink).toHaveAttribute("rel", "noopener noreferrer");
     });
 
     it("includes hashtags in Twitter share URL", () => {
-      const mockOpen = vi.fn();
-      vi.stubGlobal("open", mockOpen);
-
       render(
         <ShareButtons
           url="https://example.com/templates/test"
@@ -134,14 +125,10 @@ describe("ShareButtons", () => {
         />
       );
 
-      const twitterButton = screen.getByLabelText("Share on X (Twitter)");
-      fireEvent.click(twitterButton);
-
-      const shareUrl = mockOpen.mock.calls[0][0];
+      const twitterLink = screen.getByLabelText("Share on X (Twitter)");
+      const shareUrl = twitterLink.getAttribute("href") || "";
       expect(shareUrl).toContain(encodeURIComponent("#CivicEngagement"));
       expect(shareUrl).toContain(encodeURIComponent("#ContactCongress"));
-
-      vi.unstubAllGlobals();
     });
   });
 
@@ -164,9 +151,6 @@ describe("ShareButtons", () => {
     });
 
     it("includes rep info in Twitter share URL", () => {
-      const mockOpen = vi.fn();
-      vi.stubGlobal("open", mockOpen);
-
       render(
         <ShareButtons
           url="https://example.com/rep/S000033"
@@ -176,14 +160,10 @@ describe("ShareButtons", () => {
         />
       );
 
-      const twitterButton = screen.getByLabelText("Share on X (Twitter)");
-      fireEvent.click(twitterButton);
-
-      const shareUrl = mockOpen.mock.calls[0][0];
+      const twitterLink = screen.getByLabelText("Share on X (Twitter)");
+      const shareUrl = twitterLink.getAttribute("href") || "";
       expect(shareUrl).toContain(encodeURIComponent("Bernie Sanders"));
       expect(shareUrl).toContain(encodeURIComponent("(I-VT)"));
-
-      vi.unstubAllGlobals();
     });
   });
 
