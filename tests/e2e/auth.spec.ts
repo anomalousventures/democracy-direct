@@ -59,8 +59,8 @@ test.describe("Authentication UI", () => {
     const sendCodeBtn = page.getByRole("button", { name: /send code/i });
     await sendCodeBtn.click();
 
-    const otpLabel = page.getByLabel(/verification code/i);
-    await expect(otpLabel).toBeVisible({ timeout: 10000 });
+    const otpInput = page.getByRole("textbox", { name: /verification code/i });
+    await expect(otpInput).toBeVisible({ timeout: 10000 });
   });
 
   test("disables send button for invalid email", async ({ page }) => {

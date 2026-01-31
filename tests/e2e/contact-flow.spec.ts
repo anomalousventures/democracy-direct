@@ -75,7 +75,7 @@ test.describe("Phase 3: Contact Flow", () => {
       await fillComposer(page, "Test letter");
       const contactFormButton = page.getByRole("button", { name: /contact form/i });
       await contactFormButton.click();
-      await expect(page.getByText(/copied|paste/i)).toBeVisible();
+      await expect(page.getByText(/copied|paste/i).first()).toBeVisible();
     });
   });
 
