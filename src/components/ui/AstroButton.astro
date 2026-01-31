@@ -1,0 +1,47 @@
+---
+import { type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "./variants";
+
+type ButtonVariants = VariantProps<typeof buttonVariants>;
+
+interface Props extends ButtonVariants {
+  href?: string;
+  class?: string;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  name?: string;
+  value?: string;
+}
+
+const {
+  href,
+  variant,
+  size,
+  class: className,
+  type = "button",
+  disabled,
+  name,
+  value,
+  ...rest
+} = Astro.props;
+---
+
+{
+  href ? (
+    <a href={href} class={cn(buttonVariants({ variant, size }), className)} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      disabled={disabled}
+      name={name}
+      value={value}
+      class={cn(buttonVariants({ variant, size }), className)}
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}

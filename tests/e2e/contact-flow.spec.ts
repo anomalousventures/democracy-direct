@@ -40,7 +40,7 @@ test.describe("Phase 3: Contact Flow", () => {
     test("copy button exists after typing", async ({ page }) => {
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test content");
-      const copyButton = page.getByRole("button", { name: /copy/i });
+      const copyButton = page.getByRole("button", { name: /copy letter/i });
       await expect(copyButton).toBeVisible();
     });
 
@@ -48,7 +48,7 @@ test.describe("Phase 3: Contact Flow", () => {
       await context.grantPermissions(["clipboard-write"]);
       await page.goto(REP_PAGE);
       await fillComposer(page, "Test letter");
-      const copyButton = page.getByRole("button", { name: /copy/i });
+      const copyButton = page.getByRole("button", { name: /copy letter/i });
       await copyButton.click();
       await expect(page.getByText(/copied/i)).toBeVisible();
     });
@@ -75,7 +75,7 @@ test.describe("Phase 3: Contact Flow", () => {
       await fillComposer(page, "Test letter");
       const contactFormButton = page.getByRole("button", { name: /contact form/i });
       await contactFormButton.click();
-      await expect(page.getByText(/copied|paste/i)).toBeVisible();
+      await expect(page.getByText(/copied|paste/i).first()).toBeVisible();
     });
   });
 

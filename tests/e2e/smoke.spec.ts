@@ -15,8 +15,12 @@ test.describe("Production Smoke Tests", () => {
 
   test("turnstile widget appears in login modal", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /sign in/i }).click();
-    await expect(page.getByTestId("turnstile-widget")).toBeVisible();
+    // Wait for React hydration
+    const signInButton = page.getByTestId("sign-in-button");
+    await expect(signInButton).toBeVisible();
+    await signInButton.click();
+    // Turnstile widget container appears in login modal
+    await expect(page.getByTestId("turnstile-widget")).toBeVisible({ timeout: 15000 });
   });
 
   test("zip lookup form is interactive", async ({ page }) => {

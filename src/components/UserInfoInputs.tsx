@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
 
 const STORAGE_KEY = "democracy-direct-user-info";
@@ -46,8 +48,7 @@ export function UserInfoInputs({
     }
   }, [name, city, saveEnabled]);
 
-  const handleSaveToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
+  const handleSaveToggle = useCallback((checked: boolean) => {
     setSaveEnabled(checked);
     setItem(SAVE_PREF_KEY, String(checked));
     if (!checked) {
@@ -60,10 +61,10 @@ export function UserInfoInputs({
   }
 
   return (
-    <div className="bg-[var(--color-civic-gold)]/10 border border-[var(--color-civic-gold)]/30 rounded-md p-4 space-y-3">
-      <div className="text-sm font-medium text-[var(--color-civic-navy)]">
+    <div className="bg-accent/10 border border-accent/30 rounded-md p-4 space-y-3">
+      <div className="text-sm font-medium text-primary">
         Your Information
-        <span className="font-normal text-[var(--color-muted-foreground)] ml-2">
+        <span className="font-normal text-muted-foreground ml-2">
           (used to fill template variables)
         </span>
       </div>
@@ -71,19 +72,17 @@ export function UserInfoInputs({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {showName && (
           <div>
-            <label
-              htmlFor="user-name"
-              className="block text-xs font-medium text-[var(--color-muted-foreground)] mb-1"
-            >
+            <Label htmlFor="user-name" className="text-xs text-muted-foreground">
               Your Name
-            </label>
+            </Label>
             <Input
               id="user-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your full name"
-              className="input-civic"
+              variant="civic"
+              className="mt-1"
               autoComplete="name"
               name="name"
             />
@@ -91,19 +90,17 @@ export function UserInfoInputs({
         )}
         {showCity && (
           <div>
-            <label
-              htmlFor="user-city"
-              className="block text-xs font-medium text-[var(--color-muted-foreground)] mb-1"
-            >
+            <Label htmlFor="user-city" className="text-xs text-muted-foreground">
               Your City
-            </label>
+            </Label>
             <Input
               id="user-city"
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Your city"
-              className="input-civic"
+              variant="civic"
+              className="mt-1"
               autoComplete="address-level2"
               name="city"
             />
@@ -111,15 +108,15 @@ export function UserInfoInputs({
         )}
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-[var(--color-muted-foreground)] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={saveEnabled}
-          onChange={handleSaveToggle}
-          className="rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-gold)]"
-        />
-        <span>Remember on this device</span>
-      </label>
+      <div className="flex items-center gap-2">
+        <Checkbox id="save-user-info" checked={saveEnabled} onCheckedChange={handleSaveToggle} />
+        <Label
+          htmlFor="save-user-info"
+          className="text-xs text-[var(--color-muted-foreground)] cursor-pointer"
+        >
+          Remember on this device
+        </Label>
+      </div>
     </div>
   );
 }

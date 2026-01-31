@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
 import { templates, users, tagSuggestions } from "@/db/schema";
 import { eq, count } from "drizzle-orm";
@@ -67,126 +68,121 @@ try {
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-6xl mx-auto">
+    <div class="container-page">
+      <div class="container-xl">
         <div class="mb-8">
-          <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
-            Admin Dashboard
-          </h1>
+          <h1 class="text-2xl md:text-3xl font-bold text-primary">Admin Dashboard</h1>
           <p class="text-muted-foreground mt-1">Manage moderation and users</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div class="card-civic" data-testid="stat-pending">
-            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">
+          <AstroCard variant="civic" data-testid="stat-pending">
+            <div class="text-3xl font-bold text-primary">
               {stats.pendingReviews}
             </div>
             <div class="text-muted-foreground">Pending Reviews</div>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic" data-testid="stat-flagged">
+          <AstroCard variant="civic" data-testid="stat-flagged">
             <div class="text-3xl font-bold text-orange-600">{stats.flaggedTemplates}</div>
             <div class="text-muted-foreground">Flagged Templates</div>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic" data-testid="stat-users">
-            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">{stats.totalUsers}</div>
+          <AstroCard variant="civic" data-testid="stat-users">
+            <div class="text-3xl font-bold text-primary">{stats.totalUsers}</div>
             <div class="text-muted-foreground">Total Users</div>
-          </div>
+          </AstroCard>
 
-          <div class="card-civic" data-testid="stat-templates">
-            <div class="text-3xl font-bold text-[var(--color-civic-navy)]">
+          <AstroCard variant="civic" data-testid="stat-templates">
+            <div class="text-3xl font-bold text-primary">
               {stats.totalTemplates}
             </div>
             <div class="text-muted-foreground">Total Templates</div>
-          </div>
+          </AstroCard>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <a
-            href="/admin/queue"
-            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
-            data-testid="link-queue"
-          >
-            <div
-              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
+          <a href="/admin/queue" data-testid="link-queue">
+            <AstroCard
+              variant="civic"
+              class="hover:shadow-lg transition-shadow flex items-center gap-4"
             >
-              <svg
-                class="w-6 h-6 text-[var(--color-civic-navy)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <div class="font-semibold text-[var(--color-civic-navy)]">Moderation Queue</div>
-              <div class="text-sm text-muted-foreground">Review pending and flagged content</div>
-            </div>
-          </a>
-
-          <a
-            href="/admin/users"
-            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
-            data-testid="link-users"
-          >
-            <div
-              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
-            >
-              <svg
-                class="w-6 h-6 text-[var(--color-civic-navy)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <div class="font-semibold text-[var(--color-civic-navy)]">User Management</div>
-              <div class="text-sm text-muted-foreground">Manage users and trust levels</div>
-            </div>
-          </a>
-
-          <a
-            href="/admin/tags"
-            class="card-civic hover:shadow-lg transition-shadow flex items-center gap-4"
-            data-testid="link-tags"
-          >
-            <div
-              class="w-12 h-12 bg-[var(--color-secondary)] flex items-center justify-center rounded-full"
-            >
-              <svg
-                class="w-6 h-6 text-[var(--color-civic-navy)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <div class="font-semibold text-[var(--color-civic-navy)]">Tag Suggestions</div>
-              <div class="text-sm text-muted-foreground">
-                {stats.pendingTags > 0 ? `${stats.pendingTags} pending` : "Review suggested tags"}
+              <div class="w-12 h-12 bg-secondary flex items-center justify-center rounded-full">
+                <svg
+                  class="w-6 h-6 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                  ></path>
+                </svg>
               </div>
-            </div>
+              <div>
+                <div class="font-semibold text-primary">Moderation Queue</div>
+                <div class="text-sm text-muted-foreground">Review pending and flagged content</div>
+              </div>
+            </AstroCard>
+          </a>
+
+          <a href="/admin/users" data-testid="link-users">
+            <AstroCard
+              variant="civic"
+              class="hover:shadow-lg transition-shadow flex items-center gap-4"
+            >
+              <div class="w-12 h-12 bg-secondary flex items-center justify-center rounded-full">
+                <svg
+                  class="w-6 h-6 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <div class="font-semibold text-primary">User Management</div>
+                <div class="text-sm text-muted-foreground">Manage users and trust levels</div>
+              </div>
+            </AstroCard>
+          </a>
+
+          <a href="/admin/tags" data-testid="link-tags">
+            <AstroCard
+              variant="civic"
+              class="hover:shadow-lg transition-shadow flex items-center gap-4"
+            >
+              <div class="w-12 h-12 bg-secondary flex items-center justify-center rounded-full">
+                <svg
+                  class="w-6 h-6 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <div class="font-semibold text-primary">Tag Suggestions</div>
+                <div class="text-sm text-muted-foreground">
+                  {stats.pendingTags > 0 ? `${stats.pendingTags} pending` : "Review suggested tags"}
+                </div>
+              </div>
+            </AstroCard>
           </a>
         </div>
       </div>

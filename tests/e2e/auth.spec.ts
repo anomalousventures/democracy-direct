@@ -59,7 +59,7 @@ test.describe("Authentication UI", () => {
     const sendCodeBtn = page.getByRole("button", { name: /send code/i });
     await sendCodeBtn.click();
 
-    const otpInput = page.getByPlaceholder("000000");
+    const otpInput = page.getByRole("textbox", { name: /verification code/i });
     await expect(otpInput).toBeVisible({ timeout: 10000 });
   });
 

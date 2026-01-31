@@ -36,10 +36,7 @@ export function LetterComposer({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label
-          htmlFor="letter-content"
-          className="block text-sm font-medium text-[var(--color-civic-navy)]"
-        >
+        <label htmlFor="letter-content" className="block text-sm font-medium text-primary">
           Your Letter
         </label>
         <TiptapEditor
@@ -52,12 +49,10 @@ export function LetterComposer({
 
       {content && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[var(--color-civic-navy)]">
-            Preview
-          </label>
+          <label className="block text-sm font-medium text-primary">Preview</label>
           <div
             data-testid="letter-preview"
-            className="p-4 bg-white border border-[var(--color-border)] min-h-[100px] whitespace-pre-wrap text-sm"
+            className="p-4 bg-white border border-border min-h-[100px] whitespace-pre-wrap text-sm"
           >
             {preview}
           </div>

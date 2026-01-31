@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 import { ContactActions } from "./ContactActions";
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 const mockRep = {
   first_name: "John",
@@ -42,18 +50,18 @@ describe("ContactActions", () => {
       });
     });
 
-    it("shows success message after copy", async () => {
+    it("shows success toast after copy", async () => {
       render(<ContactActions content="Hello" representative={mockRep} />);
       const copyButton = screen.getByRole("button", { name: /copy/i });
 
       fireEvent.click(copyButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/copied/i)).toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith("Copied to clipboard!");
       });
     });
 
-    it("handles clipboard error gracefully", async () => {
+    it("shows error toast on clipboard error", async () => {
       Object.assign(navigator, {
         clipboard: {
           writeText: vi.fn().mockRejectedValue(new Error("Clipboard error")),
@@ -66,7 +74,7 @@ describe("ContactActions", () => {
       fireEvent.click(copyButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/failed|error/i)).toBeInTheDocument();
+        expect(toast.error).toHaveBeenCalledWith("Failed to copy to clipboard");
       });
     });
   });
@@ -123,7 +131,9 @@ describe("ContactActions", () => {
       fireEvent.click(contactButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/paste.*form|copied/i)).toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith(
+          "Copied! Paste your letter into the contact form."
+        );
       });
     });
   });

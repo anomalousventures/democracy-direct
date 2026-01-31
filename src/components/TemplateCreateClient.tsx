@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { TemplateForm } from "./TemplateForm";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface TemplateCreateClientProps {
   turnstileSiteKey: string;
@@ -14,6 +15,7 @@ export function TemplateCreateClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
     async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
@@ -33,6 +35,12 @@ export function TemplateCreateClient({
           throw new Error(result.error || "Failed to create template");
         }
 
+        capture("template_created", {
+          templateId: result.template.id,
+          templateSlug: result.template.slug,
+          tagCount: data.issueTags.length,
+        });
+
         setSuccess(true);
         toast.success("Template created successfully!");
         const redirectUrl = isAuthenticated
@@ -49,7 +57,7 @@ export function TemplateCreateClient({
         setIsSubmitting(false);
       }
     },
-    []
+    [capture, isAuthenticated]
   );
 
   if (success) {

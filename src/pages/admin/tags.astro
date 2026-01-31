@@ -4,6 +4,9 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroBadge from "@/components/ui/AstroBadge.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
 import { tagSuggestions, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -69,34 +72,30 @@ function formatDate(date: Date): string {
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
+    <div class="container-page">
+      <div class="container-wide">
+        <div class="flex-between mb-8">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-[var(--color-civic-navy)]">
-              Tag Suggestions
-            </h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-primary">Tag Suggestions</h1>
             <p class="text-muted-foreground mt-1">
               {pendingTags.length} tags awaiting review
             </p>
           </div>
-          <a href="/admin" class="btn-secondary">Back to Dashboard</a>
+          <AstroButton href="/admin" variant="secondary">Back to Dashboard</AstroButton>
         </div>
 
         <div data-testid="tag-items" class="space-y-4">
           {
             pendingTags.length > 0 ? (
               pendingTags.map((tag) => (
-                <article data-testid="tag-item" class="card-civic" data-tag-id={tag.id}>
+                <AstroCard variant="civic" data-testid="tag-item" data-tag-id={tag.id}>
                   <div class="flex items-center justify-between">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-2">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-secondary)] text-[var(--color-civic-navy)] font-medium">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-primary font-medium">
                           {tag.name}
                         </span>
-                        <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">
-                          Pending
-                        </span>
+                        <AstroBadge variant="warning">Pending</AstroBadge>
                       </div>
                       <p class="text-sm text-muted-foreground">
                         Suggested {formatDate(tag.createdAt)}
@@ -104,25 +103,27 @@ function formatDate(date: Date): string {
                       </p>
                     </div>
                     <div class="flex gap-2">
-                      <button
-                        type="button"
-                        class="btn-primary text-sm bg-green-600 hover:bg-green-700 tag-action-btn"
+                      <AstroButton
+                        variant="success"
+                        size="sm"
+                        class="tag-action-btn"
                         data-testid="approve-button"
                         data-action="approve"
                       >
                         Approve
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-secondary text-sm text-red-600 hover:bg-red-50 tag-action-btn"
+                      </AstroButton>
+                      <AstroButton
+                        variant="destructive"
+                        size="sm"
+                        class="tag-action-btn"
                         data-testid="reject-button"
                         data-action="reject"
                       >
                         Reject
-                      </button>
+                      </AstroButton>
                     </div>
                   </div>
-                </article>
+                </AstroCard>
               ))
             ) : (
               <div class="text-center py-12">

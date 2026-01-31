@@ -26,10 +26,10 @@ const TEMPLATE_VARIABLES = [
 ] as const;
 
 const toolbarButtonClass =
-  "p-2 rounded hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-[var(--color-civic-navy)] focus-visible:ring-offset-1 focus-visible:outline-none";
+  "p-2 rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none";
 
 const variableButtonClass =
-  "px-2 py-1 text-xs rounded hover:bg-[var(--color-civic-gold)]/20 text-[var(--color-civic-navy)] font-medium focus-visible:ring-2 focus-visible:ring-[var(--color-civic-navy)] focus-visible:ring-offset-1 focus-visible:outline-none";
+  "px-2 py-1 text-xs rounded hover:bg-accent/20 text-primary font-medium focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none";
 
 interface TiptapEditorProps {
   content: string;
@@ -76,7 +76,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "tiptap-editor input-civic min-h-[200px] resize-y text-sm focus:outline-none prose prose-sm max-w-none",
+          "tiptap-editor w-full px-5 py-4 text-lg bg-white border-2 border-border rounded-md transition-all duration-300 placeholder:italic focus:border-primary focus:ring-4 focus:ring-primary/10 min-h-[200px] resize-y text-sm focus:outline-none prose prose-sm max-w-none",
         "data-testid": "tiptap-editor",
         ...(id && { id }),
         ...(ariaInvalid && { "aria-invalid": ariaInvalid }),
@@ -122,11 +122,11 @@ export function TiptapEditor({
 
   return (
     <div className="tiptap-container">
-      <div className="flex flex-wrap gap-1 mb-2 p-1 border border-[var(--color-border)] rounded-md bg-white">
+      <div className="flex flex-wrap gap-1 mb-2 p-1 border border-border rounded-md bg-white">
         <button
           onClick={toggleBold}
           className={`${toolbarButtonClass} ${
-            editor.isActive("bold") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
+            editor.isActive("bold") ? "bg-muted text-primary" : ""
           }`}
           type="button"
           title="Bold (Ctrl+B)"
@@ -152,7 +152,7 @@ export function TiptapEditor({
         <button
           onClick={toggleItalic}
           className={`${toolbarButtonClass} ${
-            editor.isActive("italic") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
+            editor.isActive("italic") ? "bg-muted text-primary" : ""
           }`}
           type="button"
           title="Italic (Ctrl+I)"
@@ -182,7 +182,7 @@ export function TiptapEditor({
         <button
           onClick={toggleBulletList}
           className={`${toolbarButtonClass} ${
-            editor.isActive("bulletList") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
+            editor.isActive("bulletList") ? "bg-muted text-primary" : ""
           }`}
           type="button"
           title="Bullet List"
@@ -213,7 +213,7 @@ export function TiptapEditor({
         <button
           onClick={toggleOrderedList}
           className={`${toolbarButtonClass} ${
-            editor.isActive("orderedList") ? "bg-gray-200 text-[var(--color-civic-navy)]" : ""
+            editor.isActive("orderedList") ? "bg-muted text-primary" : ""
           }`}
           type="button"
           title="Numbered List"
@@ -244,9 +244,7 @@ export function TiptapEditor({
         {showVariableButtons && (
           <>
             <div className="w-px bg-gray-200 mx-1" />
-            <span className="flex items-center px-2 text-xs text-[var(--color-muted-foreground)]">
-              Insert:
-            </span>
+            <span className="flex items-center px-2 text-xs text-muted-foreground">Insert:</span>
             {TEMPLATE_VARIABLES.map((variable) => (
               <button
                 key={variable.name}
@@ -265,7 +263,7 @@ export function TiptapEditor({
 
       <EditorContent editor={editor} />
 
-      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-sm text-[var(--color-muted-foreground)] mt-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-sm text-muted-foreground mt-2">
         <span className="text-xs sm:text-sm">
           Variables like {"{{REP_NAME}}"} will be replaced with actual values
         </span>

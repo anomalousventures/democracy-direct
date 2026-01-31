@@ -109,6 +109,15 @@ Understanding what legislation representatives sponsor and support is key to inf
 20. Add e2e test in `tests/e2e/sponsored-bills.spec.ts` that verifies bills display on rep page
 21. After backfill complete (~1 week): update backfill-bills.yml cron to daily or disable
 
+### SEO: Sitemap Integration
+
+22. Create bill detail page at `/bills/[congress]/[type]/[number]` (e.g., `/bills/119/hr/1234`)
+23. Add Drizzle query `getCurrentCongressBillsForSitemap()` to `src/db/queries/sitemap.ts`
+    - Select billType, billNumber, congress, latestActionDate for current Congress (119th)
+    - Returns data needed to generate `/bills/119/hr/1234` style URLs
+24. Update sitemap generation to include bill pages (uses DATABASE_URL at build time)
+25. Include `<lastmod>` based on latestActionDate for each bill
+
 ## Data Schema
 
 ```typescript
@@ -163,5 +172,8 @@ Understanding what legislation representatives sponsor and support is key to inf
 - [ ] Coverage reaches 3+ Congresses within first week
 - [ ] Backward sync cron reduced after backfill complete
 - [ ] Handles bills without summaries gracefully
+- [ ] Bill detail pages render correctly
+- [ ] Current Congress bills appear in sitemap
+- [ ] Sitemap includes correct lastmod dates for bills
 - [ ] Unit tests pass
 - [ ] E2E tests pass

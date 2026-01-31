@@ -4,6 +4,8 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
 import { getLegislatorsByStateAndDistrict } from "@/db/queries/legislators";
 import type { Legislator } from "@/db/schema";
@@ -85,14 +87,14 @@ if (!error && zipEntry) {
   <Header currentPath={`/zip/${zip}`} user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container mx-auto px-4">
+    <div class="container-page">
       {
         error ? (
-          <div class="max-w-2xl mx-auto text-center">
-            <div class="card-civic">
-              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
                 <svg
-                  class="w-8 h-8 text-[var(--color-civic-red)]"
+                  class="w-8 h-8 text-destructive"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -105,18 +107,18 @@ if (!error && zipEntry) {
                   />
                 </svg>
               </div>
-              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <h1 class="heading-card-lg">{error}</h1>
               <p class="text-muted-foreground mb-8">Please check the ZIP code and try again.</p>
-              <a href="/" class="btn-primary inline-block">
+              <AstroButton href="/" variant="civic">
                 Try Again
-              </a>
-            </div>
+              </AstroButton>
+            </AstroCard>
           </div>
         ) : (
           <>
-            <div class="max-w-4xl mx-auto">
+            <div class="container-wide">
               <div class="text-center mb-12 animate-fade-up">
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-6">
+                <div class="hero-badge mb-6">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       stroke-linecap="round"
@@ -142,13 +144,14 @@ if (!error && zipEntry) {
 
               <div class="grid gap-6">
                 {reps.map((rep, index) => (
-                  <article
-                    class="card-civic group hover:-translate-y-1 transition-transform duration-300 animate-fade-up"
+                  <AstroCard
+                    variant="civic"
+                    class="animate-fade-up"
                     style={`animation-delay: ${index * 100}ms`}
                   >
                     <div class="flex flex-col sm:flex-row gap-6">
                       <div class="flex-shrink-0">
-                        <div class="relative w-32 h-40 mx-auto sm:mx-0 bg-[var(--color-secondary)] overflow-hidden">
+                        <div class="rep-photo-sm">
                           <img
                             src={getPhotoUrl(rep.bioguideId)}
                             alt={`${rep.firstName} ${rep.lastName}`}
@@ -157,7 +160,7 @@ if (!error && zipEntry) {
                             onerror="this.style.display='none'"
                           />
                           <div
-                            class="absolute inset-0 flex items-center justify-center text-4xl font-bold text-[var(--color-muted-foreground)]/30"
+                            class="rep-photo-fallback-sm"
                             style="font-family: var(--font-display)"
                           >
                             {rep.firstName[0]}
@@ -172,7 +175,7 @@ if (!error && zipEntry) {
                             <h2 class="text-xl sm:text-2xl font-bold">
                               <a
                                 href={`/rep/${rep.bioguideId}${templateQueryParam}`}
-                                class="hover:text-[var(--color-civic-gold)] transition-colors"
+                                class="hover:text-accent transition-colors"
                               >
                                 {rep.firstName} {rep.lastName}
                               </a>
@@ -181,18 +184,16 @@ if (!error && zipEntry) {
                               {getRepTitle(rep.chamber, rep.state, rep.district, "short")}
                             </p>
                           </div>
-                          <span
-                            class={`${getPartyColor(rep.party)} text-white px-3 py-1 text-sm font-semibold`}
-                          >
+                          <span class={`${getPartyColor(rep.party)} party-badge`}>
                             {getPartyLabel(rep.party, true)}
                           </span>
                         </div>
 
                         <div class="flex flex-wrap gap-3 mt-4">
                           {rep.phoneCapitol && (
-                            <a
+                            <AstroButton
                               href={`tel:${rep.phoneCapitol}`}
-                              class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-muted)] border border-[var(--color-border)] text-sm transition-colors"
+                              variant="contactSecondary"
                             >
                               <svg
                                 class="w-4 h-4"
@@ -208,15 +209,13 @@ if (!error && zipEntry) {
                                 />
                               </svg>
                               <span>{rep.phoneCapitol}</span>
-                            </a>
+                            </AstroButton>
                           )}
 
                           {sanitizeExternalUrl(rep.contactFormUrl) && (
-                            <a
+                            <AstroButton
                               href={sanitizeExternalUrl(rep.contactFormUrl)!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] text-sm font-medium transition-colors hover:bg-[var(--color-civic-navy)]/90"
+                              variant="contactPrimary"
                             >
                               <svg
                                 class="w-4 h-4"
@@ -245,12 +244,12 @@ if (!error && zipEntry) {
                                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                                 />
                               </svg>
-                            </a>
+                            </AstroButton>
                           )}
 
-                          <a
+                          <AstroButton
                             href={`/rep/${rep.bioguideId}${templateQueryParam}`}
-                            class="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-civic-navy)] text-[var(--color-civic-navy)] text-sm font-medium transition-colors hover:bg-[var(--color-civic-navy)] hover:text-[var(--color-civic-cream)]"
+                            variant="contactOutline"
                           >
                             <span>Full Profile</span>
                             <svg
@@ -266,19 +265,16 @@ if (!error && zipEntry) {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
-                          </a>
+                          </AstroButton>
                         </div>
                       </div>
                     </div>
-                  </article>
+                  </AstroCard>
                 ))}
               </div>
 
               <div class="text-center mt-12">
-                <a
-                  href="/"
-                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
-                >
+                <a href="/" class="link-back">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       stroke-linecap="round"
