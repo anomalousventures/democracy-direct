@@ -142,7 +142,7 @@ test.describe("ZIP Lookup Component", () => {
     await page.getByRole("button", { name: /find/i }).click();
 
     await page.waitForURL("**/zip/20001**");
-    await expect(page.getByText("DC At-Large")).toBeVisible();
+    await expect(page.getByText("DC At-Large").first()).toBeVisible();
   });
 
   test("handles Puerto Rico ZIP code with leading zeros", async ({ page }) => {
@@ -151,6 +151,6 @@ test.describe("ZIP Lookup Component", () => {
     await page.getByRole("button", { name: /find/i }).click();
 
     await page.waitForURL("**/zip/00601**");
-    await expect(page.getByText("PR At-Large")).toBeVisible();
+    await expect(page.getByText("PR At-Large").first()).toBeVisible();
   });
 });

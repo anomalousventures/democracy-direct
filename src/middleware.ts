@@ -8,6 +8,8 @@ export interface SessionUser {
   id: string;
   emailHash: string;
   trustLevel: number;
+  savedState: string | null;
+  savedDistrict: string | null;
 }
 
 export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
@@ -28,6 +30,8 @@ export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
         id: users.id,
         emailHash: users.emailHash,
         trustLevel: users.trustLevel,
+        savedState: users.savedState,
+        savedDistrict: users.savedDistrict,
       })
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
