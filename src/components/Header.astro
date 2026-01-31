@@ -14,6 +14,7 @@ const showAdminLink = isAdmin(user);
 const navLinks = [
   { href: "/about", label: "About" },
   { href: "/templates", label: "Templates" },
+  ...(user ? [{ href: "/templates/mine", label: "My Templates" }] : []),
 ];
 ---
 

@@ -24,6 +24,7 @@ let userTemplates: {
   title: string;
   body: string;
   issueTags: string[] | null;
+  isPublic: boolean;
   moderationStatus: string;
   viewCount: number;
   createdAt: Date;
@@ -40,6 +41,7 @@ try {
       title: templates.title,
       body: templates.body,
       issueTags: templates.issueTags,
+      isPublic: templates.isPublic,
       moderationStatus: templates.moderationStatus,
       viewCount: templates.viewCount,
       createdAt: templates.createdAt,
@@ -103,10 +105,16 @@ function formatDate(date: Date): string {
                   <AstroCard variant="civic" data-testid="user-template-card">
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                       <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex items-center gap-3 mb-2 flex-wrap">
                           <h2 class="text-xl font-semibold text-primary">{template.title}</h2>
                           <AstroBadge variant={status.variant} data-testid="template-status">
                             {status.label}
+                          </AstroBadge>
+                          <AstroBadge
+                            variant={template.isPublic ? "outline" : "secondary"}
+                            data-testid="template-visibility"
+                          >
+                            {template.isPublic ? "Public" : "Private"}
                           </AstroBadge>
                         </div>
                         <p class="text-muted-foreground line-clamp-2">
