@@ -287,6 +287,10 @@
     @apply inline-flex items-center gap-2 px-3 py-1 text-sm font-medium border mb-6 bg-gray-100 text-gray-700 border-gray-200;
   }
 
+  .roadmap-badge-future {
+    @apply inline-flex items-center gap-2 px-3 py-1 text-sm font-medium border mb-6 bg-purple-100 text-purple-800 border-purple-200;
+  }
+
   /* Roadmap Status Circles */
   .roadmap-circle-completed {
     @apply w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-green-100;
@@ -298,6 +302,10 @@
 
   .roadmap-circle-planned {
     @apply w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-gray-100;
+  }
+
+  .roadmap-circle-future {
+    @apply w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-purple-100;
   }
 
   /* Party Color Badges */

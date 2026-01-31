@@ -29,6 +29,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
 | [Campaign Finance](./campaign-finance.md)                   | Ready    | ProPublica Campaign Finance API integration     |
 | [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
+| [State Legislators](./state-legislators.md)                 | Research | Add state-level representatives                 |
+| [Local Officials](./local-officials.md)                     | Research | Add mayors, city council, school boards         |
 
 ## Suggested Implementation Order
 
@@ -60,6 +62,11 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 3. **Campaign Finance** - ProPublica Campaign Finance API
 4. **District Map** - MapLibre + TIGERweb integration
 
+### Phase 4: Expansion
+
+1. **State Legislators** - Add state senate and state house/assembly members
+2. **Local Officials** - Add mayors, city council, county commissioners, school boards
+
 ## External API Summary
 
 | API          | Tasks Using It                         | Rate Limit | Status                                 |
@@ -68,6 +75,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | Senate.gov   | Voting Records (Senate)                | None       | Active (XML, no key needed)            |
 | ProPublica   | Campaign Finance                       | 5,000/day  | Active (key via email request)         |
 | TIGERweb     | District Map                           | None       | Active (no key needed)                 |
+| Open States  | State Legislators                      | 100/min    | Needs research (free tier available)   |
+| Google Civic | Local Officials                        | 25,000/day | Needs research (has gaps in coverage)  |
 
 ## How to Use
 
