@@ -4,18 +4,23 @@ import { TbPrinter } from "react-icons/tb";
 import { AddressForm } from "./AddressForm";
 import { LetterPreview } from "./LetterPreview";
 import { type Representative, type Address, createEmptyAddress } from "../types/representative";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface PrintLetterProps {
   letterContent: string;
   representative: Representative;
+  bioguideId?: string;
 }
 
-export function PrintLetter({ letterContent, representative }: PrintLetterProps) {
+export function PrintLetter({ letterContent, representative, bioguideId }: PrintLetterProps) {
   const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
+  const { capture } = useAnalytics();
+  const repName = `${representative.first_name} ${representative.last_name}`;
 
   const handlePrint = useCallback(() => {
+    capture("letter_printed", { repBioguideId: bioguideId, repName });
     window.print();
-  }, []);
+  }, [capture, bioguideId, repName]);
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { TemplateForm } from "./TemplateForm";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface TemplateForkClientProps {
   forkedFromId: string;
@@ -19,6 +20,7 @@ export function TemplateForkClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
     async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
@@ -41,6 +43,12 @@ export function TemplateForkClient({
           throw new Error(result.error || "Failed to create forked template");
         }
 
+        capture("template_forked", {
+          forkedFromId,
+          newTemplateId: result.template?.id,
+          tagCount: data.issueTags.length,
+        });
+
         setSuccess(true);
         setTimeout(() => {
           window.location.href = `/templates/mine`;
@@ -51,7 +59,7 @@ export function TemplateForkClient({
         setIsSubmitting(false);
       }
     },
-    [forkedFromId]
+    [forkedFromId, capture]
   );
 
   if (success) {

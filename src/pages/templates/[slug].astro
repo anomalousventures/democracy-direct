@@ -7,6 +7,8 @@ import Footer from "@/components/Footer.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { ShareButtons } from "@/components/ShareButtons";
+import { TemplateReportButton } from "@/components/TemplateReportButton";
+import { TemplateUseButton } from "@/components/TemplateUseButton";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
@@ -196,14 +198,13 @@ const description = template ? getCleanDescription(template.body) : "Template no
                 <div class="flex flex-col gap-4 pt-6 border-t border-border">
                   {repBioguideId ? (
                     <div class="flex flex-col sm:flex-row gap-4">
-                      <AstroButton
+                      <TemplateUseButton
+                        client:load
                         href={`/rep/${repBioguideId}?template=${template.slug}`}
-                        data-testid="use-template-button"
-                        variant="civic"
-                        class="text-center flex-1 sm:flex-none"
-                      >
-                        Use This Template
-                      </AstroButton>
+                        templateSlug={template.slug}
+                        templateTitle={template.title}
+                        repBioguideId={repBioguideId}
+                      />
                       <AstroButton
                         href={`/rep/${repBioguideId}`}
                         variant="civicSecondary"
@@ -214,14 +215,12 @@ const description = template ? getCleanDescription(template.body) : "Template no
                     </div>
                   ) : (
                     <div class="space-y-3">
-                      <AstroButton
+                      <TemplateUseButton
+                        client:load
                         href={`/?template=${template.slug}`}
-                        data-testid="use-template-button"
-                        variant="civic"
-                        class="text-center block sm:inline-block"
-                      >
-                        Use This Template
-                      </AstroButton>
+                        templateSlug={template.slug}
+                        templateTitle={template.title}
+                      />
                       <p class="text-sm text-muted-foreground">
                         You'll enter your ZIP code to find your representatives, then customize and
                         send your letter.
@@ -251,15 +250,11 @@ const description = template ? getCleanDescription(template.body) : "Template no
                       </AstroButton>
                     )}
 
-                    <AstroButton
-                      type="button"
-                      data-testid="report-button"
+                    <TemplateReportButton
+                      client:load
+                      templateSlug={template.slug}
                       variant="destructive"
-                      class="text-center"
-                      onclick={`window.reportTemplate && window.reportTemplate('${template.slug}')`}
-                    >
-                      Report
-                    </AstroButton>
+                    />
                   </div>
                 </div>
 

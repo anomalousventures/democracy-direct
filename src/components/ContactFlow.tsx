@@ -10,6 +10,7 @@ import { LetterPreview, type PrintOptions } from "./LetterPreview";
 import { UserInfoInputs } from "./UserInfoInputs";
 import { type Representative, type Address, createEmptyAddress } from "../types/representative";
 import { substituteForRepresentative, parseTemplateVariables } from "@/lib/template-variables";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface ContactFlowProps {
   representative: Representative;
@@ -34,6 +35,8 @@ export function ContactFlow({
     includeClosing: false,
     includeSignatureLine: false,
   });
+  const { capture } = useAnalytics();
+  const repName = `${representative.first_name} ${representative.last_name}`;
 
   const usedVariables = useMemo(() => parseTemplateVariables(letterContent), [letterContent]);
   const needsUserName = usedVariables.includes("USER_NAME");
@@ -64,9 +67,10 @@ export function ContactFlow({
     ]
   );
 
-  function handlePrint(): void {
+  const handlePrint = useCallback(() => {
+    capture("letter_printed", { repBioguideId, repName, templateSlug });
     window.print();
-  }
+  }, [capture, repBioguideId, repName, templateSlug]);
 
   const templatesUrl = repBioguideId ? `/templates?rep=${repBioguideId}` : "/templates";
 
@@ -116,7 +120,11 @@ export function ContactFlow({
         {letterContent && (
           <div className="mt-6 pt-6 border-t border-border">
             <h3 className="text-lg font-semibold mb-4 text-primary">Send Your Letter</h3>
-            <ContactActions content={substitutedContent} representative={representative} />
+            <ContactActions
+              content={substitutedContent}
+              representative={representative}
+              bioguideId={repBioguideId}
+            />
           </div>
         )}
       </div>
