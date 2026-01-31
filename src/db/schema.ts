@@ -64,7 +64,6 @@ export const users = pgTable(
     emailHash: varchar("email_hash", { length: 64 }).notNull().unique(),
     trustLevel: integer("trust_level").notNull().default(0),
     approvedTemplatesCount: integer("approved_templates_count").notNull().default(0),
-    savedZip: varchar("saved_zip", { length: 5 }),
     savedDistrict: varchar("saved_district", { length: 5 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

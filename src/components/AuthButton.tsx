@@ -53,7 +53,12 @@ export function AuthButton({ isLoggedIn }: AuthButtonProps) {
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setDialogOpen(true)}
+        data-testid="sign-in-button"
+      >
         Sign In
       </Button>
       <LoginDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={handleLoginSuccess} />
