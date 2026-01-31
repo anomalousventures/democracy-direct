@@ -86,10 +86,10 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative group">
           <div
-            className="absolute -inset-1 bg-gradient-to-r from-[var(--color-civic-navy)] via-[var(--color-civic-gold)] to-[var(--color-civic-navy)] opacity-20 blur-sm group-hover:opacity-30 transition-opacity duration-500"
+            className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary opacity-20 blur-sm group-hover:opacity-30 transition-opacity duration-500"
             aria-hidden="true"
           />
-          <div className="relative flex flex-col sm:flex-row gap-0 bg-white border-2 border-[var(--color-border)]">
+          <div className="relative flex flex-col sm:flex-row gap-0 bg-white border-2 border-border rounded-md overflow-hidden">
             <div className="flex-1 relative">
               <label htmlFor="zip-input" className="sr-only">
                 Enter your ZIP code
@@ -109,7 +109,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
                 aria-describedby={error ? "zip-error" : undefined}
                 aria-invalid={error ? "true" : undefined}
                 disabled={isLoading}
-                className="w-full px-6 py-5 text-xl tracking-widest font-medium bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-[var(--color-muted-foreground)] placeholder:tracking-normal placeholder:font-normal placeholder:italic disabled:opacity-50"
+                className="w-full px-6 py-5 text-xl tracking-widest font-medium bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-muted-foreground placeholder:tracking-normal placeholder:font-normal placeholder:italic disabled:opacity-50"
               />
               {zip.length > 0 && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
@@ -117,9 +117,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
                     <span
                       key={i}
                       className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                        i < zip.length
-                          ? "bg-[var(--color-civic-navy)] scale-100"
-                          : "bg-[var(--color-border)] scale-75"
+                        i < zip.length ? "bg-primary scale-100" : "bg-border scale-75"
                       }`}
                     />
                   ))}
@@ -129,7 +127,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
             <button
               type="submit"
               disabled={isLoading || zip.length !== 5}
-              className="relative overflow-hidden px-8 py-5 font-semibold tracking-wide uppercase text-sm bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] border-t-2 sm:border-t-0 sm:border-l-2 border-[var(--color-civic-navy)] transition-all duration-300 hover:bg-[var(--color-civic-navy)]/90 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
+              className="relative overflow-hidden px-8 py-5 font-semibold tracking-wide uppercase text-sm bg-primary text-primary-foreground border-t-2 sm:border-t-0 sm:border-l-2 border-primary transition-colors duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
             >
               <span
                 className={`flex items-center justify-center gap-2 transition-all duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
@@ -153,15 +151,15 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
                 <span className="absolute inset-0 flex items-center justify-center">
                   <span className="flex gap-1">
                     <span
-                      className="w-2 h-2 rounded-full bg-[var(--color-civic-cream)] animate-bounce"
+                      className="w-2 h-2 rounded-full bg-primary-foreground animate-bounce"
                       style={{ animationDelay: "0ms" }}
                     />
                     <span
-                      className="w-2 h-2 rounded-full bg-[var(--color-civic-cream)] animate-bounce"
+                      className="w-2 h-2 rounded-full bg-primary-foreground animate-bounce"
                       style={{ animationDelay: "150ms" }}
                     />
                     <span
-                      className="w-2 h-2 rounded-full bg-[var(--color-civic-cream)] animate-bounce"
+                      className="w-2 h-2 rounded-full bg-primary-foreground animate-bounce"
                       style={{ animationDelay: "300ms" }}
                     />
                   </span>
@@ -173,11 +171,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
         </div>
 
         {error && (
-          <div
-            id="zip-error"
-            role="alert"
-            className="mt-4 p-4 bg-[var(--color-civic-red)]/10 border border-[var(--color-civic-red)]/30 text-[var(--color-civic-red)] text-sm animate-fade-up flex items-start gap-3"
-          >
+          <div id="zip-error" role="alert" className="mt-4 alert-error animate-fade-up">
             <svg
               className="w-5 h-5 flex-shrink-0 mt-0.5"
               fill="none"
@@ -198,11 +192,11 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
 
       {result && result.type === "ambiguous" && (
         <div className="mt-8 animate-fade-up">
-          <div className="card-civic">
-            <h3 className="text-lg font-semibold text-[var(--color-civic-navy)] mb-2">
+          <div className="card-civic-lg">
+            <h3 className="text-lg font-semibold text-primary mb-2">
               Your ZIP code spans multiple districts
             </h3>
-            <p className="text-[var(--color-muted-foreground)] text-sm mb-6">
+            <p className="text-muted-foreground text-sm mb-6">
               Please select your congressional district to see your representative:
             </p>
             <div className="space-y-3">
@@ -210,21 +204,21 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
                 <button
                   key={`${option.state}-${option.district}`}
                   onClick={() => handleDistrictSelect(option.district)}
-                  className="w-full p-4 text-left bg-[var(--color-secondary)] hover:bg-[var(--color-muted)] border border-[var(--color-border)] transition-all duration-200 hover:border-[var(--color-civic-navy)] group animate-fade-up"
+                  className="w-full p-4 text-left bg-secondary hover:bg-muted border border-border rounded-md transition-all duration-200 hover:border-primary group animate-fade-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-semibold text-[var(--color-civic-navy)]">
+                      <span className="font-semibold text-primary">
                         {option.state} District{" "}
                         {option.district === "0" ? "At-Large" : option.district}
                       </span>
-                      <span className="ml-3 text-sm text-[var(--color-muted-foreground)]">
+                      <span className="ml-3 text-sm text-muted-foreground">
                         {parseFloat((option.proportion * 100).toFixed(2))}% of ZIP area
                       </span>
                     </div>
                     <svg
-                      className="w-5 h-5 text-[var(--color-muted-foreground)] group-hover:text-[var(--color-civic-navy)] group-hover:translate-x-1 transition-all duration-200"
+                      className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

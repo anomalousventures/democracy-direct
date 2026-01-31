@@ -1,4 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { type Address, createEmptyAddress } from "../types/representative";
 import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
 
@@ -69,11 +73,10 @@ export function AddressForm({ onChange }: AddressFormProps) {
   );
 
   const handleSaveToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const enabled = e.target.checked;
-      setSaveEnabled(enabled);
-      setSavePreference(enabled);
-      if (enabled) {
+    (checked: boolean) => {
+      setSaveEnabled(checked);
+      setSavePreference(checked);
+      if (checked) {
         saveToLocalStorage(address);
       }
     },
@@ -90,110 +93,94 @@ export function AddressForm({ onChange }: AddressFormProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[var(--color-civic-navy)]">
-          Your Return Address
-        </h3>
-        <button
-          type="button"
-          onClick={handleClear}
-          className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] underline"
-        >
+        <h3 className="text-lg font-semibold text-primary">Your Return Address</h3>
+        <Button variant="link" size="sm" onClick={handleClear} className="text-muted-foreground">
           Clear
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label
-            htmlFor="address-name"
-            className="block text-sm font-medium text-[var(--color-civic-navy)] mb-1"
-          >
+          <Label htmlFor="address-name" className="text-primary">
             Your Name
-          </label>
-          <input
+          </Label>
+          <Input
             id="address-name"
             name="name"
             autoComplete="name"
             type="text"
             value={address.name}
             onChange={handleChange("name")}
-            className="input-civic"
+            variant="civic"
+            className="mt-1"
             placeholder="Your full name"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="address-street"
-            className="block text-sm font-medium text-[var(--color-civic-navy)] mb-1"
-          >
+          <Label htmlFor="address-street" className="text-primary">
             Street Address
-          </label>
-          <input
+          </Label>
+          <Input
             id="address-street"
             name="street-address"
             autoComplete="street-address"
             type="text"
             value={address.street}
             onChange={handleChange("street")}
-            className="input-civic"
+            variant="civic"
+            className="mt-1"
             placeholder="123 Main St"
           />
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <label
-              htmlFor="address-city"
-              className="block text-sm font-medium text-[var(--color-civic-navy)] mb-1"
-            >
+            <Label htmlFor="address-city" className="text-primary">
               City
-            </label>
-            <input
+            </Label>
+            <Input
               id="address-city"
               name="city"
               autoComplete="address-level2"
               type="text"
               value={address.city}
               onChange={handleChange("city")}
-              className="input-civic"
+              variant="civic"
+              className="mt-1"
               placeholder="City"
             />
           </div>
           <div>
-            <label
-              htmlFor="address-state"
-              className="block text-sm font-medium text-[var(--color-civic-navy)] mb-1"
-            >
+            <Label htmlFor="address-state" className="text-primary">
               State
-            </label>
-            <input
+            </Label>
+            <Input
               id="address-state"
               name="state"
               autoComplete="address-level1"
               type="text"
               value={address.state}
               onChange={handleChange("state")}
-              className="input-civic"
+              variant="civic"
+              className="mt-1"
               placeholder="CA"
               maxLength={2}
             />
           </div>
           <div>
-            <label
-              htmlFor="address-zip"
-              className="block text-sm font-medium text-[var(--color-civic-navy)] mb-1"
-            >
+            <Label htmlFor="address-zip" className="text-primary">
               ZIP
-            </label>
-            <input
+            </Label>
+            <Input
               id="address-zip"
               name="postal-code"
               autoComplete="postal-code"
               type="text"
               value={address.zip}
               onChange={handleChange("zip")}
-              className="input-civic"
+              variant="civic"
+              className="mt-1"
               placeholder="12345"
               maxLength={10}
             />
@@ -201,24 +188,24 @@ export function AddressForm({ onChange }: AddressFormProps) {
         </div>
       </div>
 
-      <div className="pt-2 border-t border-[var(--color-border)]">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+      <div className="pt-2 border-t border-border">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="save-address"
             checked={saveEnabled}
-            onChange={handleSaveToggle}
-            className="mt-1 h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-civic-navy)] focus:ring-[var(--color-civic-navy)]"
+            onCheckedChange={handleSaveToggle}
+            className="mt-1"
           />
           <div className="text-sm">
-            <span className="font-medium text-[var(--color-civic-navy)]">
+            <Label htmlFor="save-address" className="font-medium text-primary cursor-pointer">
               Remember my address on this device
-            </span>
-            <p className="text-[var(--color-muted-foreground)] mt-1">
+            </Label>
+            <p className="text-muted-foreground mt-1">
               Your address will be stored only on this device/browser. It won't sync to other
               devices and is never sent to or stored on our servers.
             </p>
           </div>
-        </label>
+        </div>
       </div>
     </div>
   );

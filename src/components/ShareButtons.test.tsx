@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ShareButtons } from "./ShareButtons";
+import { toast } from "sonner";
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("@/hooks/useAnalytics", () => ({
   useAnalytics: () => ({
@@ -65,7 +73,7 @@ describe("ShareButtons", () => {
       fireEvent.click(copyButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Link copied to clipboard!")).toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith("Link copied to clipboard!");
       });
 
       expect(mockWriteText).toHaveBeenCalledWith("https://example.com/templates/test");
@@ -86,7 +94,7 @@ describe("ShareButtons", () => {
       fireEvent.click(copyButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Failed to copy link")).toBeInTheDocument();
+        expect(toast.error).toHaveBeenCalledWith("Failed to copy link");
       });
     });
 

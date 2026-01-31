@@ -21,15 +21,12 @@ const navLinks = [
   <div class="container mx-auto px-4 py-4">
     <nav class="flex items-center justify-between">
       <a href="/" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 bg-[var(--color-civic-navy)] flex items-center justify-center">
-          <span
-            class="text-[var(--color-civic-gold)] text-xl font-bold"
-            style="font-family: var(--font-display)">D</span
+        <div class="w-10 h-10 bg-primary flex items-center justify-center">
+          <span class="text-accent text-xl font-bold" style="font-family: var(--font-display)"
+            >D</span
           >
         </div>
-        <span class="font-semibold text-[var(--color-civic-navy)] hidden sm:inline"
-          >Democracy Direct</span
-        >
+        <span class="font-semibold text-primary hidden sm:inline">Democracy Direct</span>
       </a>
       <div class="flex items-center gap-6">
         {
@@ -39,8 +36,8 @@ const navLinks = [
               class:list={[
                 "text-sm transition-colors",
                 currentPath === link.href
-                  ? "text-[var(--color-civic-navy)] font-medium"
-                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-primary",
               ]}
             >
               {link.label}
@@ -54,8 +51,8 @@ const navLinks = [
               class:list={[
                 "text-sm transition-colors",
                 currentPath.startsWith("/admin")
-                  ? "text-[var(--color-civic-navy)] font-medium"
-                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-primary",
               ]}
             >
               Admin

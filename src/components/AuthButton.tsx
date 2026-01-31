@@ -29,9 +29,9 @@ export function AuthButton({ isLoggedIn }: AuthButtonProps) {
   if (isLoggedIn) {
     return (
       <div className="flex items-center gap-4">
-        <div className="w-8 h-8 rounded-full bg-[var(--color-civic-navy)] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
           <svg
-            className="w-4 h-4 text-[var(--color-civic-cream)]"
+            className="w-4 h-4 text-primary-foreground"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

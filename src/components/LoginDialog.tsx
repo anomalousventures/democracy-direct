@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 
 declare global {
@@ -241,18 +242,24 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
           >
             <div className="space-y-2">
               <Label htmlFor="otp">Verification Code</Label>
-              <Input
+              <InputOTP
                 id="otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="000000"
+                maxLength={6}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(value) => setOtp(value)}
                 disabled={isLoading}
                 autoComplete="one-time-code"
-                className="text-center text-2xl tracking-widest font-mono"
-              />
+                containerClassName="justify-center"
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             {error && (

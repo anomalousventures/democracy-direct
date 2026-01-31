@@ -1,14 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, type ComponentType } from "react";
 import {
   generateTypedShareUrls,
   generateTemplateShareText,
   generateRepShareText,
   supportsWebShare,
   triggerWebShare,
+  type ShareUrls,
 } from "@/lib/share";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { Button } from "@/components/ui/button";
 import { SiX, SiFacebook, SiReddit } from "react-icons/si";
 import { TbShare, TbMail, TbLink } from "react-icons/tb";
+import { toast } from "sonner";
 
 interface RepInfo {
   name: string;
@@ -32,42 +35,53 @@ type ShareButtonsProps =
       repInfo: RepInfo;
     };
 
-type ToastState = {
-  message: string;
-  type: "success" | "error";
-} | null;
+interface PlatformConfig {
+  key: keyof ShareUrls;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  displayName: string;
+}
 
-export function ShareButtons({ url, title, description, pageType, repInfo }: ShareButtonsProps) {
-  const [toast, setToast] = useState<ToastState>(null);
+const platformButtons: PlatformConfig[] = [
+  { key: "twitter", icon: SiX, label: "Share on X (Twitter)", displayName: "X" },
+  { key: "facebook", icon: SiFacebook, label: "Share on Facebook", displayName: "Facebook" },
+  { key: "reddit", icon: SiReddit, label: "Share on Reddit", displayName: "Reddit" },
+];
+
+function getShareUrls(props: ShareButtonsProps): ShareUrls {
+  if (props.pageType === "template") {
+    return generateTypedShareUrls({
+      url: props.url,
+      title: props.title,
+      description: props.description,
+      pageType: "template",
+    });
+  }
+  return generateTypedShareUrls({
+    url: props.url,
+    title: props.title,
+    description: props.description,
+    pageType: "rep",
+    repName: props.repInfo.name,
+    repParty: props.repInfo.party,
+    repState: props.repInfo.state,
+  });
+}
+
+export function ShareButtons(props: ShareButtonsProps) {
+  const { url, title, description, pageType, repInfo } = props;
   const [hasWebShare, setHasWebShare] = useState(false);
   const { capture } = useAnalytics();
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setHasWebShare(supportsWebShare());
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const showToast = useCallback((message: string, type: "success" | "error") => {
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current);
-    }
-    setToast({ message, type });
-    toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   }, []);
 
   const getShareText = useCallback((): string => {
     if (pageType === "template") {
       return generateTemplateShareText(title);
     }
-    if (pageType === "rep" && repInfo) {
+    if (repInfo) {
       return generateRepShareText(repInfo.name, repInfo.party, repInfo.state);
     }
     return title;
@@ -75,11 +89,7 @@ export function ShareButtons({ url, title, description, pageType, repInfo }: Sha
 
   const trackShare = useCallback(
     (platform: string) => {
-      capture("share_clicked", {
-        platform,
-        pageType,
-        url,
-      });
+      capture("share_clicked", { platform, pageType, url });
     },
     [capture, pageType, url]
   );
@@ -98,29 +108,13 @@ export function ShareButtons({ url, title, description, pageType, repInfo }: Sha
     trackShare("copy");
     try {
       await navigator.clipboard.writeText(url);
-      showToast("Link copied to clipboard!", "success");
+      toast.success("Link copied to clipboard!");
     } catch {
-      showToast("Failed to copy link", "error");
+      toast.error("Failed to copy link");
     }
-  }, [url, trackShare, showToast]);
+  }, [url, trackShare]);
 
-  const shareUrls =
-    pageType === "template"
-      ? generateTypedShareUrls({
-          url,
-          title,
-          description,
-          pageType: "template",
-        })
-      : generateTypedShareUrls({
-          url,
-          title,
-          description,
-          pageType: "rep",
-          repName: repInfo!.name,
-          repParty: repInfo!.party,
-          repState: repInfo!.state,
-        });
+  const shareUrls = getShareUrls(props);
 
   const handlePlatformClick = useCallback(
     (platform: string, shareUrl: string) => {
@@ -134,82 +128,51 @@ export function ShareButtons({ url, title, description, pageType, repInfo }: Sha
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         {hasWebShare && (
-          <button
+          <Button
             onClick={handleNativeShare}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-            type="button"
+            variant="outline"
+            size="sm"
             aria-label="Share this page"
           >
-            <TbShare className="w-[18px] h-[18px]" aria-hidden="true" />
+            <TbShare className="size-4" aria-hidden="true" />
             <span>Share</span>
-          </button>
+          </Button>
         )}
 
-        <button
-          onClick={() => handlePlatformClick("twitter", shareUrls.twitter)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-          type="button"
-          aria-label="Share on X (Twitter)"
-        >
-          <SiX className="w-[16px] h-[16px]" aria-hidden="true" />
-          <span className="hidden sm:inline">X</span>
-        </button>
+        {platformButtons.map(({ key, icon: Icon, label, displayName }) => (
+          <Button
+            key={key}
+            onClick={() => handlePlatformClick(key, shareUrls[key])}
+            variant="outline"
+            size="sm"
+            aria-label={label}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">{displayName}</span>
+          </Button>
+        ))}
 
-        <button
-          onClick={() => handlePlatformClick("facebook", shareUrls.facebook)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-          type="button"
-          aria-label="Share on Facebook"
-        >
-          <SiFacebook className="w-[16px] h-[16px]" aria-hidden="true" />
-          <span className="hidden sm:inline">Facebook</span>
-        </button>
+        <Button variant="outline" size="sm" asChild>
+          <a
+            href={shareUrls.email}
+            aria-label="Share via Email"
+            onClick={() => trackShare("email")}
+          >
+            <TbMail className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Email</span>
+          </a>
+        </Button>
 
-        <button
-          onClick={() => handlePlatformClick("reddit", shareUrls.reddit)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-          type="button"
-          aria-label="Share on Reddit"
-        >
-          <SiReddit className="w-[16px] h-[16px]" aria-hidden="true" />
-          <span className="hidden sm:inline">Reddit</span>
-        </button>
-
-        <a
-          href={shareUrls.email}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-          aria-label="Share via Email"
-          onClick={() => trackShare("email")}
-        >
-          <TbMail className="w-[18px] h-[18px]" aria-hidden="true" />
-          <span className="hidden sm:inline">Email</span>
-        </a>
-
-        <button
+        <Button
           onClick={handleCopyLink}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-civic-navy)] bg-[var(--color-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-muted)] hover:border-[var(--color-civic-navy)] transition-colors"
-          type="button"
+          variant="outline"
+          size="sm"
           aria-label="Copy link to clipboard"
         >
-          <TbLink className="w-[18px] h-[18px]" aria-hidden="true" />
+          <TbLink className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Copy Link</span>
-        </button>
+        </Button>
       </div>
-
-      {toast && (
-        <div
-          className={`inline-block px-3 py-1.5 rounded text-sm font-medium ${
-            toast.type === "success"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
-          }`}
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {toast.message}
-        </div>
-      )}
     </div>
   );
 }

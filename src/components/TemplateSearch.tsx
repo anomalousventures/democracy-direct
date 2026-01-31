@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { Input } from "./ui/input";
+import { Badge } from "./ui/badge";
+import { Toggle } from "./ui/toggle";
 
 interface Template {
   id: string;
@@ -59,7 +61,7 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
             placeholder="Search templates..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="input-civic"
+            variant="civic"
             aria-label="Search templates"
             data-testid="template-search-input"
           />
@@ -71,20 +73,17 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
           <legend className="sr-only">Filter by issue tags</legend>
           <div className="flex flex-wrap gap-2" data-testid="tag-filter">
             {availableTags.map((tag) => (
-              <button
+              <Toggle
                 key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                aria-pressed={selectedTags.includes(tag)}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  selectedTags.includes(tag)
-                    ? "bg-[var(--color-civic-navy)] text-white"
-                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]/80"
-                }`}
+                variant="outline"
+                size="sm"
+                pressed={selectedTags.includes(tag)}
+                onPressedChange={() => toggleTag(tag)}
+                className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 data-testid="tag-filter-button"
               >
                 {tag}
-              </button>
+              </Toggle>
             ))}
           </div>
         </fieldset>
@@ -97,13 +96,9 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
               ? `/templates/${template.slug}?rep=${repBioguideId}`
               : `/templates/${template.slug}`;
             return (
-              <article
-                key={template.id}
-                data-testid="template-card"
-                className="card-civic hover:-translate-y-1 transition-transform duration-300"
-              >
+              <article key={template.id} data-testid="template-card" className="card-civic">
                 <a href={templateUrl} className="block">
-                  <h2 className="text-xl font-semibold mb-2 text-[var(--color-civic-navy)] hover:text-[var(--color-civic-navy)]/80">
+                  <h2 className="text-xl font-semibold mb-2 text-primary hover:text-primary/80">
                     {template.title}
                   </h2>
                   <p className="text-muted-foreground mb-4 line-clamp-2">
@@ -112,13 +107,9 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
                   <div className="flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">
                       {template.issueTags?.map((tag) => (
-                        <span
-                          key={tag}
-                          data-testid="issue-tag"
-                          className="px-2 py-1 text-xs bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] rounded"
-                        >
+                        <Badge key={tag} variant="secondary" data-testid="issue-tag">
                           {tag}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                     <span className="text-sm text-muted-foreground">

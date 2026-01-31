@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Input } from "./ui/input";
-import { LoadingButton } from "./ui/loading-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Toggle } from "@/components/ui/toggle";
 import { TiptapEditor } from "./TiptapEditor";
 import {
   TITLE_MIN_LENGTH,
@@ -141,16 +143,16 @@ export function TemplateForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <label htmlFor="title" className="block text-sm font-medium text-[var(--color-civic-navy)]">
+        <Label htmlFor="title" className="text-primary">
           Title
-        </label>
+        </Label>
         <Input
           id="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Give your template a descriptive title"
-          className="input-civic"
+          variant="civic"
           data-testid="template-title-input"
           maxLength={TITLE_MAX_LENGTH}
           aria-invalid={errors.title ? "true" : undefined}
@@ -171,9 +173,9 @@ export function TemplateForm({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="body" className="block text-sm font-medium text-[var(--color-civic-navy)]">
+        <Label htmlFor="body" className="text-primary">
           Letter Body
-        </label>
+        </Label>
         <TiptapEditor
           content={body}
           onChange={setBody}
@@ -199,24 +201,19 @@ export function TemplateForm({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="block text-sm font-medium text-[var(--color-civic-navy)]">
-          Issue Tags (optional)
-        </legend>
+        <legend className="block text-sm font-medium text-primary">Issue Tags (optional)</legend>
         <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector">
           {ISSUE_TAG_OPTIONS.map((tag) => (
-            <button
+            <Toggle
               key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              aria-pressed={selectedTags.includes(tag)}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                selectedTags.includes(tag)
-                  ? "bg-[var(--color-civic-navy)] text-white"
-                  : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]/80"
-              }`}
+              variant="outline"
+              size="sm"
+              pressed={selectedTags.includes(tag)}
+              onPressedChange={() => toggleTag(tag)}
+              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
               {tag}
-            </button>
+            </Toggle>
           ))}
         </div>
       </fieldset>
@@ -226,7 +223,7 @@ export function TemplateForm({
           type="submit"
           loading={isSubmitting}
           loadingText="Saving..."
-          className="btn-primary w-full sm:w-auto"
+          className="w-full sm:w-auto"
           data-testid="submit-template-button"
           disabled={
             (turnstileSiteKey && !turnstileToken) ||

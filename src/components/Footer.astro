@@ -17,10 +17,9 @@ const navLinks = [
   <div class="container mx-auto px-4">
     <div class="flex flex-col md:flex-row justify-between items-center gap-6">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-[var(--color-civic-navy)] flex items-center justify-center">
-          <span
-            class="text-[var(--color-civic-gold)] text-sm font-bold"
-            style="font-family: var(--font-display)">D</span
+        <div class="w-8 h-8 bg-primary flex items-center justify-center">
+          <span class="text-accent text-sm font-bold" style="font-family: var(--font-display)"
+            >D</span
           >
         </div>
         <span class="text-muted-foreground text-sm">
@@ -36,8 +35,8 @@ const navLinks = [
               class:list={[
                 "text-sm transition-colors",
                 currentPath === link.href
-                  ? "text-[var(--color-civic-navy)] font-medium"
-                  : "text-muted-foreground hover:text-[var(--color-civic-navy)]",
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-primary",
               ]}
             >
               {link.label}
@@ -48,7 +47,7 @@ const navLinks = [
           href="https://github.com/anomalousventures/democracy-direct"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-sm text-muted-foreground hover:text-[var(--color-civic-navy)] transition-colors flex items-center gap-1"
+          class="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path
