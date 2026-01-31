@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { emailOtps, users, sessions, templates } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { createHash } from "crypto";
 
 const DATABASE_URL = process.env.DATABASE_URL!;
@@ -68,7 +68,7 @@ export async function getTestUserSession(email: string): Promise<string | null> 
     .select({ sessionId: sessions.id })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
-    .where(and(eq(users.emailHash, emailHashValue), eq(sessions.expiresAt, sessions.expiresAt)))
+    .where(and(eq(users.emailHash, emailHashValue), gt(sessions.expiresAt, new Date())))
     .limit(1);
 
   return result[0]?.sessionId ?? null;
