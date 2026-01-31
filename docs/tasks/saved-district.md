@@ -48,11 +48,11 @@ Users who have identified their congressional district through ZIP lookup or map
 5. Add DELETE handler to `src/pages/api/user/district.ts` that clears savedState and savedDistrict
 6. Create `src/lib/saved-district.ts` with localStorage helpers: `getSavedDistrict()`, `setSavedDistrict(state, district)`, `clearSavedDistrict()`
 7. Create `src/components/SaveDistrictPrompt.tsx` with checkbox that saves to API (logged in) or localStorage (anonymous)
-8. Add SaveDistrictPrompt component to `/zip/[zip].astro` below the rep cards
+8. Add SaveDistrictPrompt component to `/zip/[zip].astro` above the representatives grid
 9. Create `src/pages/reps/[state]/[district].astro` route that displays reps without needing a ZIP code
 10. Add saved district display to `src/components/UserMenu.tsx` header dropdown with "View My Reps" and "Change District" options
 11. UserMenu shows saved district in header menu for logged-in users (from DB) or anonymous users (from localStorage)
-12. Add unit tests for the district API endpoints in `tests/api/user-district.test.ts`
+12. Add unit tests for the district API endpoints in `tests/api/user/district.test.ts`
 13. Add unit tests for localStorage helpers in `src/lib/saved-district.test.ts`
 14. Add e2e test for anonymous user save flow in `tests/e2e/saved-district-anonymous.spec.ts`
 15. Add e2e test for authenticated user save flow in `tests/e2e/saved-district-authenticated.spec.ts`
@@ -78,4 +78,4 @@ Users who have identified their congressional district through ZIP lookup or map
 - [x] Unit tests pass for API endpoints (11 tests)
 - [x] Unit tests pass for localStorage helpers (11 tests)
 - [x] E2E tests pass for anonymous save/clear flow (7 tests)
-- [x] E2E tests pass for authenticated save/clear flow (5 tests, skip if no session)
+- [x] E2E tests pass for authenticated save/clear flow (5 tests, uses Playwright global-setup for session)
