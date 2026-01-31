@@ -1,6 +1,5 @@
 ---
 import { UserMenu } from "./UserMenu";
-import { MobileNav } from "./MobileNav";
 import { isAdmin } from "@/lib/trust-level";
 
 interface Props {
@@ -22,9 +21,6 @@ const publicNavLinks = [
   { href: "/templates", label: "Templates" },
 ];
 
-const authNavLinks = user ? [{ href: "/templates/mine", label: "My Templates" }] : [];
-const allNavLinks = [...publicNavLinks, ...authNavLinks];
-
 const savedState = user?.savedState ?? null;
 const savedDistrict = user?.savedDistrict ?? null;
 ---
@@ -33,14 +29,6 @@ const savedDistrict = user?.savedDistrict ?? null;
   <div class="container mx-auto px-4 py-4">
     <nav class="flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <MobileNav
-          client:load
-          navLinks={allNavLinks}
-          currentPath={currentPath}
-          isAdmin={showAdminLink}
-          savedState={savedState}
-          savedDistrict={savedDistrict}
-        />
         <a href="/" class="flex items-center gap-3 group">
           <div class="w-10 h-10 bg-primary flex items-center justify-center">
             <span class="text-accent text-xl font-bold" style="font-family: var(--font-display)"

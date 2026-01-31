@@ -189,6 +189,8 @@ jobs:
       - name: Run Playwright tests
         run: pnpm test:e2e
         timeout-minutes: 10
+        env:
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - uses: actions/upload-artifact@v6
         if: failure()

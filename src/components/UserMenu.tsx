@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { User, FileText, MapPin, LogOut, ChevronDown } from "lucide-react";
+import { User, FileText, MapPin, LogOut, Menu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,11 @@ import {
   type SavedDistrict,
 } from "@/lib/saved-district";
 import { getStateName } from "@/lib/states";
+
+const publicNavLinks = [
+  { href: "/about", label: "About" },
+  { href: "/templates", label: "Templates" },
+];
 
 interface UserMenuProps {
   isLoggedIn: boolean;
@@ -84,93 +89,118 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
     ? `/reps/${effectiveState.toLowerCase()}/${effectiveDistrict.toLowerCase()}`
     : null;
 
-  if (!isLoggedIn) {
-    return (
-      <div className="flex items-center gap-3">
-        {hasDistrict && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm bg-[var(--color-civic-gold)]/10 border border-[var(--color-civic-gold)]/30 rounded-md hover:bg-[var(--color-civic-gold)]/20 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-civic-gold)]/30"
-                data-testid="district-badge"
-              >
-                <MapPin className="w-3.5 h-3.5 text-[var(--color-civic-gold)]" />
-                <span className="font-medium text-[var(--color-civic-navy)]">
-                  {districtDisplay}
-                </span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{districtDisplay}</span>
-                  <span className="text-xs text-muted-foreground">{stateName}</span>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {repsUrl && (
+  const districtSection = hasDistrict && (
+    <>
+      <DropdownMenuLabel className="font-normal">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-accent" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{districtDisplay}</span>
+            <span className="text-xs text-muted-foreground">{stateName}</span>
+          </div>
+        </div>
+      </DropdownMenuLabel>
+      {repsUrl && (
+        <DropdownMenuItem asChild>
+          <a href={repsUrl} className="cursor-pointer">
+            View My Reps
+          </a>
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem
+        onClick={handleClearDistrict}
+        disabled={isClearing}
+        className="cursor-pointer text-muted-foreground focus:text-foreground text-sm"
+      >
+        {isClearing ? "Clearing..." : "Change District"}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+    </>
+  );
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Mobile: Single hamburger menu for all navigation */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="md:hidden flex items-center justify-center w-10 h-10 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            data-testid="mobile-menu-trigger"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {publicNavLinks.map((link) => (
+            <DropdownMenuItem key={link.href} asChild>
+              <a href={link.href} className="cursor-pointer">
+                {link.label}
+              </a>
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
+
+          {districtSection}
+
+          {isLoggedIn ? (
+            <>
+              <DropdownMenuItem asChild>
+                <a href="/templates/mine" className="cursor-pointer">
+                  <FileText className="w-4 h-4" />
+                  My Templates
+                </a>
+              </DropdownMenuItem>
+              {isAdmin && (
                 <DropdownMenuItem asChild>
-                  <a href={repsUrl} className="cursor-pointer">
-                    <MapPin className="w-4 h-4" />
-                    View My Reps
+                  <a href="/admin" className="cursor-pointer">
+                    Admin
                   </a>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleClearDistrict}
-                disabled={isClearing}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="cursor-pointer text-muted-foreground focus:text-foreground"
               >
-                {isClearing ? "Clearing..." : "Change District"}
+                <LogOut className="w-4 h-4" />
+                {isLoggingOut ? "Signing out..." : "Sign Out"}
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDialogOpen(true)}
-          data-testid="sign-in-button"
-        >
-          Sign In
-        </Button>
-        <LoginDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onSuccess={handleLoginSuccess}
-        />
-      </div>
-    );
-  }
+            </>
+          ) : (
+            <DropdownMenuItem onClick={() => setDialogOpen(true)} className="cursor-pointer">
+              <User className="w-4 h-4" />
+              Sign In
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="flex items-center gap-2 p-1.5 rounded-full hover:bg-primary/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-          data-testid="user-menu-trigger"
-        >
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <User className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <ChevronDown className="w-4 h-4 text-muted-foreground hidden sm:block" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        {hasDistrict && (
-          <>
+      {/* Desktop: District badge (if set) */}
+      {hasDistrict && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-sm bg-accent/10 border border-accent/30 rounded-sm hover:bg-accent/20 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30"
+              data-testid="district-badge"
+            >
+              <MapPin className="w-3.5 h-3.5 text-accent" />
+              <span className="font-medium text-primary">{districtDisplay}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[var(--color-civic-gold)]" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{districtDisplay}</span>
-                  <span className="text-xs text-muted-foreground">{stateName}</span>
-                </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{districtDisplay}</span>
+                <span className="text-xs text-muted-foreground">{stateName}</span>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
             {repsUrl && (
               <DropdownMenuItem asChild>
                 <a href={repsUrl} className="cursor-pointer">
+                  <MapPin className="w-4 h-4" />
                   View My Reps
                 </a>
               </DropdownMenuItem>
@@ -178,40 +208,68 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
             <DropdownMenuItem
               onClick={handleClearDistrict}
               disabled={isClearing}
-              className="cursor-pointer text-muted-foreground focus:text-foreground text-sm"
+              className="cursor-pointer text-muted-foreground focus:text-foreground"
             >
               {isClearing ? "Clearing..." : "Change District"}
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
 
-        <DropdownMenuItem asChild>
-          <a href="/templates/mine" className="cursor-pointer">
-            <FileText className="w-4 h-4" />
-            My Templates
-          </a>
-        </DropdownMenuItem>
-
-        {isAdmin && (
-          <DropdownMenuItem asChild>
-            <a href="/admin" className="cursor-pointer">
-              Admin
-            </a>
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="cursor-pointer text-muted-foreground focus:text-foreground"
+      {/* Desktop logged out: Sign In button */}
+      {!isLoggedIn && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDialogOpen(true)}
+          data-testid="sign-in-button"
+          className="hidden md:inline-flex"
         >
-          <LogOut className="w-4 h-4" />
-          {isLoggingOut ? "Signing out..." : "Sign Out"}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          Sign In
+        </Button>
+      )}
+
+      {/* Desktop logged in: User avatar dropdown */}
+      {isLoggedIn && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="hidden md:flex items-center gap-2 p-1.5 rounded-full hover:bg-primary/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+              data-testid="user-menu-trigger"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <User className="w-4 h-4 text-primary-foreground" />
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem asChild>
+              <a href="/templates/mine" className="cursor-pointer">
+                <FileText className="w-4 h-4" />
+                My Templates
+              </a>
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <a href="/admin" className="cursor-pointer">
+                  Admin
+                </a>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="cursor-pointer text-muted-foreground focus:text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+              {isLoggingOut ? "Signing out..." : "Sign Out"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      <LoginDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={handleLoginSuccess} />
+    </div>
   );
 }
