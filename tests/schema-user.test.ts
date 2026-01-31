@@ -24,7 +24,8 @@ describe("Phase 0.4: Database Schema - User Tables", () => {
       expect(columns.approvedTemplatesCount).toBeDefined();
     });
 
-    it("should have saved_district field", () => {
+    it("should have saved_state and saved_district fields", () => {
+      expect(columns.savedState).toBeDefined();
       expect(columns.savedDistrict).toBeDefined();
     });
 

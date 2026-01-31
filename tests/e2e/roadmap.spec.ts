@@ -45,8 +45,8 @@ test.describe("Roadmap Page", () => {
   test("lists completed features", async ({ page }) => {
     await page.goto("/roadmap");
     const completedSection = page.locator('section[aria-labelledby="completed-heading"]');
-    await expect(completedSection.getByText("ZIP Code Lookup")).toBeVisible();
-    await expect(completedSection.getByText("Letter Templates")).toBeVisible();
+    await expect(completedSection.getByRole("heading", { name: "ZIP Code Lookup" })).toBeVisible();
+    await expect(completedSection.getByRole("heading", { name: "Letter Templates" })).toBeVisible();
   });
 
   test("lists upcoming features", async ({ page }) => {

@@ -29,24 +29,50 @@ const completed: Feature[] = [
     name: "Accessibility",
     description: "Screen reader support, keyboard navigation, and high contrast",
   },
-];
-
-const upNext: Feature[] = [
-  { name: "Share Buttons", description: "Share templates easily on social media" },
+  {
+    name: "Share Buttons",
+    description: "Share templates and rep profiles easily on social media",
+  },
   {
     name: "Save District",
     description: "Remember your district so you don't have to look it up each time",
   },
+  {
+    name: "Private Templates",
+    description: "Create private letter templates only visible to you",
+  },
+];
+
+const upNext: Feature[] = [
   { name: "Voting Records", description: "See how your representatives voted on key legislation" },
   {
     name: "Bill Summaries",
     description: "Track bills your representatives sponsor and co-sponsor",
+  },
+  {
+    name: "Legislation Search",
+    description: "Search bills and see who voted for or against them",
+  },
+  {
+    name: "Template Bill Linking",
+    description: "Connect letter templates to specific legislation",
   },
 ];
 
 const planned: Feature[] = [
   { name: "Campaign Finance", description: "See who funds your representatives' campaigns" },
   { name: "District Map", description: "Find your district visually on an interactive map" },
+];
+
+const future: Feature[] = [
+  {
+    name: "State Legislators",
+    description: "Contact your state senators and state representatives",
+  },
+  {
+    name: "Local Officials",
+    description: "Reach mayors, city council members, and school board officials",
+  },
 ];
 ---
 
@@ -194,6 +220,47 @@ const planned: Feature[] = [
                           stroke-linejoin="round"
                           stroke-width="2"
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-primary">{feature.name}</h3>
+                      <p class="text-caption">{feature.description}</p>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+
+          <section aria-labelledby="future-heading">
+            <h2 id="future-heading" class="roadmap-badge-future">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                ></path>
+              </svg>
+              Future
+            </h2>
+            <div class="space-y-4">
+              {
+                future.map((feature) => (
+                  <div class="roadmap-item">
+                    <div class="roadmap-circle-future">
+                      <svg
+                        class="w-4 h-4 text-purple-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                         />
                       </svg>
                     </div>

@@ -18,7 +18,13 @@ export function TemplateCreateClient({
   const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
+    async (data: {
+      title: string;
+      body: string;
+      issueTags: string[];
+      turnstileToken?: string;
+      isPublic?: boolean;
+    }) => {
       setIsSubmitting(true);
       setError(null);
 
@@ -97,6 +103,7 @@ export function TemplateCreateClient({
         submitLabel="Create Template"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );

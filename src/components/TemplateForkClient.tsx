@@ -10,12 +10,14 @@ interface TemplateForkClientProps {
     issueTags: string[];
   };
   turnstileSiteKey: string;
+  isAuthenticated?: boolean;
 }
 
 export function TemplateForkClient({
   forkedFromId,
   initialData,
   turnstileSiteKey,
+  isAuthenticated = false,
 }: TemplateForkClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,13 @@ export function TemplateForkClient({
   const { capture } = useAnalytics();
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[]; turnstileToken?: string }) => {
+    async (data: {
+      title: string;
+      body: string;
+      issueTags: string[];
+      turnstileToken?: string;
+      isPublic?: boolean;
+    }) => {
       setIsSubmitting(true);
       setError(null);
 
@@ -100,6 +108,7 @@ export function TemplateForkClient({
         submitLabel="Create Fork"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );

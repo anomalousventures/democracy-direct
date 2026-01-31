@@ -11,7 +11,7 @@ import { TemplateReportButton } from "@/components/TemplateReportButton";
 import { TemplateUseButton } from "@/components/TemplateUseButton";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
@@ -25,6 +25,7 @@ let template: {
   title: string;
   body: string;
   issueTags: string[] | null;
+  isPublic: boolean;
   viewCount: number;
   useCount: number;
   userId: string | null;
@@ -49,6 +50,8 @@ if (!slug) {
         title: templates.title,
         body: templates.body,
         issueTags: templates.issueTags,
+        isPublic: templates.isPublic,
+        moderationStatus: templates.moderationStatus,
         viewCount: templates.viewCount,
         useCount: templates.useCount,
         userId: templates.userId,
@@ -56,22 +59,28 @@ if (!slug) {
         createdAt: templates.createdAt,
       })
       .from(templates)
-      .where(
-        and(
-          eq(templates.slug, slug),
-          eq(templates.isPublic, true),
-          eq(templates.moderationStatus, "approved")
-        )
-      )
+      .where(eq(templates.slug, slug))
       .limit(1);
 
     if (results.length > 0) {
-      template = results[0];
+      const foundTemplate = results[0];
+      const isOwnerOfTemplate = user && foundTemplate.userId === user.id;
+      const isPublicAndApproved =
+        foundTemplate.isPublic && foundTemplate.moderationStatus === "approved";
 
-      await db
-        .update(templates)
-        .set({ viewCount: sql`${templates.viewCount} + 1` })
-        .where(eq(templates.id, template.id));
+      if (isPublicAndApproved || isOwnerOfTemplate) {
+        template = foundTemplate;
+
+        if (isPublicAndApproved) {
+          await db
+            .update(templates)
+            .set({ viewCount: sql`${templates.viewCount} + 1` })
+            .where(eq(templates.id, template.id));
+        }
+      } else {
+        Astro.response.status = 404;
+        error = "Template not found.";
+      }
     } else {
       Astro.response.status = 404;
       error = "Template not found.";

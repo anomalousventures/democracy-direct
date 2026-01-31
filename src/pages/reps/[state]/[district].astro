@@ -4,65 +4,47 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import AstroButton from "@/components/ui/AstroButton.astro";
-import AstroCard from "@/components/ui/AstroCard.astro";
-import { SaveDistrictPrompt } from "@/components/SaveDistrictPrompt";
 import { createDb } from "@/db/client";
 import { getLegislatorsByStateAndDistrict } from "@/db/queries/legislators";
 import type { Legislator } from "@/db/schema";
-import zipData from "../../../public/data/zip-districts.json";
 import { getPhotoUrl, getPartyColor, getPartyLabel, getRepTitle } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
 import { getConfig } from "@/lib/config";
-import { getStateName } from "@/lib/states";
+import { getStateName, isValidState } from "@/lib/states";
 
 const user = Astro.locals.user;
 
-interface ClientZipEntry {
-  s: string;
-  d: { d: string; p: number }[];
-}
+const { state: rawState, district: rawDistrict } = Astro.params;
+const state = rawState?.toUpperCase() ?? "";
+const district = rawDistrict?.toUpperCase() ?? "";
 
-const { zip } = Astro.params;
-const district = Astro.url.searchParams.get("district");
 const rawTemplateSlug = Astro.url.searchParams.get("template");
 const templateSlug =
   rawTemplateSlug && /^[a-z0-9-]{1,100}$/.test(rawTemplateSlug) ? rawTemplateSlug : null;
 const templateQueryParam = templateSlug ? `?template=${encodeURIComponent(templateSlug)}` : "";
 
 let reps: Legislator[] = [];
-let zipInfo: { state: string; district: string } | null = null;
 let error: string | null = null;
 
-const isInvalidZip = !zip || !/^\d{5}$/.test(zip);
-if (isInvalidZip) {
-  error = "Invalid ZIP code format.";
-}
+const isValidStateCode = isValidState(state);
+const isValidDistrict = /^(\d{1,2}|AL|0)$/.test(district);
 
-const zipEntry = !isInvalidZip ? (zipData as Record<string, ClientZipEntry>)[zip] : null;
-if (!error && !zipEntry) {
-  error =
-    "We don't have district data for this ZIP code. This may be a PO Box, military, or very new ZIP.";
-}
-
-const hasMultipleDistricts = zipEntry && zipEntry.d.length > 1 && !district;
-if (hasMultipleDistricts) {
-  const params = new URLSearchParams({ ambiguous: zip });
-  if (templateSlug) params.set("template", templateSlug);
-  return Astro.redirect(`/?${params.toString()}`);
-}
-
-if (!error && zipEntry) {
-  const selectedDistrict = district || zipEntry.d[0].d;
-  const selectedState = zipEntry.s;
-  zipInfo = { state: selectedState, district: selectedDistrict };
-
+if (!isValidStateCode) {
+  Astro.response.status = 404;
+  error = "Invalid state code.";
+} else if (!isValidDistrict) {
+  Astro.response.status = 404;
+  error = "Invalid district.";
+} else {
   const config = getConfig(Astro.locals);
   const db = createDb(config.database.url);
+
+  const normalizedDistrict = district === "AL" ? "0" : district;
+
   const [loadedReps, dbError] = await getLegislatorsByStateAndDistrict(
     db,
-    selectedState,
-    selectedDistrict
+    state,
+    normalizedDistrict
   )
     .then((result) => [result, null] as const)
     .catch((e) => {
@@ -76,26 +58,34 @@ if (!error && zipEntry) {
     return 0;
   });
   error = dbError;
+
+  if (!error && reps.length === 0) {
+    Astro.response.status = 404;
+    error = "No representatives found for this district.";
+  }
 }
+
+const stateName = isValidStateCode ? getStateName(state) : state;
+const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `District ${district}`;
 ---
 
 <Layout
-  title={zipInfo ? `Your Representatives for ${zip} | ${zipInfo.state}` : "ZIP Lookup"}
-  description={zipInfo
-    ? `Find and contact your ${reps.length} elected officials for ZIP code ${zip} in ${getStateName(zipInfo.state)}`
-    : "Look up your congressional representatives by ZIP code"}
+  title={!error ? `Representatives for ${state}-${district} | ${stateName}` : "District Not Found"}
+  description={!error
+    ? `Find and contact your ${reps.length} elected officials for ${stateName} ${districtDisplay}`
+    : "District not found"}
 >
-  <Header currentPath={`/zip/${zip}`} user={user} />
+  <Header currentPath={`/reps/${state.toLowerCase()}/${district.toLowerCase()}`} user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container-page">
+    <div class="container mx-auto px-4">
       {
         error ? (
-          <div class="container-narrow text-center">
-            <AstroCard variant="civicLg">
-              <div class="icon-box-lg mx-auto mb-6">
+          <div class="max-w-2xl mx-auto text-center">
+            <div class="card-civic">
+              <div class="w-16 h-16 mx-auto mb-6 bg-[var(--color-civic-red)]/10 flex items-center justify-center">
                 <svg
-                  class="w-8 h-8 text-destructive"
+                  class="w-8 h-8 text-[var(--color-civic-red)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -108,18 +98,18 @@ if (!error && zipEntry) {
                   />
                 </svg>
               </div>
-              <h1 class="heading-card-lg">{error}</h1>
-              <p class="text-muted-foreground mb-8">Please check the ZIP code and try again.</p>
-              <AstroButton href="/" variant="civic">
-                Try Again
-              </AstroButton>
-            </AstroCard>
+              <h1 class="text-2xl font-bold mb-4">{error}</h1>
+              <p class="text-muted-foreground mb-8">Please check the district and try again.</p>
+              <a href="/" class="btn-primary inline-block">
+                Look Up By ZIP Code
+              </a>
+            </div>
           </div>
         ) : (
           <>
-            <div class="container-wide">
-              <div class="text-center mb-8 animate-fade-up">
-                <div class="hero-badge mb-6">
+            <div class="max-w-4xl mx-auto">
+              <div class="text-center mb-12 animate-fade-up">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-muted-foreground)] mb-6">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       stroke-linecap="round"
@@ -134,36 +124,22 @@ if (!error && zipEntry) {
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  <span>ZIP Code {zip}</span>
+                  <span>
+                    {stateName} {districtDisplay}
+                  </span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-bold mb-4">Your Representatives</h1>
-                <p class="text-muted-foreground">
-                  {zipInfo?.state}{" "}
-                  {zipInfo?.district !== "0" ? `District ${zipInfo?.district}` : "At-Large"}
-                </p>
               </div>
-
-              {zipInfo && (
-                <div class="mb-8 animate-fade-up" style="animation-delay: 50ms">
-                  <SaveDistrictPrompt
-                    client:load
-                    state={zipInfo.state}
-                    district={zipInfo.district}
-                    isLoggedIn={!!user}
-                  />
-                </div>
-              )}
 
               <div class="grid gap-6">
                 {reps.map((rep, index) => (
-                  <AstroCard
-                    variant="civic"
-                    class="animate-fade-up"
+                  <article
+                    class="card-civic group hover:-translate-y-1 transition-transform duration-300 animate-fade-up"
                     style={`animation-delay: ${index * 100}ms`}
                   >
                     <div class="flex flex-col sm:flex-row gap-6">
                       <div class="flex-shrink-0">
-                        <div class="rep-photo-sm">
+                        <div class="relative w-32 h-40 mx-auto sm:mx-0 bg-[var(--color-secondary)] overflow-hidden">
                           <img
                             src={getPhotoUrl(rep.bioguideId)}
                             alt={`${rep.firstName} ${rep.lastName}`}
@@ -172,7 +148,7 @@ if (!error && zipEntry) {
                             onerror="this.style.display='none'"
                           />
                           <div
-                            class="rep-photo-fallback-sm"
+                            class="absolute inset-0 flex items-center justify-center text-4xl font-bold text-[var(--color-muted-foreground)]/30"
                             style="font-family: var(--font-display)"
                           >
                             {rep.firstName[0]}
@@ -187,7 +163,7 @@ if (!error && zipEntry) {
                             <h2 class="text-xl sm:text-2xl font-bold">
                               <a
                                 href={`/rep/${rep.bioguideId}${templateQueryParam}`}
-                                class="hover:text-accent transition-colors"
+                                class="hover:text-[var(--color-civic-gold)] transition-colors"
                               >
                                 {rep.firstName} {rep.lastName}
                               </a>
@@ -196,16 +172,18 @@ if (!error && zipEntry) {
                               {getRepTitle(rep.chamber, rep.state, rep.district, "short")}
                             </p>
                           </div>
-                          <span class={`${getPartyColor(rep.party)} party-badge`}>
+                          <span
+                            class={`${getPartyColor(rep.party)} text-white px-3 py-1 text-sm font-semibold`}
+                          >
                             {getPartyLabel(rep.party, true)}
                           </span>
                         </div>
 
                         <div class="flex flex-wrap gap-3 mt-4">
                           {rep.phoneCapitol && (
-                            <AstroButton
+                            <a
                               href={`tel:${rep.phoneCapitol}`}
-                              variant="contactSecondary"
+                              class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-muted)] border border-[var(--color-border)] text-sm transition-colors"
                             >
                               <svg
                                 class="w-4 h-4"
@@ -221,13 +199,15 @@ if (!error && zipEntry) {
                                 />
                               </svg>
                               <span>{rep.phoneCapitol}</span>
-                            </AstroButton>
+                            </a>
                           )}
 
                           {sanitizeExternalUrl(rep.contactFormUrl) && (
-                            <AstroButton
+                            <a
                               href={sanitizeExternalUrl(rep.contactFormUrl)!}
-                              variant="contactPrimary"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-civic-navy)] text-[var(--color-civic-cream)] text-sm font-medium transition-colors hover:bg-[var(--color-civic-navy)]/90"
                             >
                               <svg
                                 class="w-4 h-4"
@@ -256,12 +236,12 @@ if (!error && zipEntry) {
                                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                                 />
                               </svg>
-                            </AstroButton>
+                            </a>
                           )}
 
-                          <AstroButton
+                          <a
                             href={`/rep/${rep.bioguideId}${templateQueryParam}`}
-                            variant="contactOutline"
+                            class="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-civic-navy)] text-[var(--color-civic-navy)] text-sm font-medium transition-colors hover:bg-[var(--color-civic-navy)] hover:text-[var(--color-civic-cream)]"
                           >
                             <span>Full Profile</span>
                             <svg
@@ -277,16 +257,19 @@ if (!error && zipEntry) {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
-                          </AstroButton>
+                          </a>
                         </div>
                       </div>
                     </div>
-                  </AstroCard>
+                  </article>
                 ))}
               </div>
 
               <div class="text-center mt-12">
-                <a href="/" class="link-back">
+                <a
+                  href="/"
+                  class="inline-flex items-center gap-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-civic-navy)] transition-colors"
+                >
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       stroke-linecap="round"
@@ -295,7 +278,7 @@ if (!error && zipEntry) {
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
-                  <span>Look up a different ZIP code</span>
+                  <span>Look up a different district</span>
                 </a>
               </div>
             </div>
@@ -305,5 +288,5 @@ if (!error && zipEntry) {
     </div>
   </main>
 
-  <Footer currentPath={`/zip/${zip}`} />
+  <Footer currentPath={`/reps/${state.toLowerCase()}/${district.toLowerCase()}`} />
 </Layout>

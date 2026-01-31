@@ -9,9 +9,7 @@ test.describe("Admin Dashboard", () => {
     await expect(page.locator('[data-testid="hero"]')).toBeVisible();
   });
 
-  test("admin sees dashboard with stats", async ({ adminPage, adminSessionId }) => {
-    test.skip(!adminSessionId, "Requires admin session - run 'pnpm seed:e2e' first");
-
+  test("admin sees dashboard with stats", async ({ adminPage }) => {
     await adminPage.goto("/admin");
 
     await expect(adminPage.getByText("Admin Dashboard")).toBeVisible();
@@ -34,9 +32,7 @@ test.describe("Admin Tag Suggestions", () => {
     await expect(page.locator('[data-testid="hero"]')).toBeVisible();
   });
 
-  test("admin can access tag suggestions page", async ({ adminPage, adminSessionId }) => {
-    test.skip(!adminSessionId, "Requires admin session - run 'pnpm seed:e2e' first");
-
+  test("admin can access tag suggestions page", async ({ adminPage }) => {
     await adminPage.goto("/admin/tags");
 
     await expect(adminPage.getByText("Tag Suggestions")).toBeVisible();

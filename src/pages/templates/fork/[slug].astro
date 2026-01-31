@@ -137,6 +137,7 @@ const turnstileSiteKey = config.turnstile.siteKey;
                       issueTags: originalTemplate.issueTags || [],
                     }}
                     turnstileSiteKey={turnstileSiteKey}
+                    isAuthenticated={!!user}
                   />
                 </AstroCard>
               </>

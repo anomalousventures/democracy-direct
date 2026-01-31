@@ -60,3 +60,7 @@ export const STATE_NAMES: Record<string, string> = {
 export function getStateName(abbrev: string): string {
   return STATE_NAMES[abbrev] || abbrev;
 }
+
+export function isValidState(abbrev: string): boolean {
+  return abbrev in STATE_NAMES;
+}

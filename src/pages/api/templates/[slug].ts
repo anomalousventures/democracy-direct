@@ -107,7 +107,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { title, body: templateBody, issueTags } = parseResult.data;
+  const { title, body: templateBody, issueTags, isPublic } = parseResult.data;
 
   if (!title || !templateBody) {
     return badRequest("Title and body are required");
@@ -153,6 +153,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
         title: title.trim(),
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
+        isPublic: isPublic ?? true,
         moderationStatus: moderation.status,
         moderationScores: moderation.scores,
         updatedAt: new Date(),
