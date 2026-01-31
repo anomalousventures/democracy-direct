@@ -32,11 +32,12 @@ test.describe("Saved District - Authenticated User", () => {
     await userPage.goto("/");
     await userPage.waitForLoadState("networkidle");
 
-    const userMenuTrigger = userPage.getByTestId("user-menu-trigger");
-    await userMenuTrigger.click();
+    // On desktop, district is shown in a separate badge dropdown
+    const districtBadge = userPage.getByTestId("district-badge");
+    await expect(districtBadge).toBeVisible();
+    await expect(districtBadge).toContainText("NY-12");
 
-    const dropdownContent = userPage.locator('[role="menu"]');
-    await expect(dropdownContent.getByText("NY-12")).toBeVisible();
+    await districtBadge.click();
     await expect(userPage.getByRole("menuitem", { name: "View My Reps" })).toBeVisible();
   });
 
@@ -49,17 +50,17 @@ test.describe("Saved District - Authenticated User", () => {
     await userPage.goto("/");
     await userPage.waitForLoadState("networkidle");
 
-    const userMenuTrigger = userPage.getByTestId("user-menu-trigger");
-    await userMenuTrigger.click();
+    // On desktop, district is shown in a separate badge dropdown
+    const districtBadge = userPage.getByTestId("district-badge");
+    await districtBadge.click();
 
     const changeButton = userPage.getByRole("menuitem", { name: "Change District" });
     await changeButton.click();
 
     await userPage.waitForLoadState("networkidle");
 
-    await userMenuTrigger.click();
-    const dropdownContent = userPage.locator('[role="menu"]');
-    await expect(dropdownContent.getByText("NY-12")).not.toBeVisible();
+    // After clearing, district badge should no longer be visible
+    await expect(districtBadge).not.toBeVisible();
   });
 
   test("prompt indicates server storage for logged in users", async ({ userPage }) => {

@@ -50,8 +50,8 @@ Users who have identified their congressional district through ZIP lookup or map
 7. Create `src/components/SaveDistrictPrompt.tsx` with checkbox that saves to API (logged in) or localStorage (anonymous)
 8. Add SaveDistrictPrompt component to `/zip/[zip].astro` below the rep cards
 9. Create `src/pages/reps/[state]/[district].astro` route that displays reps without needing a ZIP code
-10. Create `src/components/SavedDistrictBanner.tsx` showing saved district with "View My Reps" and "Change" buttons
-11. Add SavedDistrictBanner to `src/pages/index.astro` that checks user record (logged in) or localStorage (anonymous)
+10. Add saved district display to `src/components/UserMenu.tsx` header dropdown with "View My Reps" and "Change District" options
+11. UserMenu shows saved district in header menu for logged-in users (from DB) or anonymous users (from localStorage)
 12. Add unit tests for the district API endpoints in `tests/api/user-district.test.ts`
 13. Add unit tests for localStorage helpers in `src/lib/saved-district.test.ts`
 14. Add e2e test for anonymous user save flow in `tests/e2e/saved-district-anonymous.spec.ts`
@@ -70,7 +70,7 @@ Users who have identified their congressional district through ZIP lookup or map
 - [x] Logged-in user can save their district after lookup
 - [x] Saved district persists across sessions (DB)
 - [x] User can clear saved district
-- [x] User with saved district sees banner on homepage
+- [x] User with saved district sees district in header menu
 - [x] "View My Reps" navigates to correct representatives
 - [x] Anonymous users can save to localStorage
 - [x] Anonymous saved district shows on homepage

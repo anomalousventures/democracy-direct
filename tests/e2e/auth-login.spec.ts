@@ -1,7 +1,18 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { createTestOTP, deleteTestUser, cleanupTestOTPs } from "./helpers/db";
 
 const TEST_EMAIL = `e2e-test-${Date.now()}@example.com`;
+
+async function openUserMenu(page: Page) {
+  const mobileMenuTrigger = page.getByTestId("mobile-menu-trigger");
+  const desktopMenuTrigger = page.getByTestId("user-menu-trigger");
+
+  if (await mobileMenuTrigger.isVisible()) {
+    await mobileMenuTrigger.click();
+  } else {
+    await desktopMenuTrigger.click();
+  }
+}
 
 test.describe("Authentication Flow", () => {
   test.afterAll(async () => {
@@ -44,7 +55,9 @@ test.describe("Authentication Flow", () => {
 
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
+    // Sign Out is in a dropdown menu - open it first
+    await openUserMenu(page);
+    await expect(page.getByRole("menuitem", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
   });
 
   test("invalid OTP shows error", async ({ page }) => {
@@ -112,13 +125,18 @@ test.describe("Authentication Flow", () => {
     await otpInput.fill(otp);
 
     await page.getByRole("button", { name: /verify/i }).click();
+    await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
+    // Sign Out is in a dropdown menu - open it first
+    await openUserMenu(page);
+    await expect(page.getByRole("menuitem", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
 
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
+    // Re-open menu after reload
+    await openUserMenu(page);
+    await expect(page.getByRole("menuitem", { name: /sign out/i })).toBeVisible({ timeout: 10000 });
 
     await deleteTestUser(sessionEmail);
   });
@@ -149,12 +167,16 @@ test.describe("Authentication Flow", () => {
     await otpInput.fill(otp);
 
     await page.getByRole("button", { name: /verify/i }).click();
+    await page.waitForLoadState("networkidle");
 
-    const signOutBtn = page.getByRole("button", { name: /sign out/i });
-    await expect(signOutBtn).toBeVisible({ timeout: 10000 });
+    // Sign Out is in a dropdown menu - open it first
+    await openUserMenu(page);
 
-    await signOutBtn.click();
+    const signOutItem = page.getByRole("menuitem", { name: /sign out/i });
+    await expect(signOutItem).toBeVisible({ timeout: 10000 });
+    await signOutItem.click();
 
+    await page.waitForLoadState("networkidle");
     await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible({ timeout: 10000 });
 
     await deleteTestUser(logoutEmail);
@@ -164,8 +186,11 @@ test.describe("Authentication Flow", () => {
     await page.goto("/templates/mine");
     await page.waitForLoadState("networkidle");
 
+    // Should redirect to /templates (without /mine)
     expect(page.url()).toContain("/templates");
-    expect(page.url()).toContain("login=required");
+    expect(page.url()).not.toContain("/mine");
+    // Verify we're on the templates listing page
+    await expect(page.getByRole("heading", { name: /letter templates/i })).toBeVisible();
   });
 });
 
