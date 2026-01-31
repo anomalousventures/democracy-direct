@@ -204,6 +204,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
 
             <LoadingButton
               type="submit"
+              variant="civic"
               className="w-full"
               loading={isLoading}
               loadingText="Sending..."
@@ -274,6 +275,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
               </Button>
               <LoadingButton
                 type="submit"
+                variant="civic"
                 className="flex-1"
                 loading={isLoading}
                 loadingText="Verifying..."

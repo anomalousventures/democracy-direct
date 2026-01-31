@@ -221,6 +221,7 @@ export function TemplateForm({
       <div className="pt-4">
         <LoadingButton
           type="submit"
+          variant="civic"
           loading={isSubmitting}
           loadingText="Saving..."
           className="w-full sm:w-auto"

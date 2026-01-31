@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Toggle } from "./ui/toggle";
+import { Card } from "./ui/card";
 
 interface Template {
   id: string;
@@ -96,7 +97,7 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
               ? `/templates/${template.slug}?rep=${repBioguideId}`
               : `/templates/${template.slug}`;
             return (
-              <article key={template.id} data-testid="template-card" className="card-civic">
+              <Card key={template.id} variant="civic" data-testid="template-card" className="block">
                 <a href={templateUrl} className="block">
                   <h2 className="text-xl font-semibold mb-2 text-primary hover:text-primary/80">
                     {template.title}
@@ -117,7 +118,7 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
                     </span>
                   </div>
                 </a>
-              </article>
+              </Card>
             );
           })
         ) : (
