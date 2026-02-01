@@ -67,6 +67,10 @@ export function validateTemplateDescription(
 
   const trimmed = description.trim();
 
+  if (!trimmed) {
+    return errors;
+  }
+
   if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
     errors.push({
       field: "description",
