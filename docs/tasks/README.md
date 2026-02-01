@@ -19,7 +19,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Saved District](./saved-district.md)                       | Complete | Save district to user profile                   |
 | [SEO & Social Sharing](./seo-social.md)                     | Complete | Optimize meta tags and social sharing           |
 | [Share Buttons](./share-buttons.md)                         | Complete | Add share functionality to pages                |
-| [Template Descriptions](./template-descriptions.md)         | Ready    | Add short descriptions to templates             |
+| [Template Descriptions](./template-descriptions.md)         | Complete | Add short descriptions to templates             |
 | [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Ready    | Add rep and template pages to sitemap           |
 | [Voting Records](./voting-records.md)                       | Ready    | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Ready    | Bill tracking and summaries                     |
