@@ -1,13 +1,23 @@
 /**
  * Congress.gov API wrapper with typed responses, rate limiting, and error handling.
  * API documentation: https://api.congress.gov/
+ *
+ * All API responses are validated at runtime using Zod schemas.
  */
 
-import type {
-  HouseVoteResponse,
-  BillListResponse,
-  BillDetailResponse,
-  BillType,
+import {
+  type HouseVoteResponse,
+  type HouseVoteListResponse,
+  type BillListResponse,
+  type BillDetailResponse,
+  type BillSummariesResponse,
+  type BillType,
+  HouseVoteResponseSchema,
+  HouseVoteListResponseSchema,
+  BillListResponseSchema,
+  BillDetailResponseSchema,
+  BillSummariesResponseSchema,
+  parseResponse,
 } from "@/lib/types/legislation";
 
 const BASE_URL = "https://api.congress.gov/v3";
@@ -39,31 +49,6 @@ export interface ListBillsOptions extends PaginationOptions {
 }
 
 export type ListHouseVotesOptions = PaginationOptions;
-
-export interface HouseVoteListResponse {
-  votes: {
-    congress: number;
-    session: number;
-    rollNumber: number;
-    date: string;
-    question?: string;
-    result?: string;
-  }[];
-  pagination?: {
-    count: number;
-    next?: string;
-  };
-}
-
-export interface BillSummariesResponse {
-  summaries: {
-    versionCode: string;
-    actionDate: string;
-    actionDesc: string;
-    text: string;
-    updateDate: string;
-  }[];
-}
 
 export interface CongressClient {
   getHouseVote(congress: number, session: number, rollCall: number): Promise<HouseVoteResponse>;
@@ -149,7 +134,12 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
     ): Promise<HouseVoteResponse> {
       const url = buildUrl(`/house-vote/${congress}/${session}/${rollCall}`);
       const response = await rateLimitedFetch(url);
-      return response.json();
+      const data = await response.json();
+      return parseResponse(
+        HouseVoteResponseSchema,
+        data,
+        `getHouseVote(${congress}/${session}/${rollCall})`
+      );
     },
 
     async listHouseVotes(
@@ -163,7 +153,12 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
 
       const url = buildUrl(`/house-vote/${congress}/${session}`, params);
       const response = await rateLimitedFetch(url);
-      return response.json();
+      const data = await response.json();
+      return parseResponse(
+        HouseVoteListResponseSchema,
+        data,
+        `listHouseVotes(${congress}/${session})`
+      );
     },
 
     async listBills(options: ListBillsOptions = {}): Promise<BillListResponse> {
@@ -176,7 +171,8 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
       const path = options.congress ? `/bill/${options.congress}` : "/bill";
       const url = buildUrl(path, params);
       const response = await rateLimitedFetch(url);
-      return response.json();
+      const data = await response.json();
+      return parseResponse(BillListResponseSchema, data, "listBills");
     },
 
     async getBill(
@@ -186,7 +182,12 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
     ): Promise<BillDetailResponse> {
       const url = buildUrl(`/bill/${congress}/${billType.toLowerCase()}/${billNumber}`);
       const response = await rateLimitedFetch(url);
-      return response.json();
+      const data = await response.json();
+      return parseResponse(
+        BillDetailResponseSchema,
+        data,
+        `getBill(${congress}/${billType}/${billNumber})`
+      );
     },
 
     async getBillSummaries(
@@ -196,7 +197,12 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
     ): Promise<BillSummariesResponse> {
       const url = buildUrl(`/bill/${congress}/${billType.toLowerCase()}/${billNumber}/summaries`);
       const response = await rateLimitedFetch(url);
-      return response.json();
+      const data = await response.json();
+      return parseResponse(
+        BillSummariesResponseSchema,
+        data,
+        `getBillSummaries(${congress}/${billType}/${billNumber})`
+      );
     },
   };
 }
@@ -230,3 +236,12 @@ export function getCurrentSession(): 1 | 2 {
   const year = new Date().getFullYear();
   return (year % 2 === 1 ? 1 : 2) as 1 | 2;
 }
+
+// Re-export types for convenience
+export type {
+  HouseVoteResponse,
+  HouseVoteListResponse,
+  BillListResponse,
+  BillDetailResponse,
+  BillSummariesResponse,
+};

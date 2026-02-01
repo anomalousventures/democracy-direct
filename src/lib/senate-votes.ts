@@ -1,9 +1,20 @@
 /**
  * Senate.gov XML parser for Senate voting records.
  * Parses vote menu and individual vote XML files.
+ *
+ * Parsed data is validated at runtime using Zod schemas.
  */
 
 import { XMLParser } from "fast-xml-parser";
+import {
+  type ParsedSenateVote,
+  type ParsedVoteMenu,
+  type SenateVoteMember,
+  type VotePosition,
+  ParsedSenateVoteSchema,
+  ParsedVoteMenuSchema,
+  parseResponse,
+} from "@/lib/types/legislation";
 
 const SENATE_BASE_URL = "https://www.senate.gov/legislative/LIS";
 
@@ -15,48 +26,6 @@ export class SenateApiError extends Error {
     super(message);
     this.name = "SenateApiError";
   }
-}
-
-export interface SenateVoteMember {
-  memberFull: string;
-  lastName: string;
-  firstName?: string;
-  party: string;
-  state: string;
-  voteCast: string;
-  lisMemberId: string;
-}
-
-export interface ParsedSenateVote {
-  congress: number;
-  session: number;
-  voteNumber: number;
-  voteDate: string;
-  question: string;
-  result: string;
-  yeas: number;
-  nays: number;
-  notVoting: number;
-  present: number;
-  members: SenateVoteMember[];
-  documentName?: string;
-  documentTitle?: string;
-}
-
-export interface ParsedVoteMenuItem {
-  voteNumber: number;
-  voteDate: string;
-  issue?: string;
-  question: string;
-  result: string;
-  yeas?: number;
-  nays?: number;
-}
-
-export interface ParsedVoteMenu {
-  congress: number;
-  session: number;
-  votes: ParsedVoteMenuItem[];
 }
 
 const xmlParser = new XMLParser({
@@ -77,7 +46,7 @@ function parseVoteNumber(voteNum: string | number): number {
 }
 
 /**
- * Parses Senate vote XML into structured data.
+ * Parses Senate vote XML into structured data with Zod validation.
  */
 export function parseSenateVoteXml(xml: string): ParsedSenateVote {
   const parsed = xmlParser.parse(xml);
@@ -106,7 +75,7 @@ export function parseSenateVoteXml(xml: string): ParsedSenateVote {
 
   const presentCount = parsedMembers.filter((m) => m.voteCast === "Present").length;
 
-  return {
+  const rawData = {
     congress: parseInt(String(vote.congress), 10),
     session: parseInt(String(vote.session), 10),
     voteNumber: parseVoteNumber(vote.vote_number),
@@ -121,10 +90,12 @@ export function parseSenateVoteXml(xml: string): ParsedSenateVote {
     documentName: vote.document?.document_name ? String(vote.document.document_name) : undefined,
     documentTitle: vote.document?.document_title ? String(vote.document.document_title) : undefined,
   };
+
+  return parseResponse(ParsedSenateVoteSchema, rawData, "parseSenateVoteXml");
 }
 
 /**
- * Parses Senate vote menu XML (list of votes) into structured data.
+ * Parses Senate vote menu XML (list of votes) into structured data with Zod validation.
  */
 export function parseSenateVoteMenuXml(xml: string): ParsedVoteMenu {
   const parsed = xmlParser.parse(xml);
@@ -136,7 +107,7 @@ export function parseSenateVoteMenuXml(xml: string): ParsedVoteMenu {
 
   const votes = ensureArray(menu.votes?.vote || []);
 
-  return {
+  const rawData = {
     congress: parseInt(String(menu.congress), 10),
     session: parseInt(String(menu.session), 10),
     votes: votes.map((v: Record<string, unknown>) => ({
@@ -153,6 +124,8 @@ export function parseSenateVoteMenuXml(xml: string): ParsedVoteMenu {
         : undefined,
     })),
   };
+
+  return parseResponse(ParsedVoteMenuSchema, rawData, "parseSenateVoteMenuXml");
 }
 
 export interface SenateClientOptions {
@@ -243,9 +216,9 @@ export function createSenateVoteClient(options: SenateClientOptions = {}): Senat
 }
 
 /**
- * Normalizes Senate vote position strings to standard format.
+ * Normalizes Senate vote position strings to standard VotePosition format.
  */
-export function normalizeVotePosition(position: string): "yea" | "nay" | "not_voting" | "present" {
+export function normalizeVotePosition(position: string): VotePosition {
   const normalized = position.toLowerCase().trim();
   if (normalized === "yea" || normalized === "aye" || normalized === "yes") {
     return "yea";
@@ -266,3 +239,6 @@ export function buildSenateVoteUrl(congress: number, session: number, voteNumber
   const paddedVote = voteNumber.toString().padStart(5, "0");
   return `https://www.senate.gov/legislative/LIS/roll_call_votes/vote${congress}${session}/vote_${congress}_${session}_${paddedVote}.htm`;
 }
+
+// Re-export types for convenience
+export type { ParsedSenateVote, ParsedVoteMenu, SenateVoteMember };
