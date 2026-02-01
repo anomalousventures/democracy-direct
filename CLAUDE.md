@@ -31,7 +31,7 @@ make db-seed                # Import legislators + ZIP data
 
 ### Astro + React Islands
 
-Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings.
+Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings. **Deployed on Cloudflare Pages** (not Workers) - Pages Functions lack persistent logging; use `wrangler pages deployment tail` for real-time logs.
 
 ### Database (Neon + Drizzle)
 
@@ -65,6 +65,7 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 
 - **Imports**: Use `@/` alias for `src/` paths
 - **API routes**: Always add `export const prerender = false;`
+- **API routes**: Wrap database operations in try-catch blocks for consistency
 - **Database**: Fresh connection per request, prefer JOINs over multiple queries
 - **Tests**: Unit tests colocated as `*.test.ts`, E2E in `tests/e2e/`
 - **No `as` casts**: Use type guards and discriminated unions instead of type assertions

@@ -38,7 +38,6 @@
   "dependencies": {
     "@astrojs/cloudflare": "12.6.12",
     "@astrojs/react": "4.4.2",
-    "@astrojs/sitemap": "^3.7.0",
     "@aws-sdk/client-sesv2": "^3.978.0",
     "@neondatabase/serverless": "1.0.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
