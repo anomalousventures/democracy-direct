@@ -5,12 +5,14 @@ export interface TemplateValidationError {
 
 export interface TemplateInput {
   title: string;
+  description?: string;
   body: string;
   issueTags?: string[];
 }
 
 export const TITLE_MIN_LENGTH = 5;
 export const TITLE_MAX_LENGTH = 100;
+export const DESCRIPTION_MAX_LENGTH = 200;
 export const BODY_MIN_LENGTH = 50;
 export const BODY_MAX_LENGTH = 10000;
 
@@ -49,6 +51,41 @@ export function validateTemplateTitle(title: string): TemplateValidationError[] 
       field: "title",
       message: "Title cannot be all caps",
     });
+  }
+
+  return errors;
+}
+
+export function validateTemplateDescription(
+  description: string | undefined
+): TemplateValidationError[] {
+  const errors: TemplateValidationError[] = [];
+
+  if (!description) {
+    return errors;
+  }
+
+  const trimmed = description.trim();
+
+  if (!trimmed) {
+    return errors;
+  }
+
+  if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
+    errors.push({
+      field: "description",
+      message: `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`,
+    });
+  }
+
+  for (const pattern of SPAM_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      errors.push({
+        field: "description",
+        message: "Description contains content that looks like spam",
+      });
+      break;
+    }
   }
 
   return errors;
@@ -94,6 +131,7 @@ export function validateTemplate(input: TemplateInput): TemplateValidationError[
   const errors: TemplateValidationError[] = [];
 
   errors.push(...validateTemplateTitle(input.title));
+  errors.push(...validateTemplateDescription(input.description));
   errors.push(...validateTemplateBody(input.body));
 
   return errors;

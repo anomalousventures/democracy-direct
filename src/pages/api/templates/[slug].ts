@@ -24,6 +24,7 @@ type PublicTemplateFields = Pick<
   | "id"
   | "slug"
   | "title"
+  | "description"
   | "body"
   | "issueTags"
   | "viewCount"
@@ -38,6 +39,7 @@ function filterPublicFields(template: Template): PublicTemplateFields {
     id: template.id,
     slug: template.slug,
     title: template.title,
+    description: template.description,
     body: template.body,
     issueTags: template.issueTags,
     viewCount: template.viewCount,
@@ -107,13 +109,13 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { title, body: templateBody, issueTags, isPublic } = parseResult.data;
+  const { title, description, body: templateBody, issueTags, isPublic } = parseResult.data;
 
   if (!title || !templateBody) {
     return badRequest("Title and body are required");
   }
 
-  const validationErrors = validateTemplate({ title, body: templateBody, issueTags });
+  const validationErrors = validateTemplate({ title, description, body: templateBody, issueTags });
   if (validationErrors.length > 0) {
     return validationError(validationErrors);
   }
@@ -151,6 +153,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       .update(templates)
       .set({
         title: title.trim(),
+        description: description?.trim() ?? null,
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         isPublic: isPublic ?? true,

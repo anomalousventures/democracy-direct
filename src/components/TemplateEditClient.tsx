@@ -6,6 +6,7 @@ interface TemplateEditClientProps {
   slug: string;
   initialData: {
     title: string;
+    description?: string;
     body: string;
     issueTags: string[];
     isPublic: boolean;
@@ -18,7 +19,13 @@ export function TemplateEditClient({ slug, initialData }: TemplateEditClientProp
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = useCallback(
-    async (data: { title: string; body: string; issueTags: string[]; isPublic?: boolean }) => {
+    async (data: {
+      title: string;
+      description?: string;
+      body: string;
+      issueTags: string[];
+      isPublic?: boolean;
+    }) => {
       setIsSubmitting(true);
       setError(null);
 

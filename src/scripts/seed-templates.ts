@@ -6,6 +6,7 @@ import { generateSlug } from "@/lib/template-validation";
 
 export interface SeedTemplate {
   title: string;
+  description: string;
   body: string;
   issueTags: string[];
 }
@@ -13,6 +14,8 @@ export interface SeedTemplate {
 export const SEED_TEMPLATES: SeedTemplate[] = [
   {
     title: "Request for Healthcare Policy Update",
+    description:
+      "Ask your representative to support affordable healthcare, protect pre-existing condition coverage, and lower prescription drug costs.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 As your constituent in {{STATE}}, I am writing to share my concerns about healthcare access in our community.
@@ -32,6 +35,8 @@ Sincerely,
   },
   {
     title: "Support Public Education Funding",
+    description:
+      "Urge increased funding for public schools, smaller class sizes, and fair teacher pay in your community.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing as a concerned constituent regarding the state of public education in {{STATE}}.
@@ -51,6 +56,8 @@ Respectfully,
   },
   {
     title: "Address Climate Change and Environmental Protection",
+    description:
+      "Call for action on climate change, clean energy investment, and protection of air and water quality.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to express my concern about climate change and environmental protection.
@@ -70,6 +77,8 @@ Sincerely,
   },
   {
     title: "Address Housing Affordability Crisis",
+    description:
+      "Request policies to increase affordable housing, protect renters, and help first-time homebuyers.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing about the housing affordability crisis affecting families in {{STATE}}.
@@ -89,6 +98,8 @@ Sincerely,
   },
   {
     title: "Protect Civil Rights and Equal Treatment",
+    description:
+      "Ask your representative to strengthen civil rights protections and ensure equal treatment under law.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to urge you to protect and strengthen civil rights for all Americans.
@@ -108,6 +119,8 @@ Respectfully,
   },
   {
     title: "Improve Local Infrastructure",
+    description:
+      "Support for road, bridge, and water system improvements that create jobs and improve safety.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing about the need for infrastructure investment in our community.
@@ -127,6 +140,8 @@ Sincerely,
   },
   {
     title: "Increase Government Transparency",
+    description:
+      "Call for open government, stronger ethics rules, and public access to legislative information.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to ask for your commitment to government transparency and accountability.
@@ -146,6 +161,8 @@ Sincerely,
   },
   {
     title: "Support Our Veterans",
+    description:
+      "Urge full funding for VA healthcare, veteran employment programs, and mental health services.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to ask for your continued support of our veterans.
@@ -165,6 +182,8 @@ Respectfully,
   },
   {
     title: "Reform Immigration System",
+    description:
+      "Ask for bipartisan work on border security, legal pathways, and a fair immigration process.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing regarding the need for comprehensive immigration reform.
@@ -184,6 +203,8 @@ Sincerely,
   },
   {
     title: "Support Small Businesses and Local Economy",
+    description:
+      "Request support for small business loans, tax relief, and fair competition policies.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing about the importance of supporting small businesses in {{STATE}}.
@@ -203,6 +224,8 @@ Sincerely,
   },
   {
     title: "Protect Social Security and Medicare",
+    description:
+      "Oppose benefit cuts and ask your representative to strengthen these programs for future generations.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to urge you to protect Social Security and Medicare.
@@ -222,6 +245,8 @@ Respectfully,
   },
   {
     title: "Address Gun Violence Prevention",
+    description:
+      "Support common-sense measures to reduce gun violence while respecting Second Amendment rights.",
     body: `Dear {{REP_TITLE}} {{REP_LAST}},
 
 I am writing to express my concern about gun violence in our communities.
@@ -269,6 +294,7 @@ export async function seedTemplates(): Promise<{
       .values({
         slug,
         title: tpl.title,
+        description: tpl.description,
         body: tpl.body,
         issueTags: tpl.issueTags,
         contentHash,
@@ -280,6 +306,7 @@ export async function seedTemplates(): Promise<{
         target: templates.contentHash,
         set: {
           title: tpl.title,
+          description: tpl.description,
           body: tpl.body,
           issueTags: tpl.issueTags,
           updatedAt: new Date(),

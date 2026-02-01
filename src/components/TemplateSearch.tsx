@@ -8,6 +8,7 @@ interface Template {
   id: string;
   slug: string;
   title: string;
+  description: string | null;
   body: string;
   issueTags: string[] | null;
   viewCount: number;
@@ -103,7 +104,7 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
                     {template.title}
                   </h2>
                   <p className="text-muted-foreground mb-4 line-clamp-2">
-                    {truncateBody(template.body)}
+                    {template.description || truncateBody(template.body)}
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">

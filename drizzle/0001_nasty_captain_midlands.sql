@@ -1,0 +1,1 @@
+ALTER TABLE "templates" ADD COLUMN "description" varchar(200);

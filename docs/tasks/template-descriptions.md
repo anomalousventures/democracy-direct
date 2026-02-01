@@ -1,6 +1,6 @@
 # Template Descriptions
 
-## Status: Ready
+## Status: Complete
 
 ## Problem Statement
 
@@ -49,7 +49,8 @@ Currently, the template detail page strips template variables from the body and 
 ### Schema & Migration
 
 1. Add `description: varchar("description", { length: 200 })` to templates table in `src/db/schema.ts`
-2. Run migration with `pnpm db:push` (dev)
+2. Run `pnpm db:generate` to create migration file
+3. Run `pnpm db:migrate` to apply migration
 
 ### API Updates
 
@@ -88,17 +89,17 @@ Currently, the template detail page strips template variables from the body and 
 
 ## Verification
 
-- [ ] Description field appears in template creation form
-- [ ] Description field appears in template edit form
-- [ ] Description is saved to database correctly
-- [ ] Description displays in template list (when available)
-- [ ] Truncated body displays in template list (when description empty)
-- [ ] Description used for meta description tag on detail page
-- [ ] Fallback to truncated body for meta when description empty
-- [ ] Description limited to 200 characters in form
-- [ ] Existing templates without description continue to work
-- [ ] All seed templates have descriptions
-- [ ] Dev database re-seeded with descriptions
-- [ ] Prod database re-seeded with descriptions after deployment
-- [ ] Unit tests pass for API validation
+- [x] Description field appears in template creation form
+- [x] Description field appears in template edit form
+- [x] Description is saved to database correctly
+- [x] Description displays in template list (when available)
+- [x] Truncated body displays in template list (when description empty)
+- [x] Description used for meta description tag on detail page
+- [x] Fallback to truncated body for meta when description empty
+- [x] Description limited to 200 characters in form
+- [x] Existing templates without description continue to work
+- [x] All seed templates have descriptions
+- [x] Dev database re-seeded with descriptions
+- [x] Prod database re-seeded with descriptions after deployment (via refresh-data workflow)
+- [x] Unit tests pass for API validation
 - [ ] E2E tests pass for description display

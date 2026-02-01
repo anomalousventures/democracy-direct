@@ -100,10 +100,25 @@ describe("seed-templates", () => {
     it("accepts valid template objects", () => {
       const validTemplate: SeedTemplate = {
         title: "Test Title",
+        description: "Test description",
         body: "Test body with {{REP_TITLE}}",
         issueTags: ["test-tag"],
       };
       expect(validTemplate.title).toBe("Test Title");
+    });
+  });
+
+  describe("SEED_TEMPLATES descriptions", () => {
+    it("all templates have descriptions", () => {
+      for (const template of SEED_TEMPLATES) {
+        expect(template.description).toBeTruthy();
+      }
+    });
+
+    it("all descriptions are within 200 character limit", () => {
+      for (const template of SEED_TEMPLATES) {
+        expect(template.description.length).toBeLessThanOrEqual(200);
+      }
     });
   });
 });

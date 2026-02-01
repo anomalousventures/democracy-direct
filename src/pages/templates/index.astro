@@ -21,6 +21,7 @@ let templateList: {
   id: string;
   slug: string;
   title: string;
+  description: string | null;
   body: string;
   issueTags: string[] | null;
   viewCount: number;
@@ -37,6 +38,7 @@ try {
       id: templates.id,
       slug: templates.slug,
       title: templates.title,
+      description: templates.description,
       body: templates.body,
       issueTags: templates.issueTags,
       viewCount: templates.viewCount,

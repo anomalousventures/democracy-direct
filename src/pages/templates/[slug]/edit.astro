@@ -23,6 +23,7 @@ let template: {
   id: string;
   slug: string;
   title: string;
+  description: string | null;
   body: string;
   issueTags: string[] | null;
   userId: string | null;
@@ -44,6 +45,7 @@ if (!slug) {
         id: templates.id,
         slug: templates.slug,
         title: templates.title,
+        description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
         userId: templates.userId,
@@ -132,6 +134,7 @@ if (!slug) {
                     slug={template.slug}
                     initialData={{
                       title: template.title,
+                      description: template.description || undefined,
                       body: template.body,
                       issueTags: template.issueTags || [],
                       isPublic: template.isPublic,

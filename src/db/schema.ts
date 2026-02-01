@@ -101,6 +101,7 @@ export const templates = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     title: varchar("title", { length: 200 }).notNull(),
+    description: varchar("description", { length: 200 }),
     body: text("body").notNull(),
     issueTags: json("issue_tags").$type<string[]>().default([]),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
