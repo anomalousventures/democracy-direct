@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://democracy-direct.com/sitemap-index.xml
+Sitemap: https://democracy-direct.com/sitemap.xml
