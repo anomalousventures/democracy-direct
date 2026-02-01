@@ -66,6 +66,7 @@
     "clsx": "2.1.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "0.45.1",
+    "fast-xml-parser": "^5.3.4",
     "input-otp": "^1.4.2",
     "lucide-react": "0.563.0",
     "nodemailer": "^7.0.13",

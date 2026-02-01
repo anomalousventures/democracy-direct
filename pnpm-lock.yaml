@@ -97,6 +97,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260131.0)(@neondatabase/serverless@1.0.2)(@types/pg@8.16.0)(pg@8.17.2)
+      fast-xml-parser:
+        specifier: ^5.3.4
+        version: 5.3.4
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -6213,6 +6216,13 @@ packages:
     resolution:
       {
         integrity: sha512-pfX9uG9Ki0yekDHx2SiuRIyFdyAr1kMIMitPvb0YBo8SUfKvia7w7FIyd/l6av85pFYRhZscS75MwMnbvY+hcQ==,
+      }
+    hasBin: true
+
+  fast-xml-parser@5.3.4:
+    resolution:
+      {
+        integrity: sha512-EFd6afGmXlCx8H8WTZHhAoDaWaGyuIBoZJ2mknrNxug+aZKjkp0a0dlars9Izl+jF+7Gu1/5f/2h68cQpe0IiA==,
       }
     hasBin: true
 
@@ -14735,6 +14745,10 @@ snapshots:
   fast-uri@3.1.0: {}
 
   fast-xml-parser@5.2.5:
+    dependencies:
+      strnum: 2.1.2
+
+  fast-xml-parser@5.3.4:
     dependencies:
       strnum: 2.1.2
 
