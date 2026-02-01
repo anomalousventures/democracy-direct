@@ -8,6 +8,7 @@ import { TiptapEditor } from "./TiptapEditor";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
   BODY_MIN_LENGTH,
   BODY_MAX_LENGTH,
 } from "@/lib/template-validation";
@@ -43,12 +44,14 @@ const ISSUE_TAG_OPTIONS = [
 interface TemplateFormProps {
   initialData?: {
     title: string;
+    description?: string;
     body: string;
     issueTags: string[];
     isPublic?: boolean;
   };
   onSubmit: (data: {
     title: string;
+    description?: string;
     body: string;
     issueTags: string[];
     turnstileToken?: string;
@@ -69,6 +72,7 @@ export function TemplateForm({
   isAuthenticated = false,
 }: TemplateFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
+  const [description, setDescription] = useState(initialData?.description || "");
   const [body, setBody] = useState(initialData?.body || "");
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.issueTags || []);
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
@@ -117,6 +121,10 @@ export function TemplateForm({
       newErrors.title = `Title must be at most ${TITLE_MAX_LENGTH} characters`;
     }
 
+    if (description.trim().length > DESCRIPTION_MAX_LENGTH) {
+      newErrors.description = `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`;
+    }
+
     if (!body.trim()) {
       newErrors.body = "Body is required";
     } else if (body.trim().length < BODY_MIN_LENGTH) {
@@ -127,7 +135,7 @@ export function TemplateForm({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [title, body]);
+  }, [title, description, body]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -138,6 +146,7 @@ export function TemplateForm({
 
       await onSubmit({
         title: title.trim(),
+        description: description.trim() || undefined,
         body: body.trim(),
         issueTags: selectedTags,
         turnstileToken: turnstileToken ?? undefined,
@@ -146,6 +155,7 @@ export function TemplateForm({
     },
     [
       title,
+      description,
       body,
       selectedTags,
       onSubmit,
@@ -185,6 +195,35 @@ export function TemplateForm({
           </span>
           <span>
             {title.length}/{TITLE_MAX_LENGTH}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-primary">
+          Short Description (optional)
+        </Label>
+        <textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Brief summary for search results and sharing..."
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+          data-testid="template-description-input"
+          maxLength={DESCRIPTION_MAX_LENGTH}
+          aria-invalid={errors.description ? "true" : undefined}
+          aria-describedby={errors.description ? "description-error" : undefined}
+        />
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span>
+            {errors.description && (
+              <span id="description-error" className="text-red-500">
+                {errors.description}
+              </span>
+            )}
+          </span>
+          <span>
+            {description.length}/{DESCRIPTION_MAX_LENGTH}
           </span>
         </div>
       </div>

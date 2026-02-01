@@ -20,6 +20,7 @@ export function TemplateCreateClient({
   const handleSubmit = useCallback(
     async (data: {
       title: string;
+      description?: string;
       body: string;
       issueTags: string[];
       turnstileToken?: string;

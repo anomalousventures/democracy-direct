@@ -23,6 +23,7 @@ let template: {
   id: string;
   slug: string;
   title: string;
+  description: string | null;
   body: string;
   issueTags: string[] | null;
   isPublic: boolean;
@@ -48,6 +49,7 @@ if (!slug) {
         id: templates.id,
         slug: templates.slug,
         title: templates.title,
+        description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
         isPublic: templates.isPublic,
@@ -101,10 +103,12 @@ function getCleanDescription(body: string): string {
   return truncated + (cleaned.length > 155 ? "..." : "");
 }
 
-const description = template ? getCleanDescription(template.body) : "Template not found";
+const metaDescription = template
+  ? template.description || getCleanDescription(template.body)
+  : "Template not found";
 ---
 
-<Layout title={template ? template.title : "Template Not Found"} description={description}>
+<Layout title={template ? template.title : "Template Not Found"} description={metaDescription}>
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
@@ -190,7 +194,7 @@ const description = template ? getCleanDescription(template.body) : "Template no
                     client:load
                     url={Astro.url.href}
                     title={template.title}
-                    description={description}
+                    description={metaDescription}
                     pageType="template"
                   />
                 </div>

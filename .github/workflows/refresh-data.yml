@@ -67,6 +67,22 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
+      - name: Seed templates
+        id: templates
+        run: |
+          set +e
+          OUTPUT=$(pnpm seed:templates 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
       - name: Export ZIP data if changed
         id: export
         if: steps.zips.outputs.failed != 'true'
@@ -115,6 +131,7 @@ jobs:
           LEGISLATORS_FAILED: ${{ steps.legislators.outputs.failed }}
           ZIPS_RESULT: ${{ steps.zips.outputs.result }}
           ZIPS_FAILED: ${{ steps.zips.outputs.failed }}
+          TEMPLATES_FAILED: ${{ steps.templates.outputs.failed }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
@@ -133,7 +150,7 @@ jobs:
           ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
 
           # Determine overall status
-          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ]; then
+          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ]; then
             TITLE="🚨 Data Refresh Failed"
             COLOR=16711680
           elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ]; then
@@ -161,11 +178,18 @@ jobs:
             ZIPS_STATUS="⏭️ **ZIP Districts**: Unchanged"
           fi
 
+          if [ "$TEMPLATES_FAILED" = "true" ]; then
+            TEMPLATES_STATUS="❌ **Templates**: Failed"
+          else
+            TEMPLATES_STATUS="✅ **Templates**: Seeded"
+          fi
+
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
             --arg leg_status "$LEG_STATUS" \
             --arg zips_status "$ZIPS_STATUS" \
+            --arg templates_status "$TEMPLATES_STATUS" \
             --arg gh_run "$GH_RUN" \
             --arg timestamp "$TIMESTAMP" \
             '{
@@ -173,7 +197,7 @@ jobs:
                 title: $title,
                 color: $color,
                 fields: [
-                  { name: "Results", value: ($leg_status + "\n" + $zips_status), inline: false },
+                  { name: "Results", value: ($leg_status + "\n" + $zips_status + "\n" + $templates_status), inline: false },
                   { name: "Links", value: "[View Run](\($gh_run))", inline: false }
                 ],
                 timestamp: $timestamp
@@ -183,7 +207,7 @@ jobs:
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
 
       - name: Fail workflow if imports failed
-        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true'
+        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true'
         run: |
           echo "One or more imports failed"
           exit 1

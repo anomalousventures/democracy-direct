@@ -26,13 +26,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { title, body: templateBody, issueTags, turnstileToken, isPublic } = parseResult.data;
+  const {
+    title,
+    description,
+    body: templateBody,
+    issueTags,
+    turnstileToken,
+    isPublic,
+  } = parseResult.data;
 
   if (!title || !templateBody) {
     return badRequest("Title and body are required");
   }
 
-  const validationErrors = validateTemplate({ title, body: templateBody, issueTags });
+  const validationErrors = validateTemplate({ title, description, body: templateBody, issueTags });
   if (validationErrors.length > 0) {
     return validationError(validationErrors);
   }
@@ -92,6 +99,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .values({
         slug,
         title: title.trim(),
+        description: description?.trim() ?? null,
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         userId: user?.id ?? null,
@@ -103,6 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         id: templates.id,
         slug: templates.slug,
         title: templates.title,
+        description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
         moderationStatus: templates.moderationStatus,

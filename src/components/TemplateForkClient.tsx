@@ -6,6 +6,7 @@ interface TemplateForkClientProps {
   forkedFromId: string;
   initialData: {
     title: string;
+    description?: string;
     body: string;
     issueTags: string[];
   };
@@ -27,6 +28,7 @@ export function TemplateForkClient({
   const handleSubmit = useCallback(
     async (data: {
       title: string;
+      description?: string;
       body: string;
       issueTags: string[];
       turnstileToken?: string;

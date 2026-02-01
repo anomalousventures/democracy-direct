@@ -20,7 +20,9 @@ pnpm test:e2e               # Playwright E2E tests
 pnpm lint && pnpm format:check && pnpm typecheck  # Full check (runs in CI)
 
 # Database
-pnpm db:push                # Push schema to Neon
+pnpm db:generate            # Generate migration from schema changes
+pnpm db:migrate             # Run migrations on Neon
+pnpm db:push                # Push schema directly (dev only, skips migrations)
 pnpm db:studio              # Drizzle Studio GUI
 make db-seed                # Import legislators + ZIP data
 ```

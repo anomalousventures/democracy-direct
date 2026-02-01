@@ -34,6 +34,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const {
     title,
+    description,
     body: templateBody,
     issueTags,
     forkedFromId,
@@ -49,7 +50,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return badRequest("Source template ID is required");
   }
 
-  const validationErrors = validateTemplate({ title, body: templateBody, issueTags });
+  const validationErrors = validateTemplate({ title, description, body: templateBody, issueTags });
   if (validationErrors.length > 0) {
     return validationError(validationErrors);
   }
@@ -123,6 +124,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .values({
         slug,
         title: title.trim(),
+        description: description?.trim() ?? null,
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         userId: user.id,
@@ -135,6 +137,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         id: templates.id,
         slug: templates.slug,
         title: templates.title,
+        description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
         forkedFrom: templates.forkedFrom,

@@ -25,6 +25,7 @@ export async function parseJsonBody<T>(
 
 export const templateBodySchema = z.object({
   title: z.string().min(1),
+  description: z.string().max(200).optional(),
   body: z.string().min(1),
   issueTags: z.array(z.string()).optional(),
   turnstileToken: z.string().optional(),
