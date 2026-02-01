@@ -172,7 +172,7 @@ jobs:
             echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
 
             # Group results by URL and calculate averages
-            jq -s '
+            jq -rs '
               group_by(.finalUrl) |
               map({
                 url: .[0].finalUrl,
