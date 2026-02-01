@@ -47,6 +47,6 @@ test.describe("Sitemap", () => {
   test("has cache control header", async ({ request }) => {
     const response = await request.get("/sitemap.xml");
 
-    expect(response.headers()["cache-control"]).toContain("max-age=3600");
+    expect(response.headers()["cache-control"]).toContain("max-age=86400");
   });
 });

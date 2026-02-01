@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ locals }) => {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600",
     },
   });
 };
