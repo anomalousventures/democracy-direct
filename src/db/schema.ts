@@ -10,6 +10,7 @@ import {
   uuid,
   boolean,
   json,
+  jsonb,
   unique,
 } from "drizzle-orm/pg-core";
 import type { BillStatus, BillType, Chamber, VotePosition } from "@/lib/types/legislation";
@@ -255,7 +256,7 @@ export const bills = pgTable(
     title: text("title").notNull(),
     summary: text("summary"),
     status: varchar("status", { length: 30 }).$type<BillStatus>().notNull(),
-    subjects: json("subjects").$type<string[]>().default([]),
+    subjects: jsonb("subjects").$type<string[]>().default([]),
     introducedDate: timestamp("introduced_date").notNull(),
     latestActionDate: timestamp("latest_action_date").notNull(),
     latestActionText: text("latest_action_text").notNull(),

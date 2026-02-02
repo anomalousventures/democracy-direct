@@ -56,7 +56,7 @@ function logProgress(
   console.log(`[${elapsed}] ${phase}: ${count}${totalStr} bills at ${rate}/min${errorStr}`);
 }
 
-function inferBillStatus(latestActionText: string): BillStatus {
+export function inferBillStatus(latestActionText: string): BillStatus {
   const actionLower = latestActionText.toLowerCase();
 
   if (actionLower.includes("became public law") || actionLower.includes("became law")) {
@@ -90,12 +90,12 @@ function inferBillStatus(latestActionText: string): BillStatus {
   return "introduced";
 }
 
-interface TransformResult {
+export interface TransformResult {
   data: BillUpsertData | null;
   error: { billNumber: string; error: string } | null;
 }
 
-function transformBillItem(item: BillListItem): TransformResult {
+export function transformBillItem(item: BillListItem): TransformResult {
   const billIdentifier = `${item.type}${item.number}`;
   const parsed = parseBillNumber(billIdentifier);
 
@@ -106,10 +106,28 @@ function transformBillItem(item: BillListItem): TransformResult {
     };
   }
 
-  const introducedDate = item.introducedDate ? new Date(item.introducedDate) : new Date();
   const latestActionDate = item.latestAction?.actionDate
     ? new Date(item.latestAction.actionDate)
-    : introducedDate;
+    : null;
+
+  let introducedDate: Date;
+  let missingIntroducedDate = false;
+
+  if (item.introducedDate) {
+    introducedDate = new Date(item.introducedDate);
+  } else if (latestActionDate) {
+    introducedDate = latestActionDate;
+    missingIntroducedDate = true;
+  } else {
+    return {
+      data: null,
+      error: {
+        billNumber: billIdentifier,
+        error: "Missing both introducedDate and latestActionDate",
+      },
+    };
+  }
+
   const latestActionText = item.latestAction?.text ?? "Introduced";
 
   return {
@@ -122,12 +140,17 @@ function transformBillItem(item: BillListItem): TransformResult {
       status: inferBillStatus(latestActionText),
       subjects: item.policyArea?.name ? [item.policyArea.name] : [],
       introducedDate,
-      latestActionDate,
+      latestActionDate: latestActionDate ?? introducedDate,
       latestActionText,
       sponsorBioguideId: item.sponsors?.[0]?.bioguideId ?? null,
       congressGovUrl: buildCongressGovUrl(item.congress, parsed.type, parsed.number),
     },
-    error: null,
+    error: missingIntroducedDate
+      ? {
+          billNumber: billIdentifier,
+          error: "Missing introducedDate, used latestActionDate as fallback",
+        }
+      : null,
   };
 }
 
@@ -218,6 +241,7 @@ async function upsertBills(db: Database, billsData: BillUpsertData[]): Promise<n
           subjects: sql`excluded.subjects`,
           latestActionDate: sql`excluded.latest_action_date`,
           latestActionText: sql`excluded.latest_action_text`,
+          sponsorBioguideId: sql`excluded.sponsor_bioguide_id`,
           updatedAt: new Date(),
         },
       });
@@ -469,14 +493,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const directionArgIndex = process.argv.findIndex((arg) => arg === "--direction");
   let direction: "forward" | "backward" = "forward";
 
-  if (directionArgIndex !== -1 && process.argv[directionArgIndex + 1]) {
+  if (directionArgIndex !== -1) {
     const dirArg = process.argv[directionArgIndex + 1];
-    if (dirArg === "forward" || dirArg === "backward") {
-      direction = dirArg;
-    } else {
-      console.error("Invalid --direction value. Use 'forward' or 'backward'");
+    if (!dirArg || (dirArg !== "forward" && dirArg !== "backward")) {
+      console.error("--direction requires a value: 'forward' or 'backward'");
       process.exit(1);
     }
+    direction = dirArg;
   }
 
   console.log(`Starting bill sync in ${direction} mode...`);

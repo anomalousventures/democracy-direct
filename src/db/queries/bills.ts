@@ -123,6 +123,13 @@ export interface SearchBillsOptions {
   subject?: string;
 }
 
+/**
+ * Search bills by bill number or title.
+ *
+ * Performance note: ILIKE with wildcards requires a full table scan. This is
+ * acceptable for the current dataset size. For larger datasets, consider adding
+ * a GIN index with pg_trgm or using PostgreSQL full-text search.
+ */
 export async function searchBills(
   db: Database,
   query: string,
@@ -204,20 +211,22 @@ export async function getBills(
 }
 
 export async function getDistinctSubjects(db: Database, congress?: number): Promise<string[]> {
-  const query = congress
-    ? db.select({ subjects: bills.subjects }).from(bills).where(eq(bills.congress, congress))
-    : db.select({ subjects: bills.subjects }).from(bills);
+  const sqlQuery =
+    congress !== undefined
+      ? sql<{ subject: string }>`
+          SELECT DISTINCT subject
+          FROM ${bills}
+          CROSS JOIN LATERAL jsonb_array_elements_text(${bills.subjects}) AS subject
+          WHERE ${bills.congress} = ${congress}
+          ORDER BY subject
+        `
+      : sql<{ subject: string }>`
+          SELECT DISTINCT subject
+          FROM ${bills}
+          CROSS JOIN LATERAL jsonb_array_elements_text(${bills.subjects}) AS subject
+          ORDER BY subject
+        `;
 
-  const results = await query;
-
-  const subjectSet = new Set<string>();
-  for (const row of results) {
-    if (row.subjects && Array.isArray(row.subjects)) {
-      for (const subject of row.subjects) {
-        subjectSet.add(subject);
-      }
-    }
-  }
-
-  return Array.from(subjectSet).sort();
+  const result = await db.execute(sqlQuery);
+  return (result.rows as Array<{ subject: string }>).map((row) => row.subject);
 }
