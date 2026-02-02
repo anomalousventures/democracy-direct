@@ -24,19 +24,17 @@ describe("CongressClient", () => {
 
   it("getHouseVote fetches a House vote by congress, session, and roll call", async () => {
     const mockResponse = {
-      vote: {
+      houseRollCallVote: {
         congress: 119,
-        session: 1,
-        chamber: "House",
-        rollNumber: 123,
-        date: "2025-01-15",
-        time: "14:30:00",
-        question: "On Passage",
+        sessionNumber: 1,
+        rollCallNumber: 123,
         result: "Passed",
-        description: "Test Bill",
-        totals: { yea: 220, nay: 200, notVoting: 10, present: 5 },
-        members: [
-          { bioguideId: "A000001", party: "D", state: "CA", name: "Test Member", vote: "Yea" },
+        voteQuestion: "On Passage",
+        voteType: "Yea-And-Nay",
+        startDate: "2025-01-15T14:30:00-05:00",
+        votePartyTotal: [
+          { voteParty: "R", yeaTotal: 120, nayTotal: 100, presentTotal: 0, notVotingTotal: 5 },
+          { voteParty: "D", yeaTotal: 100, nayTotal: 100, presentTotal: 5, notVotingTotal: 5 },
         ],
       },
     };
@@ -54,12 +52,20 @@ describe("CongressClient", () => {
         headers: expect.objectContaining({ Accept: "application/json" }),
       })
     );
-    expect(result).toEqual(mockResponse);
+    expect(result.houseRollCallVote.rollCallNumber).toBe(123);
   });
 
   it("listHouseVotes lists House votes with pagination", async () => {
     const mockResponse = {
-      votes: [{ congress: 119, session: 1, rollNumber: 1, date: "2025-01-03" }],
+      houseRollCallVotes: [
+        {
+          congress: 119,
+          sessionNumber: 1,
+          rollCallNumber: 1,
+          startDate: "2025-01-03T12:00:00-05:00",
+          result: "Passed",
+        },
+      ],
       pagination: { count: 100, next: "https://api.congress.gov/v3/house-vote?offset=20" },
     };
 
@@ -74,7 +80,7 @@ describe("CongressClient", () => {
       expect.stringContaining("/v3/house-vote/119/1"),
       expect.any(Object)
     );
-    expect(result.votes).toHaveLength(1);
+    expect(result.houseRollCallVotes).toHaveLength(1);
     expect(result.pagination?.count).toBe(100);
   });
 
@@ -84,9 +90,8 @@ describe("CongressClient", () => {
         {
           congress: 119,
           type: "HR",
-          number: 1234,
+          number: "1234",
           title: "Test Bill",
-          introducedDate: "2025-01-10",
           url: "https://api.congress.gov/v3/bill/119/hr/1234",
         },
       ],
@@ -206,7 +211,7 @@ describe("CongressClient", () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ votes: [], pagination: { count: 0 } }),
+      json: async () => ({ houseRollCallVotes: [], pagination: { count: 0 } }),
     });
 
     const start = Date.now();

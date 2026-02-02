@@ -115,55 +115,53 @@ export type ParsedBillNumber = z.infer<typeof ParsedBillNumberSchema>;
 // Congress.gov API Response Schemas (external validation)
 // =============================================================================
 
-export const HouseVoteMemberResponseSchema = z.object({
-  bioguideId: z.string(),
-  party: z.string(),
-  state: z.string(),
-  name: z.string(),
-  vote: z.string(),
+export const HouseVotePartyTotalSchema = z.object({
+  voteParty: z.string(),
+  yeaTotal: z.number(),
+  nayTotal: z.number(),
+  presentTotal: z.number(),
+  notVotingTotal: z.number(),
+  party: z
+    .object({
+      name: z.string(),
+      type: z.string(),
+    })
+    .optional(),
 });
 
 export const HouseVoteResponseSchema = z.object({
-  vote: z.object({
+  houseRollCallVote: z.object({
     congress: z.number(),
-    session: z.number(),
-    chamber: z.string(),
-    rollNumber: z.number(),
-    date: z.string(),
-    time: z.string().optional(),
-    question: z.string(),
+    sessionNumber: z.number(),
+    rollCallNumber: z.number(),
     result: z.string(),
-    description: z.string().optional(),
-    bill: z
-      .object({
-        congress: z.number(),
-        type: z.string(),
-        number: z.number(),
-        title: z.string().optional(),
-      })
-      .optional(),
-    totals: z.object({
-      yea: z.number(),
-      nay: z.number(),
-      notVoting: z.number(),
-      present: z.number(),
-    }),
-    members: z.array(HouseVoteMemberResponseSchema),
+    voteQuestion: z.string().optional(),
+    voteType: z.string().optional(),
+    startDate: z.string(),
+    updateDate: z.string().optional(),
+    votePartyTotal: z.array(HouseVotePartyTotalSchema).optional(),
+    sourceDataURL: z.string().optional(),
   }),
 });
 export type HouseVoteResponse = z.infer<typeof HouseVoteResponseSchema>;
 
 export const HouseVoteListItemSchema = z.object({
   congress: z.number(),
-  session: z.number(),
-  rollNumber: z.number(),
-  date: z.string(),
-  question: z.string().optional(),
+  sessionNumber: z.number(),
+  rollCallNumber: z.number(),
   result: z.string().optional(),
+  startDate: z.string(),
+  updateDate: z.string().optional(),
+  voteType: z.string().optional(),
+  legislationNumber: z.string().optional(),
+  legislationType: z.string().optional(),
+  legislationUrl: z.string().optional(),
+  sourceDataURL: z.string().optional(),
+  url: z.string().optional(),
 });
 
 export const HouseVoteListResponseSchema = z.object({
-  votes: z.array(HouseVoteListItemSchema),
+  houseRollCallVotes: z.array(HouseVoteListItemSchema),
   pagination: z
     .object({
       count: z.number(),
@@ -183,9 +181,9 @@ export const BillSponsorSchema = z.object({
 export const BillListItemSchema = z.object({
   congress: z.number(),
   type: z.string(),
-  number: z.number(),
+  number: z.coerce.number(),
   title: z.string(),
-  introducedDate: z.string(),
+  introducedDate: z.string().optional(),
   latestAction: z
     .object({
       actionDate: z.string(),
@@ -217,9 +215,9 @@ export const BillDetailResponseSchema = z.object({
   bill: z.object({
     congress: z.number(),
     type: z.string(),
-    number: z.number(),
+    number: z.coerce.number(),
     title: z.string(),
-    introducedDate: z.string(),
+    introducedDate: z.string().optional(),
     latestAction: z
       .object({
         actionDate: z.string(),
@@ -233,27 +231,15 @@ export const BillDetailResponseSchema = z.object({
       .optional(),
     subjects: z
       .object({
-        legislativeSubjects: z
-          .array(
-            z.object({
-              name: z.string(),
-            })
-          )
-          .optional(),
+        count: z.number(),
+        url: z.string(),
       })
       .optional(),
     sponsors: z.array(BillSponsorSchema).optional(),
     summaries: z
       .object({
-        summary: z.array(
-          z.object({
-            versionCode: z.string(),
-            actionDate: z.string(),
-            actionDesc: z.string(),
-            text: z.string(),
-            updateDate: z.string(),
-          })
-        ),
+        count: z.number(),
+        url: z.string(),
       })
       .optional(),
   }),
