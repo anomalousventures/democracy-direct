@@ -417,7 +417,7 @@ export async function syncVotes(
       id: metaId,
       sourceUrl: "https://api.congress.gov + https://senate.gov",
       lastChecked: new Date(),
-      lastChanged: hasChanges ? new Date() : new Date(0),
+      lastChanged: hasChanges ? new Date() : null,
       recordCount: totalVotesUpsertedForMeta,
     })
     .onConflictDoUpdate({
