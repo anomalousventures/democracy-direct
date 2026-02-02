@@ -245,9 +245,13 @@ jobs:
       - name: Merge coverage reports
         run: |
           mkdir -p coverage
-          pnpm nyc merge coverage-unit coverage/coverage-final.json
           if [ -f coverage-integration/coverage-final.json ]; then
-            pnpm nyc merge coverage-unit coverage-integration coverage/coverage-final.json
+            mkdir -p coverage-all
+            cp coverage-unit/coverage-final.json coverage-all/unit.json
+            cp coverage-integration/coverage-final.json coverage-all/integration.json
+            pnpm nyc merge coverage-all coverage/coverage-final.json
+          else
+            pnpm nyc merge coverage-unit coverage/coverage-final.json
           fi
           pnpm nyc report --reporter=json-summary --temp-dir=coverage --report-dir=coverage
 
