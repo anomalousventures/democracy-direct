@@ -1,9 +1,9 @@
 # Bill Summaries Integration
 
-## Status: In Progress
+## Status: Ready
 
-**PR #1 (Shared Infrastructure)**: Complete - types, utilities, API wrappers created
-**PR #3 (Bill Summaries Data)**: Pending PR #1 merge
+**PR #1 (Shared Infrastructure)**: Merged (#50) - types, utilities, API wrappers created
+**PR #3 (Bill Summaries Data)**: Not started
 
 ## Problem Statement
 
