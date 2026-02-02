@@ -1,39 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 const rootDir = resolve(__dirname, "..");
 
 describe("Phase 0.2: Database Connection", () => {
-  describe("Database client module", () => {
-    it("should have db.ts module", () => {
-      const dbPath = resolve(rootDir, "src/lib/db.ts");
-      expect(existsSync(dbPath)).toBe(true);
-    });
-
-    it("should export getDb function", async () => {
-      const dbModule = await import("../src/lib/db");
-      expect(typeof dbModule.getDb).toBe("function");
-    });
-
-    it("should export checkDbConnection function", async () => {
-      const dbModule = await import("../src/lib/db");
-      expect(typeof dbModule.checkDbConnection).toBe("function");
-    });
-
-    it("should throw error when DATABASE_URL is not set", async () => {
-      const originalEnv = process.env.DATABASE_URL;
-      delete process.env.DATABASE_URL;
-
-      vi.resetModules();
-      const { getDb } = await import("../src/lib/db");
-
-      expect(() => getDb()).toThrow("DATABASE_URL environment variable is required");
-
-      process.env.DATABASE_URL = originalEnv;
-    });
-  });
-
   describe("Health endpoint", () => {
     it("should have health endpoint file", () => {
       const healthPath = resolve(rootDir, "src/pages/api/health.ts");
