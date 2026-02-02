@@ -242,6 +242,8 @@ jobs:
           name: coverage-integration
           path: coverage-integration
 
+      # nyc merges Istanbul-format coverage JSON from different test types (unit + integration).
+      # Vitest's --merge-reports is for sharded runs only, not different test environments.
       - name: Merge coverage reports
         run: |
           mkdir -p coverage
