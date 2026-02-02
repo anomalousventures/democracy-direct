@@ -14,6 +14,7 @@ pnpm dev:wrangler           # Build + wrangler dev (fallback)
 pnpm test                   # Run unit tests (Vitest)
 pnpm test:watch             # Watch mode
 pnpm test -- src/lib/foo    # Run specific test file
+pnpm test:integration       # Run integration tests (requires DATABASE_URL)
 pnpm test:e2e               # Playwright E2E tests
 
 # Code quality
@@ -67,6 +68,7 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **API routes**: Always add `export const prerender = false;`
 - **API routes**: Wrap database operations in try-catch blocks for consistency
 - **Database**: Fresh connection per request, prefer JOINs over multiple queries
+- **Database types**: Use `.$type<T>()` on Drizzle columns to share types with Zod schemas (avoids duplication)
 - **Tests**: Unit tests colocated as `*.test.ts`, E2E in `tests/e2e/`
 - **No `as` casts**: Use type guards and discriminated unions instead of type assertions
 - **Lookup objects over if/else chains**: Prefer `const handlers = { a: fn1, b: fn2 }` over `if (x === 'a') ... else if ...`
@@ -76,6 +78,9 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **API tests location**: Place in `tests/api/`, NOT `src/pages/api/` (Astro treats files there as routes)
 - **Use static imports**: Prefer `import { POST } from "@/pages/api/foo"` over dynamic `await import()`
 - **Drizzle table names**: Access via `table[Symbol.for("drizzle:Name")]`, not `table._?.name`
+- **Integration tests**: `*.integration.test.ts` files require DATABASE_URL and error if missing (don't skip)
+- **CI database**: Neon creates a branch per PR; integration tests run in E2E job where DATABASE_URL is available
+- **Loading .env in bash**: Use `export $(grep VAR .env | xargs)` not `source .env` (special chars break source)
 
 ## Shared Utilities
 
