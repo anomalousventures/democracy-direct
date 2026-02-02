@@ -318,6 +318,7 @@
       "description": "Create database schema, bidirectional sync scripts, and queries for bill data",
       "totalPoints": 26,
       "prNumber": 3,
+      "status": "complete",
       "dependencies": ["epic-1"],
       "stories": [
         {
@@ -326,6 +327,7 @@
           "description": "As a developer, I want database tables for bills and sync cursors so that I can store synced bill data and track sync progress.",
           "points": 3,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": [],
           "acceptanceCriteria": [
             "bills table with: id (uuid), billNumber (varchar), billType (varchar), congress (int), title (text), summary (text nullable), status (varchar), subjects (json), introducedDate (date), latestActionDate (date), latestActionText (text), sponsorBioguideId (varchar FK to legislators), congressGovUrl (text), createdAt (timestamp), updatedAt (timestamp)",
@@ -351,6 +353,7 @@
           "description": "As a developer, I want to fetch bills from Congress.gov API so that I can populate the bills database.",
           "points": 3,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["infra-1", "bills-1"],
           "acceptanceCriteria": [
             "Fetches bill list with pagination support",
@@ -376,6 +379,7 @@
           "description": "As a developer, I want to sync new/updated bills since the last sync so that the database stays current with minimal API calls.",
           "points": 3,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-2"],
           "acceptanceCriteria": [
             "Reads last sync timestamp from syncCursors table",
@@ -400,6 +404,7 @@
           "description": "As a developer, I want to backfill historical bills so that I can build a complete dataset over time without hitting rate limits.",
           "points": 5,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-2"],
           "acceptanceCriteria": [
             "Reads oldest synced Congress from syncCursors table",
@@ -426,6 +431,7 @@
           "description": "As a developer, I want a sync script that supports both forward and backward sync so that I can run the appropriate sync direction.",
           "points": 5,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-3", "bills-4"],
           "acceptanceCriteria": [
             "Script runs with: pnpm sync:bills --direction forward",
@@ -452,6 +458,7 @@
           "description": "As a maintainer, I want forward bill sync to run daily so that new bills are captured automatically.",
           "points": 2,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-5"],
           "acceptanceCriteria": [
             "Added as step in .github/workflows/refresh-data.yml",
@@ -476,6 +483,7 @@
           "description": "As a maintainer, I want a separate workflow for historical bill backfill so that I can aggressively backfill initially then taper.",
           "points": 3,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-5"],
           "acceptanceCriteria": [
             "New workflow: .github/workflows/backfill-bills.yml",
@@ -500,6 +508,7 @@
           "description": "As a developer, I want query functions for bills so that I can display bill data on pages.",
           "points": 2,
           "prNumber": 3,
+          "status": "complete",
           "dependencies": ["bills-1"],
           "acceptanceCriteria": [
             "getBillsByMember(bioguideId, options) returns paginated bills for a sponsor",

@@ -22,6 +22,20 @@
       "when": 1770009672984,
       "tag": "0002_workable_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770044488614,
+      "tag": "0003_red_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770048353092,
+      "tag": "0004_heavy_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

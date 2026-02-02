@@ -35,6 +35,7 @@
     "ensure:admins": "npx tsx src/scripts/ensure-admins.ts",
     "seed:templates": "npx tsx src/scripts/seed-templates.ts",
     "sync:votes": "npx tsx src/scripts/sync-votes.ts",
+    "sync:bills": "npx tsx src/scripts/sync-bills.ts",
     "prepare": "husky"
   },
   "dependencies": {
