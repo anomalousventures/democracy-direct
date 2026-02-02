@@ -20,7 +20,7 @@
           "prNumber": 1,
           "dependencies": [],
           "acceptanceCriteria": [
-            "Client reads API key from CONGRESS_API_KEY environment variable",
+            "Client accepts API key via options parameter (caller supplies from config/env)",
             "All API responses are typed with TypeScript interfaces",
             "Rate limiting respects 5,000 requests/hour limit with 100ms minimum delay",
             "Errors are caught and wrapped with descriptive messages",
@@ -50,7 +50,7 @@
             "Parses member positions: name, party, state, vote cast, LIS ID",
             "Uses fast-xml-parser for XML parsing",
             "Handles network errors gracefully",
-            "Returns typed objects matching shared Vote/MemberVote types"
+            "Returns LIS-shaped parsed types (ParsedSenateVote/SenateVoteMember); mapping to shared Vote/MemberVote types occurs in the Senate vote fetcher"
           ],
           "files": {
             "create": ["src/lib/senate-votes.ts"],

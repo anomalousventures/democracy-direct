@@ -45,6 +45,10 @@ function parseVoteNumber(voteNum: string | number): number {
   return parseInt(voteNum.replace(/^0+/, "") || "0", 10);
 }
 
+function formatVoteNumber(num: number): string {
+  return num.toString().padStart(5, "0");
+}
+
 /**
  * Parses Senate vote XML into structured data with Zod validation.
  */
@@ -177,10 +181,6 @@ export function createSenateVoteClient(options: SenateClientOptions = {}): Senat
     }
   }
 
-  function formatVoteNumber(num: number): string {
-    return num.toString().padStart(5, "0");
-  }
-
   async function getVoteMenu(congress: number, session: number): Promise<ParsedVoteMenu> {
     const url = `${SENATE_BASE_URL}/roll_call_lists/vote_menu_${congress}_${session}.xml`;
     const response = await rateLimitedFetch(url);
@@ -240,7 +240,7 @@ export function normalizeVotePosition(position: string): VotePosition {
  * Builds a Senate.gov URL for a specific vote.
  */
 export function buildSenateVoteUrl(congress: number, session: number, voteNumber: number): string {
-  const paddedVote = voteNumber.toString().padStart(5, "0");
+  const paddedVote = formatVoteNumber(voteNumber);
   return `https://www.senate.gov/legislative/LIS/roll_call_votes/vote${congress}${session}/vote_${congress}_${session}_${paddedVote}.htm`;
 }
 
