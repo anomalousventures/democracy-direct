@@ -106,7 +106,7 @@
     "eslint-plugin-astro": "1.5.0",
     "eslint-plugin-react": "7.37.5",
     "husky": "9.1.7",
-    "jsdom": "^27.4.0",
+    "jsdom": "^28.0.0",
     "lint-staged": "16.2.7",
     "nyc": "^17.1.0",
     "playwright": "1.58.0",
