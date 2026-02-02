@@ -171,6 +171,27 @@ export const HouseVoteListResponseSchema = z.object({
 });
 export type HouseVoteListResponse = z.infer<typeof HouseVoteListResponseSchema>;
 
+export const HouseVoteMemberSchema = z.object({
+  bioguideId: z.string(),
+  name: z.string(),
+  state: z.string(),
+  district: z.coerce.number().optional(),
+  party: z.string(),
+  vote: z.string(),
+});
+export type HouseVoteMember = z.infer<typeof HouseVoteMemberSchema>;
+
+export const HouseVoteMembersResponseSchema = z.object({
+  members: z.array(HouseVoteMemberSchema),
+  pagination: z
+    .object({
+      count: z.number(),
+      next: z.string().optional(),
+    })
+    .optional(),
+});
+export type HouseVoteMembersResponse = z.infer<typeof HouseVoteMembersResponseSchema>;
+
 export const BillSponsorSchema = z.object({
   bioguideId: z.string(),
   fullName: z.string(),

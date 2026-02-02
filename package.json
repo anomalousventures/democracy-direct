@@ -33,6 +33,7 @@
     "seed:e2e": "npx tsx src/scripts/seed-e2e.ts",
     "ensure:admins": "npx tsx src/scripts/ensure-admins.ts",
     "seed:templates": "npx tsx src/scripts/seed-templates.ts",
+    "sync:votes": "npx tsx src/scripts/sync-votes.ts",
     "prepare": "husky"
   },
   "dependencies": {
