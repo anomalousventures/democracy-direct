@@ -32,14 +32,8 @@ export async function sendEmail(
   const provider = await createEmailProvider(config);
 
   try {
-    const success = await provider.send(message);
-    if (!success) {
-      logger?.error("email_send_failed", {
-        provider: config.provider,
-        subject: message.subject,
-      });
-    }
-    return success;
+    await provider.send(message);
+    return true;
   } catch (error) {
     logger?.error("email_send_error", {
       provider: config.provider,

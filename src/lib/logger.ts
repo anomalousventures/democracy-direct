@@ -59,7 +59,7 @@ export function createLogger(locals: App.Locals, request?: Request): Logger {
               timestamp,
             },
           }),
-        }).catch(() => {})
+        }).catch((error) => console.error("PostHog capture failed:", error))
       );
     }
   }
