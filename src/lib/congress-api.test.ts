@@ -86,24 +86,29 @@ describe("CongressClient", () => {
 
   it("getHouseVoteMembers fetches members who voted on a roll call", async () => {
     const mockResponse = {
-      members: [
-        {
-          bioguideId: "A000001",
-          vote: "Yea",
-          name: "John Doe",
-          party: "R",
-          state: "TX",
-          district: 1,
-        },
-        {
-          bioguideId: "B000002",
-          vote: "Nay",
-          name: "Jane Smith",
-          party: "D",
-          state: "CA",
-          district: 5,
-        },
-      ],
+      houseRollCallVoteMemberVotes: {
+        congress: 119,
+        identifier: 119210123,
+        result: "Passed",
+        results: [
+          {
+            bioguideID: "A000001",
+            firstName: "John",
+            lastName: "Doe",
+            voteCast: "Yea",
+            voteParty: "R",
+            voteState: "TX",
+          },
+          {
+            bioguideID: "B000002",
+            firstName: "Jane",
+            lastName: "Smith",
+            voteCast: "Nay",
+            voteParty: "D",
+            voteState: "CA",
+          },
+        ],
+      },
     };
 
     mockFetch.mockResolvedValueOnce({
@@ -122,6 +127,7 @@ describe("CongressClient", () => {
     expect(result.members).toHaveLength(2);
     expect(result.members[0].bioguideId).toBe("A000001");
     expect(result.members[0].vote).toBe("Yea");
+    expect(result.members[0].name).toBe("John Doe");
     expect(result.members[1].bioguideId).toBe("B000002");
     expect(result.members[1].vote).toBe("Nay");
   });

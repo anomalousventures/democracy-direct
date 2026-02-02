@@ -171,25 +171,44 @@ export const HouseVoteListResponseSchema = z.object({
 });
 export type HouseVoteListResponse = z.infer<typeof HouseVoteListResponseSchema>;
 
-export const HouseVoteMemberSchema = z.object({
-  bioguideId: z.string(),
-  name: z.string(),
-  state: z.string(),
-  district: z.coerce.number().optional(),
-  party: z.string(),
-  vote: z.string(),
+const RawHouseVoteMemberSchema = z.object({
+  bioguideID: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  voteCast: z.string(),
+  voteParty: z.string(),
+  voteState: z.string(),
 });
+
+export const HouseVoteMemberSchema = RawHouseVoteMemberSchema.transform((raw) => ({
+  bioguideId: raw.bioguideID,
+  name: `${raw.firstName} ${raw.lastName}`,
+  state: raw.voteState,
+  party: raw.voteParty,
+  vote: raw.voteCast,
+}));
 export type HouseVoteMember = z.infer<typeof HouseVoteMemberSchema>;
 
-export const HouseVoteMembersResponseSchema = z.object({
-  members: z.array(HouseVoteMemberSchema),
-  pagination: z
-    .object({
-      count: z.number(),
-      next: z.string().optional(),
-    })
-    .optional(),
+const RawHouseVoteMembersResponseSchema = z.object({
+  houseRollCallVoteMemberVotes: z.object({
+    congress: z.number(),
+    identifier: z.number().optional(),
+    result: z.string().optional(),
+    results: z.array(RawHouseVoteMemberSchema),
+  }),
 });
+
+export const HouseVoteMembersResponseSchema = RawHouseVoteMembersResponseSchema.transform(
+  (raw) => ({
+    members: raw.houseRollCallVoteMemberVotes.results.map((m) => ({
+      bioguideId: m.bioguideID,
+      name: `${m.firstName} ${m.lastName}`,
+      state: m.voteState,
+      party: m.voteParty,
+      vote: m.voteCast,
+    })),
+  })
+);
 export type HouseVoteMembersResponse = z.infer<typeof HouseVoteMembersResponseSchema>;
 
 export const BillSponsorSchema = z.object({
