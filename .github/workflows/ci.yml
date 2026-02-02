@@ -107,7 +107,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
-      db_url: ${{ steps.create_branch.outputs.db_url_with_pooler || steps.create_branch.outputs.db_url }}
+      db_url: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url }}
     steps:
       - name: Create Neon Branch
         id: create_branch
@@ -117,16 +117,17 @@ jobs:
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
-      - name: Debug database URL
+      - name: Verify database URL output
         run: |
-          echo "db_url_with_pooler output length: ${#DB_URL_POOLER}"
+          echo "db_url_pooled output length: ${#DB_URL_POOLED}"
           echo "db_url output length: ${#DB_URL}"
-          if [ -z "$DB_URL_POOLER" ] && [ -z "$DB_URL" ]; then
-            echo "ERROR: Both db_url_with_pooler and db_url are empty!"
+          if [ -z "$DB_URL_POOLED" ] && [ -z "$DB_URL" ]; then
+            echo "ERROR: Both db_url_pooled and db_url are empty!"
             exit 1
           fi
+          echo "Database URL successfully retrieved"
         env:
-          DB_URL_POOLER: ${{ steps.create_branch.outputs.db_url_with_pooler }}
+          DB_URL_POOLED: ${{ steps.create_branch.outputs.db_url_pooled }}
           DB_URL: ${{ steps.create_branch.outputs.db_url }}
 
   test-e2e:
