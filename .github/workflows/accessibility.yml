@@ -68,40 +68,52 @@ jobs:
               if (pr) {
                 console.log(`Found PR #${pr.number} for commit ${sha}`);
 
-                // Query GitHub Deployments API to get actual Cloudflare URL
+                // Try to extract deployment URL from check run output
+                const checkOutput = context.payload.check_run.output;
+                if (checkOutput?.summary) {
+                  const urlMatch = checkOutput.summary.match(/https:\/\/[a-z0-9-]+\.democracy-direct\.pages\.dev/);
+                  if (urlMatch) {
+                    deploymentUrl = urlMatch[0];
+                    console.log(`Extracted URL from check output: ${deploymentUrl}`);
+                  }
+                }
+
+                // If not found, query GitHub Deployments API
                 // This avoids issues with Cloudflare's URL truncation
-                try {
-                  const { data: deployments } = await github.rest.repos.listDeployments({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    sha: sha,
-                    per_page: 10
-                  });
-
-                  console.log(`Found ${deployments.length} deployments for ${sha}`);
-
-                  // Find the most recent successful deployment
-                  for (const deployment of deployments) {
-                    const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                if (!deploymentUrl) {
+                  try {
+                    const { data: deployments } = await github.rest.repos.listDeployments({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
-                      deployment_id: deployment.id
+                      sha: sha,
+                      per_page: 10
                     });
 
-                    const successStatus = statuses.find(s => s.state === 'success');
-                    if (successStatus && successStatus.environment_url) {
-                      deploymentUrl = successStatus.environment_url;
-                      console.log(`Found deployment URL: ${deploymentUrl}`);
-                      break;
-                    }
-                  }
+                    console.log(`Found ${deployments.length} deployments for ${sha}`);
 
-                  if (!deploymentUrl) {
-                    console.log('No successful deployment found, skipping audit');
+                    // Find the most recent successful deployment
+                    for (const deployment of deployments) {
+                      const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        deployment_id: deployment.id
+                      });
+
+                      const successStatus = statuses.find(s => s.state === 'success');
+                      if (successStatus && successStatus.environment_url) {
+                        deploymentUrl = successStatus.environment_url;
+                        console.log(`Found deployment URL from API: ${deploymentUrl}`);
+                        break;
+                      }
+                    }
+
+                    if (!deploymentUrl) {
+                      console.log('No successful deployment found, skipping audit');
+                    }
+                  } catch (error) {
+                    console.log(`Error querying deployments: ${error.message}`);
+                    deploymentUrl = null;
                   }
-                } catch (error) {
-                  console.log(`Error querying deployments: ${error.message}`);
-                  deploymentUrl = null;
                 }
               } else {
                 console.log('No PR found for this commit, skipping audit');
