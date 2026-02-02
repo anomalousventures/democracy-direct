@@ -10,6 +10,7 @@
       "description": "Create reusable API wrappers, XML parsers, and shared types for Congress data integration",
       "totalPoints": 13,
       "prNumber": 1,
+      "status": "complete",
       "dependencies": [],
       "stories": [
         {
@@ -151,6 +152,7 @@
       "description": "Create database schema, sync scripts, and queries for House and Senate voting records",
       "totalPoints": 18,
       "prNumber": 2,
+      "status": "complete",
       "dependencies": ["epic-1"],
       "stories": [
         {
@@ -159,6 +161,7 @@
           "description": "As a developer, I want database tables for votes and member positions so that I can store synced voting records.",
           "points": 3,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": [],
           "acceptanceCriteria": [
             "votes table with: id (uuid), rollCall (int), chamber (varchar), congress (int), session (int), date (date), question (text), result (varchar), billNumber (varchar nullable), billTitle (text nullable), billSubjects (json nullable), sourceUrl (text), createdAt (timestamp)",
@@ -185,6 +188,7 @@
           "description": "As a developer, I want to fetch House votes from Congress.gov API so that I can populate the votes database.",
           "points": 3,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": ["infra-1", "votes-1"],
           "acceptanceCriteria": [
             "Fetches vote list for current Congress and session",
@@ -209,6 +213,7 @@
           "description": "As a developer, I want to fetch Senate votes from Senate.gov XML so that I can populate the votes database with Senate data.",
           "points": 3,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": ["infra-2", "votes-1"],
           "acceptanceCriteria": [
             "Fetches vote menu XML to enumerate all votes in session",
@@ -233,6 +238,7 @@
           "description": "As a developer, I want a sync script that upserts votes from both chambers so that I can keep the database current.",
           "points": 5,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": ["votes-2", "votes-3"],
           "acceptanceCriteria": [
             "Script runs with: pnpm sync:votes",
@@ -260,6 +266,7 @@
           "description": "As a maintainer, I want vote sync to run automatically so that voting records stay current.",
           "points": 2,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": ["votes-4"],
           "acceptanceCriteria": [
             "Added as step in .github/workflows/refresh-data.yml",
@@ -284,6 +291,7 @@
           "description": "As a developer, I want query functions for votes so that I can display voting records on rep pages and vote detail pages.",
           "points": 2,
           "prNumber": 2,
+          "status": "complete",
           "dependencies": ["votes-1"],
           "acceptanceCriteria": [
             "getVotesByMember(bioguideId, options) returns paginated votes with position",

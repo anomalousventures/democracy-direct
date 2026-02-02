@@ -3,7 +3,7 @@
 ## Status: In Progress
 
 **PR #1 (Shared Infrastructure)**: Merged (#50)
-**PR #2 (Voting Records Data Layer)**: In Progress - schema, sync script, queries, GitHub Action complete
+**PR #2 (Voting Records Data Layer)**: Submitted (#51) - schema, sync script, queries, GitHub Action complete
 
 ## Problem Statement
 
