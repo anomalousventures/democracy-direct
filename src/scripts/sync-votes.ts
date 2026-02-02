@@ -29,7 +29,7 @@ export interface SyncVotesResult {
 
 const BATCH_SIZE = 50;
 
-function buildCongressGovVoteUrl(voteDate: Date, rollCall: number): string {
+export function buildCongressGovVoteUrl(voteDate: Date, rollCall: number): string {
   const year = voteDate.getFullYear();
   return `https://clerk.house.gov/Votes/${year}${rollCall.toString().padStart(3, "0")}`;
 }
@@ -108,6 +108,14 @@ async function syncHouseVotes(
       }
 
       const voteDate = new Date(voteData.startDate);
+      if (isNaN(voteDate.getTime())) {
+        errors.push({
+          chamber: "house",
+          rollCall: voteItem.rollCallNumber,
+          error: `Invalid vote date: ${voteData.startDate}`,
+        });
+        continue;
+      }
       const sourceUrl = buildCongressGovVoteUrl(voteDate, voteItem.rollCallNumber);
 
       const [insertedVote] = await db
@@ -136,6 +144,7 @@ async function syncHouseVotes(
             question: sql`excluded.question`,
             result: sql`excluded.result`,
             billNumber: sql`excluded.bill_number`,
+            sourceUrl: sql`excluded.source_url`,
             yeas: sql`excluded.yeas`,
             nays: sql`excluded.nays`,
             notVoting: sql`excluded.not_voting`,
@@ -145,7 +154,11 @@ async function syncHouseVotes(
         .returning({ id: votes.id });
 
       if (!insertedVote) {
-        console.warn(`Failed to upsert House vote ${voteItem.rollCallNumber}`);
+        errors.push({
+          chamber: "house",
+          rollCall: voteItem.rollCallNumber,
+          error: "Failed to upsert vote record",
+        });
         continue;
       }
 
@@ -211,7 +224,15 @@ async function syncSenateVotes(
       const sourceUrl = buildSenateVoteUrl(congress, session, voteMenuItem.voteNumber);
 
       const parsedDate = new Date(voteDetail.voteDate);
-      const voteDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+      if (isNaN(parsedDate.getTime())) {
+        errors.push({
+          chamber: "senate",
+          rollCall: voteMenuItem.voteNumber,
+          error: `Invalid vote date: ${voteDetail.voteDate}`,
+        });
+        continue;
+      }
+      const voteDate = parsedDate;
 
       const [insertedVote] = await db
         .insert(votes)
@@ -240,6 +261,7 @@ async function syncSenateVotes(
             result: sql`excluded.result`,
             billNumber: sql`excluded.bill_number`,
             billTitle: sql`excluded.bill_title`,
+            sourceUrl: sql`excluded.source_url`,
             yeas: sql`excluded.yeas`,
             nays: sql`excluded.nays`,
             notVoting: sql`excluded.not_voting`,
@@ -249,7 +271,11 @@ async function syncSenateVotes(
         .returning({ id: votes.id });
 
       if (!insertedVote) {
-        console.warn(`Failed to upsert Senate vote ${voteMenuItem.voteNumber}`);
+        errors.push({
+          chamber: "senate",
+          rollCall: voteMenuItem.voteNumber,
+          error: "Failed to upsert vote record",
+        });
         continue;
       }
 
@@ -382,21 +408,24 @@ export async function syncVotes(
     );
   }
 
+  const totalVotesUpsertedForMeta = houseResult.votesUpserted + senateResult.votesUpserted;
+  const hasChanges = totalVotesUpsertedForMeta > 0;
+
   await db
     .insert(dataSourceMeta)
     .values({
       id: metaId,
       sourceUrl: "https://api.congress.gov + https://senate.gov",
       lastChecked: new Date(),
-      lastChanged: new Date(),
-      recordCount: houseResult.votesUpserted + senateResult.votesUpserted,
+      lastChanged: hasChanges ? new Date() : new Date(0),
+      recordCount: totalVotesUpsertedForMeta,
     })
     .onConflictDoUpdate({
       target: dataSourceMeta.id,
       set: {
         lastChecked: new Date(),
-        lastChanged: new Date(),
-        recordCount: houseResult.votesUpserted + senateResult.votesUpserted,
+        ...(hasChanges ? { lastChanged: new Date() } : {}),
+        recordCount: totalVotesUpsertedForMeta,
       },
     });
 
@@ -406,9 +435,11 @@ export async function syncVotes(
     `Sync complete: ${houseResult.votesUpserted} House votes, ${senateResult.votesUpserted} Senate votes`
   );
 
+  const totalVotesUpserted = houseResult.votesUpserted + senateResult.votesUpserted;
+
   return {
     source: "congress.gov + senate.gov",
-    changed: true,
+    changed: totalVotesUpserted > 0,
     congressNumber: congress,
     session,
     houseVotesUpserted: houseResult.votesUpserted,
