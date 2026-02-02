@@ -42,6 +42,10 @@ function formatElapsed(startTime: number): string {
   return elapsed < 60 ? `${elapsed.toFixed(1)}s` : `${(elapsed / 60).toFixed(1)}m`;
 }
 
+function formatDateForApi(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function logProgress(
   phase: string,
   startTime: number,
@@ -313,7 +317,7 @@ async function syncForward(
   const upsertCount = await upsertBills(db, billsToUpsert);
   console.log(`Upserted ${upsertCount} bills in ${formatElapsed(upsertStartTime)}`);
 
-  const newCursor = new Date().toISOString();
+  const newCursor = formatDateForApi(new Date());
   await updateCursor(db, cursorId, newCursor, null, newestCongress ?? currentCongress);
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
