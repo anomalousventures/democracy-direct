@@ -169,6 +169,21 @@ Understanding what legislation representatives sponsor and support is key to inf
 
 ## Verification
 
+### Data Layer (Epic 3 - Verified)
+
+- [x] Forward sync completes without errors (tested locally: 13,011 bills upserted)
+- [x] Backward sync completes without errors (tested locally: 3,000 bills/run)
+- [x] Forward sync only fetches new/updated bills (uses fromDateTime cursor)
+- [x] Backward sync gradually backfills historical data
+- [x] Handles bills without summaries gracefully (summary field nullable)
+- [x] Unit tests pass (5/5 sync-bills tests, 7/7 bills query tests)
+- [ ] Forward sync GitHub Action completes without rate limit errors (pending CI run)
+- [ ] Backward sync GitHub Action completes without rate limit errors (pending CI run)
+- [ ] Coverage reaches 3+ Congresses within first week
+- [ ] Backward sync cron reduced after backfill complete
+
+### UI Components (Epic 4 - Pending)
+
 - [ ] Sponsored bills display on rep profile pages
 - [ ] Bills show correct status indicators
 - [ ] Summaries display when available
@@ -176,15 +191,10 @@ Understanding what legislation representatives sponsor and support is key to inf
 - [ ] Filter by status works
 - [ ] Filter by topic/subject works
 - [ ] Data loads within acceptable time (<2s)
-- [ ] Forward sync GitHub Action completes without rate limit errors
-- [ ] Backward sync GitHub Action completes without rate limit errors
-- [ ] Forward sync only fetches new/updated bills
-- [ ] Backward sync gradually backfills historical data
-- [ ] Coverage reaches 3+ Congresses within first week
-- [ ] Backward sync cron reduced after backfill complete
-- [ ] Handles bills without summaries gracefully
+- [ ] E2E tests pass
+
+### SEO (Pending)
+
 - [ ] Bill detail pages render correctly
 - [ ] Current Congress bills appear in sitemap
 - [ ] Sitemap includes correct lastmod dates for bills
-- [ ] Unit tests pass
-- [ ] E2E tests pass
