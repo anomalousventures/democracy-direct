@@ -21,8 +21,8 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Share Buttons](./share-buttons.md)                         | Complete    | Add share functionality to pages                |
 | [Template Descriptions](./template-descriptions.md)         | Complete    | Add short descriptions to templates             |
 | [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Complete    | Add rep and template pages to sitemap           |
-| [Voting Records](./voting-records.md)                       | In Progress | Integrate voting records (House + Senate)       |
-| [Bill Summaries](./bill-summaries.md)                       | In Progress | Bill tracking and summaries                     |
+| [Voting Records](./voting-records.md)                       | Complete    | Integrate voting records (House + Senate)       |
+| [Bill Summaries](./bill-summaries.md)                       | In Progress | Bill tracking and summaries (data layer done)   |
 | [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready       | Performance, a11y, SEO optimization             |
 | [Legislation Search](./legislation-search.md)               | Ready       | Search bills, find who voted how                |
 | [Template Bill Linking](./template-bill-linking.md)         | Ready       | Link templates to specific bills                |

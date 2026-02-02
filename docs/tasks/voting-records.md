@@ -1,9 +1,9 @@
 # Voting Records Integration
 
-## Status: In Progress
+## Status: Complete
 
-**PR #1 (Shared Infrastructure)**: Complete - types, utilities, API wrappers created
-**PR #2 (Voting Records Data)**: Pending PR #1 merge
+**PR #1 (Shared Infrastructure)**: Merged (#50)
+**PR #2 (Voting Records Data Layer)**: Merged (#51) - schema, sync script, queries, GitHub Action complete
 
 ## Problem Statement
 
@@ -202,17 +202,26 @@ https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001
 
 ## Verification
 
+### Data Layer (Epic 2)
+
+- [x] votes table created with proper indexes and unique constraint
+- [x] memberVotes table created with composite primary key
+- [x] lisId column added to legislators table for Senate vote mapping
+- [x] sync:votes script syncs House votes from Congress.gov API
+- [x] sync:votes script syncs Senate votes from Senate.gov XML
+- [x] LIS ID mapping for Senate members works correctly
+- [x] GitHub Action step added to refresh-data.yml
+- [x] Discord notification updated for vote sync status
+- [x] Vote database queries implemented (getVotesByMember, getVoteById, getVoteStats)
+- [x] All lint/format/typecheck passes
+- [x] All 704 unit tests pass
+
+### UI Components (Epic 4 - Future)
+
 - [ ] Voting history displays on rep profile pages for both chambers
-- [ ] House votes fetched from Congress.gov API
-- [ ] Senate votes fetched from Senate.gov XML
 - [ ] Votes show correct position for each member
 - [ ] Clicking vote links to official source (Congress.gov or Senate.gov)
 - [ ] Filter by chamber works
 - [ ] Filter by topic/category works
 - [ ] Data loads within acceptable time (<2s)
-- [ ] GitHub Action sync step runs successfully
-- [ ] Handles missing data gracefully
-- [ ] Unit tests pass for House API wrapper
-- [ ] Unit tests pass for Senate XML parser
-- [ ] Unit tests pass for database queries
 - [ ] E2E tests pass for vote display

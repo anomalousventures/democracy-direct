@@ -14,6 +14,7 @@ export interface ImportResult {
 export interface RawLegislatorId {
   bioguide: string;
   thomas?: string;
+  lis?: string;
   govtrack?: number;
   opensecrets?: string;
   votesmart?: number;
@@ -94,6 +95,7 @@ export interface TransformedLegislator {
   twitterHandle: string | null;
   facebookId: string | null;
   youtubeId: string | null;
+  lisId: string | null;
 }
 
 export function validateRawLegislator(data: unknown, index: number): data is RawLegislator {
@@ -194,6 +196,7 @@ export function transformLegislator(raw: RawLegislator): TransformedLegislator {
     twitterHandle: raw.social?.twitter ?? null,
     facebookId: raw.social?.facebook ?? null,
     youtubeId: raw.social?.youtube ?? null,
+    lisId: raw.id.lis ?? null,
   };
 }
 
@@ -375,6 +378,7 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
           twitterHandle: leg.twitterHandle,
           facebookId: leg.facebookId,
           youtubeId: leg.youtubeId,
+          lisId: leg.lisId,
         }))
       )
       .onConflictDoUpdate({
@@ -400,6 +404,7 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
           twitterHandle: sql`excluded.twitter_handle`,
           facebookId: sql`excluded.facebook_id`,
           youtubeId: sql`excluded.youtube_id`,
+          lisId: sql`excluded.lis_id`,
         },
       });
 
