@@ -12,273 +12,245 @@ import {
 } from "./bill-utils";
 
 describe("normalizeBillNumber", () => {
-  it("normalizes H.R. variants", () => {
-    expect(normalizeBillNumber("HR1234")).toBe("H.R.1234");
-    expect(normalizeBillNumber("H.R.1234")).toBe("H.R.1234");
-    expect(normalizeBillNumber("H.R. 1234")).toBe("H.R.1234");
-    expect(normalizeBillNumber("hr1234")).toBe("H.R.1234");
-    expect(normalizeBillNumber("h.r.1234")).toBe("H.R.1234");
-    expect(normalizeBillNumber("H. R. 1234")).toBe("H.R.1234");
+  it.each([
+    ["HR1234", "H.R.1234"],
+    ["H.R.1234", "H.R.1234"],
+    ["H.R. 1234", "H.R.1234"],
+    ["hr1234", "H.R.1234"],
+    ["h.r.1234", "H.R.1234"],
+    ["H. R. 1234", "H.R.1234"],
+  ])("normalizes H.R. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes S. variants", () => {
-    expect(normalizeBillNumber("S567")).toBe("S.567");
-    expect(normalizeBillNumber("S.567")).toBe("S.567");
-    expect(normalizeBillNumber("S. 567")).toBe("S.567");
-    expect(normalizeBillNumber("s567")).toBe("S.567");
-    expect(normalizeBillNumber("s.567")).toBe("S.567");
+  it.each([
+    ["S567", "S.567"],
+    ["S.567", "S.567"],
+    ["S. 567", "S.567"],
+    ["s567", "S.567"],
+    ["s.567", "S.567"],
+  ])("normalizes S. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes H.J.Res. variants", () => {
-    expect(normalizeBillNumber("HJRes123")).toBe("H.J.Res.123");
-    expect(normalizeBillNumber("H.J.Res.123")).toBe("H.J.Res.123");
-    expect(normalizeBillNumber("H.J.Res. 123")).toBe("H.J.Res.123");
-    expect(normalizeBillNumber("hjres123")).toBe("H.J.Res.123");
-    expect(normalizeBillNumber("H. J. Res. 123")).toBe("H.J.Res.123");
+  it.each([
+    ["HJRes123", "H.J.Res.123"],
+    ["H.J.Res.123", "H.J.Res.123"],
+    ["H.J.Res. 123", "H.J.Res.123"],
+    ["hjres123", "H.J.Res.123"],
+    ["H. J. Res. 123", "H.J.Res.123"],
+  ])("normalizes H.J.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes S.J.Res. variants", () => {
-    expect(normalizeBillNumber("SJRes45")).toBe("S.J.Res.45");
-    expect(normalizeBillNumber("S.J.Res.45")).toBe("S.J.Res.45");
-    expect(normalizeBillNumber("sjres45")).toBe("S.J.Res.45");
+  it.each([
+    ["SJRes45", "S.J.Res.45"],
+    ["S.J.Res.45", "S.J.Res.45"],
+    ["sjres45", "S.J.Res.45"],
+  ])("normalizes S.J.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes H.Con.Res. variants", () => {
-    expect(normalizeBillNumber("HConRes78")).toBe("H.Con.Res.78");
-    expect(normalizeBillNumber("H.Con.Res.78")).toBe("H.Con.Res.78");
-    expect(normalizeBillNumber("hconres78")).toBe("H.Con.Res.78");
+  it.each([
+    ["HConRes78", "H.Con.Res.78"],
+    ["H.Con.Res.78", "H.Con.Res.78"],
+    ["hconres78", "H.Con.Res.78"],
+  ])("normalizes H.Con.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes S.Con.Res. variants", () => {
-    expect(normalizeBillNumber("SConRes12")).toBe("S.Con.Res.12");
-    expect(normalizeBillNumber("S.Con.Res.12")).toBe("S.Con.Res.12");
-    expect(normalizeBillNumber("sconres12")).toBe("S.Con.Res.12");
+  it.each([
+    ["SConRes12", "S.Con.Res.12"],
+    ["S.Con.Res.12", "S.Con.Res.12"],
+    ["sconres12", "S.Con.Res.12"],
+  ])("normalizes S.Con.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes H.Res. variants", () => {
-    expect(normalizeBillNumber("HRes99")).toBe("H.Res.99");
-    expect(normalizeBillNumber("H.Res.99")).toBe("H.Res.99");
-    expect(normalizeBillNumber("hres99")).toBe("H.Res.99");
+  it.each([
+    ["HRes99", "H.Res.99"],
+    ["H.Res.99", "H.Res.99"],
+    ["hres99", "H.Res.99"],
+  ])("normalizes H.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("normalizes S.Res. variants", () => {
-    expect(normalizeBillNumber("SRes33")).toBe("S.Res.33");
-    expect(normalizeBillNumber("S.Res.33")).toBe("S.Res.33");
-    expect(normalizeBillNumber("sres33")).toBe("S.Res.33");
+  it.each([
+    ["SRes33", "S.Res.33"],
+    ["S.Res.33", "S.Res.33"],
+    ["sres33", "S.Res.33"],
+  ])("normalizes S.Res. variant %s to %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 
-  it("returns null for invalid bill numbers", () => {
-    expect(normalizeBillNumber("")).toBeNull();
-    expect(normalizeBillNumber("invalid")).toBeNull();
-    expect(normalizeBillNumber("H.R.")).toBeNull();
-    expect(normalizeBillNumber("1234")).toBeNull();
-    expect(normalizeBillNumber("XYZ123")).toBeNull();
-  });
+  it.each(["", "invalid", "H.R.", "1234", "XYZ123"])(
+    "returns null for invalid input: %s",
+    (input) => {
+      expect(normalizeBillNumber(input)).toBeNull();
+    }
+  );
 
-  it("handles whitespace", () => {
-    expect(normalizeBillNumber("  HR1234  ")).toBe("H.R.1234");
-    expect(normalizeBillNumber("\tS567\n")).toBe("S.567");
+  it.each([
+    ["  HR1234  ", "H.R.1234"],
+    ["\tS567\n", "S.567"],
+  ])("handles whitespace in %s", (input, expected) => {
+    expect(normalizeBillNumber(input)).toBe(expected);
   });
 });
 
 describe("parseBillNumber", () => {
-  it("parses H.R. bills", () => {
-    expect(parseBillNumber("H.R.1234")).toEqual({ type: "hr", number: 1234 });
-    expect(parseBillNumber("HR1234")).toEqual({ type: "hr", number: 1234 });
+  it.each([
+    ["H.R.1234", { type: "hr", number: 1234 }],
+    ["HR1234", { type: "hr", number: 1234 }],
+    ["S.567", { type: "s", number: 567 }],
+    ["S567", { type: "s", number: 567 }],
+    ["H.J.Res.123", { type: "hjres", number: 123 }],
+    ["S.J.Res.45", { type: "sjres", number: 45 }],
+    ["H.Con.Res.78", { type: "hconres", number: 78 }],
+    ["S.Con.Res.12", { type: "sconres", number: 12 }],
+    ["H.Res.99", { type: "hres", number: 99 }],
+    ["S.Res.33", { type: "sres", number: 33 }],
+  ])("parses %s correctly", (input, expected) => {
+    expect(parseBillNumber(input)).toEqual(expected);
   });
 
-  it("parses S. bills", () => {
-    expect(parseBillNumber("S.567")).toEqual({ type: "s", number: 567 });
-    expect(parseBillNumber("S567")).toEqual({ type: "s", number: 567 });
+  it.each(["", "invalid", "H.R."])("returns null for invalid input: %s", (input) => {
+    expect(parseBillNumber(input)).toBeNull();
   });
 
-  it("parses joint resolutions", () => {
-    expect(parseBillNumber("H.J.Res.123")).toEqual({
-      type: "hjres",
-      number: 123,
-    });
-    expect(parseBillNumber("S.J.Res.45")).toEqual({ type: "sjres", number: 45 });
-  });
-
-  it("parses concurrent resolutions", () => {
-    expect(parseBillNumber("H.Con.Res.78")).toEqual({
-      type: "hconres",
-      number: 78,
-    });
-    expect(parseBillNumber("S.Con.Res.12")).toEqual({
-      type: "sconres",
-      number: 12,
-    });
-  });
-
-  it("parses simple resolutions", () => {
-    expect(parseBillNumber("H.Res.99")).toEqual({ type: "hres", number: 99 });
-    expect(parseBillNumber("S.Res.33")).toEqual({ type: "sres", number: 33 });
-  });
-
-  it("returns null for invalid inputs", () => {
-    expect(parseBillNumber("")).toBeNull();
-    expect(parseBillNumber("invalid")).toBeNull();
-    expect(parseBillNumber("H.R.")).toBeNull();
-  });
-
-  it("is case-insensitive", () => {
-    expect(parseBillNumber("hr1234")).toEqual({ type: "hr", number: 1234 });
-    expect(parseBillNumber("HJRES99")).toEqual({ type: "hjres", number: 99 });
+  it.each([
+    ["hr1234", { type: "hr", number: 1234 }],
+    ["HJRES99", { type: "hjres", number: 99 }],
+  ])("is case-insensitive: %s", (input, expected) => {
+    expect(parseBillNumber(input)).toEqual(expected);
   });
 });
 
 describe("parseBillId", () => {
-  it("parses URL-friendly bill IDs", () => {
-    expect(parseBillId("hr1234")).toEqual({ type: "hr", number: 1234 });
-    expect(parseBillId("s567")).toEqual({ type: "s", number: 567 });
-    expect(parseBillId("hjres123")).toEqual({ type: "hjres", number: 123 });
-    expect(parseBillId("sjres45")).toEqual({ type: "sjres", number: 45 });
-    expect(parseBillId("hconres78")).toEqual({ type: "hconres", number: 78 });
-    expect(parseBillId("sconres12")).toEqual({ type: "sconres", number: 12 });
-    expect(parseBillId("hres99")).toEqual({ type: "hres", number: 99 });
-    expect(parseBillId("sres33")).toEqual({ type: "sres", number: 33 });
+  it.each([
+    ["hr1234", { type: "hr", number: 1234 }],
+    ["s567", { type: "s", number: 567 }],
+    ["hjres123", { type: "hjres", number: 123 }],
+    ["sjres45", { type: "sjres", number: 45 }],
+    ["hconres78", { type: "hconres", number: 78 }],
+    ["sconres12", { type: "sconres", number: 12 }],
+    ["hres99", { type: "hres", number: 99 }],
+    ["sres33", { type: "sres", number: 33 }],
+  ])("parses URL-friendly bill ID %s", (input, expected) => {
+    expect(parseBillId(input)).toEqual(expected);
   });
 
-  it("is case-insensitive", () => {
-    expect(parseBillId("HR1234")).toEqual({ type: "hr", number: 1234 });
-    expect(parseBillId("HJRES123")).toEqual({ type: "hjres", number: 123 });
+  it.each([
+    ["HR1234", { type: "hr", number: 1234 }],
+    ["HJRES123", { type: "hjres", number: 123 }],
+  ])("is case-insensitive: %s", (input, expected) => {
+    expect(parseBillId(input)).toEqual(expected);
   });
 
-  it("handles congress suffix", () => {
-    expect(parseBillId("hr1234-119")).toEqual({
-      type: "hr",
-      number: 1234,
-      congress: 119,
-    });
-    expect(parseBillId("s567-118")).toEqual({
-      type: "s",
-      number: 567,
-      congress: 118,
-    });
+  it.each([
+    ["hr1234-119", { type: "hr", number: 1234, congress: 119 }],
+    ["s567-118", { type: "s", number: 567, congress: 118 }],
+  ])("handles congress suffix in %s", (input, expected) => {
+    expect(parseBillId(input)).toEqual(expected);
   });
 
-  it("returns null for invalid inputs", () => {
-    expect(parseBillId("")).toBeNull();
-    expect(parseBillId("invalid")).toBeNull();
-    expect(parseBillId("xyz123")).toBeNull();
-    expect(parseBillId("hr")).toBeNull();
+  it.each(["", "invalid", "xyz123", "hr"])("returns null for invalid input: %s", (input) => {
+    expect(parseBillId(input)).toBeNull();
   });
 });
 
 describe("toBillId", () => {
-  it("converts parsed bill to URL-friendly ID", () => {
-    expect(toBillId({ type: "hr", number: 1234 })).toBe("hr1234");
-    expect(toBillId({ type: "s", number: 567 })).toBe("s567");
-    expect(toBillId({ type: "hjres", number: 123 })).toBe("hjres123");
-    expect(toBillId({ type: "sconres", number: 12 })).toBe("sconres12");
+  it.each([
+    [{ type: "hr", number: 1234 }, "hr1234"],
+    [{ type: "s", number: 567 }, "s567"],
+    [{ type: "hjres", number: 123 }, "hjres123"],
+    [{ type: "sconres", number: 12 }, "sconres12"],
+  ] as const)("converts %j to %s", (input, expected) => {
+    expect(toBillId(input)).toBe(expected);
   });
 
-  it("includes congress when provided", () => {
-    expect(toBillId({ type: "hr", number: 1234, congress: 119 })).toBe("hr1234-119");
-    expect(toBillId({ type: "s", number: 567, congress: 118 })).toBe("s567-118");
+  it.each([
+    [{ type: "hr", number: 1234, congress: 119 }, "hr1234-119"],
+    [{ type: "s", number: 567, congress: 118 }, "s567-118"],
+  ] as const)("includes congress when provided: %j to %s", (input, expected) => {
+    expect(toBillId(input)).toBe(expected);
   });
 });
 
 describe("isValidBillType", () => {
-  it("returns true for valid bill types", () => {
-    expect(isValidBillType("hr")).toBe(true);
-    expect(isValidBillType("s")).toBe(true);
-    expect(isValidBillType("hjres")).toBe(true);
-    expect(isValidBillType("sjres")).toBe(true);
-    expect(isValidBillType("hconres")).toBe(true);
-    expect(isValidBillType("sconres")).toBe(true);
-    expect(isValidBillType("hres")).toBe(true);
-    expect(isValidBillType("sres")).toBe(true);
-  });
+  it.each(["hr", "s", "hjres", "sjres", "hconres", "sconres", "hres", "sres"])(
+    "returns true for valid bill type: %s",
+    (type) => {
+      expect(isValidBillType(type)).toBe(true);
+    }
+  );
 
-  it("returns false for invalid bill types", () => {
-    expect(isValidBillType("invalid")).toBe(false);
-    expect(isValidBillType("")).toBe(false);
-    expect(isValidBillType("xyz")).toBe(false);
+  it.each(["invalid", "", "xyz"])("returns false for invalid bill type: %s", (type) => {
+    expect(isValidBillType(type)).toBe(false);
   });
 });
 
 describe("BILL_TYPE_DISPLAY_NAMES", () => {
-  it("has display names for all bill types", () => {
-    expect(BILL_TYPE_DISPLAY_NAMES.hr).toBe("H.R.");
-    expect(BILL_TYPE_DISPLAY_NAMES.s).toBe("S.");
-    expect(BILL_TYPE_DISPLAY_NAMES.hjres).toBe("H.J.Res.");
-    expect(BILL_TYPE_DISPLAY_NAMES.sjres).toBe("S.J.Res.");
-    expect(BILL_TYPE_DISPLAY_NAMES.hconres).toBe("H.Con.Res.");
-    expect(BILL_TYPE_DISPLAY_NAMES.sconres).toBe("S.Con.Res.");
-    expect(BILL_TYPE_DISPLAY_NAMES.hres).toBe("H.Res.");
-    expect(BILL_TYPE_DISPLAY_NAMES.sres).toBe("S.Res.");
+  it.each([
+    ["hr", "H.R."],
+    ["s", "S."],
+    ["hjres", "H.J.Res."],
+    ["sjres", "S.J.Res."],
+    ["hconres", "H.Con.Res."],
+    ["sconres", "S.Con.Res."],
+    ["hres", "H.Res."],
+    ["sres", "S.Res."],
+  ] as const)("has display name for %s: %s", (type, display) => {
+    expect(BILL_TYPE_DISPLAY_NAMES[type]).toBe(display);
   });
 });
 
 describe("billIdToDisplay", () => {
-  it("converts URL-friendly bill ID to display format", () => {
-    expect(billIdToDisplay("hr1234")).toBe("H.R.1234");
-    expect(billIdToDisplay("s567")).toBe("S.567");
-    expect(billIdToDisplay("hjres123")).toBe("H.J.Res.123");
-    expect(billIdToDisplay("sconres12")).toBe("S.Con.Res.12");
+  it.each([
+    ["hr1234", "H.R.1234"],
+    ["s567", "S.567"],
+    ["hjres123", "H.J.Res.123"],
+    ["sconres12", "S.Con.Res.12"],
+  ])("converts %s to %s", (input, expected) => {
+    expect(billIdToDisplay(input)).toBe(expected);
   });
 
-  it("returns null for invalid inputs", () => {
-    expect(billIdToDisplay("")).toBeNull();
-    expect(billIdToDisplay("invalid")).toBeNull();
+  it.each(["", "invalid"])("returns null for invalid input: %s", (input) => {
+    expect(billIdToDisplay(input)).toBeNull();
   });
 });
 
 describe("getBillChamber", () => {
-  it("returns house for House bill types", () => {
-    expect(getBillChamber("hr")).toBe("house");
-    expect(getBillChamber("hjres")).toBe("house");
-    expect(getBillChamber("hconres")).toBe("house");
-    expect(getBillChamber("hres")).toBe("house");
+  it.each(["hr", "hjres", "hconres", "hres"] as const)("returns house for %s", (type) => {
+    expect(getBillChamber(type)).toBe("house");
   });
 
-  it("returns senate for Senate bill types", () => {
-    expect(getBillChamber("s")).toBe("senate");
-    expect(getBillChamber("sjres")).toBe("senate");
-    expect(getBillChamber("sconres")).toBe("senate");
-    expect(getBillChamber("sres")).toBe("senate");
+  it.each(["s", "sjres", "sconres", "sres"] as const)("returns senate for %s", (type) => {
+    expect(getBillChamber(type)).toBe("senate");
   });
 });
 
 describe("buildCongressGovUrl", () => {
-  it("builds correct URLs for House bills", () => {
-    expect(buildCongressGovUrl(119, "hr", 1234)).toBe(
-      "https://www.congress.gov/bill/119th-congress/house-bill/1234"
-    );
-  });
-
-  it("builds correct URLs for Senate bills", () => {
-    expect(buildCongressGovUrl(119, "s", 567)).toBe(
-      "https://www.congress.gov/bill/119th-congress/senate-bill/567"
-    );
-  });
-
-  it("builds correct URLs for joint resolutions", () => {
-    expect(buildCongressGovUrl(119, "hjres", 123)).toBe(
-      "https://www.congress.gov/bill/119th-congress/house-joint-resolution/123"
-    );
-    expect(buildCongressGovUrl(119, "sjres", 45)).toBe(
-      "https://www.congress.gov/bill/119th-congress/senate-joint-resolution/45"
-    );
-  });
-
-  it("builds correct URLs for concurrent resolutions", () => {
-    expect(buildCongressGovUrl(119, "hconres", 78)).toBe(
-      "https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/78"
-    );
-    expect(buildCongressGovUrl(119, "sconres", 12)).toBe(
-      "https://www.congress.gov/bill/119th-congress/senate-concurrent-resolution/12"
-    );
-  });
-
-  it("builds correct URLs for simple resolutions", () => {
-    expect(buildCongressGovUrl(119, "hres", 99)).toBe(
-      "https://www.congress.gov/bill/119th-congress/house-resolution/99"
-    );
-    expect(buildCongressGovUrl(119, "sres", 33)).toBe(
-      "https://www.congress.gov/bill/119th-congress/senate-resolution/33"
-    );
+  it.each([
+    [119, "hr", 1234, "https://www.congress.gov/bill/119th-congress/house-bill/1234"],
+    [119, "s", 567, "https://www.congress.gov/bill/119th-congress/senate-bill/567"],
+    [119, "hjres", 123, "https://www.congress.gov/bill/119th-congress/house-joint-resolution/123"],
+    [119, "sjres", 45, "https://www.congress.gov/bill/119th-congress/senate-joint-resolution/45"],
+    [
+      119,
+      "hconres",
+      78,
+      "https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/78",
+    ],
+    [
+      119,
+      "sconres",
+      12,
+      "https://www.congress.gov/bill/119th-congress/senate-concurrent-resolution/12",
+    ],
+    [119, "hres", 99, "https://www.congress.gov/bill/119th-congress/house-resolution/99"],
+    [119, "sres", 33, "https://www.congress.gov/bill/119th-congress/senate-resolution/33"],
+  ] as const)("builds URL for congress %i, %s, %i", (congress, type, number, expected) => {
+    expect(buildCongressGovUrl(congress, type, number)).toBe(expected);
   });
 });

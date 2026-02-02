@@ -279,41 +279,60 @@ describe("SenateApiError", () => {
 });
 
 describe("normalizeVotePosition", () => {
-  it("normalizes yea variants", () => {
-    expect(normalizeVotePosition("Yea")).toBe("yea");
-    expect(normalizeVotePosition("yea")).toBe("yea");
-    expect(normalizeVotePosition("Aye")).toBe("yea");
-    expect(normalizeVotePosition("Yes")).toBe("yea");
+  it.each([
+    ["Yea", "yea"],
+    ["yea", "yea"],
+    ["Aye", "yea"],
+    ["Yes", "yea"],
+  ])("normalizes yea variant %s to %s", (input, expected) => {
+    expect(normalizeVotePosition(input)).toBe(expected);
   });
 
-  it("normalizes nay variants", () => {
-    expect(normalizeVotePosition("Nay")).toBe("nay");
-    expect(normalizeVotePosition("nay")).toBe("nay");
-    expect(normalizeVotePosition("No")).toBe("nay");
+  it.each([
+    ["Nay", "nay"],
+    ["nay", "nay"],
+    ["No", "nay"],
+  ])("normalizes nay variant %s to %s", (input, expected) => {
+    expect(normalizeVotePosition(input)).toBe(expected);
   });
 
-  it("normalizes present", () => {
-    expect(normalizeVotePosition("Present")).toBe("present");
-    expect(normalizeVotePosition("present")).toBe("present");
+  it.each([
+    ["Present", "present"],
+    ["present", "present"],
+  ])("normalizes present variant %s to %s", (input, expected) => {
+    expect(normalizeVotePosition(input)).toBe(expected);
   });
 
-  it("normalizes not voting and unknown values", () => {
-    expect(normalizeVotePosition("Not Voting")).toBe("not_voting");
-    expect(normalizeVotePosition("Absent")).toBe("not_voting");
-    expect(normalizeVotePosition("")).toBe("not_voting");
+  it.each([
+    ["Not Voting", "not_voting"],
+    ["Absent", "not_voting"],
+    ["", "not_voting"],
+  ])("normalizes %s to not_voting", (input, expected) => {
+    expect(normalizeVotePosition(input)).toBe(expected);
   });
 });
 
 describe("buildSenateVoteUrl", () => {
-  it("builds correct Senate.gov vote URLs", () => {
-    expect(buildSenateVoteUrl(119, 1, 1)).toBe(
-      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001.htm"
-    );
-    expect(buildSenateVoteUrl(119, 1, 123)).toBe(
-      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00123.htm"
-    );
-    expect(buildSenateVoteUrl(118, 2, 45)).toBe(
-      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1182/vote_118_2_00045.htm"
-    );
+  it.each([
+    [
+      119,
+      1,
+      1,
+      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001.htm",
+    ],
+    [
+      119,
+      1,
+      123,
+      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00123.htm",
+    ],
+    [
+      118,
+      2,
+      45,
+      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1182/vote_118_2_00045.htm",
+    ],
+  ])("builds URL for congress %i, session %i, vote %i", (congress, session, vote, expected) => {
+    expect(buildSenateVoteUrl(congress, session, vote)).toBe(expected);
   });
 });
