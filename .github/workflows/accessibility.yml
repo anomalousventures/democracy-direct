@@ -107,6 +107,23 @@ jobs:
           npm install -g @lhci/cli pa11y
           npx puppeteer browsers install chrome
 
+      - name: Wait for deployment to be ready
+        if: steps.deployment.outputs.url != ''
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+        run: |
+          echo "Waiting for deployment to be ready..."
+          for i in {1..30}; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${DEPLOY_URL}/api/health" || echo "000")
+            if [ "$status" = "200" ] || [ "$status" = "503" ]; then
+              echo "Deployment is ready (health returned $status)"
+              exit 0
+            fi
+            echo "Attempt $i: health returned $status, waiting..."
+            sleep 10
+          done
+          echo "Deployment not ready after 5 minutes, proceeding anyway"
+
       - name: Run Lighthouse audit
         if: steps.deployment.outputs.url != ''
         id: lighthouse
