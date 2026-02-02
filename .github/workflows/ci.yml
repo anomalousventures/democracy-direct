@@ -168,6 +168,11 @@ jobs:
         env:
           DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
+      - name: Run integration tests
+        run: pnpm test:integration
+        env:
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
+
       - name: Create .dev.vars for wrangler
         run: |
           echo "DATABASE_URL=$DATABASE_URL" > .dev.vars
