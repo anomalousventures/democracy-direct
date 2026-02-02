@@ -11,5 +11,18 @@ export default defineConfig({
     globals: true,
     include: ["**/*.integration.test.ts"],
     testTimeout: 30000,
+    coverage: {
+      provider: "v8",
+      reporter: ["json"],
+      reportsDirectory: "./coverage-integration",
+      exclude: [
+        "node_modules/**",
+        "dist/**",
+        ".astro/**",
+        "**/*.config.*",
+        "tests/**",
+        "**/*.d.ts",
+      ],
+    },
   },
 });

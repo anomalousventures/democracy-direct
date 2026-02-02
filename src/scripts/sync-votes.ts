@@ -23,6 +23,7 @@ export interface SyncVotesResult {
   houseVotesUpserted: number;
   senateVotesUpserted: number;
   memberVotesUpserted: number;
+  unmappedSenateMembers: number;
   duration: string;
   errors: Array<{ chamber: string; rollCall: number; error: string }>;
 }
@@ -378,6 +379,7 @@ export async function syncVotes(
           houseVotesUpserted: 0,
           senateVotesUpserted: 0,
           memberVotesUpserted: 0,
+          unmappedSenateMembers: 0,
           duration,
           errors: [],
         };
@@ -435,16 +437,15 @@ export async function syncVotes(
     `Sync complete: ${houseResult.votesUpserted} House votes, ${senateResult.votesUpserted} Senate votes`
   );
 
-  const totalVotesUpserted = houseResult.votesUpserted + senateResult.votesUpserted;
-
   return {
     source: "congress.gov + senate.gov",
-    changed: totalVotesUpserted > 0,
+    changed: hasChanges,
     congressNumber: congress,
     session,
     houseVotesUpserted: houseResult.votesUpserted,
     senateVotesUpserted: senateResult.votesUpserted,
     memberVotesUpserted: houseResult.memberVotesUpserted + senateResult.memberVotesUpserted,
+    unmappedSenateMembers: senateResult.unmappedMembers,
     duration,
     errors,
   };

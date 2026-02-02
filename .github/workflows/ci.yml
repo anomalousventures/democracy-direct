@@ -85,12 +85,11 @@ jobs:
       - name: Run Vitest with coverage
         run: pnpm test --coverage
 
-      - name: Report coverage
-        if: always()
-        uses: davelosert/vitest-coverage-report-action@15b5b41bb7d36796d89f4bf482b09529c53f3446 # v2.9.2
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v6
         with:
-          json-summary-path: ./coverage/coverage-summary.json
-          json-final-path: ./coverage/coverage-final.json
+          name: coverage-unit
+          path: coverage/coverage-final.json
 
   setup-branch-name:
     name: Setup Branch Name
@@ -168,10 +167,16 @@ jobs:
         env:
           DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
-      - name: Run integration tests
-        run: pnpm test:integration
+      - name: Run integration tests with coverage
+        run: pnpm test:integration --coverage
         env:
           DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
+
+      - name: Upload integration test coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-integration
+          path: coverage-integration/coverage-final.json
 
       - name: Create .dev.vars for wrangler
         run: |
@@ -203,6 +208,54 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  coverage-report:
+    name: Coverage Report
+    needs: [test, test-e2e]
+    if: always() && github.event.action != 'closed' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-unit
+          path: coverage-unit
+
+      - name: Download integration test coverage
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          name: coverage-integration
+          path: coverage-integration
+
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          pnpm nyc merge coverage-unit coverage/coverage-final.json
+          if [ -f coverage-integration/coverage-final.json ]; then
+            pnpm nyc merge coverage-unit coverage-integration coverage/coverage-final.json
+          fi
+          pnpm nyc report --reporter=json-summary --temp-dir=coverage --report-dir=coverage
+
+      - name: Report coverage
+        uses: davelosert/vitest-coverage-report-action@15b5b41bb7d36796d89f4bf482b09529c53f3446 # v2.9.2
+        with:
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
 
   build:
     name: Build
