@@ -176,6 +176,21 @@ describe("transformBillItem", () => {
     expect(result.error?.error).toBe("Missing introducedDate, used latestActionDate as fallback");
   });
 
+  it("returns both data AND error for warning cases (regression test)", () => {
+    const item = {
+      ...baseBillItem,
+      latestAction: {
+        actionDate: "2025-01-15",
+        text: "Passed House",
+      },
+    };
+
+    const result = transformBillItem(item);
+
+    expect(result.data).not.toBeNull();
+    expect(result.error).not.toBeNull();
+  });
+
   it("returns error when both introducedDate and latestActionDate are missing", () => {
     const item = {
       ...baseBillItem,

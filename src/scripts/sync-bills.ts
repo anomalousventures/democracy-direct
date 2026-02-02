@@ -287,10 +287,11 @@ async function syncForward(
 
     for (const item of response.bills) {
       const result = transformBillItem(item);
+      if (result.data) {
+        billsToUpsert.push(result.data);
+      }
       if (result.error) {
         errors.push(result.error);
-      } else if (result.data) {
-        billsToUpsert.push(result.data);
       }
     }
 
@@ -396,10 +397,11 @@ async function syncBackward(
       if (billsToUpsert.length >= BACKWARD_BILLS_PER_RUN) break;
 
       const result = transformBillItem(item);
+      if (result.data) {
+        billsToUpsert.push(result.data);
+      }
       if (result.error) {
         errors.push(result.error);
-      } else if (result.data) {
-        billsToUpsert.push(result.data);
       }
     }
 
