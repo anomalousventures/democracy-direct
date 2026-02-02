@@ -208,18 +208,6 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
 }
 
 /**
- * Creates a client using the CONGRESS_API_KEY environment variable.
- * Throws if the API key is not set.
- */
-export function createCongressClientFromEnv(minDelayMs = 100): CongressClient {
-  const apiKey = import.meta.env.CONGRESS_API_KEY;
-  if (!apiKey) {
-    throw new Error("CONGRESS_API_KEY environment variable is not set");
-  }
-  return createCongressClient({ apiKey, minDelayMs });
-}
-
-/**
  * Gets the current Congress number based on the year.
  * Congress numbers: 119th starts Jan 2025, 118th was Jan 2023 - Jan 2025.
  */
