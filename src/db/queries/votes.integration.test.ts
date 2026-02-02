@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { votes, memberVotes, legislators } from "@/db/schema";
 import {
@@ -75,9 +75,9 @@ describe("votes queries (integration)", () => {
   });
 
   afterAll(async () => {
-    await db.delete(memberVotes).where(sql`vote_id = ${testVoteId}`);
-    await db.delete(votes).where(sql`id = ${testVoteId}`);
-    await db.delete(legislators).where(sql`bioguide_id = ${testBioguideId}`);
+    await db.delete(memberVotes).where(eq(memberVotes.voteId, testVoteId));
+    await db.delete(votes).where(eq(votes.id, testVoteId));
+    await db.delete(legislators).where(eq(legislators.bioguideId, testBioguideId));
   });
 
   describe("getVoteById", () => {

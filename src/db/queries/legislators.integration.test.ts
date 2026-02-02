@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDb, type Database } from "@/db/client";
 import { legislators } from "@/db/schema";
 import { getLegislatorByBioguideId, getLegislatorsByStateAndDistrict } from "./legislators";
@@ -57,7 +57,7 @@ describe("legislators queries (integration)", () => {
 
   afterAll(async () => {
     for (const bioguideId of testBioguideIds) {
-      await db.delete(legislators).where(sql`bioguide_id = ${bioguideId}`);
+      await db.delete(legislators).where(eq(legislators.bioguideId, bioguideId));
     }
   });
 
