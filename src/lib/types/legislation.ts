@@ -223,19 +223,19 @@ export const BillListItemSchema = z.object({
   type: z.string(),
   number: z.coerce.number(),
   title: z.string(),
-  introducedDate: z.string().optional(),
+  introducedDate: z.string().nullish(),
   latestAction: z
     .object({
       actionDate: z.string(),
       text: z.string(),
     })
-    .optional(),
+    .nullish(),
   policyArea: z
     .object({
       name: z.string(),
     })
-    .optional(),
-  sponsors: z.array(BillSponsorSchema).optional(),
+    .nullish(),
+  sponsors: z.array(BillSponsorSchema).nullish(),
   url: z.string(),
 });
 export type BillListItem = z.infer<typeof BillListItemSchema>;
