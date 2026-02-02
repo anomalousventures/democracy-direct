@@ -29,22 +29,6 @@ export function calculateTrustLevel(
   return Math.max(currentTrustLevel, TRUST_LEVELS.NEW_USER);
 }
 
-export function shouldAutoApprove(trustLevel: number, moderationScore: number): boolean {
-  if (trustLevel >= TRUST_LEVELS.ADMIN) {
-    return true;
-  }
-
-  if (trustLevel >= TRUST_LEVELS.TRUSTED && moderationScore < 0.3) {
-    return true;
-  }
-
-  if (trustLevel >= TRUST_LEVELS.NEW_USER && moderationScore < 0.1) {
-    return true;
-  }
-
-  return false;
-}
-
 export function getTrustLevelLabel(trustLevel: number): string {
   switch (trustLevel) {
     case TRUST_LEVELS.BANNED:
@@ -62,10 +46,6 @@ export function getTrustLevelLabel(trustLevel: number): string {
 
 export function canCreateTemplates(trustLevel: number): boolean {
   return trustLevel >= TRUST_LEVELS.NEW_USER;
-}
-
-export function canBypassModeration(trustLevel: number): boolean {
-  return trustLevel >= TRUST_LEVELS.ADMIN;
 }
 
 type UserWithTrustLevel = { trustLevel: number } | null | undefined;

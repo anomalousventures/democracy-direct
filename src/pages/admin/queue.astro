@@ -7,6 +7,8 @@ import Footer from "@/components/Footer.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroBadge from "@/components/ui/AstroBadge.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
+import { ModerationToast } from "@/components/ModerationToast";
+import { ModerationScoresPanel } from "@/components/ModerationScoresPanel";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -85,19 +87,10 @@ function getStatusBadge(status: string): { label: string; variant: BadgeVariant 
   };
   return badges[status] ?? { label: status, variant: "secondary" };
 }
-
-function formatScores(scores: Record<string, number> | null): string {
-  if (!scores) return "No scores";
-  const highScores = Object.entries(scores)
-    .filter(([, value]) => value > 0.1)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`);
-  return highScores.length > 0 ? highScores.join(", ") : "All scores low";
-}
 ---
 
 <Layout title="Moderation Queue">
+  <ModerationToast client:load />
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
@@ -135,10 +128,11 @@ function formatScores(scores: Record<string, number> | null): string {
                       </div>
                     </div>
 
-                    <div class="bg-gray-50 rounded p-3 mb-4 text-sm">
-                      <div class="font-medium text-gray-700 mb-1">Moderation Scores</div>
-                      <div class="text-gray-600">{formatScores(item.moderationScores)}</div>
-                    </div>
+                    <ModerationScoresPanel
+                      client:load
+                      templateId={item.id}
+                      initialScores={item.moderationScores}
+                    />
 
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border">
                       <div class="text-sm text-muted-foreground">
@@ -198,15 +192,24 @@ function formatScores(scores: Record<string, number> | null): string {
 </Layout>
 
 <script is:inline>
-  document.addEventListener("click", async function (e) {
-    const button = e.target.closest(".moderation-btn");
-    if (!button) return;
+  function showToast(type, message) {
+    window.dispatchEvent(
+      new CustomEvent("moderation-toast", {
+        detail: { type, message },
+      })
+    );
+  }
 
-    const article = button.closest("[data-template-id]");
+  document.addEventListener("click", async function (e) {
+    const moderationBtn = e.target.closest(".moderation-btn");
+
+    if (!moderationBtn) return;
+
+    const article = moderationBtn.closest("[data-template-id]");
     if (!article) return;
 
     const templateId = article.getAttribute("data-template-id");
-    const action = button.getAttribute("data-action");
+    const action = moderationBtn.getAttribute("data-action");
     if (!templateId || !action) return;
 
     const reason = action === "reject" ? prompt("Reason for rejection (optional):") : null;
@@ -226,12 +229,14 @@ function formatScores(scores: Record<string, number> | null): string {
         if (headerP) {
           headerP.textContent = `${remaining} items awaiting review`;
         }
+        const pastTense = action === "approve" ? "approved" : "rejected";
+        showToast("success", `Template ${pastTense} successfully`);
       } else {
         const data = await response.json();
-        alert(data.error || `Failed to ${action} template`);
+        showToast("error", data.error || `Failed to ${action} template`);
       }
     } catch {
-      alert(`Failed to ${action} template`);
+      showToast("error", `Failed to ${action} template`);
     }
   });
 </script>
