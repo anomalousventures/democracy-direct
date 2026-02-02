@@ -14,10 +14,12 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
+import { createLogger } from "@/lib/logger";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
 
   if (!user) {
@@ -132,7 +134,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {
-    console.error("Failed to fork template:", error);
+    logger.error("template_fork_failed", {
+      forkedFromId,
+      userId: user.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to fork template");
   }
 };

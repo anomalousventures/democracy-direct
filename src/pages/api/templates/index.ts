@@ -11,10 +11,12 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
+import { createLogger } from "@/lib/logger";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
 
   const parseResult = await parseJsonBody(request, templateBodySchema);
@@ -102,7 +104,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {
-    console.error("Failed to create template:", error);
+    logger.error("template_create_failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      userId: user?.id,
+    });
     return serverError("Failed to create template");
   }
 };

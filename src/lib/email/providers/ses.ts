@@ -25,56 +25,51 @@ export class SesEmailProvider implements EmailProvider {
   }
 
   async send(message: EmailMessage): Promise<boolean> {
-    try {
-      const boundary = `boundary_${crypto.randomUUID()}`;
-      const emailParts = [
-        `From: ${this.from}`,
-        `To: ${message.to}`,
-        `Subject: ${message.subject}`,
-        "MIME-Version: 1.0",
-        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    const boundary = `boundary_${crypto.randomUUID()}`;
+    const emailParts = [
+      `From: ${this.from}`,
+      `To: ${message.to}`,
+      `Subject: ${message.subject}`,
+      "MIME-Version: 1.0",
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      "",
+    ];
+
+    if (message.text) {
+      emailParts.push(
+        `--${boundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: 7bit",
         "",
-      ];
-
-      if (message.text) {
-        emailParts.push(
-          `--${boundary}`,
-          'Content-Type: text/plain; charset="UTF-8"',
-          "Content-Transfer-Encoding: 7bit",
-          "",
-          message.text,
-          ""
-        );
-      }
-
-      if (message.html) {
-        emailParts.push(
-          `--${boundary}`,
-          'Content-Type: text/html; charset="UTF-8"',
-          "Content-Transfer-Encoding: 7bit",
-          "",
-          message.html,
-          ""
-        );
-      }
-
-      emailParts.push(`--${boundary}--`);
-
-      const rawEmail = emailParts.join("\r\n");
-
-      const command = new SendEmailCommand({
-        Content: {
-          Raw: {
-            Data: new TextEncoder().encode(rawEmail),
-          },
-        },
-      });
-
-      await this.client.send(command);
-      return true;
-    } catch (error) {
-      console.error("SES send error:", error);
-      return false;
+        message.text,
+        ""
+      );
     }
+
+    if (message.html) {
+      emailParts.push(
+        `--${boundary}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        "Content-Transfer-Encoding: 7bit",
+        "",
+        message.html,
+        ""
+      );
+    }
+
+    emailParts.push(`--${boundary}--`);
+
+    const rawEmail = emailParts.join("\r\n");
+
+    const command = new SendEmailCommand({
+      Content: {
+        Raw: {
+          Data: new TextEncoder().encode(rawEmail),
+        },
+      },
+    });
+
+    await this.client.send(command);
+    return true;
   }
 }

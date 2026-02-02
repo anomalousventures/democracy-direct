@@ -3,6 +3,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { createDb } from "./db/client";
 import { sessions, users } from "./db/schema";
 import { getConfig } from "./lib/config";
+import { createLogger } from "./lib/logger";
 
 export interface SessionUser {
   id: string;
@@ -45,8 +46,10 @@ export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
 
     locals.user = results[0] as SessionUser;
   } catch (error) {
-    console.error("Session middleware error:", error);
-    // User remains null on error
+    const logger = createLogger(locals);
+    logger.error("session_middleware_error", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 
   return next();

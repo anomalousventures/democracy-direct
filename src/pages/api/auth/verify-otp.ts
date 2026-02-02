@@ -7,6 +7,7 @@ import { hashEmail } from "@/lib/auth/hash-email";
 import { hashOTP } from "@/lib/auth/otp";
 import { getConfig } from "@/lib/config";
 import { parseJsonBody, verifyOtpBodySchema } from "@/lib/request-body";
+import { createLogger } from "@/lib/logger";
 
 export const prerender = false;
 
@@ -84,6 +85,7 @@ export async function verifyOTPRequest(
 }
 
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
+  const logger = createLogger(locals, request);
   const parseResult = await parseJsonBody(request, verifyOtpBodySchema);
   if (!parseResult.success) {
     return badRequest(parseResult.error);
@@ -97,6 +99,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const result = await verifyOTPRequest(email, otp, db);
 
     if (!result.success || !result.sessionId) {
+      logger.warn("otp_verification_failed", { reason: result.error ?? "invalid_otp" });
       return unauthorized(result.error ?? "Invalid or expired OTP");
     }
 
@@ -110,10 +113,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     return jsonResponse({ success: true });
   } catch (error) {
-    console.error("OTP verification error:", error);
-    if (error instanceof Error && error.cause) {
-      console.error("OTP verification error cause:", error.cause);
-    }
+    logger.error("otp_verification_error", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Internal error");
   }
 };

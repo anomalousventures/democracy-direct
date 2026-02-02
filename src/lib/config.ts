@@ -62,12 +62,18 @@ const dataSourcesSchema = z.object({
   congressApiKey: z.string().optional(),
 });
 
+const posthogSchema = z.object({
+  apiKey: z.string().optional(),
+  host: z.string().default("https://us.i.posthog.com"),
+});
+
 const configSchema = z.object({
   database: databaseSchema,
   email: emailSchema,
   moderation: moderationSchema,
   turnstile: turnstileSchema,
   dataSources: dataSourcesSchema,
+  posthog: posthogSchema,
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -75,6 +81,7 @@ export type DatabaseConfig = z.infer<typeof databaseSchema>;
 export type EmailConfig = z.infer<typeof emailSchema>;
 export type TurnstileConfig = z.infer<typeof turnstileSchema>;
 export type ModerationConfig = z.infer<typeof moderationSchema>;
+export type PosthogConfig = z.infer<typeof posthogSchema>;
 
 function getRawEnv(locals: App.Locals, key: string): string | undefined {
   const runtimeValue = locals.runtime?.env?.[key as keyof typeof locals.runtime.env];
@@ -112,6 +119,10 @@ export function getConfig(locals: App.Locals): Config {
     },
     dataSources: {
       congressApiKey: getRawEnv(locals, "CONGRESS_API_KEY"),
+    },
+    posthog: {
+      apiKey: getRawEnv(locals, "POSTHOG_API_KEY"),
+      host: getRawEnv(locals, "POSTHOG_HOST"),
     },
   };
 

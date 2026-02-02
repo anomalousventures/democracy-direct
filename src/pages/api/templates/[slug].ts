@@ -14,6 +14,7 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
+import { createLogger } from "@/lib/logger";
 
 export const prerender = false;
 
@@ -58,7 +59,8 @@ function canViewTemplate(
   return template.isPublic && template.moderationStatus === "approved";
 }
 
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, request }) => {
+  const logger = createLogger(locals, request);
   const { slug } = params;
 
   if (!slug) {
@@ -85,12 +87,16 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     return jsonResponse({ template: responseData });
   } catch (error) {
-    console.error("Failed to fetch template:", error);
+    logger.error("template_fetch_failed", {
+      slug,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to fetch template");
   }
 };
 
 export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
   const { slug } = params;
 
@@ -153,12 +159,17 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 
     return jsonResponse({ template: updatedTemplate });
   } catch (error) {
-    console.error("Failed to update template:", error);
+    logger.error("template_update_failed", {
+      slug,
+      userId: user.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to update template");
   }
 };
 
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals, request }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
   const { slug } = params;
 
@@ -192,7 +203,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     return jsonResponse({ success: true });
   } catch (error) {
-    console.error("Failed to delete template:", error);
+    logger.error("template_delete_failed", {
+      slug,
+      userId: user.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to delete template");
   }
 };

@@ -22,6 +22,8 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   CONGRESS_API_KEY?: string;
+  POSTHOG_API_KEY?: string;
+  POSTHOG_HOST?: string;
 }
 
 interface PostHogInstance {
@@ -57,6 +59,8 @@ declare global {
     readonly TURNSTILE_SITE_KEY?: string;
     readonly TURNSTILE_SECRET_KEY?: string;
     readonly CONGRESS_API_KEY?: string;
+    readonly POSTHOG_API_KEY?: string;
+    readonly POSTHOG_HOST?: string;
     readonly DEV: boolean;
   }
 

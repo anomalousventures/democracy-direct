@@ -1,5 +1,6 @@
 import type { EmailMessage, EmailProvider } from "./types";
 import { getConfig, type EmailConfig } from "@/lib/config";
+import type { Logger } from "@/lib/logger";
 
 export type { EmailConfig, EmailMessage, EmailProvider };
 
@@ -22,8 +23,29 @@ export function getEmailConfig(locals: App.Locals): EmailConfig {
   return getConfig(locals).email;
 }
 
-export async function sendEmail(message: EmailMessage, locals: App.Locals): Promise<boolean> {
+export async function sendEmail(
+  message: EmailMessage,
+  locals: App.Locals,
+  logger?: Logger
+): Promise<boolean> {
   const config = getEmailConfig(locals);
   const provider = await createEmailProvider(config);
-  return provider.send(message);
+
+  try {
+    const success = await provider.send(message);
+    if (!success) {
+      logger?.error("email_send_failed", {
+        provider: config.provider,
+        subject: message.subject,
+      });
+    }
+    return success;
+  } catch (error) {
+    logger?.error("email_send_error", {
+      provider: config.provider,
+      subject: message.subject,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return false;
+  }
 }

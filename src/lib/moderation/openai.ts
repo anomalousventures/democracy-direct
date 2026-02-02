@@ -58,7 +58,7 @@ export async function moderateContent(content: string, apiKey: string): Promise<
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`OpenAI Moderation API error: ${response.status} - ${errorText}`);
+    throw new Error(`OpenAI API ${response.status}: ${errorText}`);
   }
 
   const json = await response.json();

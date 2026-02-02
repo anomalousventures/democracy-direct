@@ -28,3 +28,6 @@ TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
 # Data Sources
 # CONGRESS_API_KEY=
+
+# PostHog Analytics
+POSTHOG_API_KEY=phc_dummy_key_for_local_dev
