@@ -95,7 +95,7 @@
           "dependencies": [],
           "acceptanceCriteria": [
             "normalizeBillNumber() converts variants to standard format (H.R.1234, S.567, etc.)",
-            "parseBillNumber() extracts type, number, and congress from bill number string",
+            "parseBillNumber() extracts type and number from bill number string (e.g., 'H.R.1234' -> {type: 'hr', number: 1234})",
             "parseBillId() parses URL-friendly IDs like 'hr1234' to structured data",
             "toBillId() converts structured data to URL-friendly format",
             "Handles all bill types: hr, s, hjres, sjres, hconres, sconres, hres, sres",
