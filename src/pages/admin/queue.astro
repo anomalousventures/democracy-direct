@@ -8,6 +8,7 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroBadge from "@/components/ui/AstroBadge.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { ModerationToast } from "@/components/ModerationToast";
+import { ModerationScoresPanel } from "@/components/ModerationScoresPanel";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -86,16 +87,6 @@ function getStatusBadge(status: string): { label: string; variant: BadgeVariant 
   };
   return badges[status] ?? { label: status, variant: "secondary" };
 }
-
-function formatScores(scores: Record<string, number> | null): string {
-  if (!scores) return "No scores";
-  const highScores = Object.entries(scores)
-    .filter(([, value]) => value > 0.1)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`);
-  return highScores.length > 0 ? highScores.join(", ") : "All scores low";
-}
 ---
 
 <Layout title="Moderation Queue">
@@ -137,24 +128,17 @@ function formatScores(scores: Record<string, number> | null): string {
                       </div>
                     </div>
 
-                    <div class="bg-gray-50 rounded p-3 mb-4 text-sm">
-                      <div class="font-medium text-gray-700 mb-1">Moderation Scores</div>
-                      <div class="text-gray-600">{formatScores(item.moderationScores)}</div>
-                    </div>
+                    <ModerationScoresPanel
+                      client:load
+                      templateId={item.id}
+                      initialScores={item.moderationScores}
+                    />
 
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border">
                       <div class="text-sm text-muted-foreground">
                         Created {formatDate(item.createdAt)}
                       </div>
                       <div class="flex gap-2">
-                        <AstroButton
-                          variant="secondary"
-                          size="sm"
-                          class="request-moderation-btn"
-                          data-testid="request-moderation-button"
-                        >
-                          Request AI Review
-                        </AstroButton>
                         <AstroButton
                           variant="success"
                           size="sm"
@@ -216,55 +200,8 @@ function formatScores(scores: Record<string, number> | null): string {
     );
   }
 
-  function formatScores(scores) {
-    if (!scores) return "No scores";
-    const highScores = Object.entries(scores)
-      .filter(([, value]) => value > 0.1)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3)
-      .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`);
-    return highScores.length > 0 ? highScores.join(", ") : "All scores low";
-  }
-
   document.addEventListener("click", async function (e) {
     const moderationBtn = e.target.closest(".moderation-btn");
-    const requestBtn = e.target.closest(".request-moderation-btn");
-
-    if (requestBtn) {
-      const article = requestBtn.closest("[data-template-id]");
-      if (!article) return;
-
-      const templateId = article.getAttribute("data-template-id");
-      if (!templateId) return;
-
-      requestBtn.disabled = true;
-      requestBtn.textContent = "Requesting...";
-
-      try {
-        const response = await fetch(
-          `/api/admin/moderate/${encodeURIComponent(templateId)}/request`,
-          { method: "POST" }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const scoresEl = article.querySelector(".text-gray-600");
-          if (scoresEl) {
-            scoresEl.textContent = formatScores(data.scores);
-          }
-          showToast("success", `AI review complete: ${data.decision}`);
-        } else {
-          const data = await response.json();
-          showToast("error", data.error || "Failed to request AI review");
-        }
-      } catch {
-        showToast("error", "Failed to request AI review");
-      } finally {
-        requestBtn.disabled = false;
-        requestBtn.textContent = "Request AI Review";
-      }
-      return;
-    }
 
     if (!moderationBtn) return;
 

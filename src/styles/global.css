@@ -364,6 +364,17 @@
     animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
     opacity: 0;
   }
+
+  .animate-grow-bar {
+    width: 0;
+    animation: grow-bar 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-fade-slide-in {
+    opacity: 0;
+    transform: translateY(4px);
+    animation: fade-slide-in 0.3s ease forwards;
+  }
 }
 
 @keyframes fadeUp {
@@ -384,6 +395,26 @@
   }
   50% {
     opacity: 0.7;
+  }
+}
+
+@keyframes grow-bar {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--bar-width);
+  }
+}
+
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
