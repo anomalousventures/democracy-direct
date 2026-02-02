@@ -95,3 +95,9 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **PR comments**: `gh api repos/anomalousventures/democracy-direct/pulls/{pr}/comments/{id}/replies -f body="..."`
 - **CI lint job**: Runs both `eslint` and `prettier --check` - Prettier failures show as lint failures
 - **Pre-commit**: lint-staged auto-formats; commits include typecheck
+
+## Skills & Agents
+
+- **`/sync-data`**: Run data import scripts (legislators, zips, votes, templates)
+- **`/new-query`**: Scaffold new db query module with integration tests
+- **security-reviewer**: Agent for auditing auth/security code changes
