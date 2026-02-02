@@ -7,6 +7,7 @@ import Footer from "@/components/Footer.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroBadge from "@/components/ui/AstroBadge.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
+import { ModerationToast } from "@/components/ModerationToast";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -98,6 +99,7 @@ function formatScores(scores: Record<string, number> | null): string {
 ---
 
 <Layout title="Moderation Queue">
+  <ModerationToast client:load />
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
@@ -145,6 +147,14 @@ function formatScores(scores: Record<string, number> | null): string {
                         Created {formatDate(item.createdAt)}
                       </div>
                       <div class="flex gap-2">
+                        <AstroButton
+                          variant="secondary"
+                          size="sm"
+                          class="request-moderation-btn"
+                          data-testid="request-moderation-button"
+                        >
+                          Request AI Review
+                        </AstroButton>
                         <AstroButton
                           variant="success"
                           size="sm"
@@ -198,15 +208,71 @@ function formatScores(scores: Record<string, number> | null): string {
 </Layout>
 
 <script is:inline>
-  document.addEventListener("click", async function (e) {
-    const button = e.target.closest(".moderation-btn");
-    if (!button) return;
+  function showToast(type, message) {
+    window.dispatchEvent(
+      new CustomEvent("moderation-toast", {
+        detail: { type, message },
+      })
+    );
+  }
 
-    const article = button.closest("[data-template-id]");
+  function formatScores(scores) {
+    if (!scores) return "No scores";
+    const highScores = Object.entries(scores)
+      .filter(([, value]) => value > 0.1)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`);
+    return highScores.length > 0 ? highScores.join(", ") : "All scores low";
+  }
+
+  document.addEventListener("click", async function (e) {
+    const moderationBtn = e.target.closest(".moderation-btn");
+    const requestBtn = e.target.closest(".request-moderation-btn");
+
+    if (requestBtn) {
+      const article = requestBtn.closest("[data-template-id]");
+      if (!article) return;
+
+      const templateId = article.getAttribute("data-template-id");
+      if (!templateId) return;
+
+      requestBtn.disabled = true;
+      requestBtn.textContent = "Requesting...";
+
+      try {
+        const response = await fetch(
+          `/api/admin/moderate/${encodeURIComponent(templateId)}/request`,
+          { method: "POST" }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const scoresEl = article.querySelector(".text-gray-600");
+          if (scoresEl) {
+            scoresEl.textContent = formatScores(data.scores);
+          }
+          showToast("success", `AI review complete: ${data.decision}`);
+        } else {
+          const data = await response.json();
+          showToast("error", data.error || "Failed to request AI review");
+        }
+      } catch {
+        showToast("error", "Failed to request AI review");
+      } finally {
+        requestBtn.disabled = false;
+        requestBtn.textContent = "Request AI Review";
+      }
+      return;
+    }
+
+    if (!moderationBtn) return;
+
+    const article = moderationBtn.closest("[data-template-id]");
     if (!article) return;
 
     const templateId = article.getAttribute("data-template-id");
-    const action = button.getAttribute("data-action");
+    const action = moderationBtn.getAttribute("data-action");
     if (!templateId || !action) return;
 
     const reason = action === "reject" ? prompt("Reason for rejection (optional):") : null;
@@ -226,12 +292,14 @@ function formatScores(scores: Record<string, number> | null): string {
         if (headerP) {
           headerP.textContent = `${remaining} items awaiting review`;
         }
+        const pastTense = action === "approve" ? "approved" : "rejected";
+        showToast("success", `Template ${pastTense} successfully`);
       } else {
         const data = await response.json();
-        alert(data.error || `Failed to ${action} template`);
+        showToast("error", data.error || `Failed to ${action} template`);
       }
     } catch {
-      alert(`Failed to ${action} template`);
+      showToast("error", `Failed to ${action} template`);
     }
   });
 </script>

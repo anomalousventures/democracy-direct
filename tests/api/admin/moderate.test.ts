@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { POST } from "@/pages/api/admin/moderate/[templateId]";
 import { ADMIN_TRUST_LEVEL } from "@/lib/admin";
 
+const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
+
 describe("POST /api/admin/moderate/[templateId]", () => {
   it("returns 401 when not authenticated", async () => {
     const response = await POST({
@@ -77,7 +79,7 @@ describe("POST /api/admin/moderate/[templateId]", () => {
 
   it("returns 400 for invalid action", async () => {
     const response = await POST({
-      params: { templateId: "template-123" },
+      params: { templateId: VALID_UUID },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
         runtime: {
@@ -88,7 +90,7 @@ describe("POST /api/admin/moderate/[templateId]", () => {
           },
         },
       },
-      request: new Request("http://localhost/api/admin/moderate/template-123", {
+      request: new Request(`http://localhost/api/admin/moderate/${VALID_UUID}`, {
         method: "POST",
         body: JSON.stringify({ action: "invalid" }),
       }),
@@ -101,7 +103,7 @@ describe("POST /api/admin/moderate/[templateId]", () => {
 
   it("returns 400 for invalid JSON", async () => {
     const response = await POST({
-      params: { templateId: "template-123" },
+      params: { templateId: VALID_UUID },
       locals: {
         user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
         runtime: {
@@ -112,7 +114,7 @@ describe("POST /api/admin/moderate/[templateId]", () => {
           },
         },
       },
-      request: new Request("http://localhost/api/admin/moderate/template-123", {
+      request: new Request(`http://localhost/api/admin/moderate/${VALID_UUID}`, {
         method: "POST",
         body: "not valid json",
       }),
@@ -121,5 +123,51 @@ describe("POST /api/admin/moderate/[templateId]", () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toBe("Invalid JSON");
+  });
+
+  it("returns 400 for invalid templateId format", async () => {
+    const response = await POST({
+      params: { templateId: "not-a-uuid" },
+      locals: {
+        user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+      request: new Request("http://localhost/api/admin/moderate/not-a-uuid", {
+        method: "POST",
+        body: JSON.stringify({ action: "approve" }),
+      }),
+    } as never);
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe("Invalid template ID format");
+  });
+
+  it("accepts approve action with null reason", async () => {
+    const response = await POST({
+      params: { templateId: VALID_UUID },
+      locals: {
+        user: { id: "admin-123", trustLevel: ADMIN_TRUST_LEVEL },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+      request: new Request(`http://localhost/api/admin/moderate/${VALID_UUID}`, {
+        method: "POST",
+        body: JSON.stringify({ action: "approve", reason: null }),
+      }),
+    } as never);
+
+    expect(response.status).not.toBe(400);
   });
 });

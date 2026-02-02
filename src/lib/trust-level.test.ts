@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   calculateTrustLevel,
-  shouldAutoApprove,
   getTrustLevelLabel,
   canCreateTemplates,
-  canBypassModeration,
   hasMinTrustLevel,
   isTrusted,
   isAdmin,
@@ -41,32 +39,6 @@ describe("Trust Level System", () => {
     });
   });
 
-  describe("shouldAutoApprove", () => {
-    it("auto-approves admin content regardless of score", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.ADMIN, 0.9)).toBe(true);
-    });
-
-    it("auto-approves trusted user with low score", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.TRUSTED, 0.2)).toBe(true);
-    });
-
-    it("does not auto-approve trusted user with moderate score", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.TRUSTED, 0.5)).toBe(false);
-    });
-
-    it("auto-approves new user with very low score", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.NEW_USER, 0.05)).toBe(true);
-    });
-
-    it("does not auto-approve new user with low-moderate score", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.NEW_USER, 0.15)).toBe(false);
-    });
-
-    it("does not auto-approve banned users", () => {
-      expect(shouldAutoApprove(TRUST_LEVELS.BANNED, 0.0)).toBe(false);
-    });
-  });
-
   describe("getTrustLevelLabel", () => {
     it("returns correct labels", () => {
       expect(getTrustLevelLabel(TRUST_LEVELS.BANNED)).toBe("Banned");
@@ -95,15 +67,6 @@ describe("Trust Level System", () => {
 
     it("does not allow banned users to create templates", () => {
       expect(canCreateTemplates(TRUST_LEVELS.BANNED)).toBe(false);
-    });
-  });
-
-  describe("canBypassModeration", () => {
-    it("only admins can bypass moderation", () => {
-      expect(canBypassModeration(TRUST_LEVELS.ADMIN)).toBe(true);
-      expect(canBypassModeration(TRUST_LEVELS.TRUSTED)).toBe(false);
-      expect(canBypassModeration(TRUST_LEVELS.NEW_USER)).toBe(false);
-      expect(canBypassModeration(TRUST_LEVELS.BANNED)).toBe(false);
     });
   });
 
