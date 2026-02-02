@@ -11,6 +11,9 @@
     "claude-md-management@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true
   },
+  "permissions": {
+    "deny": ["Edit(.env*)", "Write(.env*)"]
+  },
   "hooks": {
     "PostToolUse": [
       {

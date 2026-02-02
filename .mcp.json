@@ -3,6 +3,10 @@
     "shadcn": {
       "command": "npx",
       "args": ["shadcn@latest", "mcp"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/github-mcp"]
     }
   }
 }
