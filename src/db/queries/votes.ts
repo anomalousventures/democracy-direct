@@ -101,8 +101,7 @@ export async function getVotesByMember(
     .limit(limit)
     .offset(offset);
 
-  // Cast needed: Drizzle infers column types but doesn't know position is VotePosition
-  return results as VoteWithPosition[];
+  return results;
 }
 
 export async function getVoteStats(
@@ -172,8 +171,7 @@ export async function getMemberVotesForVote(
     .innerJoin(legislators, eq(memberVotes.bioguideId, legislators.bioguideId))
     .where(eq(memberVotes.voteId, voteId));
 
-  // Cast needed: Drizzle infers column types but doesn't know position is VotePosition
-  return results as MemberVoteWithLegislator[];
+  return results;
 }
 
 export async function getVoteWithMembers(

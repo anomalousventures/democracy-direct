@@ -12,6 +12,7 @@ import {
   json,
   unique,
 } from "drizzle-orm/pg-core";
+import type { Chamber, VotePosition } from "@/lib/types/legislation";
 
 export const legislators = pgTable(
   "legislators",
@@ -199,7 +200,7 @@ export const votes = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     rollCall: integer("roll_call").notNull(),
-    chamber: varchar("chamber", { length: 10 }).notNull(),
+    chamber: varchar("chamber", { length: 10 }).$type<Chamber>().notNull(),
     congress: integer("congress").notNull(),
     session: integer("session").notNull(),
     date: timestamp("date").notNull(),
@@ -236,7 +237,7 @@ export const memberVotes = pgTable(
     bioguideId: varchar("bioguide_id", { length: 10 })
       .notNull()
       .references(() => legislators.bioguideId, { onDelete: "cascade" }),
-    position: varchar("position", { length: 20 }).notNull(),
+    position: varchar("position", { length: 20 }).$type<VotePosition>().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.voteId, table.bioguideId] }),
