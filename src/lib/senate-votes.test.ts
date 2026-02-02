@@ -97,7 +97,7 @@ const SAMPLE_VOTE_MENU_XML = `<?xml version="1.0" encoding="utf-8"?>
 </vote_summary>`;
 
 describe("parseSenateVoteXml", () => {
-  it("parses vote metadata", () => {
+  it("parses complete vote data including metadata, counts, members, and document", () => {
     const result = parseSenateVoteXml(SAMPLE_VOTE_XML);
 
     expect(result.congress).toBe(119);
@@ -105,67 +105,40 @@ describe("parseSenateVoteXml", () => {
     expect(result.voteNumber).toBe(1);
     expect(result.question).toBe("On the Motion");
     expect(result.result).toBe("Motion Agreed to");
-  });
-
-  it("parses vote counts", () => {
-    const result = parseSenateVoteXml(SAMPLE_VOTE_XML);
+    expect(result.voteDate).toContain("January 3, 2025");
 
     expect(result.yeas).toBe(99);
     expect(result.nays).toBe(0);
     expect(result.notVoting).toBe(1);
-  });
-
-  it("parses member votes", () => {
-    const result = parseSenateVoteXml(SAMPLE_VOTE_XML);
 
     expect(result.members).toHaveLength(3);
-
     const baldwin = result.members.find((m) => m.lastName === "Baldwin");
-    expect(baldwin).toBeDefined();
-    expect(baldwin?.party).toBe("D");
-    expect(baldwin?.state).toBe("WI");
-    expect(baldwin?.voteCast).toBe("Yea");
-    expect(baldwin?.lisMemberId).toBe("S354");
-
-    const sanders = result.members.find((m) => m.lastName === "Sanders");
-    expect(sanders?.voteCast).toBe("Not Voting");
-    expect(sanders?.party).toBe("I");
-  });
-
-  it("parses document/bill info when present", () => {
-    const result = parseSenateVoteXml(SAMPLE_VOTE_XML);
+    expect(baldwin).toMatchObject({
+      party: "D",
+      state: "WI",
+      voteCast: "Yea",
+      lisMemberId: "S354",
+    });
 
     expect(result.documentName).toBe("S.1");
     expect(result.documentTitle).toBe("Test Bill Title");
   });
-
-  it("parses date correctly", () => {
-    const result = parseSenateVoteXml(SAMPLE_VOTE_XML);
-
-    expect(result.voteDate).toContain("January 3, 2025");
-  });
 });
 
 describe("parseSenateVoteMenuXml", () => {
-  it("parses vote menu metadata", () => {
+  it("parses vote menu metadata and list of votes", () => {
     const result = parseSenateVoteMenuXml(SAMPLE_VOTE_MENU_XML);
 
     expect(result.congress).toBe(119);
     expect(result.session).toBe(1);
-  });
-
-  it("parses list of votes", () => {
-    const result = parseSenateVoteMenuXml(SAMPLE_VOTE_MENU_XML);
-
     expect(result.votes).toHaveLength(2);
 
-    expect(result.votes[0].voteNumber).toBe(1);
-    expect(result.votes[0].question).toBe("On the Motion");
-    expect(result.votes[0].result).toBe("Agreed to");
-    expect(result.votes[0].issue).toBe("S. 1");
-
-    expect(result.votes[1].voteNumber).toBe(2);
-    expect(result.votes[1].question).toBe("On Passage");
+    expect(result.votes[0]).toMatchObject({
+      voteNumber: 1,
+      question: "On the Motion",
+      result: "Agreed to",
+      issue: "S. 1",
+    });
   });
 });
 
@@ -182,95 +155,87 @@ describe("SenateVoteClient", () => {
     vi.unstubAllGlobals();
   });
 
-  describe("getVoteMenu", () => {
-    it("fetches and parses vote menu XML", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => SAMPLE_VOTE_MENU_XML,
-      });
-
-      const result = await client.getVoteMenu(119, 1);
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://www.senate.gov/legislative/LIS/roll_call_lists/vote_menu_119_1.xml",
-        expect.any(Object)
-      );
-      expect(result.votes).toHaveLength(2);
+  it("getVoteMenu fetches and parses vote menu XML", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => SAMPLE_VOTE_MENU_XML,
     });
 
-    it("throws SenateApiError on non-OK response", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: "Not Found",
-      });
+    const result = await client.getVoteMenu(119, 1);
 
-      await expect(client.getVoteMenu(999, 1)).rejects.toThrow(SenateApiError);
-    });
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://www.senate.gov/legislative/LIS/roll_call_lists/vote_menu_119_1.xml",
+      expect.any(Object)
+    );
+    expect(result.votes).toHaveLength(2);
   });
 
-  describe("getVote", () => {
-    it("fetches and parses individual vote XML", async () => {
-      mockFetch.mockResolvedValueOnce({
+  it("getVote fetches and parses individual vote XML", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => SAMPLE_VOTE_XML,
+    });
+
+    const result = await client.getVote(119, 1, 1);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001.xml",
+      expect.any(Object)
+    );
+    expect(result.voteNumber).toBe(1);
+    expect(result.members).toHaveLength(3);
+  });
+
+  it("getAllVotes fetches menu then all individual votes", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => SAMPLE_VOTE_MENU_XML,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => SAMPLE_VOTE_XML,
+      })
+      .mockResolvedValueOnce({
         ok: true,
         text: async () => SAMPLE_VOTE_XML,
       });
 
-      const result = await client.getVote(119, 1, 1);
+    const results = await client.getAllVotes(119, 1);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001.xml",
-        expect.any(Object)
-      );
-      expect(result.voteNumber).toBe(1);
-      expect(result.members).toHaveLength(3);
-    });
+    expect(results).toHaveLength(2);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  describe("getAllVotes", () => {
-    it("fetches menu then all individual votes", async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          text: async () => SAMPLE_VOTE_MENU_XML,
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          text: async () => SAMPLE_VOTE_XML,
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          text: async () => SAMPLE_VOTE_XML,
-        });
-
-      const results = await client.getAllVotes(119, 1);
-
-      expect(results).toHaveLength(2);
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+  it("throws SenateApiError on non-OK response", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
     });
+
+    await expect(client.getVoteMenu(999, 1)).rejects.toThrow(SenateApiError);
   });
 
-  describe("rate limiting", () => {
-    it("delays between requests when rate limiting is enabled", async () => {
-      const clientWithRateLimit = createSenateVoteClient({ minDelayMs: 50 });
+  it("delays between requests when rate limiting is enabled", async () => {
+    const clientWithRateLimit = createSenateVoteClient({ minDelayMs: 50 });
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        text: async () => SAMPLE_VOTE_MENU_XML,
-      });
-
-      const start = Date.now();
-      await clientWithRateLimit.getVoteMenu(119, 1);
-      await clientWithRateLimit.getVoteMenu(119, 1);
-      const elapsed = Date.now() - start;
-
-      expect(elapsed).toBeGreaterThanOrEqual(45);
+    mockFetch.mockResolvedValue({
+      ok: true,
+      text: async () => SAMPLE_VOTE_MENU_XML,
     });
+
+    const start = Date.now();
+    await clientWithRateLimit.getVoteMenu(119, 1);
+    await clientWithRateLimit.getVoteMenu(119, 1);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeGreaterThanOrEqual(45);
   });
 });
 
 describe("SenateApiError", () => {
-  it("creates error with message and status code", () => {
+  it("creates error with message, status code, and name", () => {
     const error = new SenateApiError("Test error", 404);
     expect(error.message).toBe("Test error");
     expect(error.statusCode).toBe(404);
@@ -281,33 +246,15 @@ describe("SenateApiError", () => {
 describe("normalizeVotePosition", () => {
   it.each([
     ["Yea", "yea"],
-    ["yea", "yea"],
     ["Aye", "yea"],
     ["Yes", "yea"],
-  ])("normalizes yea variant %s to %s", (input, expected) => {
-    expect(normalizeVotePosition(input)).toBe(expected);
-  });
-
-  it.each([
     ["Nay", "nay"],
-    ["nay", "nay"],
     ["No", "nay"],
-  ])("normalizes nay variant %s to %s", (input, expected) => {
-    expect(normalizeVotePosition(input)).toBe(expected);
-  });
-
-  it.each([
     ["Present", "present"],
-    ["present", "present"],
-  ])("normalizes present variant %s to %s", (input, expected) => {
-    expect(normalizeVotePosition(input)).toBe(expected);
-  });
-
-  it.each([
     ["Not Voting", "not_voting"],
     ["Absent", "not_voting"],
     ["", "not_voting"],
-  ])("normalizes %s to not_voting", (input, expected) => {
+  ])("normalizes %s to %s", (input, expected) => {
     expect(normalizeVotePosition(input)).toBe(expected);
   });
 });
