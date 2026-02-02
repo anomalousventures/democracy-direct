@@ -181,37 +181,41 @@ export function createSenateVoteClient(options: SenateClientOptions = {}): Senat
     return num.toString().padStart(5, "0");
   }
 
+  async function getVoteMenu(congress: number, session: number): Promise<ParsedVoteMenu> {
+    const url = `${SENATE_BASE_URL}/roll_call_lists/vote_menu_${congress}_${session}.xml`;
+    const response = await rateLimitedFetch(url);
+    const xml = await response.text();
+    return parseSenateVoteMenuXml(xml);
+  }
+
+  async function getVote(
+    congress: number,
+    session: number,
+    voteNumber: number
+  ): Promise<ParsedSenateVote> {
+    const voteNumPadded = formatVoteNumber(voteNumber);
+    const url = `${SENATE_BASE_URL}/roll_call_votes/vote${congress}${session}/vote_${congress}_${session}_${voteNumPadded}.xml`;
+    const response = await rateLimitedFetch(url);
+    const xml = await response.text();
+    return parseSenateVoteXml(xml);
+  }
+
+  async function getAllVotes(congress: number, session: number): Promise<ParsedSenateVote[]> {
+    const menu = await getVoteMenu(congress, session);
+    const votes: ParsedSenateVote[] = [];
+
+    for (const item of menu.votes) {
+      const vote = await getVote(congress, session, item.voteNumber);
+      votes.push(vote);
+    }
+
+    return votes;
+  }
+
   return {
-    async getVoteMenu(congress: number, session: number): Promise<ParsedVoteMenu> {
-      const url = `${SENATE_BASE_URL}/roll_call_lists/vote_menu_${congress}_${session}.xml`;
-      const response = await rateLimitedFetch(url);
-      const xml = await response.text();
-      return parseSenateVoteMenuXml(xml);
-    },
-
-    async getVote(
-      congress: number,
-      session: number,
-      voteNumber: number
-    ): Promise<ParsedSenateVote> {
-      const voteNumPadded = formatVoteNumber(voteNumber);
-      const url = `${SENATE_BASE_URL}/roll_call_votes/vote${congress}${session}/vote_${congress}_${session}_${voteNumPadded}.xml`;
-      const response = await rateLimitedFetch(url);
-      const xml = await response.text();
-      return parseSenateVoteXml(xml);
-    },
-
-    async getAllVotes(congress: number, session: number): Promise<ParsedSenateVote[]> {
-      const menu = await this.getVoteMenu(congress, session);
-      const votes: ParsedSenateVote[] = [];
-
-      for (const item of menu.votes) {
-        const vote = await this.getVote(congress, session, item.voteNumber);
-        votes.push(vote);
-      }
-
-      return votes;
-    },
+    getVoteMenu,
+    getVote,
+    getAllVotes,
   };
 }
 

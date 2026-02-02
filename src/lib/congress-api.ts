@@ -148,8 +148,8 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
       options: ListHouseVotesOptions = {}
     ): Promise<HouseVoteListResponse> {
       const params: Record<string, string> = {};
-      if (options.limit) params.limit = options.limit.toString();
-      if (options.offset) params.offset = options.offset.toString();
+      if (options.limit !== undefined) params.limit = options.limit.toString();
+      if (options.offset !== undefined) params.offset = options.offset.toString();
 
       const url = buildUrl(`/house-vote/${congress}/${session}`, params);
       const response = await rateLimitedFetch(url);
@@ -163,10 +163,10 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
 
     async listBills(options: ListBillsOptions = {}): Promise<BillListResponse> {
       const params: Record<string, string> = {};
-      if (options.limit) params.limit = options.limit.toString();
-      if (options.offset) params.offset = options.offset.toString();
-      if (options.fromDateTime) params.fromDateTime = options.fromDateTime;
-      if (options.sort) params.sort = options.sort;
+      if (options.limit !== undefined) params.limit = options.limit.toString();
+      if (options.offset !== undefined) params.offset = options.offset.toString();
+      if (options.fromDateTime !== undefined) params.fromDateTime = options.fromDateTime;
+      if (options.sort !== undefined) params.sort = options.sort;
 
       const path = options.congress ? `/bill/${options.congress}` : "/bill";
       const url = buildUrl(path, params);
