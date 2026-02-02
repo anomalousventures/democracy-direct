@@ -194,39 +194,26 @@ export async function getBills(
 
   const conditions = buildCongressStatusConditions(congress, status);
 
-  const query = db
+  return db
     .select(billWithSponsorSelect)
     .from(bills)
-    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId));
-
-  if (conditions.length > 0) {
-    return query
-      .where(and(...conditions))
-      .orderBy(desc(bills.latestActionDate))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  return query.orderBy(desc(bills.latestActionDate)).limit(limit).offset(offset);
+    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(bills.latestActionDate))
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function getDistinctSubjects(db: Database, congress?: number): Promise<string[]> {
-  const sqlQuery =
-    congress !== undefined
-      ? sql<{ subject: string }>`
-          SELECT DISTINCT subject
-          FROM ${bills}
-          CROSS JOIN LATERAL jsonb_array_elements_text(${bills.subjects}) AS subject
-          WHERE ${bills.congress} = ${congress}
-          ORDER BY subject
-        `
-      : sql<{ subject: string }>`
-          SELECT DISTINCT subject
-          FROM ${bills}
-          CROSS JOIN LATERAL jsonb_array_elements_text(${bills.subjects}) AS subject
-          ORDER BY subject
-        `;
+  const whereClause = congress !== undefined ? sql`WHERE ${bills.congress} = ${congress}` : sql``;
 
-  const result = await db.execute(sqlQuery);
+  const result = await db.execute(sql<{ subject: string }>`
+    SELECT DISTINCT subject
+    FROM ${bills}
+    CROSS JOIN LATERAL jsonb_array_elements_text(${bills.subjects}) AS subject
+    ${whereClause}
+    ORDER BY subject
+  `);
+
   return (result.rows as Array<{ subject: string }>).map((row) => row.subject);
 }

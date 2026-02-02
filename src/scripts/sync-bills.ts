@@ -42,6 +42,10 @@ function formatElapsed(startTime: number): string {
   return elapsed < 60 ? `${elapsed.toFixed(1)}s` : `${(elapsed / 60).toFixed(1)}m`;
 }
 
+function formatDateForApi(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function logProgress(
   phase: string,
   startTime: number,
@@ -110,15 +114,10 @@ export function transformBillItem(item: BillListItem): TransformResult {
     ? new Date(item.latestAction.actionDate)
     : null;
 
-  let introducedDate: Date;
-  let missingIntroducedDate = false;
+  const hasIntroducedDate = Boolean(item.introducedDate);
+  const introducedDate = item.introducedDate ? new Date(item.introducedDate) : latestActionDate;
 
-  if (item.introducedDate) {
-    introducedDate = new Date(item.introducedDate);
-  } else if (latestActionDate) {
-    introducedDate = latestActionDate;
-    missingIntroducedDate = true;
-  } else {
+  if (!introducedDate) {
     return {
       data: null,
       error: {
@@ -145,12 +144,12 @@ export function transformBillItem(item: BillListItem): TransformResult {
       sponsorBioguideId: item.sponsors?.[0]?.bioguideId ?? null,
       congressGovUrl: buildCongressGovUrl(item.congress, parsed.type, parsed.number),
     },
-    error: missingIntroducedDate
-      ? {
+    error: hasIntroducedDate
+      ? null
+      : {
           billNumber: billIdentifier,
           error: "Missing introducedDate, used latestActionDate as fallback",
-        }
-      : null,
+        },
   };
 }
 
@@ -287,10 +286,11 @@ async function syncForward(
 
     for (const item of response.bills) {
       const result = transformBillItem(item);
+      if (result.data) {
+        billsToUpsert.push(result.data);
+      }
       if (result.error) {
         errors.push(result.error);
-      } else if (result.data) {
-        billsToUpsert.push(result.data);
       }
     }
 
@@ -317,7 +317,7 @@ async function syncForward(
   const upsertCount = await upsertBills(db, billsToUpsert);
   console.log(`Upserted ${upsertCount} bills in ${formatElapsed(upsertStartTime)}`);
 
-  const newCursor = new Date().toISOString();
+  const newCursor = formatDateForApi(new Date());
   await updateCursor(db, cursorId, newCursor, null, newestCongress ?? currentCongress);
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
@@ -396,10 +396,11 @@ async function syncBackward(
       if (billsToUpsert.length >= BACKWARD_BILLS_PER_RUN) break;
 
       const result = transformBillItem(item);
+      if (result.data) {
+        billsToUpsert.push(result.data);
+      }
       if (result.error) {
         errors.push(result.error);
-      } else if (result.data) {
-        billsToUpsert.push(result.data);
       }
     }
 
@@ -482,11 +483,12 @@ export async function syncBills(direction: "forward" | "backward"): Promise<Sync
 
   const errors: SyncBillsResult["errors"] = [];
 
-  if (direction === "forward") {
-    return syncForward(db, client, errors);
-  } else {
-    return syncBackward(db, client, errors);
-  }
+  const syncHandlers = {
+    forward: syncForward,
+    backward: syncBackward,
+  };
+
+  return syncHandlers[direction](db, client, errors);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
