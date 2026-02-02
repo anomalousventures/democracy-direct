@@ -66,12 +66,43 @@ jobs:
               prNumber = pr ? pr.number : null;
 
               if (pr) {
-                const branchSlug = pr.head.ref
-                  .toLowerCase()
-                  .replace(/\//g, '-')
-                  .replace(/[^a-z0-9-]/g, '');
-                deploymentUrl = `https://${branchSlug}.democracy-direct.pages.dev`;
-                console.log(`Branch: ${pr.head.ref} -> Slug: ${branchSlug}`);
+                console.log(`Found PR #${pr.number} for commit ${sha}`);
+
+                // Query GitHub Deployments API to get actual Cloudflare URL
+                // This avoids issues with Cloudflare's URL truncation
+                try {
+                  const { data: deployments } = await github.rest.repos.listDeployments({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    sha: sha,
+                    per_page: 10
+                  });
+
+                  console.log(`Found ${deployments.length} deployments for ${sha}`);
+
+                  // Find the most recent successful deployment
+                  for (const deployment of deployments) {
+                    const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      deployment_id: deployment.id
+                    });
+
+                    const successStatus = statuses.find(s => s.state === 'success');
+                    if (successStatus && successStatus.environment_url) {
+                      deploymentUrl = successStatus.environment_url;
+                      console.log(`Found deployment URL: ${deploymentUrl}`);
+                      break;
+                    }
+                  }
+
+                  if (!deploymentUrl) {
+                    console.log('No successful deployment found, skipping audit');
+                  }
+                } catch (error) {
+                  console.log(`Error querying deployments: ${error.message}`);
+                  deploymentUrl = null;
+                }
               } else {
                 console.log('No PR found for this commit, skipping audit');
                 deploymentUrl = null;
