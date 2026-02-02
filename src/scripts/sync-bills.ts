@@ -110,15 +110,10 @@ export function transformBillItem(item: BillListItem): TransformResult {
     ? new Date(item.latestAction.actionDate)
     : null;
 
-  let introducedDate: Date;
-  let missingIntroducedDate = false;
+  const hasIntroducedDate = Boolean(item.introducedDate);
+  const introducedDate = item.introducedDate ? new Date(item.introducedDate) : latestActionDate;
 
-  if (item.introducedDate) {
-    introducedDate = new Date(item.introducedDate);
-  } else if (latestActionDate) {
-    introducedDate = latestActionDate;
-    missingIntroducedDate = true;
-  } else {
+  if (!introducedDate) {
     return {
       data: null,
       error: {
@@ -145,12 +140,12 @@ export function transformBillItem(item: BillListItem): TransformResult {
       sponsorBioguideId: item.sponsors?.[0]?.bioguideId ?? null,
       congressGovUrl: buildCongressGovUrl(item.congress, parsed.type, parsed.number),
     },
-    error: missingIntroducedDate
-      ? {
+    error: hasIntroducedDate
+      ? null
+      : {
           billNumber: billIdentifier,
           error: "Missing introducedDate, used latestActionDate as fallback",
-        }
-      : null,
+        },
   };
 }
 
@@ -484,11 +479,12 @@ export async function syncBills(direction: "forward" | "backward"): Promise<Sync
 
   const errors: SyncBillsResult["errors"] = [];
 
-  if (direction === "forward") {
-    return syncForward(db, client, errors);
-  } else {
-    return syncBackward(db, client, errors);
-  }
+  const syncHandlers = {
+    forward: syncForward,
+    backward: syncBackward,
+  };
+
+  return syncHandlers[direction](db, client, errors);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
