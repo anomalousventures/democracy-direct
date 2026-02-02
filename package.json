@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -33,6 +34,7 @@
     "seed:e2e": "npx tsx src/scripts/seed-e2e.ts",
     "ensure:admins": "npx tsx src/scripts/ensure-admins.ts",
     "seed:templates": "npx tsx src/scripts/seed-templates.ts",
+    "sync:votes": "npx tsx src/scripts/sync-votes.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -106,6 +108,7 @@
     "husky": "9.1.7",
     "jsdom": "^27.4.0",
     "lint-staged": "16.2.7",
+    "nyc": "^17.1.0",
     "playwright": "1.58.0",
     "prettier": "3.8.1",
     "prettier-plugin-astro": "0.14.1",

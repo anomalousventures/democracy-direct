@@ -107,6 +107,23 @@ jobs:
           npm install -g @lhci/cli pa11y
           npx puppeteer browsers install chrome
 
+      - name: Wait for deployment to be ready
+        if: steps.deployment.outputs.url != ''
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.url }}
+        run: |
+          echo "Waiting for deployment to be ready..."
+          for i in {1..30}; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${DEPLOY_URL}/api/health" || echo "000")
+            if [ "$status" = "200" ] || [ "$status" = "503" ]; then
+              echo "Deployment is ready (health returned $status)"
+              exit 0
+            fi
+            echo "Attempt $i: health returned $status, waiting..."
+            sleep 10
+          done
+          echo "Deployment not ready after 5 minutes, proceeding anyway"
+
       - name: Run Lighthouse audit
         if: steps.deployment.outputs.url != ''
         id: lighthouse
@@ -171,20 +188,34 @@ jobs:
             echo "| Page | Performance | Accessibility | Best Practices | SEO |" >> audit-summary.md
             echo "|------|-------------|---------------|----------------|-----|" >> audit-summary.md
 
-            # Group results by URL and calculate averages
-            jq -rs '
-              group_by(.finalUrl) |
-              map({
-                url: .[0].finalUrl,
-                perf: ([.[].categories.performance.score] | add / length * 100 | floor),
-                a11y: ([.[].categories.accessibility.score] | add / length * 100 | floor),
-                bp: ([.[].categories["best-practices"].score] | add / length * 100 | floor),
-                seo: ([.[].categories.seo.score] | add / length * 100 | floor)
-              }) |
-              sort_by(.url) |
-              .[] |
-              "| \(.url) | \(.perf) | \(.a11y) | \(.bp) | \(.seo) |"
-            ' .lighthouseci/lhr-*.json >> audit-summary.md 2>/dev/null || echo "Error parsing Lighthouse results" >> audit-summary.md
+            # Check if any Lighthouse run succeeded (has non-null scores)
+            has_valid_scores=$(jq -s '[.[].categories.performance.score | select(. != null)] | length > 0' .lighthouseci/lhr-*.json 2>/dev/null || echo "false")
+
+            if [ "$has_valid_scores" = "true" ]; then
+              # Group results by URL and calculate averages (filtering out failed runs)
+              jq -rs '
+                [.[] | select(.categories.performance.score != null)] |
+                group_by(.finalUrl) |
+                map({
+                  url: .[0].finalUrl,
+                  perf: ([.[].categories.performance.score] | add / length * 100 | floor),
+                  a11y: ([.[].categories.accessibility.score] | add / length * 100 | floor),
+                  bp: ([.[].categories["best-practices"].score] | add / length * 100 | floor),
+                  seo: ([.[].categories.seo.score] | add / length * 100 | floor)
+                }) |
+                sort_by(.url) |
+                .[] |
+                "| \(.url) | \(.perf) | \(.a11y) | \(.bp) | \(.seo) |"
+              ' .lighthouseci/lhr-*.json >> audit-summary.md 2>/dev/null || echo "Error parsing Lighthouse results" >> audit-summary.md
+            else
+              # Check for runtime errors in Lighthouse output
+              error_msg=$(jq -rs '.[0].runtimeError.message // empty' .lighthouseci/lhr-*.json 2>/dev/null | head -1)
+              if [ -n "$error_msg" ]; then
+                echo "⚠️ Lighthouse failed: $error_msg" >> audit-summary.md
+              else
+                echo "⚠️ No valid Lighthouse scores found" >> audit-summary.md
+              fi
+            fi
 
             echo "" >> audit-summary.md
             echo "[View full Lighthouse reports](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts)" >> audit-summary.md

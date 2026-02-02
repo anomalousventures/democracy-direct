@@ -84,6 +84,54 @@ describe("CongressClient", () => {
     expect(result.pagination?.count).toBe(100);
   });
 
+  it("getHouseVoteMembers fetches members who voted on a roll call", async () => {
+    const mockResponse = {
+      houseRollCallVoteMemberVotes: {
+        congress: 119,
+        identifier: 119210123,
+        result: "Passed",
+        results: [
+          {
+            bioguideID: "A000001",
+            firstName: "John",
+            lastName: "Doe",
+            voteCast: "Yea",
+            voteParty: "R",
+            voteState: "TX",
+          },
+          {
+            bioguideID: "B000002",
+            firstName: "Jane",
+            lastName: "Smith",
+            voteCast: "Nay",
+            voteParty: "D",
+            voteState: "CA",
+          },
+        ],
+      },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const result = await client.getHouseVoteMembers(119, 1, 123);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/v3/house-vote/119/1/123/members"),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Accept: "application/json" }),
+      })
+    );
+    expect(result.members).toHaveLength(2);
+    expect(result.members[0].bioguideId).toBe("A000001");
+    expect(result.members[0].vote).toBe("Yea");
+    expect(result.members[0].name).toBe("John Doe");
+    expect(result.members[1].bioguideId).toBe("B000002");
+    expect(result.members[1].vote).toBe("Nay");
+  });
+
   it("listBills supports fromDateTime for incremental sync", async () => {
     const mockResponse = {
       bills: [

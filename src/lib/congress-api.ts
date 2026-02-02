@@ -8,12 +8,14 @@
 import {
   type HouseVoteResponse,
   type HouseVoteListResponse,
+  type HouseVoteMembersResponse,
   type BillListResponse,
   type BillDetailResponse,
   type BillSummariesResponse,
   type BillType,
   HouseVoteResponseSchema,
   HouseVoteListResponseSchema,
+  HouseVoteMembersResponseSchema,
   BillListResponseSchema,
   BillDetailResponseSchema,
   BillSummariesResponseSchema,
@@ -52,6 +54,12 @@ export type ListHouseVotesOptions = PaginationOptions;
 
 export interface CongressClient {
   getHouseVote(congress: number, session: number, rollCall: number): Promise<HouseVoteResponse>;
+
+  getHouseVoteMembers(
+    congress: number,
+    session: number,
+    rollCall: number
+  ): Promise<HouseVoteMembersResponse>;
 
   listHouseVotes(
     congress: number,
@@ -142,6 +150,21 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
       );
     },
 
+    async getHouseVoteMembers(
+      congress: number,
+      session: number,
+      rollCall: number
+    ): Promise<HouseVoteMembersResponse> {
+      const url = buildUrl(`/house-vote/${congress}/${session}/${rollCall}/members`);
+      const response = await rateLimitedFetch(url);
+      const data = await response.json();
+      return parseResponse(
+        HouseVoteMembersResponseSchema,
+        data,
+        `getHouseVoteMembers(${congress}/${session}/${rollCall})`
+      );
+    },
+
     async listHouseVotes(
       congress: number,
       session: number,
@@ -229,6 +252,7 @@ export function getCurrentSession(): 1 | 2 {
 export type {
   HouseVoteResponse,
   HouseVoteListResponse,
+  HouseVoteMembersResponse,
   BillListResponse,
   BillDetailResponse,
   BillSummariesResponse,

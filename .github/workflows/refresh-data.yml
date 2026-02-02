@@ -83,6 +83,25 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
 
+      - name: Sync voting records
+        id: votes
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:votes 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Sync failed"; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
       - name: Export ZIP data if changed
         id: export
         if: steps.zips.outputs.failed != 'true'
@@ -132,6 +151,8 @@ jobs:
           ZIPS_RESULT: ${{ steps.zips.outputs.result }}
           ZIPS_FAILED: ${{ steps.zips.outputs.failed }}
           TEMPLATES_FAILED: ${{ steps.templates.outputs.failed }}
+          VOTES_RESULT: ${{ steps.votes.outputs.result }}
+          VOTES_FAILED: ${{ steps.votes.outputs.failed }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
@@ -149,11 +170,15 @@ jobs:
           ZIPS_CHANGED=$(echo "$ZIPS_RESULT" | jq -r '.changed // false')
           ZIPS_COUNT=$(echo "$ZIPS_RESULT" | jq -r '.recordsInserted // 0')
 
+          VOTES_CHANGED=$(echo "$VOTES_RESULT" | jq -r '.changed // false')
+          VOTES_HOUSE=$(echo "$VOTES_RESULT" | jq -r '.houseVotesUpserted // 0')
+          VOTES_SENATE=$(echo "$VOTES_RESULT" | jq -r '.senateVotesUpserted // 0')
+
           # Determine overall status
-          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ]; then
+          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ] || [ "$VOTES_FAILED" = "true" ]; then
             TITLE="🚨 Data Refresh Failed"
             COLOR=16711680
-          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ]; then
+          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ] || [ "$VOTES_CHANGED" = "true" ]; then
             TITLE="📊 Data Refresh Complete"
             COLOR=65280
           else
@@ -184,12 +209,21 @@ jobs:
             TEMPLATES_STATUS="✅ **Templates**: Seeded"
           fi
 
+          if [ "$VOTES_FAILED" = "true" ]; then
+            VOTES_STATUS="❌ **Votes**: Failed"
+          elif [ "$VOTES_CHANGED" = "true" ]; then
+            VOTES_STATUS="✅ **Votes**: ${VOTES_HOUSE} House, ${VOTES_SENATE} Senate"
+          else
+            VOTES_STATUS="⏭️ **Votes**: Unchanged"
+          fi
+
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
             --arg leg_status "$LEG_STATUS" \
             --arg zips_status "$ZIPS_STATUS" \
             --arg templates_status "$TEMPLATES_STATUS" \
+            --arg votes_status "$VOTES_STATUS" \
             --arg gh_run "$GH_RUN" \
             --arg timestamp "$TIMESTAMP" \
             '{
@@ -197,7 +231,7 @@ jobs:
                 title: $title,
                 color: $color,
                 fields: [
-                  { name: "Results", value: ($leg_status + "\n" + $zips_status + "\n" + $templates_status), inline: false },
+                  { name: "Results", value: ($leg_status + "\n" + $zips_status + "\n" + $templates_status + "\n" + $votes_status), inline: false },
                   { name: "Links", value: "[View Run](\($gh_run))", inline: false }
                 ],
                 timestamp: $timestamp
@@ -207,7 +241,7 @@ jobs:
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
 
       - name: Fail workflow if imports failed
-        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true'
+        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true' || steps.votes.outputs.failed == 'true'
         run: |
           echo "One or more imports failed"
           exit 1
