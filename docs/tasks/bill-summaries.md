@@ -1,9 +1,9 @@
 # Bill Summaries Integration
 
-## Status: Ready
+## Status: In Progress
 
 **PR #1 (Shared Infrastructure)**: Merged (#50) - types, utilities, API wrappers created
-**PR #3 (Bill Summaries Data)**: Not started
+**PR #3 (Bill Summaries Data)**: Data layer complete - schema, sync scripts, queries, GitHub Actions
 
 ## Problem Statement
 
@@ -90,27 +90,35 @@ Understanding what legislation representatives sponsor and support is key to inf
 
 ## Implementation Tasks
 
-1. Create `src/db/schema.ts` additions: `bills` table with billNumber, billType, congress, title, summary, status, subjects, introducedDate, latestActionDate, sponsorBioguideId
-2. Create `src/db/schema.ts` additions: `syncCursors` table to track forward/backward sync positions and coverage stats
-3. Run database migration with `pnpm db:push`
-4. Add Congress.gov bill endpoints to `src/lib/congress-api.ts`
-5. Create `src/scripts/sync-bills.ts` script that accepts `--direction forward` or `--direction backward` flag
-6. Implement forward sync: use `fromDateTime` param with last sync timestamp
-7. Implement backward sync: fetch bills older than oldest synced bill, process in batches of ~3,000
-8. Add coverage check: script logs how many Congresses are fully synced
-9. Add 100ms throttle delay between API requests in sync script
-10. Add `"sync:bills": "tsx src/scripts/sync-bills.ts"` to package.json scripts
-11. Add `pnpm sync:bills --direction forward` step to `.github/workflows/refresh-data.yml`
-12. Create `.github/workflows/backfill-bills.yml` with initial cron `0 */4 * * *` (every 4 hours)
-13. Create `src/db/queries/bills.ts` with `getBillsByMember(bioguideId, limit)` query
-14. Create `src/components/SponsoredBills.tsx` component that displays bill list with status indicators
-15. Add SponsoredBills component to `src/pages/rep/[bioguideId].astro` as a tabbed section
-16. Add filter controls for bill status (introduced, passed committee, passed chamber, signed)
-17. Add filter controls for topic/subject
-18. Add unit tests for bill sync logic in `src/scripts/sync-bills.test.ts`
-19. Add unit tests for bill queries in `src/db/queries/bills.test.ts`
-20. Add e2e test in `tests/e2e/sponsored-bills.spec.ts` that verifies bills display on rep page
-21. After backfill complete (~1 week): update backfill-bills.yml cron to daily or disable
+### Data Layer (Epic 3 - Complete)
+
+1. [x] Create `src/db/schema.ts` additions: `bills` table with billNumber, billType, congress, title, summary, status, subjects, introducedDate, latestActionDate, sponsorBioguideId
+2. [x] Create `src/db/schema.ts` additions: `syncCursors` table to track forward/backward sync positions and coverage stats
+3. [x] Run database migration with `pnpm db:generate` and `pnpm db:migrate`
+4. [x] Add Congress.gov bill endpoints to `src/lib/congress-api.ts` (already exists from Epic 1)
+5. [x] Create `src/scripts/sync-bills.ts` script that accepts `--direction forward` or `--direction backward` flag
+6. [x] Implement forward sync: use `fromDateTime` param with last sync timestamp
+7. [x] Implement backward sync: fetch bills older than oldest synced bill, process in batches of ~3,000
+8. [x] Add coverage check: script logs how many Congresses are fully synced
+9. [x] Add 100ms throttle delay between API requests in sync script
+10. [x] Add `"sync:bills": "tsx src/scripts/sync-bills.ts"` to package.json scripts
+11. [x] Add `pnpm sync:bills --direction forward` step to `.github/workflows/refresh-data.yml`
+12. [x] Create `.github/workflows/backfill-bills.yml` with initial cron `0 */4 * * *` (every 4 hours)
+13. [x] Create `src/db/queries/bills.ts` with `getBillsByMember(bioguideId, limit)` query
+14. [x] Add unit tests for bill sync logic in `src/scripts/sync-bills.test.ts`
+15. [x] Add unit tests for bill queries in `src/db/queries/bills.test.ts`
+
+### UI Components (Epic 4 - Pending)
+
+14. [ ] Create `src/components/SponsoredBills.tsx` component that displays bill list with status indicators
+15. [ ] Add SponsoredBills component to `src/pages/rep/[bioguideId].astro` as a tabbed section
+16. [ ] Add filter controls for bill status (introduced, passed committee, passed chamber, signed)
+17. [ ] Add filter controls for topic/subject
+18. [ ] Add e2e test in `tests/e2e/sponsored-bills.spec.ts` that verifies bills display on rep page
+
+### Maintenance
+
+21. [ ] After backfill complete (~1 week): update backfill-bills.yml cron to daily or disable
 
 ### SEO: Sitemap Integration
 

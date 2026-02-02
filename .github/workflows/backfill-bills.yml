@@ -1,0 +1,106 @@
+name: Backfill Bills
+
+on:
+  schedule:
+    # Initially every 4 hours for aggressive backfill
+    # After initial backfill (~1 week), reduce to daily or disable
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    name: Backfill Historical Bills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync bills (backward)
+        id: bills
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:bills -- --direction backward 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BILLS_RESULT: ${{ steps.bills.outputs.result }}
+          BILLS_FAILED: ${{ steps.bills.outputs.failed }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          BILLS_CHANGED=$(echo "$BILLS_RESULT" | jq -r '.changed // false')
+          BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
+          CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
+          OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
+
+          if [ "$BILLS_FAILED" = "true" ]; then
+            TITLE="🚨 Bill Backfill Failed"
+            COLOR=16711680
+            STATUS="❌ **Bills**: Backfill failed"
+          elif [ "$BILLS_CHANGED" = "true" ]; then
+            TITLE="📊 Bill Backfill Complete"
+            COLOR=65280
+            STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
+          else
+            TITLE="✅ Bill Backfill - Complete"
+            COLOR=8421504
+            STATUS="⏭️ **Bills**: Backfill complete to target Congress"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --argjson color "$COLOR" \
+            --arg status "$STATUS" \
+            --arg gh_run "$GH_RUN" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "Results", value: $status, inline: false },
+                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
+                ],
+                timestamp: $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+
+      - name: Fail workflow if backfill failed
+        if: steps.bills.outputs.failed == 'true'
+        run: |
+          echo "Bill backfill failed"
+          exit 1

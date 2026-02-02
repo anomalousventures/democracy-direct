@@ -12,7 +12,7 @@ import {
   json,
   unique,
 } from "drizzle-orm/pg-core";
-import type { Chamber, VotePosition } from "@/lib/types/legislation";
+import type { BillStatus, BillType, Chamber, VotePosition } from "@/lib/types/legislation";
 
 export const legislators = pgTable(
   "legislators",
@@ -245,6 +245,47 @@ export const memberVotes = pgTable(
   ]
 );
 
+export const bills = pgTable(
+  "bills",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    billNumber: varchar("bill_number", { length: 50 }).notNull(),
+    billType: varchar("bill_type", { length: 10 }).$type<BillType>().notNull(),
+    congress: integer("congress").notNull(),
+    title: text("title").notNull(),
+    summary: text("summary"),
+    status: varchar("status", { length: 30 }).$type<BillStatus>().notNull(),
+    subjects: json("subjects").$type<string[]>().default([]),
+    introducedDate: timestamp("introduced_date").notNull(),
+    latestActionDate: timestamp("latest_action_date").notNull(),
+    latestActionText: text("latest_action_text").notNull(),
+    sponsorBioguideId: varchar("sponsor_bioguide_id", { length: 10 }).references(
+      () => legislators.bioguideId,
+      { onDelete: "set null" }
+    ),
+    congressGovUrl: text("congress_gov_url").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("bills_congress_type_number_unique").on(
+      table.congress,
+      table.billType,
+      table.billNumber
+    ),
+    index("bills_sponsor_bioguide_id_idx").on(table.sponsorBioguideId),
+    index("bills_congress_latest_action_idx").on(table.congress, table.latestActionDate),
+  ]
+);
+
+export const syncCursors = pgTable("sync_cursors", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  cursor: text("cursor"),
+  oldestCongress: integer("oldest_congress"),
+  newestCongress: integer("newest_congress"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type Legislator = typeof legislators.$inferSelect;
 export type NewLegislator = typeof legislators.$inferInsert;
 export type Vote = typeof votes.$inferSelect;
@@ -271,3 +312,7 @@ export type TagSuggestion = typeof tagSuggestions.$inferSelect;
 export type NewTagSuggestion = typeof tagSuggestions.$inferInsert;
 export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
 export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;
+export type Bill = typeof bills.$inferSelect;
+export type NewBill = typeof bills.$inferInsert;
+export type SyncCursor = typeof syncCursors.$inferSelect;
+export type NewSyncCursor = typeof syncCursors.$inferInsert;
