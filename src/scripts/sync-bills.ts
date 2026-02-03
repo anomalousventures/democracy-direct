@@ -508,7 +508,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   syncBills(direction)
     .then((result) => {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result));
       process.exit(0);
     })
     .catch((error) => {
