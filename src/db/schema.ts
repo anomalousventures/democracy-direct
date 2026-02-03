@@ -179,11 +179,11 @@ export const dataSourceMeta = pgTable("data_source_meta", {
   recordCount: integer("record_count"),
 });
 
-export const tagSuggestions = pgTable(
-  "tag_suggestions",
+export const issueTags = pgTable(
+  "issue_tags",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 50 }).notNull(),
+    name: varchar("name", { length: 50 }).notNull().unique(),
     suggestedBy: uuid("suggested_by").references(() => users.id, { onDelete: "set null" }),
     status: varchar("status", { length: 20 }).notNull().default("pending"),
     approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
@@ -191,8 +191,8 @@ export const tagSuggestions = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
-    index("tag_suggestions_name_idx").on(table.name),
-    index("tag_suggestions_status_idx").on(table.status),
+    index("issue_tags_name_idx").on(table.name),
+    index("issue_tags_status_idx").on(table.status),
   ]
 );
 
@@ -309,8 +309,8 @@ export type ModerationLogEntry = typeof moderationLog.$inferSelect;
 export type NewModerationLogEntry = typeof moderationLog.$inferInsert;
 export type UserTemplate = typeof userTemplates.$inferSelect;
 export type NewUserTemplate = typeof userTemplates.$inferInsert;
-export type TagSuggestion = typeof tagSuggestions.$inferSelect;
-export type NewTagSuggestion = typeof tagSuggestions.$inferInsert;
+export type IssueTag = typeof issueTags.$inferSelect;
+export type NewIssueTag = typeof issueTags.$inferInsert;
 export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
 export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;
 export type Bill = typeof bills.$inferSelect;

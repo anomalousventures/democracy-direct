@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { eq, desc } from "drizzle-orm";
 import { createDb } from "@/db/client";
-import { tagSuggestions } from "@/db/schema";
+import { issueTags } from "@/db/schema";
 import { jsonResponse, badRequest, serverError, notFound } from "@/lib/api-response";
 import { getConfig } from "@/lib/config";
 import { requireAdmin } from "@/lib/admin";
@@ -18,9 +18,9 @@ export const GET: APIRoute = async ({ locals }) => {
     const db = createDb(config.database.url);
     const tags = await db
       .select()
-      .from(tagSuggestions)
-      .where(eq(tagSuggestions.status, "pending"))
-      .orderBy(desc(tagSuggestions.createdAt));
+      .from(issueTags)
+      .where(eq(issueTags.status, "pending"))
+      .orderBy(desc(issueTags.createdAt));
 
     return jsonResponse({ tags });
   } catch (error) {
@@ -45,13 +45,13 @@ export const POST: APIRoute = async ({ locals, request }) => {
     const config = getConfig(locals);
     const db = createDb(config.database.url);
     const [updatedTag] = await db
-      .update(tagSuggestions)
+      .update(issueTags)
       .set({
         status: newStatus,
         approvedBy: locals.user?.id ?? null,
         updatedAt: new Date(),
       })
-      .where(eq(tagSuggestions.id, tagId))
+      .where(eq(issueTags.id, tagId))
       .returning();
 
     if (!updatedTag) {

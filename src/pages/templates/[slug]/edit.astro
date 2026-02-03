@@ -8,7 +8,7 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { TemplateEditClient } from "@/components/TemplateEditClient";
 import { createDb } from "@/db/client";
-import { templates } from "@/db/schema";
+import { templates, issueTags } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 
@@ -30,6 +30,7 @@ let template: {
   isPublic: boolean;
 } | null = null;
 
+let availableTags: string[] = [];
 let error: string | null = null;
 
 if (!slug) {
@@ -61,6 +62,11 @@ if (!slug) {
         error = "You do not have permission to edit this template.";
       } else {
         template = result;
+        const approvedTags = await db
+          .select({ name: issueTags.name })
+          .from(issueTags)
+          .where(eq(issueTags.status, "approved"));
+        availableTags = approvedTags.map((t) => t.name);
       }
     } else {
       Astro.response.status = 404;
@@ -132,6 +138,7 @@ if (!slug) {
                   <TemplateEditClient
                     client:load
                     slug={template.slug}
+                    availableTags={availableTags}
                     initialData={{
                       title: template.title,
                       description: template.description || undefined,

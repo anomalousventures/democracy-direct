@@ -8,7 +8,7 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroBadge from "@/components/ui/AstroBadge.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
-import { tagSuggestions, users } from "@/db/schema";
+import { issueTags, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 import { isAdmin } from "@/lib/admin";
@@ -40,17 +40,17 @@ try {
 
   const results = await db
     .select({
-      id: tagSuggestions.id,
-      name: tagSuggestions.name,
-      status: tagSuggestions.status,
-      suggestedBy: tagSuggestions.suggestedBy,
+      id: issueTags.id,
+      name: issueTags.name,
+      status: issueTags.status,
+      suggestedBy: issueTags.suggestedBy,
       suggestedByEmail: users.emailHash,
-      createdAt: tagSuggestions.createdAt,
+      createdAt: issueTags.createdAt,
     })
-    .from(tagSuggestions)
-    .leftJoin(users, eq(tagSuggestions.suggestedBy, users.id))
-    .where(eq(tagSuggestions.status, "pending"))
-    .orderBy(desc(tagSuggestions.createdAt));
+    .from(issueTags)
+    .leftJoin(users, eq(issueTags.suggestedBy, users.id))
+    .where(eq(issueTags.status, "pending"))
+    .orderBy(desc(issueTags.createdAt));
 
   pendingTags = results;
 } catch (error) {

@@ -8,7 +8,7 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { TemplateForkClient } from "@/components/TemplateForkClient";
 import { createDb } from "@/db/client";
-import { templates } from "@/db/schema";
+import { templates, issueTags } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 
@@ -28,6 +28,7 @@ let originalTemplate: {
   issueTags: string[] | null;
 } | null = null;
 
+let availableTags: string[] = [];
 let error: string | null = null;
 
 const config = getConfig(Astro.locals);
@@ -60,6 +61,11 @@ if (!slug) {
 
     if (result) {
       originalTemplate = result;
+      const approvedTags = await db
+        .select({ name: issueTags.name })
+        .from(issueTags)
+        .where(eq(issueTags.status, "approved"));
+      availableTags = approvedTags.map((t) => t.name);
     } else {
       Astro.response.status = 404;
       error = "Template not found or not available for forking.";
@@ -133,6 +139,7 @@ const turnstileSiteKey = config.turnstile.siteKey;
                   <TemplateForkClient
                     client:load
                     forkedFromId={originalTemplate.id}
+                    availableTags={availableTags}
                     initialData={{
                       title: originalTemplate.title,
                       description: originalTemplate.description || undefined,

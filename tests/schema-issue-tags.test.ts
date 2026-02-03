@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { getTableColumns } from "drizzle-orm";
-import { tagSuggestions } from "../src/db/schema";
+import { issueTags } from "../src/db/schema";
 
-describe("Phase 7.6: Tag Suggestions table schema", () => {
-  const columns = getTableColumns(tagSuggestions);
+describe("Phase 7.6: Issue Tags table schema", () => {
+  const columns = getTableColumns(issueTags);
 
   it("should have id as primary key (UUID)", () => {
     expect(columns.id).toBeDefined();

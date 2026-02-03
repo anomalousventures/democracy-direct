@@ -26,21 +26,6 @@ declare global {
   }
 }
 
-const ISSUE_TAG_OPTIONS = [
-  "healthcare",
-  "education",
-  "environment",
-  "economy",
-  "immigration",
-  "civil rights",
-  "gun policy",
-  "foreign policy",
-  "social security",
-  "infrastructure",
-  "veterans affairs",
-  "housing",
-];
-
 interface TemplateFormProps {
   initialData?: {
     title: string;
@@ -49,6 +34,7 @@ interface TemplateFormProps {
     issueTags: string[];
     isPublic?: boolean;
   };
+  availableTags: string[];
   onSubmit: (data: {
     title: string;
     description?: string;
@@ -65,6 +51,7 @@ interface TemplateFormProps {
 
 export function TemplateForm({
   initialData,
+  availableTags,
   onSubmit,
   submitLabel = "Create Template",
   isSubmitting = false,
@@ -261,7 +248,7 @@ export function TemplateForm({
       <fieldset className="space-y-2">
         <legend className="block text-sm font-medium text-primary">Issue Tags (optional)</legend>
         <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector">
-          {ISSUE_TAG_OPTIONS.map((tag) => (
+          {availableTags.map((tag) => (
             <Toggle
               key={tag}
               variant="outline"

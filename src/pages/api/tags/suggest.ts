@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { eq, or, and, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
-import { tagSuggestions } from "@/db/schema";
+import { issueTags } from "@/db/schema";
 import {
   jsonResponse,
   badRequest,
@@ -36,14 +36,9 @@ export const POST: APIRoute = async ({ locals, request }) => {
 
     const oneHourAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000);
     const recentSuggestions = await db
-      .select({ id: tagSuggestions.id })
-      .from(tagSuggestions)
-      .where(
-        and(
-          eq(tagSuggestions.suggestedBy, locals.user.id),
-          gte(tagSuggestions.createdAt, oneHourAgo)
-        )
-      );
+      .select({ id: issueTags.id })
+      .from(issueTags)
+      .where(and(eq(issueTags.suggestedBy, locals.user.id), gte(issueTags.createdAt, oneHourAgo)));
 
     if (recentSuggestions.length >= RATE_LIMIT_MAX_SUGGESTIONS) {
       return tooManyRequests("Too many suggestions. Please try again later.");
@@ -51,8 +46,8 @@ export const POST: APIRoute = async ({ locals, request }) => {
 
     const existing = await db
       .select()
-      .from(tagSuggestions)
-      .where(or(eq(tagSuggestions.name, name), eq(tagSuggestions.status, "approved")));
+      .from(issueTags)
+      .where(or(eq(issueTags.name, name), eq(issueTags.status, "approved")));
 
     const existingWithName = existing.find((t) => t.name === name);
     if (existingWithName) {
@@ -60,7 +55,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
     }
 
     const [newTag] = await db
-      .insert(tagSuggestions)
+      .insert(issueTags)
       .values({
         name,
         suggestedBy: locals.user.id,

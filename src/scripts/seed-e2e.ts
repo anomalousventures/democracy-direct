@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { createDb } from "../db/client";
-import { users, sessions, templates, tagSuggestions } from "../db/schema";
+import { users, sessions, templates, issueTags } from "../db/schema";
 import { TRUST_LEVELS } from "../lib/trust-level";
 
 export const SESSION_DURATION_DAYS = 30;
@@ -112,12 +112,12 @@ async function seedE2E() {
 
   const existingTag = await db
     .select()
-    .from(tagSuggestions)
-    .where(eq(tagSuggestions.name, E2E_TAG_NAME))
+    .from(issueTags)
+    .where(eq(issueTags.name, E2E_TAG_NAME))
     .limit(1);
 
   if (existingTag.length === 0) {
-    await db.insert(tagSuggestions).values({
+    await db.insert(issueTags).values({
       name: E2E_TAG_NAME,
       suggestedBy: adminUser.id,
       status: "pending",

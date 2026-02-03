@@ -10,6 +10,7 @@ interface TemplateForkClientProps {
     body: string;
     issueTags: string[];
   };
+  availableTags: string[];
   turnstileSiteKey: string;
   isAuthenticated?: boolean;
 }
@@ -17,6 +18,7 @@ interface TemplateForkClientProps {
 export function TemplateForkClient({
   forkedFromId,
   initialData,
+  availableTags,
   turnstileSiteKey,
   isAuthenticated = false,
 }: TemplateForkClientProps) {
@@ -106,6 +108,7 @@ export function TemplateForkClient({
 
       <TemplateForm
         initialData={initialData}
+        availableTags={availableTags}
         onSubmit={handleSubmit}
         submitLabel="Create Fork"
         isSubmitting={isSubmitting}

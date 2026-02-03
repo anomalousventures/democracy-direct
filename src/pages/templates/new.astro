@@ -7,11 +7,21 @@ import Footer from "@/components/Footer.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { TemplateCreateClient } from "@/components/TemplateCreateClient";
 import { getConfig } from "@/lib/config";
+import { createDb } from "@/db/client";
+import { issueTags } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const user = Astro.locals.user;
 
 const config = getConfig(Astro.locals);
 const turnstileSiteKey = config.turnstile.siteKey;
+
+const db = createDb(config.database.url);
+const approvedTags = await db
+  .select({ name: issueTags.name })
+  .from(issueTags)
+  .where(eq(issueTags.status, "approved"));
+const availableTags = approvedTags.map((t) => t.name);
 ---
 
 <Layout title="Create New Template">
@@ -43,6 +53,7 @@ const turnstileSiteKey = config.turnstile.siteKey;
           <TemplateCreateClient
             client:load
             turnstileSiteKey={turnstileSiteKey}
+            availableTags={availableTags}
             isAuthenticated={!!user}
           />
         </AstroCard>
