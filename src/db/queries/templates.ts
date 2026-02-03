@@ -34,12 +34,19 @@ interface CursorData {
 }
 
 export function encodeCursor(score: number, createdAt: Date, id: string): string {
-  return Buffer.from(`${score}:${createdAt.toISOString()}:${id}`).toString("base64url");
+  const raw = `${score}:${createdAt.toISOString()}:${id}`;
+  const base64 = btoa(raw);
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export function decodeCursor(cursor: string): CursorData | null {
   try {
-    const decoded = Buffer.from(cursor, "base64url").toString("utf-8");
+    let base64 = cursor.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad !== 0) {
+      base64 = base64 + "=".repeat(4 - pad);
+    }
+    const decoded = atob(base64);
     const firstColonIdx = decoded.indexOf(":");
     if (firstColonIdx === -1) return null;
 
