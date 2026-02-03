@@ -99,22 +99,36 @@ jobs:
           CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
           OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
           
-          # Check for errors and detect if all errors are the same (potential schema issue)
+          # Check for errors and aggregate counts by unique error message
           ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
           SCHEMA_ISSUE_DETECTED="false"
-          COMMON_ERROR=""
+          ERROR_SUMMARY=""
           
           if [ "$ERROR_COUNT" -gt 0 ]; then
-            # Extract unique error messages (filtering out nulls for robustness)
+            # Aggregate error counts by unique error message (excluding billNumber)
             # Handle missing or null errors field gracefully
+            ERROR_SUMMARY=$(echo "$BILLS_RESULT" | jq -r '
+              (.errors // [])
+              | group_by(.error // "Unknown error")
+              | map({
+                  message: (.[0].error // "Unknown error"),
+                  count: length
+                })
+              | map("\(.message): \(.count)")
+              | join("\n")
+            ')
+            
             UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .error // empty] | unique | length')
             
             # If all errors have the same message, it's likely a schema/code issue
             if [ "$UNIQUE_ERRORS" -eq 1 ]; then
               SCHEMA_ISSUE_DETECTED="true"
-              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
-              echo "⚠️ WARNING: All $ERROR_COUNT bills failed with the same error: $COMMON_ERROR"
+              echo "⚠️ WARNING: All $ERROR_COUNT bills failed with the same error:"
+              echo "$ERROR_SUMMARY"
               echo "This indicates a potential schema or code issue, not individual data problems."
+            else
+              echo "⚠️ Encountered $ERROR_COUNT errors across $UNIQUE_ERRORS unique error types:"
+              echo "$ERROR_SUMMARY"
             fi
           fi
 
@@ -130,22 +144,22 @@ jobs:
             # Build multi-line status message for better readability
             STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error"
             STATUS="${STATUS}\n\`\`\`"
-            STATUS="${STATUS}\n${COMMON_ERROR}"
+            STATUS="${STATUS}\n${ERROR_SUMMARY}"
             STATUS="${STATUS}\n\`\`\`"
             STATUS="${STATUS}\n**This suggests a schema or code issue, not data problems.**"
           elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
             # All bills had errors, none succeeded
             TITLE="🚨 Bill Backfill - All Bills Failed"
             COLOR=16711680  # Red
-            STATUS="❌ **Bills**: All bills failed ($ERROR_COUNT errors)\nCheck logs for details."
+            STATUS="❌ **Bills**: All bills failed ($ERROR_COUNT errors across $UNIQUE_ERRORS types)\nCheck logs for error breakdown."
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
             COLOR=65280  # Green
             if [ "$ERROR_COUNT" -gt 0 ]; then
               if [ "$SCHEMA_ISSUE_DETECTED" = "true" ]; then
-                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Warning**: ${ERROR_COUNT} bills had the same error (${COMMON_ERROR})"
+                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Warning**: ${ERROR_COUNT} bills had the same error:\n\`\`\`\n${ERROR_SUMMARY}\n\`\`\`"
               else
-                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Errors**: ${ERROR_COUNT} bills had issues"
+                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Errors**: ${ERROR_COUNT} bills had issues across ${UNIQUE_ERRORS} types"
               fi
             else
               STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
@@ -201,12 +215,23 @@ jobs:
           if [ "$ERROR_COUNT" -gt 0 ]; then
             UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .error // empty] | unique | length')
             
+            # Aggregate error counts by message for better visibility
+            ERROR_SUMMARY=$(echo "$BILLS_RESULT" | jq -r '
+              (.errors // [])
+              | group_by(.error // "Unknown error")
+              | map({
+                  message: (.[0].error // "Unknown error"),
+                  count: length
+                })
+              | map("  \(.message): \(.count)")
+              | join("\n")
+            ')
+            
             # If all errors are identical and no bills succeeded, fail the workflow
             if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
-              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
               echo "❌ SCHEMA ISSUE DETECTED ❌"
               echo "All $ERROR_COUNT bills failed with the same error:"
-              echo "  $COMMON_ERROR"
+              echo "$ERROR_SUMMARY"
               echo ""
               echo "This indicates a problem with the schema or code, not the data."
               echo "Action required: Investigate and fix the schema/transformation logic."
@@ -215,10 +240,12 @@ jobs:
             
             # If errors exist but some bills succeeded, just warn
             if [ "$UNIQUE_ERRORS" -eq 1 ]; then
-              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
               echo "⚠️ Warning: All $ERROR_COUNT errors have the same message:"
-              echo "  $COMMON_ERROR"
+              echo "$ERROR_SUMMARY"
               echo "This may indicate a schema issue. Investigate if error rate is high."
+            else
+              echo "ℹ️ Encountered $ERROR_COUNT errors across $UNIQUE_ERRORS unique types:"
+              echo "$ERROR_SUMMARY"
             fi
           fi
           
