@@ -13,44 +13,56 @@ export interface SessionUser {
   savedDistrict: string | null;
 }
 
-export const onRequest = defineMiddleware(async ({ cookies, locals }, next) => {
-  // Initialize user as null first
+export const onRequest = defineMiddleware(async ({ cookies, locals, request }, next) => {
   locals.user = null;
 
   const sessionId = cookies.get("session")?.value;
 
-  if (!sessionId) {
-    return next();
+  if (sessionId) {
+    try {
+      const config = getConfig(locals);
+      const db = createDb(config.database.url);
+
+      const results = await db
+        .select({
+          id: users.id,
+          emailHash: users.emailHash,
+          trustLevel: users.trustLevel,
+          savedState: users.savedState,
+          savedDistrict: users.savedDistrict,
+        })
+        .from(sessions)
+        .innerJoin(users, eq(sessions.userId, users.id))
+        .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
+
+      if (results.length === 0) {
+        cookies.delete("session", { path: "/" });
+      } else {
+        locals.user = results[0] as SessionUser;
+      }
+    } catch (error) {
+      const logger = createLogger(locals, request);
+      logger.error("session_middleware_error", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
 
-  try {
-    const config = getConfig(locals);
-    const db = createDb(config.database.url);
+  const start = Date.now();
+  const response = await next();
+  const duration = Date.now() - start;
 
-    const results = await db
-      .select({
-        id: users.id,
-        emailHash: users.emailHash,
-        trustLevel: users.trustLevel,
-        savedState: users.savedState,
-        savedDistrict: users.savedDistrict,
-      })
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
+  const url = new URL(request.url);
+  const isApi = url.pathname.startsWith("/api/");
+  const isAsset = /\.(js|css|ico|png|jpg|svg|woff2?)$/.test(url.pathname);
 
-    if (results.length === 0) {
-      cookies.delete("session", { path: "/" });
-      return next();
-    }
-
-    locals.user = results[0] as SessionUser;
-  } catch (error) {
-    const logger = createLogger(locals);
-    logger.error("session_middleware_error", {
-      error: error instanceof Error ? error.message : "Unknown error",
+  if (isApi && !isAsset) {
+    const logger = createLogger(locals, request);
+    logger.info("api_request", {
+      status: response.status,
+      duration,
     });
   }
 
-  return next();
+  return response;
 });
