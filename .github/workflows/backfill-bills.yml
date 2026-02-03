@@ -44,9 +44,10 @@ jobs:
           
           # Parse JSON result from the last line containing valid JSON
           # The script outputs JSON on the final line after completion
-          JSON=$(grep -E '^\{' "$OUTPUT_FILE" | tail -1 || echo '{}')
+          JSON=$(grep -E '^\{' "$OUTPUT_FILE" | tail -n 1 || echo '{}')
           
           # Validate JSON is not empty and is valid JSON structure
+          # Note: We check for '{}' because that's our fallback from the grep command above
           if [ -z "$JSON" ] || [ "$JSON" = "{}" ] || ! echo "$JSON" | jq empty 2>/dev/null; then
             echo "Warning: No valid JSON result found in output" >&2
             JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[]}'
@@ -105,7 +106,8 @@ jobs:
           
           if [ "$ERROR_COUNT" -gt 0 ]; then
             # Extract unique error messages (filtering out nulls for robustness)
-            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[] | .error // empty] | unique | length')
+            # Handle missing or null errors field gracefully
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .error // empty] | unique | length')
             
             # If all errors have the same message, it's likely a schema/code issue
             if [ "$UNIQUE_ERRORS" -eq 1 ]; then
@@ -197,7 +199,7 @@ jobs:
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
           
           if [ "$ERROR_COUNT" -gt 0 ]; then
-            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[] | .error // empty] | unique | length')
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .error // empty] | unique | length')
             
             # If all errors are identical and no bills succeeded, fail the workflow
             if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
