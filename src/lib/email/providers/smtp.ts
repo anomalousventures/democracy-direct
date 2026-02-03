@@ -20,7 +20,7 @@ export class SmtpEmailProvider implements EmailProvider {
     });
   }
 
-  async send(message: EmailMessage): Promise<boolean> {
+  async send(message: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
       from: this.from,
       to: message.to,
@@ -28,6 +28,5 @@ export class SmtpEmailProvider implements EmailProvider {
       text: message.text,
       html: message.html,
     });
-    return true;
   }
 }

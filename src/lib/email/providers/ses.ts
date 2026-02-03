@@ -24,7 +24,7 @@ export class SesEmailProvider implements EmailProvider {
     });
   }
 
-  async send(message: EmailMessage): Promise<boolean> {
+  async send(message: EmailMessage): Promise<void> {
     const boundary = `boundary_${crypto.randomUUID()}`;
     const emailParts = [
       `From: ${this.from}`,
@@ -70,6 +70,5 @@ export class SesEmailProvider implements EmailProvider {
     });
 
     await this.client.send(command);
-    return true;
   }
 }

@@ -45,19 +45,23 @@ export function createLogger(locals: App.Locals, request?: Request): Logger {
 
     if (posthogConfig?.apiKey && ctx) {
       ctx.waitUntil(
-        fetch(`${posthogConfig.host}/capture`, {
+        fetch(`${posthogConfig.host}/batch`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             api_key: posthogConfig.apiKey,
-            event: "server_log",
-            distinct_id: context.userId || "anonymous",
-            properties: {
-              level,
-              message,
-              ...merged,
-              timestamp,
-            },
+            batch: [
+              {
+                event: "server_log",
+                distinct_id: context.userId || "anonymous",
+                properties: {
+                  level,
+                  message,
+                  ...merged,
+                  timestamp,
+                },
+              },
+            ],
           }),
         }).catch((error) => console.error("PostHog capture failed:", error))
       );
