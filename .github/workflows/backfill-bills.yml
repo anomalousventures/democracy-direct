@@ -121,8 +121,8 @@ jobs:
             TITLE="🚨 Bill Backfill Failed"
             COLOR=16711680  # Red
             STATUS="❌ **Bills**: Backfill failed"
-          elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ]; then
-            # Special case: All errors are identical - likely schema issue
+          elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ] && [ "$BILLS_COUNT" -eq 0 ]; then
+            # Special case: All errors are identical AND no successes - likely schema issue
             TITLE="⚠️ Bill Backfill - Schema Issue Detected"
             COLOR=16744192  # Orange
             # Build multi-line status message for better readability
@@ -140,7 +140,11 @@ jobs:
             TITLE="📊 Bill Backfill Complete"
             COLOR=65280  # Green
             if [ "$ERROR_COUNT" -gt 0 ]; then
-              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Errors**: ${ERROR_COUNT} bills had issues"
+              if [ "$SCHEMA_ISSUE_DETECTED" = "true" ]; then
+                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Warning**: ${ERROR_COUNT} bills had the same error (${COMMON_ERROR})"
+              else
+                STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Errors**: ${ERROR_COUNT} bills had issues"
+              fi
             else
               STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
             fi
