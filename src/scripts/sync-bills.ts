@@ -562,10 +562,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(`Starting bill sync in ${direction} mode...`);
 
   syncBills(direction)
-    .then((result) => {
-      console.log("__SYNC_RESULT_JSON_START__");
-      console.log(JSON.stringify(result));
-      console.log("__SYNC_RESULT_JSON_END__");
+    .then(async (result) => {
+      const githubOutput = process.env.GITHUB_OUTPUT;
+      if (githubOutput) {
+        const { appendFileSync } = await import("node:fs");
+        appendFileSync(githubOutput, `result=${JSON.stringify(result)}\n`);
+      } else {
+        console.log(JSON.stringify(result, null, 2));
+      }
       process.exit(0);
     })
     .catch((error) => {

@@ -106,30 +106,15 @@ jobs:
         id: bills
         run: |
           set +e
-          OUTPUT_FILE="${RUNNER_TEMP}/bills_output.log"
-          pnpm sync:bills -- --direction forward > "$OUTPUT_FILE" 2>&1
+          pnpm sync:bills -- --direction forward
           EXIT_CODE=$?
           set -e
 
-          cat "$OUTPUT_FILE"
-
-          # Extract JSON using delimiters for reliable parsing
-          JSON=$(sed -n '/__SYNC_RESULT_JSON_START__/,/__SYNC_RESULT_JSON_END__/p' "$OUTPUT_FILE" | grep -v '__SYNC_RESULT_JSON' | head -1 || echo '{}')
-
-          if [ -z "$JSON" ] || [ "$JSON" = "{}" ] || ! echo "$JSON" | jq empty 2>/dev/null; then
-            echo "Warning: No valid JSON result found in output" >&2
-            JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[],"warnings":[]}'
-          fi
-
-          echo "result=$JSON" >> $GITHUB_OUTPUT
-
-          if [ $EXIT_CODE -ne 0 ] || grep -q "Sync failed" "$OUTPUT_FILE"; then
+          if [ $EXIT_CODE -ne 0 ]; then
             echo "failed=true" >> $GITHUB_OUTPUT
           else
             echo "failed=false" >> $GITHUB_OUTPUT
           fi
-
-          rm -f "$OUTPUT_FILE"
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
