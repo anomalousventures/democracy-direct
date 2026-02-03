@@ -32,18 +32,38 @@ jobs:
       - name: Sync bills (backward)
         id: bills
         run: |
+          # Redirect output to file to avoid "Argument list too long" error
           set +e
-          OUTPUT=$(pnpm sync:bills -- --direction backward 2>&1)
+          OUTPUT_FILE="${RUNNER_TEMP}/bills_output.log"
+          pnpm sync:bills -- --direction backward > "$OUTPUT_FILE" 2>&1
           EXIT_CODE=$?
           set -e
-          echo "$OUTPUT"
-          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          
+          # Display full output for debugging
+          cat "$OUTPUT_FILE"
+          
+          # Parse JSON result from the last line containing valid JSON
+          # The script outputs JSON on the final line after completion
+          JSON=$(grep -E '^\{' "$OUTPUT_FILE" | tail -1 || echo '{}')
+          
+          # Validate JSON is not empty and store result
+          if [ -z "$JSON" ] || [ "$JSON" = "{}" ]; then
+            echo "Warning: No valid JSON result found in output" >&2
+            JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown"}'
+          fi
+          
           echo "result=$JSON" >> $GITHUB_OUTPUT
+          
+          # Set failure flag based on exit code
           if [ $EXIT_CODE -ne 0 ]; then
             echo "failed=true" >> $GITHUB_OUTPUT
+            echo "Error: Sync command exited with code $EXIT_CODE" >&2
           else
             echo "failed=false" >> $GITHUB_OUTPUT
           fi
+          
+          # Clean up temporary file
+          rm -f "$OUTPUT_FILE"
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
@@ -55,33 +75,77 @@ jobs:
           BILLS_RESULT: ${{ steps.bills.outputs.result }}
           BILLS_FAILED: ${{ steps.bills.outputs.failed }}
         run: |
+          # Guard: Skip if Discord webhook is not configured
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
             exit 0
           fi
 
+          # Guard: Validate BILLS_RESULT is not empty
+          if [ -z "$BILLS_RESULT" ]; then
+            echo "Warning: BILLS_RESULT is empty, using default values"
+            BILLS_RESULT='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown"}'
+          fi
+
+          # Generate timestamp for embed
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+          # Parse result fields with fallback defaults
+          # Use jq to safely extract fields, defaulting to safe values if missing
           BILLS_CHANGED=$(echo "$BILLS_RESULT" | jq -r '.changed // false')
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
           CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
           OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
+          
+          # Check for errors and detect if all errors are the same (potential schema issue)
+          ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
+          SCHEMA_ISSUE_DETECTED="false"
+          COMMON_ERROR=""
+          
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            # Extract unique error messages
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[].error] | unique | length')
+            
+            # If all errors have the same message, it's likely a schema/code issue
+            if [ "$UNIQUE_ERRORS" -eq 1 ]; then
+              SCHEMA_ISSUE_DETECTED="true"
+              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
+              echo "⚠️ WARNING: All $ERROR_COUNT bills failed with the same error: $COMMON_ERROR"
+              echo "This indicates a potential schema or code issue, not individual data problems."
+            fi
+          fi
 
+          # Determine notification title, color, and status based on result
           if [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Bill Backfill Failed"
-            COLOR=16711680
+            COLOR=16711680  # Red
             STATUS="❌ **Bills**: Backfill failed"
+          elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ]; then
+            # Special case: All errors are identical - likely schema issue
+            TITLE="⚠️ Bill Backfill - Schema Issue Detected"
+            COLOR=16744192  # Orange
+            STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error\n\`\`\`\n${COMMON_ERROR}\n\`\`\`\n**This suggests a schema or code issue, not data problems.**"
+          elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
+            # All bills had errors, none succeeded
+            TITLE="🚨 Bill Backfill - All Bills Failed"
+            COLOR=16711680  # Red
+            STATUS="❌ **Bills**: All bills failed ($ERROR_COUNT errors)\nCheck logs for details."
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
-            COLOR=65280
-            STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
+            COLOR=65280  # Green
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})\n⚠️ **Errors**: ${ERROR_COUNT} bills had issues"
+            else
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
+            fi
           else
             TITLE="✅ Bill Backfill - Complete"
-            COLOR=8421504
+            COLOR=8421504  # Gray
             STATUS="⏭️ **Bills**: Backfill complete to target Congress"
           fi
 
+          # Build Discord webhook payload
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
@@ -100,10 +164,52 @@ jobs:
               }]
             }')
 
+          # Send notification to Discord
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
 
       - name: Fail workflow if backfill failed
         if: steps.bills.outputs.failed == 'true'
         run: |
-          echo "Bill backfill failed"
+          echo "Bill backfill failed - check logs above for details"
           exit 1
+      
+      - name: Fail workflow if schema issue detected
+        if: steps.bills.outputs.failed != 'true'
+        run: |
+          # Parse the result to check for schema issues
+          BILLS_RESULT='${{ steps.bills.outputs.result }}'
+          
+          if [ -z "$BILLS_RESULT" ] || [ "$BILLS_RESULT" = "{}" ]; then
+            echo "No result data available, skipping schema check"
+            exit 0
+          fi
+          
+          ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
+          BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
+          
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[].error] | unique | length')
+            
+            # If all errors are identical and no bills succeeded, fail the workflow
+            if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
+              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error')
+              echo "❌ SCHEMA ISSUE DETECTED ❌"
+              echo "All $ERROR_COUNT bills failed with the same error:"
+              echo "  $COMMON_ERROR"
+              echo ""
+              echo "This indicates a problem with the schema or code, not the data."
+              echo "Action required: Investigate and fix the schema/transformation logic."
+              exit 1
+            fi
+            
+            # If errors exist but some bills succeeded, just warn
+            if [ "$UNIQUE_ERRORS" -eq 1 ]; then
+              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error')
+              echo "⚠️ Warning: All $ERROR_COUNT errors have the same message:"
+              echo "  $COMMON_ERROR"
+              echo "This may indicate a schema issue. Investigate if error rate is high."
+            fi
+          fi
+          
+          echo "Schema check complete"
+          exit 0
