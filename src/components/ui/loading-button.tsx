@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Icon } from "@/components/icons";
 import { Button, type ButtonProps } from "./button";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ const LoadingButton = ({
 }: LoadingButtonProps) => {
   return (
     <Button disabled={loading || disabled} className={cn(className)} {...props}>
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {loading && <Icon name="loader" className="h-4 w-4 animate-spin" />}
       {loading && loadingText ? loadingText : children}
     </Button>
   );

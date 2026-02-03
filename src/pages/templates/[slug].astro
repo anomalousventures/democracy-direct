@@ -9,6 +9,7 @@ import AstroCard from "@/components/ui/AstroCard.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { TemplateReportButton } from "@/components/TemplateReportButton";
 import { TemplateUseButton } from "@/components/TemplateUseButton";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -200,12 +201,11 @@ const metaDescription = template
                 </div>
 
                 <div class="mb-8">
-                  <div
+                  <MarkdownContent
+                    content={template.body}
+                    className="text-foreground leading-relaxed"
                     data-testid="template-body"
-                    class="prose prose-slate max-w-none whitespace-pre-wrap text-foreground leading-relaxed"
-                  >
-                    {template.body}
-                  </div>
+                  />
                 </div>
 
                 <div class="flex flex-col gap-4 pt-6 border-t border-border">
@@ -227,12 +227,14 @@ const metaDescription = template
                       </AstroButton>
                     </div>
                   ) : (
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                       <TemplateUseButton
                         client:load
                         href={`/?template=${template.slug}`}
                         templateSlug={template.slug}
                         templateTitle={template.title}
+                        savedState={user?.savedState}
+                        savedDistrict={user?.savedDistrict}
                       />
                       <p class="text-sm text-muted-foreground">
                         You'll enter your ZIP code to find your representatives, then customize and

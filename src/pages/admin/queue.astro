@@ -9,6 +9,7 @@ import AstroBadge from "@/components/ui/AstroBadge.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { ModerationToast } from "@/components/ModerationToast";
 import { ModerationScoresPanel } from "@/components/ModerationScoresPanel";
+import { ExpandableContent } from "@/components/ExpandableContent";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, or, desc } from "drizzle-orm";
@@ -61,11 +62,6 @@ try {
     .limit(50);
 } catch (error) {
   console.error("Failed to load moderation queue:", error);
-}
-
-function truncateBody(body: string, maxLength: number = 200): string {
-  if (body.length <= maxLength) return body;
-  return body.slice(0, maxLength).trim() + "...";
 }
 
 function formatDate(date: Date): string {
@@ -122,9 +118,11 @@ function getStatusBadge(status: string): { label: string; variant: BadgeVariant 
                             <AstroBadge variant="destructive">{item.flagCount} flags</AstroBadge>
                           )}
                         </div>
-                        <p class="text-muted-foreground whitespace-pre-wrap">
-                          {truncateBody(item.body)}
-                        </p>
+                        <ExpandableContent
+                          client:load
+                          content={item.body}
+                          className="text-muted-foreground"
+                        />
                       </div>
                     </div>
 

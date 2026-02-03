@@ -97,9 +97,7 @@ describe("ContactActions", () => {
       expect(contactButton).not.toBeInTheDocument();
     });
 
-    it("copies content and opens contact form in new tab", async () => {
-      const windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
-
+    it("copies content and shows redirect dialog", async () => {
       render(<ContactActions content="Test letter" representative={mockRep} />);
       const contactButton = screen.getByRole("button", {
         name: /send via.*form|contact form/i,
@@ -111,18 +109,15 @@ describe("ContactActions", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("Test letter");
       });
 
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        mockRep.contact_form,
-        "_blank",
-        "noopener,noreferrer"
-      );
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
 
-      windowOpenSpy.mockRestore();
+      expect(screen.getByText(/letter copied to clipboard/i)).toBeInTheDocument();
+      expect(screen.getByText(/representative john smith/i)).toBeInTheDocument();
     });
 
-    it("shows instruction toast after opening contact form", async () => {
-      vi.spyOn(window, "open").mockReturnValue(null);
-
+    it("Go to Contact Form link has correct href and closes dialog when clicked", async () => {
       render(<ContactActions content="Test letter" representative={mockRep} />);
       const contactButton = screen.getByRole("button", {
         name: /send via.*form|contact form/i,
@@ -131,9 +126,18 @@ describe("ContactActions", () => {
       fireEvent.click(contactButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Copied! Paste your letter into the contact form."
-        );
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
+
+      const goToFormLink = screen.getByRole("link", { name: /go to contact form/i });
+      expect(goToFormLink).toHaveAttribute("href", mockRep.contact_form);
+      expect(goToFormLink).toHaveAttribute("target", "_blank");
+      expect(goToFormLink).toHaveAttribute("rel", "noopener noreferrer");
+
+      fireEvent.click(goToFormLink);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       });
     });
   });

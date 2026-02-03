@@ -11,6 +11,11 @@ export default defineConfig({
   output: "server",
   integrations: [react()],
 
+  server: {
+    host: "0.0.0.0",
+    allowedHosts: ["callisto.hair-rockhopper.ts.net"],
+  },
+
   vite: {
     plugins: [tailwindcss()],
     ssr: {

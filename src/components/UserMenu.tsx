@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { User, FileText, MapPin, LogOut, Menu } from "lucide-react";
+import { Icon } from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +93,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
     <>
       <DropdownMenuLabel className="font-normal">
         <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-accent" />
+          <Icon name="map-pin" className="w-4 h-4 text-accent" />
           <div className="flex flex-col">
             <span className="text-sm font-medium">{districtDisplay}</span>
             <span className="text-xs text-muted-foreground">{stateName}</span>
@@ -128,7 +128,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
             data-testid="mobile-menu-trigger"
             aria-label="Open menu"
           >
-            <Menu className="w-5 h-5" aria-hidden="true" />
+            <Icon name="menu" className="w-5 h-5" aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
@@ -147,7 +147,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
             <>
               <DropdownMenuItem asChild>
                 <a href="/templates/mine" className="cursor-pointer">
-                  <FileText className="w-4 h-4" />
+                  <Icon name="file-text" className="w-4 h-4" />
                   My Templates
                 </a>
               </DropdownMenuItem>
@@ -164,13 +164,13 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
                 disabled={isLoggingOut}
                 className="cursor-pointer text-muted-foreground focus:text-foreground"
               >
-                <LogOut className="w-4 h-4" />
+                <Icon name="logout" className="w-4 h-4" />
                 {isLoggingOut ? "Signing out..." : "Sign Out"}
               </DropdownMenuItem>
             </>
           ) : (
             <DropdownMenuItem onClick={() => setDialogOpen(true)} className="cursor-pointer">
-              <User className="w-4 h-4" />
+              <Icon name="user" className="w-4 h-4" />
               Sign In
             </DropdownMenuItem>
           )}
@@ -185,7 +185,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
               className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-sm bg-accent/10 border border-accent/30 rounded-sm hover:bg-accent/20 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30"
               data-testid="district-badge"
             >
-              <MapPin className="w-3.5 h-3.5 text-accent" />
+              <Icon name="map-pin" className="w-3.5 h-3.5 text-accent" />
               <span className="font-medium text-primary">{districtDisplay}</span>
             </button>
           </DropdownMenuTrigger>
@@ -200,7 +200,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
             {repsUrl && (
               <DropdownMenuItem asChild>
                 <a href={repsUrl} className="cursor-pointer">
-                  <MapPin className="w-4 h-4" />
+                  <Icon name="map-pin" className="w-4 h-4" />
                   View My Reps
                 </a>
               </DropdownMenuItem>
@@ -238,14 +238,14 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
               data-testid="user-menu-trigger"
             >
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <User className="w-4 h-4 text-primary-foreground" />
+                <Icon name="user" className="w-4 h-4 text-primary-foreground" />
               </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <a href="/templates/mine" className="cursor-pointer">
-                <FileText className="w-4 h-4" />
+                <Icon name="file-text" className="w-4 h-4" />
                 My Templates
               </a>
             </DropdownMenuItem>
@@ -262,7 +262,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
               disabled={isLoggingOut}
               className="cursor-pointer text-muted-foreground focus:text-foreground"
             >
-              <LogOut className="w-4 h-4" />
+              <Icon name="logout" className="w-4 h-4" />
               {isLoggingOut ? "Signing out..." : "Sign Out"}
             </DropdownMenuItem>
           </DropdownMenuContent>

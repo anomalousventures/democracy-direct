@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, type ComponentType } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   generateTypedShareUrls,
   generateTemplateShareText,
@@ -9,8 +9,7 @@ import {
 } from "@/lib/share";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
-import { SiX, SiFacebook, SiReddit } from "react-icons/si";
-import { TbShare, TbMail, TbLink } from "react-icons/tb";
+import { Icon, type IconName } from "@/components/icons";
 import { toast } from "sonner";
 
 interface RepInfo {
@@ -37,15 +36,20 @@ type ShareButtonsProps =
 
 interface PlatformConfig {
   key: keyof ShareUrls;
-  icon: ComponentType<{ className?: string }>;
+  iconName: IconName;
   label: string;
   displayName: string;
 }
 
 const platformButtons: PlatformConfig[] = [
-  { key: "twitter", icon: SiX, label: "Share on X (Twitter)", displayName: "X" },
-  { key: "facebook", icon: SiFacebook, label: "Share on Facebook", displayName: "Facebook" },
-  { key: "reddit", icon: SiReddit, label: "Share on Reddit", displayName: "Reddit" },
+  { key: "twitter", iconName: "brand-x", label: "Share on X (Twitter)", displayName: "X" },
+  {
+    key: "facebook",
+    iconName: "brand-facebook",
+    label: "Share on Facebook",
+    displayName: "Facebook",
+  },
+  { key: "reddit", iconName: "brand-reddit", label: "Share on Reddit", displayName: "Reddit" },
 ];
 
 function getShareUrls(props: ShareButtonsProps): ShareUrls {
@@ -116,57 +120,48 @@ export function ShareButtons(props: ShareButtonsProps) {
 
   const shareUrls = getShareUrls(props);
 
+  if (hasWebShare) {
+    return (
+      <Button onClick={handleNativeShare} variant="outline" size="sm" aria-label="Share this page">
+        <Icon name="share" className="size-4" aria-hidden="true" />
+        <span>Share this page</span>
+      </Button>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        {hasWebShare && (
-          <Button
-            onClick={handleNativeShare}
-            variant="outline"
-            size="sm"
-            aria-label="Share this page"
-          >
-            <TbShare className="size-4" aria-hidden="true" />
-            <span>Share</span>
-          </Button>
-        )}
-
-        {platformButtons.map(({ key, icon: Icon, label, displayName }) => (
-          <Button key={key} variant="outline" size="sm" asChild>
-            <a
-              href={shareUrls[key]}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={label}
-              onClick={() => trackShare(key)}
-            >
-              <Icon className="size-4" aria-hidden="true" />
-              <span className="hidden sm:inline">{displayName}</span>
-            </a>
-          </Button>
-        ))}
-
-        <Button variant="outline" size="sm" asChild>
+    <div className="flex flex-wrap items-center gap-2">
+      {platformButtons.map(({ key, iconName, label, displayName }) => (
+        <Button key={key} variant="outline" size="sm" asChild>
           <a
-            href={shareUrls.email}
-            aria-label="Share via Email"
-            onClick={() => trackShare("email")}
+            href={shareUrls[key]}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            onClick={() => trackShare(key)}
           >
-            <TbMail className="size-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Email</span>
+            <Icon name={iconName} className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">{displayName}</span>
           </a>
         </Button>
+      ))}
 
-        <Button
-          onClick={handleCopyLink}
-          variant="outline"
-          size="sm"
-          aria-label="Copy link to clipboard"
-        >
-          <TbLink className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Copy Link</span>
-        </Button>
-      </div>
+      <Button variant="outline" size="sm" asChild>
+        <a href={shareUrls.email} aria-label="Share via Email" onClick={() => trackShare("email")}>
+          <Icon name="mail" className="size-4" aria-hidden="true" />
+          <span className="hidden sm:inline">Email</span>
+        </a>
+      </Button>
+
+      <Button
+        onClick={handleCopyLink}
+        variant="outline"
+        size="sm"
+        aria-label="Copy link to clipboard"
+      >
+        <Icon name="link" className="size-4" aria-hidden="true" />
+        <span className="hidden sm:inline">Copy Link</span>
+      </Button>
     </div>
   );
 }

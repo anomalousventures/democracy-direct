@@ -1,6 +1,6 @@
 import * as React from "react";
 import { OTPInput, OTPInputContext } from "input-otp";
-import { Minus } from "lucide-react";
+import { Icon } from "@/components/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -64,7 +64,7 @@ const InputOTPSeparator = React.forwardRef<
   React.ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => (
   <div ref={ref} role="separator" className={cn("text-muted-foreground", className)} {...props}>
-    <Minus className="h-4 w-4" />
+    <Icon name="minus" className="h-4 w-4" />
   </div>
 ));
 InputOTPSeparator.displayName = "InputOTPSeparator";
