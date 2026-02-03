@@ -400,7 +400,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
               </div>
             )}
           </>
-        ) : (
+        ) : !error ? (
           <div
             className="text-center py-16 px-8 bg-secondary/30 border border-border rounded-sm"
             data-testid="no-results"
@@ -432,7 +432,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
               </button>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

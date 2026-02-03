@@ -16,12 +16,17 @@ const user = Astro.locals.user;
 const config = getConfig(Astro.locals);
 const turnstileSiteKey = config.turnstile.siteKey;
 
-const db = createDb(config.database.url);
-const approvedTags = await db
-  .select({ name: issueTags.name })
-  .from(issueTags)
-  .where(eq(issueTags.status, "approved"));
-const availableTags = approvedTags.map((t) => t.name);
+let availableTags: string[] = [];
+try {
+  const db = createDb(config.database.url);
+  const approvedTags = await db
+    .select({ name: issueTags.name })
+    .from(issueTags)
+    .where(eq(issueTags.status, "approved"));
+  availableTags = approvedTags.map((t) => t.name);
+} catch {
+  // Gracefully degrade - tag selector will be empty but page still works
+}
 ---
 
 <Layout title="Create New Template">
