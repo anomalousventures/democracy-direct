@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
-import { templates, users, type Template } from "@/db/schema";
+import { templates, type Template } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTemplate } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
@@ -14,8 +14,6 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
-import { moderateTemplate } from "@/lib/moderation/moderate-template";
-import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export const prerender = false;
 
@@ -138,17 +136,6 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       return forbidden();
     }
 
-    const [userRecord] = await db
-      .select({ trustLevel: users.trustLevel })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .limit(1);
-    const trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
-
-    const openaiKey = config.moderation.openaiApiKey;
-    const contentToModerate = `${title}\n\n${templateBody}`;
-    const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
-
     const [updatedTemplate] = await db
       .update(templates)
       .set({
@@ -157,8 +144,8 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
         body: templateBody.trim(),
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         isPublic: isPublic ?? true,
-        moderationStatus: moderation.status,
-        moderationScores: moderation.scores,
+        moderationStatus: "pending",
+        moderationScores: null,
         updatedAt: new Date(),
       })
       .where(eq(templates.id, existingTemplate.id))

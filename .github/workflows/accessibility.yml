@@ -40,7 +40,7 @@ jobs:
 
       - name: Get deployment URL and PR number
         id: deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             let deploymentUrl, prNumber;
@@ -314,7 +314,7 @@ jobs:
 
       - name: Post audit results to PR
         if: steps.deployment.outputs.url != '' && steps.deployment.outputs.pr_number != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');

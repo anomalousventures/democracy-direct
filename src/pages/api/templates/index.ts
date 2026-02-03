@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
-import { templates, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { templates } from "@/db/schema";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
 import {
@@ -12,9 +11,6 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
-import { moderateTemplate } from "@/lib/moderation/moderate-template";
-import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
-import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export const prerender = false;
 
@@ -76,20 +72,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const db = createDb(config.database.url);
 
-    let trustLevel: number = TRUST_LEVELS.NEW_USER;
-    if (user) {
-      const [userRecord] = await db
-        .select({ trustLevel: users.trustLevel })
-        .from(users)
-        .where(eq(users.id, user.id))
-        .limit(1);
-      trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
-    }
-
-    const openaiKey = config.moderation.openaiApiKey;
-    const contentToModerate = `${title}\n\n${templateBody}`;
-    const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
-
     const slug = generateSlug(title);
 
     const templateIsPublic = user ? (isPublic ?? true) : true;
@@ -104,8 +86,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
         userId: user?.id ?? null,
         isPublic: templateIsPublic,
-        moderationStatus: moderation.status,
-        moderationScores: moderation.scores,
+        moderationStatus: "pending",
+        moderationScores: null,
       })
       .returning({
         id: templates.id,
@@ -117,10 +99,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         moderationStatus: templates.moderationStatus,
         createdAt: templates.createdAt,
       });
-
-    if (moderation.status === "approved" && user) {
-      await incrementApprovedTemplatesCount(db, user.id);
-    }
 
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {

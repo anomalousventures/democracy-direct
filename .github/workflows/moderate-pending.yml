@@ -1,0 +1,53 @@
+name: Moderate Pending Templates
+
+on:
+  schedule:
+    # Run every 4 hours at :15, between 8am-10pm Pacific
+    # 8am, 12pm, 4pm, 8pm Pacific = 16:00, 20:00, 00:00, 04:00 UTC (PST)
+    - cron: "15 16,20,0,4 * * *"
+  workflow_dispatch:
+
+jobs:
+  moderate:
+    name: Process Pending Moderation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Process pending moderation
+        id: moderate
+        run: |
+          set +e
+          OUTPUT=$(pnpm moderate:pending 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Fail workflow if moderation failed
+        if: steps.moderate.outputs.failed == 'true'
+        run: |
+          echo "Moderation processing failed"
+          exit 1
