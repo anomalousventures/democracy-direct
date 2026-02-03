@@ -254,7 +254,9 @@ export function TemplateForm({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-primary">Letter Body</Label>
+        <Label htmlFor="template-body" className="text-primary">
+          Letter Body
+        </Label>
         <Tabs defaultValue="edit" className="w-full">
           <TabsList className="mb-2">
             <TabsTrigger value="edit">Edit</TabsTrigger>
@@ -262,6 +264,7 @@ export function TemplateForm({
           </TabsList>
           <TabsContent value="edit">
             <TiptapEditor
+              id="template-body"
               content={body}
               onChange={setBody}
               placeholder="Write your letter template here..."

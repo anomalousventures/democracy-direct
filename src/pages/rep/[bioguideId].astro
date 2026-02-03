@@ -190,9 +190,9 @@ if (!error) {
                       </a>
                     )}
 
-                    {rep.website && (
+                    {sanitizeExternalUrl(rep.website) && (
                       <a
-                        href={rep.website}
+                        href={sanitizeExternalUrl(rep.website)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         class="info-item-link"
@@ -203,7 +203,12 @@ if (!error) {
                         <div class="flex-1 flex flex-col justify-center">
                           <p class="font-medium">Official Website</p>
                           <p class="inline-flex items-center gap-1 text-primary">
-                            <span>{new URL(rep.website).hostname.replace("www.", "")}</span>
+                            <span>
+                              {new URL(sanitizeExternalUrl(rep.website)!).hostname.replace(
+                                "www.",
+                                ""
+                              )}
+                            </span>
                             <Icon name="external-link" class="w-4 h-4" />
                           </p>
                         </div>
