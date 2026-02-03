@@ -49,7 +49,7 @@ jobs:
           # Validate JSON is not empty and store result
           if [ -z "$JSON" ] || [ "$JSON" = "{}" ]; then
             echo "Warning: No valid JSON result found in output" >&2
-            JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown"}'
+            JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[]}'
           fi
           
           echo "result=$JSON" >> $GITHUB_OUTPUT
@@ -84,7 +84,7 @@ jobs:
           # Guard: Validate BILLS_RESULT is not empty
           if [ -z "$BILLS_RESULT" ]; then
             echo "Warning: BILLS_RESULT is empty, using default values"
-            BILLS_RESULT='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown"}'
+            BILLS_RESULT='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[]}'
           fi
 
           # Generate timestamp for embed
