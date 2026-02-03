@@ -216,12 +216,16 @@ https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00001
 - [x] All lint/format/typecheck passes
 - [x] All 704 unit tests pass
 
-### UI Components (Epic 4 - Future)
+### UI Components (Epic 4 - Complete)
 
-- [ ] Voting history displays on rep profile pages for both chambers
-- [ ] Votes show correct position for each member
-- [ ] Clicking vote links to official source (Congress.gov or Senate.gov)
-- [ ] Filter by chamber works
-- [ ] Filter by topic/category works
-- [ ] Data loads within acceptable time (<2s)
-- [ ] E2E tests pass for vote display
+- [x] VotingRecord component created with vote history display
+- [x] Position badges (Yea=green, Nay=red, Not Voting=gray, Present=yellow)
+- [x] Vote stats visualization (horizontal bar chart)
+- [x] RepTabs component for tabbed navigation with hash routing
+- [x] ContactInfo component extracted for reusability
+- [x] API endpoints created (/api/rep/[bioguideId]/voting-record)
+- [x] Rep page integrated with RepTabs showing Contact, Voting Record, Sponsored Bills
+- [x] Unit tests for all new components (VotingRecord, SponsoredBills, RepTabs, ContactInfo)
+- [x] E2E tests for rep page tabs navigation
+- [ ] Filter by chamber works (future enhancement)
+- [ ] Filter by topic/category works (future enhancement)

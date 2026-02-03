@@ -10,10 +10,15 @@ import Icon from "@/components/icons/Icon.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import { getVotesByMember, getVoteStats } from "@/db/queries/votes";
+import { getBillsByMember, getBillCountByMember } from "@/db/queries/bills";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
+import { RepTabs } from "@/components/RepTabs";
 import type { Legislator } from "@/db/schema";
+import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
+import type { Bill } from "@/db/schema";
 import {
   getPhotoUrl,
   getPartyColor,
@@ -35,6 +40,10 @@ let rep: Legislator | null = null;
 let error: string | null = null;
 let templateContent: string | null = null;
 let templateTitle: string | null = null;
+let votes: VoteWithPosition[] = [];
+let voteStats: VoteStats = { totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, present: 0 };
+let bills: Bill[] = [];
+let billCount = 0;
 
 const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
 if (isInvalidId) {
@@ -81,7 +90,26 @@ if (!error) {
       console.error("Failed to load template:", e);
     }
   }
+
+  if (rep && !error) {
+    try {
+      const [loadedVotes, loadedStats, loadedBills, loadedBillCount] = await Promise.all([
+        getVotesByMember(db, bioguideId!, { limit: 50 }),
+        getVoteStats(db, bioguideId!),
+        getBillsByMember(db, bioguideId!, { limit: 50 }),
+        getBillCountByMember(db, bioguideId!),
+      ]);
+      votes = loadedVotes;
+      voteStats = loadedStats;
+      bills = loadedBills;
+      billCount = loadedBillCount;
+    } catch (e) {
+      console.error("Failed to load voting/bill data:", e);
+    }
+  }
 }
+
+const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null;
 ---
 
 <Layout
@@ -172,127 +200,28 @@ if (!error) {
                     </div>
                   </div>
                 </div>
-
-                {/* Contact Information Section */}
-                <div class="pt-6">
-                  <h2 class="text-xl font-semibold mb-4">Contact Information</h2>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {rep.phoneCapitol && (
-                      <a href={`tel:${rep.phoneCapitol}`} class="info-item-link">
-                        <div class="icon-box-sm self-center">
-                          <Icon name="phone" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex flex-col justify-center">
-                          <p class="font-medium">DC Office Phone</p>
-                          <p class="text-primary text-lg">{rep.phoneCapitol}</p>
-                        </div>
-                      </a>
-                    )}
-
-                    {sanitizeExternalUrl(rep.website) && (
-                      <a
-                        href={sanitizeExternalUrl(rep.website)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="info-item-link"
-                      >
-                        <div class="icon-box-sm self-center">
-                          <Icon name="globe" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <p class="font-medium">Official Website</p>
-                          <p class="inline-flex items-center gap-1 text-primary">
-                            <span>
-                              {new URL(sanitizeExternalUrl(rep.website)!).hostname.replace(
-                                "www.",
-                                ""
-                              )}
-                            </span>
-                            <Icon name="external-link" class="w-4 h-4" />
-                          </p>
-                        </div>
-                      </a>
-                    )}
-
-                    {sanitizeExternalUrl(rep.contactFormUrl) && (
-                      <a
-                        href={sanitizeExternalUrl(rep.contactFormUrl)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="info-item-link"
-                      >
-                        <div class="icon-box-sm self-center">
-                          <Icon name="mail" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <p class="font-medium">Online Contact Form</p>
-                          <p class="inline-flex items-center gap-1 text-primary">
-                            <span>Send a message</span>
-                            <Icon name="external-link" class="w-4 h-4" />
-                          </p>
-                        </div>
-                      </a>
-                    )}
-
-                    {rep.addressCapitol && (
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rep.addressCapitol)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="info-item-link"
-                      >
-                        <div class="icon-box-sm self-center">
-                          <Icon name="map-pin" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <p class="font-medium">DC Office Address</p>
-                          <p class="inline-flex items-center gap-1 text-primary">
-                            <span class="whitespace-pre-line">{rep.addressCapitol}</span>
-                            <Icon name="external-link" class="w-4 h-4 flex-shrink-0" />
-                          </p>
-                        </div>
-                      </a>
-                    )}
-
-                    {rep.twitterHandle && (
-                      <a
-                        href={`https://twitter.com/${rep.twitterHandle}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="info-item-link"
-                      >
-                        <div class="icon-box-sm self-center">
-                          <Icon name="brand-x" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <p class="font-medium">X (Twitter)</p>
-                          <p class="text-primary">@{rep.twitterHandle}</p>
-                        </div>
-                      </a>
-                    )}
-
-                    {rep.facebookId && (
-                      <a
-                        href={`https://facebook.com/${rep.facebookId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="info-item-link"
-                      >
-                        <div class="icon-box-sm self-center">
-                          <Icon name="brand-facebook" class="w-5 h-5 text-accent" />
-                        </div>
-                        <div class="flex-1 flex flex-col justify-center">
-                          <p class="font-medium">Facebook</p>
-                          <p class="text-primary">View Profile</p>
-                        </div>
-                      </a>
-                    )}
-                  </div>
-                </div>
               </AstroCard>
 
-              <div class="mt-8 animate-fade-up-delay-1">
+              <div class="mt-8 animate-fade-up-delay-1 no-print">
+                <RepTabs
+                  client:load
+                  bioguideId={bioguideId!}
+                  chamber={rep.chamber as "house" | "senate"}
+                  votes={votes}
+                  voteStats={voteStats}
+                  bills={bills}
+                  billCount={billCount}
+                  contactInfo={{
+                    phone: rep.phoneCapitol || undefined,
+                    contactFormUrl: sanitizedContactUrl || undefined,
+                    address: rep.addressCapitol || undefined,
+                    twitterHandle: rep.twitterHandle || undefined,
+                    facebookId: rep.facebookId || undefined,
+                  }}
+                />
+              </div>
+
+              <div class="mt-8 animate-fade-up-delay-2">
                 <ContactFlow
                   client:load
                   representative={{
@@ -302,7 +231,7 @@ if (!error) {
                     state: rep.state,
                     district: rep.district,
                     chamber: rep.chamber as "senate" | "house",
-                    contact_form: sanitizeExternalUrl(rep.contactFormUrl) || undefined,
+                    contact_form: sanitizedContactUrl || undefined,
                     phone: rep.phoneCapitol || undefined,
                     office_address: rep.addressCapitol || undefined,
                   }}
