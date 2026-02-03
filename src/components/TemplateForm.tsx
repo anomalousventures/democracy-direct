@@ -27,18 +27,18 @@ declare global {
 }
 
 const ISSUE_TAG_OPTIONS = [
-  "Healthcare",
-  "Education",
-  "Environment",
-  "Economy",
-  "Immigration",
-  "Civil Rights",
-  "Gun Policy",
-  "Foreign Policy",
-  "Social Security",
-  "Infrastructure",
-  "Veterans Affairs",
-  "Housing",
+  "healthcare",
+  "education",
+  "environment",
+  "economy",
+  "immigration",
+  "civil rights",
+  "gun policy",
+  "foreign policy",
+  "social security",
+  "infrastructure",
+  "veterans affairs",
+  "housing",
 ];
 
 interface TemplateFormProps {
@@ -74,7 +74,9 @@ export function TemplateForm({
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(initialData?.description || "");
   const [body, setBody] = useState(initialData?.body || "");
-  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.issueTags || []);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    (initialData?.issueTags || []).map((t) => t.toLowerCase())
+  );
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -266,7 +268,7 @@ export function TemplateForm({
               size="sm"
               pressed={selectedTags.includes(tag)}
               onPressedChange={() => toggleTag(tag)}
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground capitalize"
             >
               {tag}
             </Toggle>

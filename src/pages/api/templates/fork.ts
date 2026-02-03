@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { validateTemplate, generateSlug } from "@/lib/template-validation";
+import { validateTemplate, generateSlug, normalizeTags } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
@@ -113,7 +113,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         title: title.trim(),
         description: description?.trim() ?? null,
         body: templateBody.trim(),
-        issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
+        issueTags: normalizeTags(issueTags),
         userId: user.id,
         isPublic: templateIsPublic,
         forkedFrom: forkedFromId,

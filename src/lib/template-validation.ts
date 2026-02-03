@@ -137,6 +137,11 @@ export function validateTemplate(input: TemplateInput): TemplateValidationError[
   return errors;
 }
 
+export function normalizeTags(tags: string[] | undefined): string[] {
+  if (!tags) return [];
+  return tags.map((t) => t.trim().toLowerCase()).filter((t) => t.length > 0);
+}
+
 export function generateSlug(title: string): string {
   const slug = title
     .toLowerCase()

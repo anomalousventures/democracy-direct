@@ -109,7 +109,12 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
                   <div className="flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">
                       {template.issueTags?.map((tag) => (
-                        <Badge key={tag} variant="secondary" data-testid="issue-tag">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="capitalize"
+                          data-testid="issue-tag"
+                        >
                           {tag}
                         </Badge>
                       ))}
