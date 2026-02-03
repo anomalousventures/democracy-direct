@@ -1,17 +1,38 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Toggle } from "@/components/ui/toggle";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TiptapEditor } from "./TiptapEditor";
+import { MarkdownContent } from "./MarkdownContent";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   BODY_MIN_LENGTH,
   BODY_MAX_LENGTH,
+  validateTemplateVariables,
+  getSupportedVariablesList,
 } from "@/lib/template-validation";
+
+const SAMPLE_PREVIEW_DATA = {
+  REP_NAME: "Jane Smith",
+  REP_TITLE: "Senator",
+  REP_FIRST: "Jane",
+  REP_LAST: "Smith",
+  REP_PARTY: "Independent",
+  STATE: "CA",
+  DISTRICT: "12",
+  USER_NAME: "John Doe",
+  USER_CITY: "San Francisco",
+  TODAY_DATE: new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }),
+};
 
 declare global {
   interface Window {
@@ -99,6 +120,14 @@ export function TemplateForm({
     );
   }, []);
 
+  const previewContent = useMemo(() => {
+    let preview = body;
+    for (const [key, value] of Object.entries(SAMPLE_PREVIEW_DATA)) {
+      preview = preview.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+    }
+    return preview;
+  }, [body]);
+
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -120,6 +149,13 @@ export function TemplateForm({
       newErrors.body = `Body must be at least ${BODY_MIN_LENGTH} characters`;
     } else if (body.trim().length > BODY_MAX_LENGTH) {
       newErrors.body = `Body must be at most ${BODY_MAX_LENGTH} characters`;
+    } else {
+      const variableValidation = validateTemplateVariables(body);
+      if (!variableValidation.valid) {
+        const unknownList = variableValidation.unknownVariables.join(", ");
+        const supportedList = getSupportedVariablesList().join(", ");
+        newErrors.body = `Unknown variable(s): ${unknownList}. Supported variables: ${supportedList}`;
+      }
     }
 
     setErrors(newErrors);
@@ -218,17 +254,40 @@ export function TemplateForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="body" className="text-primary">
+        <Label htmlFor="template-body" className="text-primary">
           Letter Body
         </Label>
-        <TiptapEditor
-          content={body}
-          onChange={setBody}
-          placeholder="Write your letter template here..."
-          maxLength={BODY_MAX_LENGTH}
-          aria-invalid={errors.body ? "true" : undefined}
-          aria-describedby={errors.body ? "body-error" : "body-hint"}
-        />
+        <Tabs defaultValue="edit" className="w-full">
+          <TabsList className="mb-2">
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+          <TabsContent value="edit">
+            <TiptapEditor
+              id="template-body"
+              content={body}
+              onChange={setBody}
+              placeholder="Write your letter template here..."
+              maxLength={BODY_MAX_LENGTH}
+              aria-invalid={errors.body ? "true" : undefined}
+              aria-describedby={errors.body ? "body-error" : "body-hint"}
+            />
+          </TabsContent>
+          <TabsContent value="preview">
+            <div className="min-h-[200px] p-4 bg-white border-2 border-border rounded-md">
+              {body ? (
+                <MarkdownContent content={previewContent} className="text-sm" />
+              ) : (
+                <p className="text-muted-foreground italic">
+                  Start writing your letter to see a preview...
+                </p>
+              )}
+              <p className="mt-4 text-xs text-muted-foreground border-t pt-3">
+                Sample data: Senator Jane Smith (Independent, CA-12)
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>
             {errors.body ? (

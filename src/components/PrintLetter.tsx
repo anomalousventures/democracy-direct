@@ -1,10 +1,19 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { TbPrinter } from "react-icons/tb";
-import { AddressForm } from "./AddressForm";
-import { LetterPreview } from "./LetterPreview";
-import { type Representative, type Address, createEmptyAddress } from "../types/representative";
+import { Icon } from "@/components/icons";
+import { SenderInfoForm, type SenderInfo, createEmptySenderInfo } from "./SenderInfoForm";
+import { LetterPreview, type PrintOptions } from "./LetterPreview";
+import { type Representative } from "../types/representative";
 import { useAnalytics } from "@/hooks/useAnalytics";
+
+const printLetterOptions: PrintOptions = {
+  includeReturnAddress: true,
+  includeDate: true,
+  includeRecipientAddress: true,
+  includeSalutation: true,
+  includeClosing: true,
+  includeSignatureLine: true,
+};
 
 interface PrintLetterProps {
   letterContent: string;
@@ -13,7 +22,7 @@ interface PrintLetterProps {
 }
 
 export function PrintLetter({ letterContent, representative, bioguideId }: PrintLetterProps) {
-  const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
+  const [senderInfo, setSenderInfo] = useState<SenderInfo>(createEmptySenderInfo);
   const { capture } = useAnalytics();
   const repName = `${representative.first_name} ${representative.last_name}`;
 
@@ -25,11 +34,11 @@ export function PrintLetter({ letterContent, representative, bioguideId }: Print
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AddressForm onChange={setReturnAddress} />
+        <SenderInfoForm onChange={setSenderInfo} />
 
         <div className="flex flex-col justify-end">
           <Button variant="default" onClick={handlePrint}>
-            <TbPrinter className="size-4" aria-hidden="true" />
+            <Icon name="printer" className="size-4" aria-hidden="true" />
             Print & Mail Letter
           </Button>
         </div>
@@ -38,7 +47,8 @@ export function PrintLetter({ letterContent, representative, bioguideId }: Print
       <LetterPreview
         letterContent={letterContent}
         representative={representative}
-        returnAddress={returnAddress}
+        returnAddress={senderInfo}
+        printOptions={printLetterOptions}
         className="min-h-[500px]"
       />
     </div>

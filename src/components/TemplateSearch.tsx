@@ -5,6 +5,7 @@ import { Toggle } from "./ui/toggle";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
+import { getPreviewLines } from "@/lib/markdown";
 
 interface Template {
   id: string;
@@ -185,9 +186,8 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
     setSelectedTags([]);
   }, []);
 
-  const truncateBody = (body: string, maxLength = 100): string => {
-    if (body.length <= maxLength) return body;
-    return body.slice(0, maxLength).trim() + "...";
+  const getBodyPreview = (body: string): string => {
+    return getPreviewLines(body, 3);
   };
 
   const hasActiveFilters = searchQuery.trim() || selectedTags.length > 0;
@@ -316,7 +316,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
                       {template.title}
                     </h2>
                     <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-                      {template.description || truncateBody(template.body)}
+                      {template.description || getBodyPreview(template.body)}
                     </p>
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex flex-wrap gap-2 min-w-0">

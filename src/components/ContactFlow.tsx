@@ -1,16 +1,31 @@
 import { useState, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { TbFileText, TbPrinter } from "react-icons/tb";
-import { LetterComposer } from "./LetterComposer";
-import { ContactActions } from "./ContactActions";
-import { AddressForm } from "./AddressForm";
-import { LetterPreview, type PrintOptions } from "./LetterPreview";
-import { UserInfoInputs } from "./UserInfoInputs";
-import { type Representative, type Address, createEmptyAddress } from "../types/representative";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Icon } from "@/components/icons";
+import { TiptapEditor } from "./TiptapEditor";
+import { SenderInfoForm, type SenderInfo, createEmptySenderInfo } from "./SenderInfoForm";
+import {
+  LetterPreview,
+  type PrintOptions,
+  type PrintReadiness,
+  defaultPrintOptions,
+} from "./LetterPreview";
+import { type Representative, getRepresentativeTitle } from "../types/representative";
 import { substituteForRepresentative, parseTemplateVariables } from "@/lib/template-variables";
+import { markdownToPlainText } from "@/lib/markdown";
 import { useAnalytics } from "@/hooks/useAnalytics";
+
+type ViewMode = "edit" | "preview" | "print";
 
 interface ContactFlowProps {
   representative: Representative;
@@ -28,44 +43,75 @@ export function ContactFlow({
   repBioguideId,
 }: ContactFlowProps) {
   const [letterContent, setLetterContent] = useState(initialTemplate);
-  const [returnAddress, setReturnAddress] = useState<Address>(createEmptyAddress);
-  const [userInfo, setUserInfo] = useState({ name: "", city: "" });
-  const [printOptions, setPrintOptions] = useState<PrintOptions>({
-    includeSalutation: false,
-    includeClosing: false,
-    includeSignatureLine: false,
-  });
+  const [senderInfo, setSenderInfo] = useState<SenderInfo>(createEmptySenderInfo);
+  const [printOptions, setPrintOptions] = useState<PrintOptions>(defaultPrintOptions);
+  const [isRedirectDialogOpen, setIsRedirectDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("edit");
+
   const { capture } = useAnalytics();
   const repName = `${representative.first_name} ${representative.last_name}`;
+  const repTitle = getRepresentativeTitle(representative);
 
   const usedVariables = useMemo(() => parseTemplateVariables(letterContent), [letterContent]);
   const needsUserName = usedVariables.includes("USER_NAME");
   const needsUserCity = usedVariables.includes("USER_CITY");
 
-  const handleUserInfoChange = useCallback((info: { name: string; city: string }) => {
-    setUserInfo(info);
-    setReturnAddress((prev) => ({
-      ...prev,
-      name: info.name || prev.name,
-      city: info.city || prev.city,
-    }));
+  const handleSenderInfoChange = useCallback((info: SenderInfo) => {
+    setSenderInfo(info);
   }, []);
 
   const substitutedContent = useMemo(
     () =>
       substituteForRepresentative(letterContent, representative, {
-        name: userInfo.name || returnAddress.name,
-        city: userInfo.city || returnAddress.city,
+        name: senderInfo.name,
+        city: senderInfo.city,
       }),
-    [
-      letterContent,
-      representative,
-      userInfo.name,
-      userInfo.city,
-      returnAddress.name,
-      returnAddress.city,
-    ]
+    [letterContent, representative, senderInfo.name, senderInfo.city]
   );
+
+  const printReadiness: PrintReadiness = useMemo(() => {
+    const hasContent = letterContent.trim().length > 0;
+    const hasName = !needsUserName || senderInfo.name.trim().length > 0;
+    const hasCity = !needsUserCity || senderInfo.city.trim().length > 0;
+    const hasReturnAddress = senderInfo.name.trim().length > 0;
+
+    return {
+      hasContent,
+      hasName,
+      hasCity,
+      hasReturnAddress,
+      allRequiredMet: hasContent && hasName && hasCity,
+    };
+  }, [letterContent, needsUserName, needsUserCity, senderInfo.name, senderInfo.city]);
+
+  const copyToClipboard = useCallback(async () => {
+    try {
+      const plainText = markdownToPlainText(substitutedContent);
+      await navigator.clipboard.writeText(plainText);
+      capture("letter_copied", { repBioguideId, repName });
+      toast.success("Copied to clipboard!");
+      return true;
+    } catch {
+      toast.error("Failed to copy to clipboard");
+      return false;
+    }
+  }, [substitutedContent, capture, repBioguideId, repName]);
+
+  const handleContactFormClick = useCallback(async () => {
+    const copied = await copyToClipboard();
+    if (copied && representative.contact_form) {
+      setIsRedirectDialogOpen(true);
+    }
+  }, [copyToClipboard, representative.contact_form]);
+
+  const handleGoToForm = useCallback(() => {
+    capture("contact_form_clicked", { repBioguideId, repName });
+    setIsRedirectDialogOpen(false);
+  }, [capture, repBioguideId, repName]);
+
+  const handlePhoneClick = useCallback(() => {
+    capture("phone_called", { repBioguideId, repName });
+  }, [capture, repBioguideId, repName]);
 
   const handlePrint = useCallback(() => {
     capture("letter_printed", { repBioguideId, repName, templateSlug });
@@ -73,12 +119,14 @@ export function ContactFlow({
   }, [capture, repBioguideId, repName, templateSlug]);
 
   const templatesUrl = repBioguideId ? `/templates?rep=${repBioguideId}` : "/templates";
+  const hasContent = letterContent.trim().length > 0;
 
   return (
-    <div className="space-y-8">
+    <>
       <div className="card-civic-lg no-print">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold text-primary">Write Your Letter</h2>
+        {/* Header */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-bold text-primary">Contact Your Representative</h2>
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {templateName && templateSlug ? (
               <span className="flex items-center gap-2">
@@ -93,122 +141,281 @@ export function ContactFlow({
                 href={templatesUrl}
                 className="inline-flex items-center gap-1 text-primary hover:text-accent transition-colors"
               >
-                <TbFileText className="size-4" aria-hidden="true" />
+                <Icon name="file-text" className="size-4" aria-hidden="true" />
                 Browse Templates
               </a>
             )}
           </div>
-        </div>
+        </header>
 
-        {(needsUserName || needsUserCity) && (
-          <div className="mb-6">
-            <UserInfoInputs
-              onChange={handleUserInfoChange}
-              showName={needsUserName}
-              showCity={needsUserCity}
+        {/* Main content - reorders on mobile via CSS */}
+        <div className="flex flex-col lg:flex-row lg:gap-6">
+          {/* Sidebar - comes FIRST on mobile (order-1), SECOND on desktop */}
+          <aside className="order-1 lg:order-2 lg:w-80 lg:flex-shrink-0 space-y-4 mb-6 lg:mb-0">
+            <SenderInfoForm
+              onChange={handleSenderInfoChange}
+              requiredForTemplate={{ name: needsUserName, city: needsUserCity }}
             />
-          </div>
-        )}
+          </aside>
 
-        <LetterComposer
-          representative={representative}
-          initialContent={initialTemplate}
-          onContentChange={setLetterContent}
-          userInfo={userInfo}
-        />
-
-        {letterContent && (
-          <div className="mt-6 pt-6 border-t border-border">
-            <h3 className="text-lg font-semibold mb-4 text-primary">Send Your Letter</h3>
-            <ContactActions
-              content={substitutedContent}
-              representative={representative}
-              bioguideId={repBioguideId}
-            />
-          </div>
-        )}
-      </div>
-
-      {letterContent && (
-        <div className="card-civic-lg no-print">
-          <h2 className="text-2xl font-bold mb-6 text-primary">Print & Mail</h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <AddressForm onChange={setReturnAddress} />
-
-            <div className="flex flex-col gap-4">
-              <fieldset className="space-y-3">
-                <legend className="sr-only">Letter Format Options</legend>
-                <p className="text-sm font-medium text-primary" aria-hidden="true">
-                  Letter Format Options
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="salutation"
-                      checked={printOptions.includeSalutation}
-                      onCheckedChange={(checked) =>
-                        setPrintOptions((p) => ({ ...p, includeSalutation: checked === true }))
-                      }
-                    />
-                    <Label htmlFor="salutation" className="text-sm cursor-pointer">
-                      Add "Dear Representative..." salutation
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="closing"
-                      checked={printOptions.includeClosing}
-                      onCheckedChange={(checked) =>
-                        setPrintOptions((p) => ({ ...p, includeClosing: checked === true }))
-                      }
-                    />
-                    <Label htmlFor="closing" className="text-sm cursor-pointer">
-                      Add "Sincerely," closing
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="signature"
-                      checked={printOptions.includeSignatureLine}
-                      onCheckedChange={(checked) =>
-                        setPrintOptions((p) => ({ ...p, includeSignatureLine: checked === true }))
-                      }
-                    />
-                    <Label htmlFor="signature" className="text-sm cursor-pointer">
-                      Add signature line
-                    </Label>
-                  </div>
-                </div>
-              </fieldset>
-
-              <Button variant="default" onClick={handlePrint} className="mt-auto">
-                <TbPrinter className="size-4" aria-hidden="true" />
-                Print & Mail Letter
+          {/* Editor/Preview - comes SECOND on mobile (order-2), FIRST on desktop */}
+          <div className="order-2 lg:order-1 lg:flex-1">
+            {/* View mode buttons */}
+            <div className="flex gap-1 mb-4 p-1 bg-muted rounded-md w-fit">
+              <Button
+                variant={viewMode === "edit" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("edit")}
+              >
+                Edit
+              </Button>
+              <Button
+                variant={viewMode === "preview" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("preview")}
+              >
+                Preview
+              </Button>
+              <Button
+                variant={viewMode === "print" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("print")}
+              >
+                Print Preview
               </Button>
             </div>
+
+            {/* Edit view */}
+            {viewMode === "edit" && (
+              <TiptapEditor
+                content={letterContent}
+                onChange={setLetterContent}
+                placeholder={`Write your letter to ${repTitle} ${representative.last_name}. Use {{REP_NAME}}, {{REP_TITLE}}, {{STATE}}, {{DISTRICT}} for auto-substitution...`}
+              />
+            )}
+
+            {/* Preview view - shows substituted content without print formatting */}
+            {viewMode === "preview" && (
+              <LetterPreview
+                letterContent={substitutedContent}
+                representative={representative}
+                returnAddress={senderInfo}
+                printOptions={{
+                  includeReturnAddress: false,
+                  includeDate: false,
+                  includeRecipientAddress: false,
+                  includeSalutation: false,
+                  includeClosing: false,
+                  includeSignatureLine: false,
+                }}
+              />
+            )}
+
+            {/* Print Preview view - shows full letter with formatting options */}
+            {viewMode === "print" && (
+              <div className="space-y-4">
+                {/* Letter Formatting Options */}
+                <fieldset className="p-4 bg-muted/50 rounded-sm border border-border">
+                  <legend className="text-sm font-medium text-primary px-2">
+                    Letter Formatting
+                  </legend>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="returnAddress"
+                        checked={printOptions.includeReturnAddress}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({ ...p, includeReturnAddress: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="returnAddress" className="text-sm cursor-pointer">
+                        Your Address
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="date"
+                        checked={printOptions.includeDate}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({ ...p, includeDate: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="date" className="text-sm cursor-pointer">
+                        Date
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="recipientAddress"
+                        checked={printOptions.includeRecipientAddress}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({
+                            ...p,
+                            includeRecipientAddress: checked === true,
+                          }))
+                        }
+                      />
+                      <Label htmlFor="recipientAddress" className="text-sm cursor-pointer">
+                        Rep Address
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="salutation"
+                        checked={printOptions.includeSalutation}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({ ...p, includeSalutation: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="salutation" className="text-sm cursor-pointer">
+                        Salutation
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="closing"
+                        checked={printOptions.includeClosing}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({ ...p, includeClosing: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="closing" className="text-sm cursor-pointer">
+                        Closing
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="signature"
+                        checked={printOptions.includeSignatureLine}
+                        onCheckedChange={(checked) =>
+                          setPrintOptions((p) => ({ ...p, includeSignatureLine: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="signature" className="text-sm cursor-pointer">
+                        Signature Line
+                      </Label>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <LetterPreview
+                  letterContent={substitutedContent}
+                  representative={representative}
+                  returnAddress={senderInfo}
+                  printOptions={printOptions}
+                  printReadiness={printReadiness}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions - ALWAYS visible */}
+        <div className="mt-6 pt-6 border-t border-border">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            {representative.contact_form && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handleContactFormClick}
+                disabled={!hasContent}
+                className="col-span-2"
+              >
+                <Icon name="external-link" className="size-5" aria-hidden="true" />
+                Send via Contact Form
+              </Button>
+            )}
+
+            {representative.phone && (
+              <Button variant="secondary" size="default" className="col-span-1" asChild>
+                <a href={`tel:${representative.phone}`} onClick={handlePhoneClick}>
+                  <Icon name="phone" className="size-4" aria-hidden="true" />
+                  Call Office
+                </a>
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handlePrint}
+              disabled={!printReadiness.allRequiredMet}
+              className="col-span-1"
+            >
+              <Icon name="printer" className="size-4" aria-hidden="true" />
+              Print & Mail
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="default"
+              onClick={copyToClipboard}
+              disabled={!hasContent}
+              className="col-span-2"
+            >
+              <Icon name="copy" className="size-4" aria-hidden="true" />
+              Copy
+            </Button>
           </div>
 
-          <LetterPreview
-            letterContent={substitutedContent}
-            representative={representative}
-            returnAddress={returnAddress}
-            printOptions={printOptions}
-            className="mt-8"
-          />
+          {!hasContent && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Write your letter above to enable sending
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
-      {letterContent && (
-        <div className="print-only hidden">
-          <LetterPreview
-            letterContent={substitutedContent}
-            representative={representative}
-            returnAddress={returnAddress}
-            printOptions={printOptions}
-          />
-        </div>
-      )}
-    </div>
+      {/* Print-only version */}
+      <div className="print-only hidden">
+        <LetterPreview
+          letterContent={substitutedContent}
+          representative={representative}
+          returnAddress={senderInfo}
+          printOptions={printOptions}
+        />
+      </div>
+
+      {/* Contact Form Redirect Dialog */}
+      <Dialog open={isRedirectDialogOpen} onOpenChange={setIsRedirectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="check" className="size-5 text-green-600" aria-hidden="true" />
+              Letter Copied to Clipboard
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              Your letter has been copied and is ready to paste into {repTitle} {repName}'s contact
+              form.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-sm bg-secondary p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">Next steps:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Click the button below to open the contact form</li>
+              <li>Look for the message or comment field</li>
+              <li>
+                Paste your letter using <kbd className="px-1 py-0.5 bg-muted rounded">Ctrl+V</kbd>{" "}
+                (or <kbd className="px-1 py-0.5 bg-muted rounded">⌘+V</kbd> on Mac)
+              </li>
+              <li>Fill in any required fields and submit</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button variant="default" asChild>
+              <a
+                href={representative.contact_form}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleGoToForm}
+              >
+                <Icon name="external-link" className="size-4" aria-hidden="true" />
+                Go to Contact Form
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

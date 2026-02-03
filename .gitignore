@@ -34,6 +34,7 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+.playwright-mcp/
 
 # Editor
 *.swp
