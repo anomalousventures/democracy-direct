@@ -91,11 +91,12 @@ describe("VotingRecord", () => {
       expect(screen.getByText(/H\.R\.1234/)).toBeInTheDocument();
     });
 
-    it("renders vote links correctly", () => {
+    it("renders vote links to source URL", () => {
       render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
 
-      const links = screen.getAllByRole("link", { name: /On Passage of the Bill/ });
-      expect(links[0]).toHaveAttribute("href", "/vote/house/119/1/123");
+      const links = screen.getAllByRole("link");
+      const sourceLink = links.find((link) => link.getAttribute("href")?.includes("congress.gov"));
+      expect(sourceLink).toHaveAttribute("href", "https://congress.gov/vote/119/house/123");
     });
 
     it("shows result badge with correct styling", () => {

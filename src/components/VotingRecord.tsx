@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { TbExternalLink, TbCalendar, TbGavel, TbChevronRight } from "react-icons/tb";
+import { TbExternalLink, TbCalendar, TbGavel, TbTag } from "react-icons/tb";
 import { cn } from "@/lib/utils";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
@@ -55,8 +55,14 @@ function formatDate(date: Date | string): string {
   });
 }
 
-function buildVoteUrl(vote: VoteWithPosition): string {
-  return `/vote/${vote.chamber}/${vote.congress}/${vote.session}/${vote.rollCall}`;
+function getVoteDisplayTitle(vote: VoteWithPosition): string {
+  if (vote.billTitle) {
+    return vote.billTitle;
+  }
+  if (vote.billNumber) {
+    return `${vote.billNumber}: ${vote.question}`;
+  }
+  return vote.question;
 }
 
 function PositionBadge({ position }: { position: VotePosition }) {
@@ -158,8 +164,8 @@ function VoteStatsBar({ stats }: { stats: VoteStats }) {
 }
 
 function VoteCard({ vote }: { vote: VoteWithPosition }) {
-  const voteUrl = buildVoteUrl(vote);
   const chamberLabel = vote.chamber === "house" ? "House" : "Senate";
+  const displayTitle = getVoteDisplayTitle(vote);
 
   return (
     <article className="group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
@@ -170,22 +176,48 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
             <span className="text-xs text-muted-foreground uppercase tracking-wide">
               {chamberLabel} Roll Call #{vote.rollCall}
             </span>
+            {vote.billNumber && (
+              <span className="text-xs font-semibold text-accent">{vote.billNumber}</span>
+            )}
           </div>
 
-          <a
-            href={voteUrl}
-            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
-          >
-            {vote.question}
-          </a>
+          {vote.sourceUrl ? (
+            <a
+              href={vote.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
+            >
+              {displayTitle}
+              <TbExternalLink
+                className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60"
+                aria-hidden="true"
+              />
+            </a>
+          ) : (
+            <p className="block font-medium text-primary line-clamp-2 mb-2">{displayTitle}</p>
+          )}
 
-          {vote.billNumber && (
-            <div className="flex items-center gap-2 text-sm">
-              <TbGavel className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
-              <span className="text-muted-foreground">
-                {vote.billNumber}
-                {vote.billTitle && <span className="hidden sm:inline"> — {vote.billTitle}</span>}
-              </span>
+          {vote.question !== displayTitle && (
+            <p className="text-sm text-muted-foreground mb-2">{vote.question}</p>
+          )}
+
+          {vote.billSubjects && vote.billSubjects.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              <TbTag className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+              {vote.billSubjects.slice(0, 3).map((subject, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 text-xs bg-secondary text-muted-foreground rounded-sm"
+                >
+                  {subject}
+                </span>
+              ))}
+              {vote.billSubjects.length > 3 && (
+                <span className="text-xs text-muted-foreground">
+                  +{vote.billSubjects.length - 3} more
+                </span>
+              )}
             </div>
           )}
 
@@ -210,28 +242,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
             </span>
           </div>
         </div>
-
-        <a
-          href={voteUrl}
-          className="shrink-0 flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-          aria-label={`View details for ${vote.question}`}
-        >
-          <span className="hidden sm:inline">Details</span>
-          <TbChevronRight className="w-4 h-4" aria-hidden="true" />
-        </a>
       </div>
-
-      {vote.sourceUrl && (
-        <a
-          href={vote.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute top-3 right-3 p-1.5 text-muted-foreground hover:text-primary hover:bg-secondary rounded-sm transition-colors"
-          aria-label="View official source"
-        >
-          <TbExternalLink className="w-4 h-4" aria-hidden="true" />
-        </a>
-      )}
     </article>
   );
 }

@@ -1,15 +1,9 @@
 import { useMemo, useState, useCallback } from "react";
-import {
-  TbExternalLink,
-  TbCalendar,
-  TbChevronRight,
-  TbFileText,
-  TbChevronDown,
-} from "react-icons/tb";
+import { TbExternalLink, TbCalendar, TbFileText, TbChevronDown } from "react-icons/tb";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
 import type { BillStatus } from "@/lib/types/legislation";
-import { BILL_TYPE_DISPLAY_NAMES, toBillId } from "@/lib/bill-utils";
+import { BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
 import type { BillType } from "@/lib/types/legislation";
 
 export interface SponsoredBillsProps {
@@ -92,15 +86,6 @@ function formatDate(date: Date | string): string {
   });
 }
 
-function buildBillUrl(bill: Bill): string {
-  const billId = toBillId({
-    type: bill.billType as BillType,
-    number: parseInt(bill.billNumber, 10),
-    congress: bill.congress,
-  });
-  return `/legislation/${billId}`;
-}
-
 function StatusBadge({ status }: { status: BillStatus }) {
   const style = STATUS_STYLES[status];
   return (
@@ -163,7 +148,6 @@ function BillStatsBar({ bills, totalCount }: { bills: Bill[]; totalCount: number
 
 function BillCard({ bill }: { bill: Bill }) {
   const [expanded, setExpanded] = useState(false);
-  const billUrl = buildBillUrl(bill);
   const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType]}${bill.billNumber}`;
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
@@ -182,12 +166,22 @@ function BillCard({ bill }: { bill: Bill }) {
             <span className="text-xs text-muted-foreground">{bill.congress}th Congress</span>
           </div>
 
-          <a
-            href={billUrl}
-            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
-          >
-            {bill.title}
-          </a>
+          {bill.congressGovUrl ? (
+            <a
+              href={bill.congressGovUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
+            >
+              {bill.title}
+              <TbExternalLink
+                className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60"
+                aria-hidden="true"
+              />
+            </a>
+          ) : (
+            <p className="block font-medium text-primary line-clamp-2 mb-2">{bill.title}</p>
+          )}
 
           {hasSummary && (
             <div className="mt-2">
@@ -220,28 +214,7 @@ function BillCard({ bill }: { bill: Bill }) {
             )}
           </div>
         </div>
-
-        <a
-          href={billUrl}
-          className="shrink-0 flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-          aria-label={`View details for ${displayNumber}`}
-        >
-          <span className="hidden sm:inline">Details</span>
-          <TbChevronRight className="w-4 h-4" aria-hidden="true" />
-        </a>
       </div>
-
-      {bill.congressGovUrl && (
-        <a
-          href={bill.congressGovUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute top-3 right-3 p-1.5 text-muted-foreground hover:text-primary hover:bg-secondary rounded-sm transition-colors"
-          aria-label="View on Congress.gov"
-        >
-          <TbExternalLink className="w-4 h-4" aria-hidden="true" />
-        </a>
-      )}
     </article>
   );
 }
