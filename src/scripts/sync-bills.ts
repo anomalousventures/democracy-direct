@@ -14,7 +14,8 @@ export interface SyncBillsResult {
   duration: string;
   cursorPosition: string | null;
   oldestCongress: number | null;
-  errors: Array<{ billNumber: string; error: string }>;
+  errors: Array<{ billNumber: string; message: string }>;
+  warnings: Array<{ billNumber: string; message: string }>;
 }
 
 interface BillUpsertData {
@@ -34,7 +35,7 @@ interface BillUpsertData {
 
 const BATCH_SIZE = 50;
 const TARGET_OLDEST_CONGRESS = 117;
-const BACKWARD_BILLS_PER_RUN = 3000;
+const BACKWARD_BILLS_PER_RUN = 750;
 const LOG_INTERVAL = 250;
 
 function formatElapsed(startTime: number): string {
@@ -96,17 +97,22 @@ export function inferBillStatus(latestActionText: string): BillStatus {
 
 export interface TransformResult {
   data: BillUpsertData | null;
-  error: { billNumber: string; error: string } | null;
+  warning: { billNumber: string; message: string } | null;
+  error: { billNumber: string; message: string } | null;
 }
 
-export function transformBillItem(item: BillListItem): TransformResult {
+export function transformBillItem(
+  item: BillListItem,
+  detailIntroducedDate?: string
+): TransformResult {
   const billIdentifier = `${item.type}${item.number}`;
   const parsed = parseBillNumber(billIdentifier);
 
   if (!parsed) {
     return {
       data: null,
-      error: { billNumber: billIdentifier, error: "Failed to parse bill number" },
+      warning: null,
+      error: { billNumber: billIdentifier, message: "Failed to parse bill number" },
     };
   }
 
@@ -114,15 +120,15 @@ export function transformBillItem(item: BillListItem): TransformResult {
     ? new Date(item.latestAction.actionDate)
     : null;
 
-  const hasIntroducedDate = Boolean(item.introducedDate);
-  const introducedDate = item.introducedDate ? new Date(item.introducedDate) : latestActionDate;
+  const introducedDate = detailIntroducedDate ? new Date(detailIntroducedDate) : latestActionDate;
 
   if (!introducedDate) {
     return {
       data: null,
+      warning: null,
       error: {
         billNumber: billIdentifier,
-        error: "Missing both introducedDate and latestActionDate",
+        message: "Missing both introducedDate and latestActionDate",
       },
     };
   }
@@ -144,12 +150,13 @@ export function transformBillItem(item: BillListItem): TransformResult {
       sponsorBioguideId: item.sponsors?.[0]?.bioguideId ?? null,
       congressGovUrl: buildCongressGovUrl(item.congress, parsed.type, parsed.number),
     },
-    error: hasIntroducedDate
+    warning: detailIntroducedDate
       ? null
       : {
           billNumber: billIdentifier,
-          error: "Missing introducedDate, used latestActionDate as fallback",
+          message: "Detail fetch failed, used latestActionDate as fallback",
         },
+    error: null,
   };
 }
 
@@ -254,7 +261,8 @@ async function upsertBills(db: Database, billsData: BillUpsertData[]): Promise<n
 async function syncForward(
   db: Database,
   client: CongressClient,
-  errors: SyncBillsResult["errors"]
+  errors: SyncBillsResult["errors"],
+  warnings: SyncBillsResult["warnings"]
 ): Promise<SyncBillsResult> {
   const startTime = Date.now();
   const cursorId = "bills_forward";
@@ -285,9 +293,23 @@ async function syncForward(
     });
 
     for (const item of response.bills) {
-      const result = transformBillItem(item);
+      let detailIntroducedDate: string | undefined;
+      try {
+        const detail = await client.getBill(item.congress, item.type, item.number);
+        detailIntroducedDate = detail.bill.introducedDate;
+      } catch (err) {
+        errors.push({
+          billNumber: `${item.type}${item.number}`,
+          message: `Detail fetch failed: ${err instanceof Error ? err.message : "Unknown"}`,
+        });
+      }
+
+      const result = transformBillItem(item, detailIntroducedDate);
       if (result.data) {
         billsToUpsert.push(result.data);
+      }
+      if (result.warning) {
+        warnings.push(result.warning);
       }
       if (result.error) {
         errors.push(result.error);
@@ -306,9 +328,15 @@ async function syncForward(
     `\n--- Fetch complete: ${billsToUpsert.length} bills in ${formatElapsed(fetchStartTime)} ---`
   );
 
+  if (warnings.length > 0) {
+    console.log(`\nTransform warnings (${warnings.length}):`);
+    warnings.slice(0, 5).forEach((w) => console.log(`  - ${w.billNumber}: ${w.message}`));
+    if (warnings.length > 5) console.log(`  ... and ${warnings.length - 5} more`);
+  }
+
   if (errors.length > 0) {
     console.log(`\nTransform errors (${errors.length}):`);
-    errors.slice(0, 5).forEach((e) => console.log(`  - ${e.billNumber}: ${e.error}`));
+    errors.slice(0, 5).forEach((e) => console.log(`  - ${e.billNumber}: ${e.message}`));
     if (errors.length > 5) console.log(`  ... and ${errors.length - 5} more`);
   }
 
@@ -325,6 +353,7 @@ async function syncForward(
   console.log("\n=== FORWARD SYNC COMPLETE ===");
   console.log(`Duration: ${duration}`);
   console.log(`Bills upserted: ${upsertCount}`);
+  console.log(`Warnings: ${warnings.length}`);
   console.log(`Errors: ${errors.length}`);
   console.log(`New cursor: ${newCursor}`);
 
@@ -338,13 +367,15 @@ async function syncForward(
     cursorPosition: newCursor,
     oldestCongress: null,
     errors,
+    warnings,
   };
 }
 
 async function syncBackward(
   db: Database,
   client: CongressClient,
-  errors: SyncBillsResult["errors"]
+  errors: SyncBillsResult["errors"],
+  warnings: SyncBillsResult["warnings"]
 ): Promise<SyncBillsResult> {
   const startTime = Date.now();
   const cursorId = "bills_backward";
@@ -368,6 +399,7 @@ async function syncBackward(
       cursorPosition: null,
       oldestCongress: previousOldest,
       errors: [],
+      warnings: [],
     };
   }
 
@@ -395,9 +427,23 @@ async function syncBackward(
     for (const item of response.bills) {
       if (billsToUpsert.length >= BACKWARD_BILLS_PER_RUN) break;
 
-      const result = transformBillItem(item);
+      let detailIntroducedDate: string | undefined;
+      try {
+        const detail = await client.getBill(item.congress, item.type, item.number);
+        detailIntroducedDate = detail.bill.introducedDate;
+      } catch (err) {
+        errors.push({
+          billNumber: `${item.type}${item.number}`,
+          message: `Detail fetch failed: ${err instanceof Error ? err.message : "Unknown"}`,
+        });
+      }
+
+      const result = transformBillItem(item, detailIntroducedDate);
       if (result.data) {
         billsToUpsert.push(result.data);
+      }
+      if (result.warning) {
+        warnings.push(result.warning);
       }
       if (result.error) {
         errors.push(result.error);
@@ -422,9 +468,15 @@ async function syncBackward(
     `\n--- Fetch complete: ${billsToUpsert.length} bills in ${formatElapsed(fetchStartTime)} ---`
   );
 
+  if (warnings.length > 0) {
+    console.log(`\nTransform warnings (${warnings.length}):`);
+    warnings.slice(0, 5).forEach((w) => console.log(`  - ${w.billNumber}: ${w.message}`));
+    if (warnings.length > 5) console.log(`  ... and ${warnings.length - 5} more`);
+  }
+
   if (errors.length > 0) {
     console.log(`\nTransform errors (${errors.length}):`);
-    errors.slice(0, 5).forEach((e) => console.log(`  - ${e.billNumber}: ${e.error}`));
+    errors.slice(0, 5).forEach((e) => console.log(`  - ${e.billNumber}: ${e.message}`));
     if (errors.length > 5) console.log(`  ... and ${errors.length - 5} more`);
   }
 
@@ -446,6 +498,7 @@ async function syncBackward(
     `Congress ${targetCongress}: ${congressFullySynced ? "FULLY SYNCED" : "PARTIAL - will continue"}`
   );
   console.log(`Bills upserted: ${upsertCount}`);
+  console.log(`Warnings: ${warnings.length}`);
   console.log(`Errors: ${errors.length}`);
   console.log(`Oldest synced Congress: ${newOldestCongress ?? "none yet"}`);
 
@@ -459,6 +512,7 @@ async function syncBackward(
     cursorPosition: null,
     oldestCongress: newOldestCongress,
     errors,
+    warnings,
   };
 }
 
@@ -478,17 +532,18 @@ export async function syncBills(direction: "forward" | "backward"): Promise<Sync
 
   const client = createCongressClient({
     apiKey: congressApiKey,
-    minDelayMs: 100,
+    minDelayMs: 20,
   });
 
   const errors: SyncBillsResult["errors"] = [];
+  const warnings: SyncBillsResult["warnings"] = [];
 
   const syncHandlers = {
     forward: syncForward,
     backward: syncBackward,
   };
 
-  return syncHandlers[direction](db, client, errors);
+  return syncHandlers[direction](db, client, errors, warnings);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -508,7 +563,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   syncBills(direction)
     .then((result) => {
+      console.log("__SYNC_RESULT_JSON_START__");
       console.log(JSON.stringify(result));
+      console.log("__SYNC_RESULT_JSON_END__");
       process.exit(0);
     })
     .catch((error) => {

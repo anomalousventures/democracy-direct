@@ -29,6 +29,7 @@ describe("sync-bills module", () => {
       cursorPosition: "2025-01-01T00:00:00.000Z",
       oldestCongress: 117,
       errors: [],
+      warnings: [],
     };
 
     expect(result.source).toBe("congress.gov");
@@ -121,10 +122,9 @@ describe("transformBillItem", () => {
     url: "https://api.congress.gov/v3/bill/119/hr/1",
   };
 
-  it("transforms a valid bill item", () => {
+  it("transforms a valid bill item with detailIntroducedDate", () => {
     const item = {
       ...baseBillItem,
-      introducedDate: "2025-01-01",
       latestAction: {
         actionDate: "2025-01-15",
         text: "Referred to committee",
@@ -133,15 +133,17 @@ describe("transformBillItem", () => {
       sponsors: [{ bioguideId: "A000001", fullName: "John Doe", party: "D", state: "CA" }],
     };
 
-    const result = transformBillItem(item);
+    const result = transformBillItem(item, "2025-01-01");
 
     expect(result.data).not.toBeNull();
     expect(result.data?.billNumber).toBe("HR.1");
     expect(result.data?.billType).toBe("hr");
     expect(result.data?.congress).toBe(119);
+    expect(result.data?.introducedDate).toEqual(new Date("2025-01-01"));
     expect(result.data?.status).toBe("introduced");
     expect(result.data?.subjects).toEqual(["Economics and Public Finance"]);
     expect(result.data?.sponsorBioguideId).toBe("A000001");
+    expect(result.warning).toBeNull();
     expect(result.error).toBeNull();
   });
 
@@ -149,17 +151,17 @@ describe("transformBillItem", () => {
     const item = {
       ...baseBillItem,
       type: "invalid",
-      introducedDate: "2025-01-01",
     };
 
-    const result = transformBillItem(item);
+    const result = transformBillItem(item, "2025-01-01");
 
     expect(result.data).toBeNull();
+    expect(result.warning).toBeNull();
     expect(result.error).not.toBeNull();
-    expect(result.error?.error).toBe("Failed to parse bill number");
+    expect(result.error?.message).toBe("Failed to parse bill number");
   });
 
-  it("uses latestActionDate as fallback when introducedDate is missing", () => {
+  it("uses latestActionDate as fallback when detailIntroducedDate is not provided (warning)", () => {
     const item = {
       ...baseBillItem,
       latestAction: {
@@ -172,11 +174,12 @@ describe("transformBillItem", () => {
 
     expect(result.data).not.toBeNull();
     expect(result.data?.introducedDate).toEqual(new Date("2025-01-15"));
-    expect(result.error).not.toBeNull();
-    expect(result.error?.error).toBe("Missing introducedDate, used latestActionDate as fallback");
+    expect(result.warning).not.toBeNull();
+    expect(result.warning?.message).toBe("Detail fetch failed, used latestActionDate as fallback");
+    expect(result.error).toBeNull();
   });
 
-  it("returns error when both introducedDate and latestActionDate are missing", () => {
+  it("returns error when both detailIntroducedDate and latestActionDate are missing", () => {
     const item = {
       ...baseBillItem,
     };
@@ -184,30 +187,49 @@ describe("transformBillItem", () => {
     const result = transformBillItem(item);
 
     expect(result.data).toBeNull();
+    expect(result.warning).toBeNull();
     expect(result.error).not.toBeNull();
-    expect(result.error?.error).toBe("Missing both introducedDate and latestActionDate");
+    expect(result.error?.message).toBe("Missing both introducedDate and latestActionDate");
   });
 
   it("handles bill without sponsor", () => {
     const item = {
       ...baseBillItem,
-      introducedDate: "2025-01-01",
     };
 
-    const result = transformBillItem(item);
+    const result = transformBillItem(item, "2025-01-01");
 
     expect(result.data?.sponsorBioguideId).toBeNull();
+    expect(result.warning).toBeNull();
+    expect(result.error).toBeNull();
   });
 
   it("handles bill without policyArea", () => {
     const item = {
       ...baseBillItem,
-      introducedDate: "2025-01-01",
     };
 
-    const result = transformBillItem(item);
+    const result = transformBillItem(item, "2025-01-01");
 
     expect(result.data?.subjects).toEqual([]);
+    expect(result.warning).toBeNull();
+    expect(result.error).toBeNull();
+  });
+
+  it("prefers detailIntroducedDate over latestActionDate", () => {
+    const item = {
+      ...baseBillItem,
+      latestAction: {
+        actionDate: "2025-02-15",
+        text: "Passed House",
+      },
+    };
+
+    const result = transformBillItem(item, "2025-01-01");
+
+    expect(result.data?.introducedDate).toEqual(new Date("2025-01-01"));
+    expect(result.data?.latestActionDate).toEqual(new Date("2025-02-15"));
+    expect(result.warning).toBeNull();
   });
 });
 
@@ -223,6 +245,7 @@ describe("SyncBillsResult structure", () => {
       cursorPosition: "2025-02-01T12:00:00.000Z",
       oldestCongress: null,
       errors: [],
+      warnings: [],
     };
 
     expect(result.direction).toBe("forward");
@@ -241,6 +264,7 @@ describe("SyncBillsResult structure", () => {
       cursorPosition: null,
       oldestCongress: 118,
       errors: [],
+      warnings: [],
     };
 
     expect(result.direction).toBe("backward");
@@ -248,7 +272,7 @@ describe("SyncBillsResult structure", () => {
     expect(result.oldestCongress).toBe(118);
   });
 
-  it("tracks errors during sync", () => {
+  it("tracks errors during sync (fatal issues)", () => {
     const result: syncBillsModule.SyncBillsResult = {
       source: "congress.gov",
       changed: true,
@@ -259,13 +283,70 @@ describe("SyncBillsResult structure", () => {
       cursorPosition: "2025-02-01T00:00:00.000Z",
       oldestCongress: null,
       errors: [
-        { billNumber: "HR1234", error: "Failed to parse bill" },
-        { billNumber: "S567", error: "Network timeout" },
+        { billNumber: "HR1234", message: "Failed to parse bill" },
+        { billNumber: "S567", message: "Missing both dates" },
       ],
+      warnings: [],
     };
 
     expect(result.errors).toHaveLength(2);
     expect(result.errors[0].billNumber).toBe("HR1234");
-    expect(result.errors[1].error).toBe("Network timeout");
+    expect(result.errors[1].message).toBe("Missing both dates");
+  });
+
+  it("tracks warnings during sync (recoverable issues)", () => {
+    const result: syncBillsModule.SyncBillsResult = {
+      source: "congress.gov",
+      changed: true,
+      direction: "forward",
+      congressNumber: 119,
+      billsUpserted: 100,
+      duration: "30.0s",
+      cursorPosition: "2025-02-01T00:00:00.000Z",
+      oldestCongress: null,
+      errors: [],
+      warnings: [
+        {
+          billNumber: "HR123",
+          message: "Missing introducedDate, used latestActionDate as fallback",
+        },
+        {
+          billNumber: "S456",
+          message: "Missing introducedDate, used latestActionDate as fallback",
+        },
+      ],
+    };
+
+    expect(result.warnings).toHaveLength(2);
+    expect(result.warnings[0].billNumber).toBe("HR123");
+    expect(result.warnings[1].message).toBe(
+      "Missing introducedDate, used latestActionDate as fallback"
+    );
+  });
+
+  it("tracks both errors and warnings separately", () => {
+    const result: syncBillsModule.SyncBillsResult = {
+      source: "congress.gov",
+      changed: true,
+      direction: "forward",
+      congressNumber: 119,
+      billsUpserted: 98,
+      duration: "30.0s",
+      cursorPosition: "2025-02-01T00:00:00.000Z",
+      oldestCongress: null,
+      errors: [
+        { billNumber: "HR999", message: "Missing both introducedDate and latestActionDate" },
+      ],
+      warnings: [
+        {
+          billNumber: "HR123",
+          message: "Missing introducedDate, used latestActionDate as fallback",
+        },
+      ],
+    };
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.billsUpserted).toBe(98);
   });
 });

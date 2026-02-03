@@ -40,13 +40,13 @@ describe("sync-bills (integration)", () => {
     await db.delete(syncCursors).where(eq(syncCursors.id, "test_sync"));
   });
 
-  describe("sync loop warning case handling", () => {
-    it("upserts bills with missing introducedDate when latestActionDate exists", async () => {
+  describe("sync loop with detail fetch simulation", () => {
+    it("upserts bills with introducedDate from detail fetch", async () => {
       const billItem: BillListItem = {
         congress: testCongress,
         type: "hr",
         number: 1,
-        title: "Test Bill Without Introduced Date",
+        title: "Test Bill With Detail Fetch",
         url: "https://api.congress.gov/v3/bill/999/hr/1",
         latestAction: {
           actionDate: "2025-01-15",
@@ -58,24 +58,31 @@ describe("sync-bills (integration)", () => {
         ],
       };
 
-      const result = transformBillItem(billItem);
+      const detailIntroducedDate = "2025-01-01";
+      const result = transformBillItem(billItem, detailIntroducedDate);
 
       expect(result.data).not.toBeNull();
-      expect(result.error).not.toBeNull();
-      expect(result.error?.error).toBe("Missing introducedDate, used latestActionDate as fallback");
+      expect(result.data?.introducedDate).toEqual(new Date("2025-01-01"));
+      expect(result.warning).toBeNull();
+      expect(result.error).toBeNull();
 
       const billsToUpsert: NonNullable<TransformResult["data"]>[] = [];
+      const warnings: NonNullable<TransformResult["warning"]>[] = [];
       const errors: NonNullable<TransformResult["error"]>[] = [];
 
       if (result.data) {
         billsToUpsert.push(result.data);
+      }
+      if (result.warning) {
+        warnings.push(result.warning);
       }
       if (result.error) {
         errors.push(result.error);
       }
 
       expect(billsToUpsert).toHaveLength(1);
-      expect(errors).toHaveLength(1);
+      expect(warnings).toHaveLength(0);
+      expect(errors).toHaveLength(0);
 
       await db
         .insert(bills)
@@ -115,75 +122,115 @@ describe("sync-bills (integration)", () => {
         );
 
       expect(insertedBill).toBeDefined();
-      expect(insertedBill.title).toBe("Test Bill Without Introduced Date");
-      expect(insertedBill.introducedDate).toEqual(new Date("2025-01-15"));
+      expect(insertedBill.title).toBe("Test Bill With Detail Fetch");
+      expect(insertedBill.introducedDate).toEqual(new Date("2025-01-01"));
       expect(insertedBill.sponsorBioguideId).toBe(testBioguideId);
     });
 
-    it("does not upsert bills when both introducedDate and latestActionDate are missing", async () => {
+    it("falls back to latestActionDate when detail fetch fails (warning)", async () => {
       const billItem: BillListItem = {
         congress: testCongress,
         type: "hr",
         number: 2,
-        title: "Test Bill Without Any Dates",
+        title: "Test Bill With Failed Detail Fetch",
         url: "https://api.congress.gov/v3/bill/999/hr/2",
+        latestAction: {
+          actionDate: "2025-01-15",
+          text: "Referred to Committee",
+        },
+      };
+
+      const result = transformBillItem(billItem);
+
+      expect(result.data).not.toBeNull();
+      expect(result.data?.introducedDate).toEqual(new Date("2025-01-15"));
+      expect(result.warning).not.toBeNull();
+      expect(result.warning?.message).toBe(
+        "Detail fetch failed, used latestActionDate as fallback"
+      );
+      expect(result.error).toBeNull();
+    });
+
+    it("does not upsert bills when detail fetch fails and latestActionDate is missing (error)", async () => {
+      const billItem: BillListItem = {
+        congress: testCongress,
+        type: "hr",
+        number: 3,
+        title: "Test Bill Without Any Dates",
+        url: "https://api.congress.gov/v3/bill/999/hr/3",
       };
 
       const result = transformBillItem(billItem);
 
       expect(result.data).toBeNull();
+      expect(result.warning).toBeNull();
       expect(result.error).not.toBeNull();
-      expect(result.error?.error).toBe("Missing both introducedDate and latestActionDate");
+      expect(result.error?.message).toBe("Missing both introducedDate and latestActionDate");
 
       const billsToUpsert: NonNullable<TransformResult["data"]>[] = [];
+      const warnings: NonNullable<TransformResult["warning"]>[] = [];
       const errors: NonNullable<TransformResult["error"]>[] = [];
 
       if (result.data) {
         billsToUpsert.push(result.data);
+      }
+      if (result.warning) {
+        warnings.push(result.warning);
       }
       if (result.error) {
         errors.push(result.error);
       }
 
       expect(billsToUpsert).toHaveLength(0);
+      expect(warnings).toHaveLength(0);
       expect(errors).toHaveLength(1);
     });
 
-    it("correctly processes a batch with mixed valid, warning, and error cases", async () => {
-      const testItems: BillListItem[] = [
+    it("correctly processes a batch simulating mixed detail fetch results", async () => {
+      const testItems: Array<{ item: BillListItem; detailIntroducedDate?: string }> = [
         {
-          congress: testCongress,
-          type: "s",
-          number: 10,
-          title: "Valid Bill With Both Dates",
-          url: "https://api.congress.gov/v3/bill/999/s/10",
-          introducedDate: "2025-01-01",
-          latestAction: { actionDate: "2025-01-20", text: "Passed Senate" },
+          item: {
+            congress: testCongress,
+            type: "s",
+            number: 10,
+            title: "Valid Bill With Detail",
+            url: "https://api.congress.gov/v3/bill/999/s/10",
+            latestAction: { actionDate: "2025-01-20", text: "Passed Senate" },
+          },
+          detailIntroducedDate: "2025-01-01",
         },
         {
-          congress: testCongress,
-          type: "s",
-          number: 11,
-          title: "Warning Bill Missing Introduced Date",
-          url: "https://api.congress.gov/v3/bill/999/s/11",
-          latestAction: { actionDate: "2025-01-15", text: "Referred to Committee" },
+          item: {
+            congress: testCongress,
+            type: "s",
+            number: 11,
+            title: "Bill With Failed Detail Fetch",
+            url: "https://api.congress.gov/v3/bill/999/s/11",
+            latestAction: { actionDate: "2025-01-15", text: "Referred to Committee" },
+          },
         },
         {
-          congress: testCongress,
-          type: "s",
-          number: 12,
-          title: "Error Bill Missing Both Dates",
-          url: "https://api.congress.gov/v3/bill/999/s/12",
+          item: {
+            congress: testCongress,
+            type: "s",
+            number: 12,
+            title: "Error Bill Missing Both Dates",
+            url: "https://api.congress.gov/v3/bill/999/s/12",
+          },
         },
       ];
 
       const billsToUpsert: NonNullable<TransformResult["data"]>[] = [];
+      const warnings: NonNullable<TransformResult["warning"]>[] = [];
       const errors: NonNullable<TransformResult["error"]>[] = [];
 
-      for (const item of testItems) {
-        const result = transformBillItem(item);
+      for (const { item, detailIntroducedDate } of testItems) {
+        const result = transformBillItem(item, detailIntroducedDate);
         if (result.data) {
           billsToUpsert.push(result.data);
+        }
+        if (result.warning) {
+          warnings.push(result.warning);
         }
         if (result.error) {
           errors.push(result.error);
@@ -191,11 +238,12 @@ describe("sync-bills (integration)", () => {
       }
 
       expect(billsToUpsert).toHaveLength(2);
-      expect(errors).toHaveLength(2);
+      expect(warnings).toHaveLength(1);
+      expect(errors).toHaveLength(1);
 
       expect(billsToUpsert.map((b) => b.billNumber).sort()).toEqual(["S.10", "S.11"]);
-
-      expect(errors.map((e) => e.billNumber).sort()).toEqual(["s11", "s12"]);
+      expect(warnings.map((w) => w.billNumber)).toEqual(["s11"]);
+      expect(errors.map((e) => e.billNumber)).toEqual(["s12"]);
 
       await db.insert(bills).values(
         billsToUpsert.map((b) => ({
@@ -216,10 +264,10 @@ describe("sync-bills (integration)", () => {
 
       const insertedBills = await db.select().from(bills).where(eq(bills.congress, testCongress));
 
-      const senatetBills = insertedBills.filter((b) => b.billType === "s");
-      expect(senatetBills).toHaveLength(2);
+      const senateBills = insertedBills.filter((b) => b.billType === "s");
+      expect(senateBills).toHaveLength(2);
 
-      const billNumbers = senatetBills.map((b) => b.billNumber).sort();
+      const billNumbers = senateBills.map((b) => b.billNumber).sort();
       expect(billNumbers).toEqual(["S.10", "S.11"]);
     });
   });
