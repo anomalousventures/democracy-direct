@@ -35,7 +35,7 @@ interface BillUpsertData {
 
 const BATCH_SIZE = 50;
 const TARGET_OLDEST_CONGRESS = 117;
-const BACKWARD_BILLS_PER_RUN = 750;
+const BACKWARD_BILLS_PER_RUN = 1500;
 const LOG_INTERVAL = 250;
 
 function formatElapsed(startTime: number): string {
@@ -403,13 +403,20 @@ async function syncBackward(
     };
   }
 
+  const isPastCongress = targetCongress < currentCongress;
+
   console.log("=== BACKWARD SYNC START ===");
   console.log(`Target Congress: ${targetCongress}`);
   console.log(`Previously synced oldest: ${previousOldest ?? "none"}`);
   console.log(`Target oldest: ${TARGET_OLDEST_CONGRESS}`);
   console.log(`Max bills per run: ${BACKWARD_BILLS_PER_RUN}`);
+  if (isPastCongress) {
+    console.log(`Filter: Skipping "introduced" status bills (past Congress)`);
+  }
 
   const billsToUpsert: BillUpsertData[] = [];
+  let billsFetched = 0;
+  let billsSkipped = 0;
   let offset = 0;
   const limit = 250;
   let hasMore = true;
@@ -417,7 +424,7 @@ async function syncBackward(
   console.log("\n--- Fetching from Congress.gov API ---");
   const fetchStartTime = Date.now();
 
-  while (hasMore && billsToUpsert.length < BACKWARD_BILLS_PER_RUN) {
+  while (hasMore && billsFetched < BACKWARD_BILLS_PER_RUN) {
     const response = await client.listBills({
       congress: targetCongress,
       limit,
@@ -425,7 +432,8 @@ async function syncBackward(
     });
 
     for (const item of response.bills) {
-      if (billsToUpsert.length >= BACKWARD_BILLS_PER_RUN) break;
+      if (billsFetched >= BACKWARD_BILLS_PER_RUN) break;
+      billsFetched++;
 
       let detailIntroducedDate: string | undefined;
       try {
@@ -440,7 +448,11 @@ async function syncBackward(
 
       const result = transformBillItem(item, detailIntroducedDate);
       if (result.data) {
-        billsToUpsert.push(result.data);
+        if (isPastCongress && result.data.status === "introduced") {
+          billsSkipped++;
+        } else {
+          billsToUpsert.push(result.data);
+        }
       }
       if (result.warning) {
         warnings.push(result.warning);
@@ -454,18 +466,12 @@ async function syncBackward(
     offset += limit;
 
     if (offset % LOG_INTERVAL === 0) {
-      logProgress(
-        "Fetch",
-        fetchStartTime,
-        billsToUpsert.length,
-        BACKWARD_BILLS_PER_RUN,
-        errors.length
-      );
+      logProgress("Fetch", fetchStartTime, billsFetched, BACKWARD_BILLS_PER_RUN, errors.length);
     }
   }
 
   console.log(
-    `\n--- Fetch complete: ${billsToUpsert.length} bills in ${formatElapsed(fetchStartTime)} ---`
+    `\n--- Fetch complete: ${billsFetched} fetched, ${billsToUpsert.length} to upsert, ${billsSkipped} skipped in ${formatElapsed(fetchStartTime)} ---`
   );
 
   if (warnings.length > 0) {
@@ -485,7 +491,7 @@ async function syncBackward(
   const upsertCount = await upsertBills(db, billsToUpsert);
   console.log(`Upserted ${upsertCount} bills in ${formatElapsed(upsertStartTime)}`);
 
-  const congressFullySynced = !hasMore || billsToUpsert.length < BACKWARD_BILLS_PER_RUN;
+  const congressFullySynced = !hasMore || billsFetched < BACKWARD_BILLS_PER_RUN;
   const newOldestCongress = congressFullySynced ? targetCongress : previousOldest;
 
   await updateCursor(db, cursorId, null, newOldestCongress, currentCongress);
