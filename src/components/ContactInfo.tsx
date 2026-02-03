@@ -1,12 +1,4 @@
-import {
-  TbPhone,
-  TbMail,
-  TbMapPin,
-  TbWorld,
-  TbLink,
-  TbBrandX,
-  TbBrandFacebook,
-} from "react-icons/tb";
+import { Icon } from "@/components/icons";
 
 export interface ContactInfoProps {
   phone?: string;
@@ -43,7 +35,7 @@ export function ContactInfo({
       {phone && (
         <div className="info-item">
           <div className="icon-box-sm">
-            <TbPhone className="w-5 h-5 text-accent" aria-hidden="true" />
+            <Icon name="phone" className="w-5 h-5 text-accent" />
           </div>
           <div>
             <p className="font-medium">DC Office Phone</p>
@@ -57,7 +49,7 @@ export function ContactInfo({
       {website && (
         <div className="info-item">
           <div className="icon-box-sm">
-            <TbWorld className="w-5 h-5 text-accent" aria-hidden="true" />
+            <Icon name="globe" className="w-5 h-5 text-accent" />
           </div>
           <div>
             <p className="font-medium">Official Website</p>
@@ -76,7 +68,7 @@ export function ContactInfo({
       {contactFormUrl && (
         <div className="info-item">
           <div className="icon-box-sm">
-            <TbMail className="w-5 h-5 text-accent" aria-hidden="true" />
+            <Icon name="mail" className="w-5 h-5 text-accent" />
           </div>
           <div>
             <p className="font-medium">Online Contact Form</p>
@@ -95,7 +87,7 @@ export function ContactInfo({
       {address && (
         <div className="info-item">
           <div className="icon-box-sm">
-            <TbMapPin className="w-5 h-5 text-accent" aria-hidden="true" />
+            <Icon name="map-pin" className="w-5 h-5 text-accent" />
           </div>
           <div>
             <p className="font-medium">DC Office Address</p>
@@ -107,7 +99,7 @@ export function ContactInfo({
       {hasSocial && (
         <div className="info-item">
           <div className="icon-box-sm">
-            <TbLink className="w-5 h-5 text-accent" aria-hidden="true" />
+            <Icon name="link" className="w-5 h-5 text-accent" />
           </div>
           <div>
             <p className="font-medium">Social Media</p>
@@ -119,7 +111,7 @@ export function ContactInfo({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary hover:underline"
                 >
-                  <TbBrandX className="w-5 h-5" aria-hidden="true" />
+                  <Icon name="brand-x" className="w-5 h-5" />
                   <span>@{twitterHandle}</span>
                 </a>
               )}
@@ -130,7 +122,7 @@ export function ContactInfo({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary hover:underline"
                 >
-                  <TbBrandFacebook className="w-5 h-5" aria-hidden="true" />
+                  <Icon name="brand-facebook" className="w-5 h-5" />
                   <span>Facebook</span>
                 </a>
               )}

@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { TbExternalLink, TbCalendar, TbGavel, TbTag } from "react-icons/tb";
+import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
@@ -189,10 +189,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
               className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
             >
               {displayTitle}
-              <TbExternalLink
-                className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60"
-                aria-hidden="true"
-              />
+              <Icon name="external-link" className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60" />
             </a>
           ) : (
             <p className="block font-medium text-primary line-clamp-2 mb-2">{displayTitle}</p>
@@ -204,7 +201,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
 
           {vote.billSubjects && vote.billSubjects.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
-              <TbTag className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+              <Icon name="tag" className="w-3.5 h-3.5 text-muted-foreground" />
               {vote.billSubjects.slice(0, 3).map((subject, i) => (
                 <span
                   key={i}
@@ -223,7 +220,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
 
           <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <TbCalendar className="w-3.5 h-3.5" aria-hidden="true" />
+              <Icon name="calendar" className="w-3.5 h-3.5" />
               {formatDate(vote.date)}
             </span>
             <span
@@ -251,7 +248,7 @@ function EmptyState() {
   return (
     <div className="text-center py-12 px-4">
       <div className="icon-box-accent mx-auto mb-4">
-        <TbGavel className="w-8 h-8 text-accent" aria-hidden="true" />
+        <Icon name="gavel" className="w-8 h-8 text-accent" />
       </div>
       <h3 className="text-lg font-semibold text-primary mb-2">No Recorded Votes</h3>
       <p className="text-muted-foreground text-sm max-w-md mx-auto">

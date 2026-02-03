@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { TbExternalLink, TbCalendar, TbFileText, TbChevronDown } from "react-icons/tb";
+import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
 import type { BillStatus } from "@/lib/types/legislation";
@@ -174,10 +174,7 @@ function BillCard({ bill }: { bill: Bill }) {
               className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
             >
               {bill.title}
-              <TbExternalLink
-                className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60"
-                aria-hidden="true"
-              />
+              <Icon name="external-link" className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60" />
             </a>
           ) : (
             <p className="block font-medium text-primary line-clamp-2 mb-2">{bill.title}</p>
@@ -193,7 +190,8 @@ function BillCard({ bill }: { bill: Bill }) {
                   onClick={toggleExpand}
                   className="inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
                 >
-                  <TbChevronDown
+                  <Icon
+                    name="chevron-down"
                     className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-180")}
                   />
                   {expanded ? "Show less" : "Read more"}
@@ -204,7 +202,7 @@ function BillCard({ bill }: { bill: Bill }) {
 
           <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <TbCalendar className="w-3.5 h-3.5" aria-hidden="true" />
+              <Icon name="calendar" className="w-3.5 h-3.5" />
               Introduced {formatDate(bill.introducedDate)}
             </span>
             {bill.latestActionText && (
@@ -223,7 +221,7 @@ function EmptyState() {
   return (
     <div className="text-center py-12 px-4">
       <div className="icon-box-accent mx-auto mb-4">
-        <TbFileText className="w-8 h-8 text-accent" aria-hidden="true" />
+        <Icon name="file-text" className="w-8 h-8 text-accent" />
       </div>
       <h3 className="text-lg font-semibold text-primary mb-2">No Sponsored Bills</h3>
       <p className="text-muted-foreground text-sm max-w-md mx-auto">
