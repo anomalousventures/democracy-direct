@@ -111,8 +111,10 @@ test.describe("Template Search and Filtering", () => {
       // Verify it's selected
       await expect(firstTagButton).toHaveAttribute("data-state", "on");
 
-      // Wait for API response
+      // Wait for API response and results to update
       await page.waitForLoadState("networkidle");
+      // Wait for loading to complete (no "Searching..." text)
+      await expect(page.locator("text=Searching...")).not.toBeVisible({ timeout: 10000 });
 
       // Results should be filtered (equal or fewer cards)
       const filteredCount = await templateCards.count();
@@ -168,15 +170,16 @@ test.describe("Template Search and Filtering", () => {
     expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
     // Click clear filters
-    const clearButton = page.getByRole("button", { name: /clear filters/i });
+    const clearButton = page.locator("[data-testid='clear-filters-button']");
     await expect(clearButton).toBeVisible();
     await clearButton.click();
 
+    // Wait for debounce (300ms) + API call to complete
+    await page.waitForTimeout(400);
     await page.waitForLoadState("networkidle");
 
-    // Should restore original count
-    const restoredCount = await templateCards.count();
-    expect(restoredCount).toBe(initialCount);
+    // Wait for results to be restored (check that we have more than filtered count)
+    await expect(templateCards).toHaveCount(initialCount, { timeout: 10000 });
 
     // Search input should be cleared
     await expect(searchInput).toHaveValue("");

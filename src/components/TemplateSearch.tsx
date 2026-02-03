@@ -263,6 +263,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
             onClick={clearFilters}
             className="text-sm text-primary hover:text-accent font-medium transition-colors"
             aria-label="Clear all filters"
+            data-testid="clear-filters-button"
           >
             Clear filters
           </button>
