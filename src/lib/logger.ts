@@ -1,6 +1,7 @@
 import type { PosthogConfig } from "./config";
 
 interface LogContext {
+  host?: string;
   path?: string;
   method?: string;
   userId?: string;
@@ -87,8 +88,10 @@ export function createLogger(locals: App.Locals, request?: Request): Logger {
   const ctx = locals.runtime?.ctx;
   const posthogConfig = getPosthogConfig(locals);
 
+  const url = request ? new URL(request.url) : undefined;
   const context: LogContext = {
-    path: request ? new URL(request.url).pathname : undefined,
+    host: url?.host,
+    path: url?.pathname,
     method: request?.method,
     userId: locals.user?.id,
   };
