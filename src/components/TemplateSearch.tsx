@@ -43,7 +43,10 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
         template.body.toLowerCase().includes(searchLower);
 
       const matchesTags =
-        selectedTags.length === 0 || selectedTags.some((tag) => template.issueTags?.includes(tag));
+        selectedTags.length === 0 ||
+        selectedTags.some((tag) =>
+          template.issueTags?.some((t) => t.toLowerCase() === tag.toLowerCase())
+        );
 
       return matchesSearch && matchesTags;
     });

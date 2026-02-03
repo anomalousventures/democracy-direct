@@ -49,8 +49,9 @@ try {
 
   templateList = results;
 
-  const allTags = results.flatMap((t) => t.issueTags || []);
-  availableTags = [...new Set(allTags)].sort();
+  availableTags = Array.from(
+    new Set(results.flatMap((t) => t.issueTags || []).map((t) => t.toLowerCase()))
+  ).sort();
 
   if (repBioguideId) {
     const [rep] = await db
