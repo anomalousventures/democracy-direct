@@ -211,4 +211,22 @@ describe("transformLegislator", () => {
     const result = transformLegislator(multiTermLegislator);
     expect(result.district).toBe("15");
   });
+
+  it("extracts lisId from senator id object", () => {
+    const senatorWithLisId: RawLegislator = {
+      ...rawSenator,
+      id: {
+        ...rawSenator.id,
+        lis: "S001",
+      },
+    };
+
+    const result = transformLegislator(senatorWithLisId);
+    expect(result.lisId).toBe("S001");
+  });
+
+  it("returns null for lisId when not present", () => {
+    const result = transformLegislator(rawRep);
+    expect(result.lisId).toBeNull();
+  });
 });

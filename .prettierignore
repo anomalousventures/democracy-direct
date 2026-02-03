@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+.astro/
+.wrangler/
+.mf/
+
+# Coverage
+coverage/
+
+# Test results
+playwright-report/
+test-results/
+blob-report/
+
+# Generated data
+public/data/

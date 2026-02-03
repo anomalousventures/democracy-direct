@@ -171,6 +171,46 @@ export const HouseVoteListResponseSchema = z.object({
 });
 export type HouseVoteListResponse = z.infer<typeof HouseVoteListResponseSchema>;
 
+const RawHouseVoteMemberSchema = z.object({
+  bioguideID: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  voteCast: z.string(),
+  voteParty: z.string(),
+  voteState: z.string(),
+});
+
+export const HouseVoteMemberSchema = RawHouseVoteMemberSchema.transform((raw) => ({
+  bioguideId: raw.bioguideID,
+  name: `${raw.firstName} ${raw.lastName}`,
+  state: raw.voteState,
+  party: raw.voteParty,
+  vote: raw.voteCast,
+}));
+export type HouseVoteMember = z.infer<typeof HouseVoteMemberSchema>;
+
+const RawHouseVoteMembersResponseSchema = z.object({
+  houseRollCallVoteMemberVotes: z.object({
+    congress: z.number(),
+    identifier: z.number().optional(),
+    result: z.string().optional(),
+    results: z.array(RawHouseVoteMemberSchema),
+  }),
+});
+
+export const HouseVoteMembersResponseSchema = RawHouseVoteMembersResponseSchema.transform(
+  (raw) => ({
+    members: raw.houseRollCallVoteMemberVotes.results.map((m) => ({
+      bioguideId: m.bioguideID,
+      name: `${m.firstName} ${m.lastName}`,
+      state: m.voteState,
+      party: m.voteParty,
+      vote: m.voteCast,
+    })),
+  })
+);
+export type HouseVoteMembersResponse = z.infer<typeof HouseVoteMembersResponseSchema>;
+
 export const BillSponsorSchema = z.object({
   bioguideId: z.string(),
   fullName: z.string(),
@@ -183,19 +223,19 @@ export const BillListItemSchema = z.object({
   type: z.string(),
   number: z.coerce.number(),
   title: z.string(),
-  introducedDate: z.string().optional(),
+  introducedDate: z.string().nullish(),
   latestAction: z
     .object({
       actionDate: z.string(),
       text: z.string(),
     })
-    .optional(),
+    .nullish(),
   policyArea: z
     .object({
       name: z.string(),
     })
-    .optional(),
-  sponsors: z.array(BillSponsorSchema).optional(),
+    .nullish(),
+  sponsors: z.array(BillSponsorSchema).nullish(),
   url: z.string(),
 });
 export type BillListItem = z.infer<typeof BillListItemSchema>;

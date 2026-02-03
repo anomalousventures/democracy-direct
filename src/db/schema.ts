@@ -10,7 +10,10 @@ import {
   uuid,
   boolean,
   json,
+  jsonb,
+  unique,
 } from "drizzle-orm/pg-core";
+import type { BillStatus, BillType, Chamber, VotePosition } from "@/lib/types/legislation";
 
 export const legislators = pgTable(
   "legislators",
@@ -36,6 +39,7 @@ export const legislators = pgTable(
     twitterHandle: varchar("twitter_handle", { length: 50 }),
     facebookId: varchar("facebook_id", { length: 100 }),
     youtubeId: varchar("youtube_id", { length: 100 }),
+    lisId: varchar("lis_id", { length: 10 }),
   },
   (table) => [
     index("legislators_state_idx").on(table.state),
@@ -192,8 +196,103 @@ export const tagSuggestions = pgTable(
   ]
 );
 
+export const votes = pgTable(
+  "votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    rollCall: integer("roll_call").notNull(),
+    chamber: varchar("chamber", { length: 10 }).$type<Chamber>().notNull(),
+    congress: integer("congress").notNull(),
+    session: integer("session").notNull(),
+    date: timestamp("date").notNull(),
+    question: text("question").notNull(),
+    result: varchar("result", { length: 100 }).notNull(),
+    billNumber: varchar("bill_number", { length: 50 }),
+    billTitle: text("bill_title"),
+    billSubjects: json("bill_subjects").$type<string[]>(),
+    sourceUrl: text("source_url").notNull(),
+    yeas: integer("yeas").notNull().default(0),
+    nays: integer("nays").notNull().default(0),
+    notVoting: integer("not_voting").notNull().default(0),
+    present: integer("present").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("votes_chamber_congress_session_rollcall_unique").on(
+      table.chamber,
+      table.congress,
+      table.session,
+      table.rollCall
+    ),
+    index("votes_chamber_congress_idx").on(table.chamber, table.congress),
+    index("votes_date_idx").on(table.date),
+  ]
+);
+
+export const memberVotes = pgTable(
+  "member_votes",
+  {
+    voteId: uuid("vote_id")
+      .notNull()
+      .references(() => votes.id, { onDelete: "cascade" }),
+    bioguideId: varchar("bioguide_id", { length: 10 })
+      .notNull()
+      .references(() => legislators.bioguideId, { onDelete: "cascade" }),
+    position: varchar("position", { length: 20 }).$type<VotePosition>().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.voteId, table.bioguideId] }),
+    index("member_votes_bioguide_id_idx").on(table.bioguideId),
+  ]
+);
+
+export const bills = pgTable(
+  "bills",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    billNumber: varchar("bill_number", { length: 50 }).notNull(),
+    billType: varchar("bill_type", { length: 10 }).$type<BillType>().notNull(),
+    congress: integer("congress").notNull(),
+    title: text("title").notNull(),
+    summary: text("summary"),
+    status: varchar("status", { length: 30 }).$type<BillStatus>().notNull(),
+    subjects: jsonb("subjects").$type<string[]>().default([]),
+    introducedDate: timestamp("introduced_date").notNull(),
+    latestActionDate: timestamp("latest_action_date").notNull(),
+    latestActionText: text("latest_action_text").notNull(),
+    sponsorBioguideId: varchar("sponsor_bioguide_id", { length: 10 }).references(
+      () => legislators.bioguideId,
+      { onDelete: "set null" }
+    ),
+    congressGovUrl: text("congress_gov_url").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("bills_congress_type_number_unique").on(
+      table.congress,
+      table.billType,
+      table.billNumber
+    ),
+    index("bills_sponsor_bioguide_id_idx").on(table.sponsorBioguideId),
+    index("bills_congress_latest_action_idx").on(table.congress, table.latestActionDate),
+  ]
+);
+
+export const syncCursors = pgTable("sync_cursors", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  cursor: text("cursor"),
+  oldestCongress: integer("oldest_congress"),
+  newestCongress: integer("newest_congress"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type Legislator = typeof legislators.$inferSelect;
 export type NewLegislator = typeof legislators.$inferInsert;
+export type Vote = typeof votes.$inferSelect;
+export type NewVote = typeof votes.$inferInsert;
+export type MemberVote = typeof memberVotes.$inferSelect;
+export type NewMemberVote = typeof memberVotes.$inferInsert;
 export type ZipDistrict = typeof zipDistricts.$inferSelect;
 export type NewZipDistrict = typeof zipDistricts.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -214,3 +313,7 @@ export type TagSuggestion = typeof tagSuggestions.$inferSelect;
 export type NewTagSuggestion = typeof tagSuggestions.$inferInsert;
 export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
 export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;
+export type Bill = typeof bills.$inferSelect;
+export type NewBill = typeof bills.$inferInsert;
+export type SyncCursor = typeof syncCursors.$inferSelect;
+export type NewSyncCursor = typeof syncCursors.$inferInsert;

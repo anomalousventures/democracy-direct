@@ -13,8 +13,10 @@ export const prerender = false;
 
 const moderationActionSchema = z.object({
   action: z.enum(["approve", "reject"]),
-  reason: z.string().optional(),
+  reason: z.string().nullable().optional(),
 });
+
+const templateIdSchema = z.string().uuid();
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   const user = locals.user;
@@ -24,6 +26,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const { templateId } = params;
   if (!templateId) {
     return badRequest("Template ID is required");
+  }
+
+  const templateIdResult = templateIdSchema.safeParse(templateId);
+  if (!templateIdResult.success) {
+    return badRequest("Invalid template ID format");
   }
 
   const parseResult = await parseJsonBody(request, moderationActionSchema);

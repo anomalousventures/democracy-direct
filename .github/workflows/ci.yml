@@ -85,12 +85,11 @@ jobs:
       - name: Run Vitest with coverage
         run: pnpm test --coverage
 
-      - name: Report coverage
-        if: always()
-        uses: davelosert/vitest-coverage-report-action@15b5b41bb7d36796d89f4bf482b09529c53f3446 # v2.9.2
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v6
         with:
-          json-summary-path: ./coverage/coverage-summary.json
-          json-final-path: ./coverage/coverage-final.json
+          name: coverage-unit
+          path: coverage/coverage-final.json
 
   setup-branch-name:
     name: Setup Branch Name
@@ -108,7 +107,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
-      db_url: ${{ steps.create_branch.outputs.db_url_with_pooler }}
+      db_url: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url }}
     steps:
       - name: Create Neon Branch
         id: create_branch
@@ -117,6 +116,19 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Verify database URL output
+        run: |
+          echo "db_url_pooled output length: ${#DB_URL_POOLED}"
+          echo "db_url output length: ${#DB_URL}"
+          if [ -z "$DB_URL_POOLED" ] && [ -z "$DB_URL" ]; then
+            echo "ERROR: Both db_url_pooled and db_url are empty!"
+            exit 1
+          fi
+          echo "Database URL successfully retrieved"
+        env:
+          DB_URL_POOLED: ${{ steps.create_branch.outputs.db_url_pooled }}
+          DB_URL: ${{ steps.create_branch.outputs.db_url }}
 
   test-e2e:
     name: E2E Tests
@@ -147,6 +159,18 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Verify DATABASE_URL
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set!"
+            echo "create-preview-db result: ${{ needs.create-preview-db.result }}"
+            echo "create-preview-db.outputs.db_url is empty: ${{ needs.create-preview-db.outputs.db_url == '' }}"
+            exit 1
+          fi
+          echo "DATABASE_URL is set (length: ${#DATABASE_URL})"
+        env:
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
+
       - name: Run database migrations
         run: pnpm db:migrate
         env:
@@ -167,6 +191,17 @@ jobs:
         run: pnpm tsx src/scripts/import-legislators.ts
         env:
           DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
+
+      - name: Run integration tests with coverage
+        run: pnpm test:integration --coverage
+        env:
+          DATABASE_URL: ${{ needs.create-preview-db.outputs.db_url || secrets.DEV_DATABASE_URL }}
+
+      - name: Upload integration test coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-integration
+          path: coverage-integration/coverage-final.json
 
       - name: Create .dev.vars for wrangler
         run: |
@@ -198,6 +233,60 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  coverage-report:
+    name: Coverage Report
+    needs: [test, test-e2e]
+    if: always() && github.event.action != 'closed' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-unit
+          path: coverage-unit
+
+      - name: Download integration test coverage
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          name: coverage-integration
+          path: coverage-integration
+
+      # nyc merges Istanbul-format coverage JSON from different test types (unit + integration).
+      # Vitest's --merge-reports is for sharded runs only, not different test environments.
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          if [ -f coverage-integration/coverage-final.json ]; then
+            mkdir -p coverage-all
+            cp coverage-unit/coverage-final.json coverage-all/unit.json
+            cp coverage-integration/coverage-final.json coverage-all/integration.json
+            pnpm nyc merge coverage-all coverage/coverage-final.json
+          else
+            pnpm nyc merge coverage-unit coverage/coverage-final.json
+          fi
+          pnpm nyc report --reporter=json-summary --temp-dir=coverage --report-dir=coverage
+
+      - name: Report coverage
+        uses: davelosert/vitest-coverage-report-action@15b5b41bb7d36796d89f4bf482b09529c53f3446 # v2.9.2
+        with:
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
 
   build:
     name: Build

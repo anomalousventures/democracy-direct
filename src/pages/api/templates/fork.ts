@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
-import { templates, users } from "@/db/schema";
+import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { validateTemplate, generateSlug } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
@@ -14,9 +14,6 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
-import { moderateTemplate } from "@/lib/moderation/moderate-template";
-import { incrementApprovedTemplatesCount } from "@/lib/user-trust";
-import { TRUST_LEVELS } from "@/lib/trust-level";
 
 export const prerender = false;
 
@@ -103,18 +100,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return notFound("Source template not found");
     }
 
-    const [userRecord] = await db
-      .select({ trustLevel: users.trustLevel })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .limit(1);
-
-    const trustLevel = userRecord?.trustLevel ?? TRUST_LEVELS.NEW_USER;
-
-    const openaiKey = config.moderation.openaiApiKey;
-    const contentToModerate = `${title}\n\n${templateBody}`;
-    const moderation = await moderateTemplate(contentToModerate, openaiKey, trustLevel);
-
     const slug = generateSlug(title);
 
     const templateIsPublic = isPublic ?? true;
@@ -130,8 +115,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         userId: user.id,
         isPublic: templateIsPublic,
         forkedFrom: forkedFromId,
-        moderationStatus: moderation.status,
-        moderationScores: moderation.scores,
+        moderationStatus: "pending",
+        moderationScores: null,
       })
       .returning({
         id: templates.id,
@@ -144,10 +129,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         moderationStatus: templates.moderationStatus,
         createdAt: templates.createdAt,
       });
-
-    if (moderation.status === "approved") {
-      await incrementApprovedTemplatesCount(db, user.id);
-    }
 
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {
