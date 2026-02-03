@@ -26,21 +26,6 @@ declare global {
   }
 }
 
-const ISSUE_TAG_OPTIONS = [
-  "Healthcare",
-  "Education",
-  "Environment",
-  "Economy",
-  "Immigration",
-  "Civil Rights",
-  "Gun Policy",
-  "Foreign Policy",
-  "Social Security",
-  "Infrastructure",
-  "Veterans Affairs",
-  "Housing",
-];
-
 interface TemplateFormProps {
   initialData?: {
     title: string;
@@ -49,6 +34,7 @@ interface TemplateFormProps {
     issueTags: string[];
     isPublic?: boolean;
   };
+  availableTags: string[];
   onSubmit: (data: {
     title: string;
     description?: string;
@@ -65,6 +51,7 @@ interface TemplateFormProps {
 
 export function TemplateForm({
   initialData,
+  availableTags,
   onSubmit,
   submitLabel = "Create Template",
   isSubmitting = false,
@@ -74,7 +61,9 @@ export function TemplateForm({
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(initialData?.description || "");
   const [body, setBody] = useState(initialData?.body || "");
-  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.issueTags || []);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    (initialData?.issueTags || []).map((t) => t.toLowerCase())
+  );
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -259,14 +248,14 @@ export function TemplateForm({
       <fieldset className="space-y-2">
         <legend className="block text-sm font-medium text-primary">Issue Tags (optional)</legend>
         <div className="flex flex-wrap gap-2" data-testid="issue-tag-selector">
-          {ISSUE_TAG_OPTIONS.map((tag) => (
+          {availableTags.map((tag) => (
             <Toggle
               key={tag}
               variant="outline"
               size="sm"
               pressed={selectedTags.includes(tag)}
               onPressedChange={() => toggleTag(tag)}
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground capitalize"
             >
               {tag}
             </Toggle>

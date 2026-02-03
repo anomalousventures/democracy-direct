@@ -6,7 +6,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import { createDb } from "@/db/client";
-import { templates, users, tagSuggestions } from "@/db/schema";
+import { templates, users, issueTags } from "@/db/schema";
 import { eq, count } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 import { isAdmin } from "@/lib/admin";
@@ -49,8 +49,8 @@ try {
 
   const [pendingTagsResult] = await db
     .select({ count: count() })
-    .from(tagSuggestions)
-    .where(eq(tagSuggestions.status, "pending"));
+    .from(issueTags)
+    .where(eq(issueTags.status, "pending"));
 
   stats = {
     pendingReviews: pendingResult?.count ?? 0,

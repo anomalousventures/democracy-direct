@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/admin";
 import { parseJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { incrementApprovedTemplatesCount, handleTemplateRejection } from "@/lib/user-trust";
+import { createLogger } from "@/lib/logger";
 
 export const prerender = false;
 
@@ -19,6 +20,7 @@ const moderationActionSchema = z.object({
 const templateIdSchema = z.string().uuid();
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
   const adminError = requireAdmin(user);
   if (adminError) return adminError;
@@ -85,6 +87,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       }
     }
 
+    logger.info("admin_moderation_action", {
+      templateId,
+      action,
+      newStatus,
+      adminId: user!.id,
+    });
+
     return jsonResponse({
       success: true,
       templateId,
@@ -92,7 +101,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       newStatus,
     });
   } catch (error) {
-    console.error("Failed to moderate template:", error);
+    logger.error("admin_moderation_failed", {
+      templateId,
+      action,
+      adminId: user!.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to moderate template");
   }
 };

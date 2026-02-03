@@ -13,6 +13,7 @@ interface Props {
 
 const config = getConfig(Astro.locals);
 const turnstileSiteKey = config.turnstile.siteKey;
+const posthogConfig = config.posthog;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || "https://democracy-direct.com");
 const {
@@ -28,7 +29,7 @@ const ogImageUrl = ogImage.startsWith("http") ? ogImage : new URL(ogImage, canon
 <!doctype html>
 <html lang="en">
   <head>
-    <PostHog />
+    <PostHog apiKey={posthogConfig.apiKey} host={posthogConfig.host} />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />

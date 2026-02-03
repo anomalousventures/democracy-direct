@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email";
 import { createOtpEmail } from "@/lib/email/templates/otp";
 import { getConfig } from "@/lib/config";
 import { parseJsonBody, requestOtpBodySchema } from "@/lib/request-body";
+import { createLogger, type Logger } from "@/lib/logger";
 
 export const prerender = false;
 
@@ -18,14 +19,16 @@ const RATE_LIMIT_WINDOW_HOURS = 1;
 
 type EmailSender = (
   message: Parameters<typeof sendEmail>[0],
-  locals: App.Locals
+  locals: App.Locals,
+  logger?: Logger
 ) => Promise<boolean>;
 
 export async function requestOTP(
   email: string,
   locals: App.Locals,
   db?: ReturnType<typeof createDb>,
-  emailSender: EmailSender = sendEmail
+  emailSender: EmailSender = sendEmail,
+  logger?: Logger
 ): Promise<{ success: boolean; error?: string }> {
   const emailHash = hashEmail(email);
 
@@ -55,8 +58,9 @@ export async function requestOTP(
       expiresInMinutes: OTP_EXPIRY_MINUTES,
     });
 
-    const sent = await emailSender(emailMessage, locals);
+    const sent = await emailSender(emailMessage, locals, logger);
     if (!sent) {
+      logger?.error("otp_email_failed", { emailHashPrefix: emailHash.slice(0, 8) });
       return { success: false, error: "Failed to send verification email. Please try again." };
     }
   }
@@ -65,6 +69,7 @@ export async function requestOTP(
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const logger = createLogger(locals, request);
   const parseResult = await parseJsonBody(request, requestOtpBodySchema);
   if (!parseResult.success) {
     return badRequest(parseResult.error);
@@ -99,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(config.database.url);
-    const result = await requestOTP(email, locals, db);
+    const result = await requestOTP(email, locals, db, sendEmail, logger);
 
     if (!result.success) {
       return jsonResponse({ success: false, error: result.error }, 500);
@@ -107,7 +112,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return jsonResponse({ success: true });
   } catch (error) {
-    console.error("OTP request error:", error);
+    logger.error("otp_request_failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return jsonResponse({ success: false, error: "Something went wrong. Please try again." }, 500);
   }
 };

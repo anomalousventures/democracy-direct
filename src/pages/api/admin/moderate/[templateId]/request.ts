@@ -7,6 +7,7 @@ import { jsonResponse, badRequest, notFound, serverError } from "@/lib/api-respo
 import { requireAdmin } from "@/lib/admin";
 import { moderateContent } from "@/lib/moderation/openai";
 import { makeModerationDecision, scoresToRecord } from "@/lib/moderation/decision";
+import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 
 export const prerender = false;
@@ -19,7 +20,8 @@ const DECISION_TO_STATUS = {
   reject: "rejected",
 } as const;
 
-export const POST: APIRoute = async ({ params, locals }) => {
+export const POST: APIRoute = async ({ params, locals, request }) => {
+  const logger = createLogger(locals, request);
   const adminError = requireAdmin(locals.user);
   if (adminError) return adminError;
 
@@ -72,6 +74,16 @@ export const POST: APIRoute = async ({ params, locals }) => {
       })
       .where(eq(templates.id, templateId));
 
+    logger.info("moderation_request_completed", {
+      templateId,
+      previousStatus: template.moderationStatus,
+      newStatus,
+      decision: decision.decision,
+      flagged: result.flagged,
+      highestCategory: decision.highestCategory,
+      highestScore: decision.highestScore,
+    });
+
     return jsonResponse({
       success: true,
       templateId,
@@ -82,7 +94,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
       flagged: result.flagged,
     });
   } catch (error) {
-    console.error("Failed to request moderation:", error);
+    logger.error("moderation_request_failed", {
+      templateId,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return serverError("Failed to request moderation");
   }
 };

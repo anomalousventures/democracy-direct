@@ -110,7 +110,7 @@ describe("OpenAI Moderation", () => {
       });
 
       await expect(moderateContent("test content", "bad-key")).rejects.toThrow(
-        "OpenAI Moderation API error: 401"
+        "OpenAI API 401: Unauthorized"
       );
     });
 

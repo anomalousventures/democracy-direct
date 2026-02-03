@@ -11,9 +11,10 @@ interface TemplateEditClientProps {
     issueTags: string[];
     isPublic: boolean;
   };
+  availableTags: string[];
 }
 
-export function TemplateEditClient({ slug, initialData }: TemplateEditClientProps) {
+export function TemplateEditClient({ slug, initialData, availableTags }: TemplateEditClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -90,6 +91,7 @@ export function TemplateEditClient({ slug, initialData }: TemplateEditClientProp
 
       <TemplateForm
         initialData={initialData}
+        availableTags={availableTags}
         onSubmit={handleSubmit}
         submitLabel="Save Changes"
         isSubmitting={isSubmitting}

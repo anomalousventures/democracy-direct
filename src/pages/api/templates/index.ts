@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
-import { validateTemplate, generateSlug } from "@/lib/template-validation";
+import { validateTemplate, generateSlug, normalizeTags } from "@/lib/template-validation";
 import { getConfig } from "@/lib/config";
 import {
   jsonResponse,
@@ -11,10 +11,13 @@ import {
   validationError,
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
+import { createLogger } from "@/lib/logger";
+import { linkTemplateTags } from "@/db/queries/templates";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const logger = createLogger(locals, request);
   const user = locals.user;
 
   const parseResult = await parseJsonBody(request, templateBodySchema);
@@ -76,6 +79,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const templateIsPublic = user ? (isPublic ?? true) : true;
 
+    const normalizedTags = normalizeTags(issueTags);
+
     const [newTemplate] = await db
       .insert(templates)
       .values({
@@ -83,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         title: title.trim(),
         description: description?.trim() ?? null,
         body: templateBody.trim(),
-        issueTags: issueTags?.filter((t: string) => t.trim()) ?? [],
+        issueTags: normalizedTags,
         userId: user?.id ?? null,
         isPublic: templateIsPublic,
         moderationStatus: "pending",
@@ -100,9 +105,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         createdAt: templates.createdAt,
       });
 
+    if (normalizedTags.length > 0) {
+      await linkTemplateTags(db, newTemplate.id, normalizedTags);
+    }
+
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {
-    console.error("Failed to create template:", error);
+    logger.error("template_create_failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      userId: user?.id,
+    });
     return serverError("Failed to create template");
   }
 };

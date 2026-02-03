@@ -20,19 +20,13 @@ export class SmtpEmailProvider implements EmailProvider {
     });
   }
 
-  async send(message: EmailMessage): Promise<boolean> {
-    try {
-      await this.transporter.sendMail({
-        from: this.from,
-        to: message.to,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-      });
-      return true;
-    } catch (error) {
-      console.error("SMTP send error:", error);
-      return false;
-    }
+  async send(message: EmailMessage): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.from,
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    });
   }
 }

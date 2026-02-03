@@ -6,8 +6,8 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroAlert from "@/components/ui/AstroAlert.astro";
 import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
-import { templates, legislators } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { legislators } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 
 export const prerender = false;
@@ -17,42 +17,10 @@ const rawRepId = Astro.url.searchParams.get("rep");
 const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
 let repName: string | null = null;
 
-let templateList: {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  body: string;
-  issueTags: string[] | null;
-  viewCount: number;
-}[] = [];
-
-let availableTags: string[] = [];
-
-try {
-  const config = getConfig(Astro.locals);
-  const db = createDb(config.database.url);
-
-  const results = await db
-    .select({
-      id: templates.id,
-      slug: templates.slug,
-      title: templates.title,
-      description: templates.description,
-      body: templates.body,
-      issueTags: templates.issueTags,
-      viewCount: templates.viewCount,
-    })
-    .from(templates)
-    .where(and(eq(templates.isPublic, true), eq(templates.moderationStatus, "approved")))
-    .orderBy(desc(templates.viewCount));
-
-  templateList = results;
-
-  const allTags = results.flatMap((t) => t.issueTags || []);
-  availableTags = [...new Set(allTags)].sort();
-
-  if (repBioguideId) {
+if (repBioguideId) {
+  try {
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
     const [rep] = await db
       .select({ firstName: legislators.firstName, lastName: legislators.lastName })
       .from(legislators)
@@ -61,9 +29,9 @@ try {
     if (rep) {
       repName = `${rep.firstName} ${rep.lastName}`;
     }
+  } catch (error) {
+    console.error("Failed to load representative:", error);
   }
-} catch (error) {
-  console.error("Failed to load templates:", error);
 }
 ---
 
@@ -112,12 +80,7 @@ try {
         </div>
 
         <div data-testid="template-list">
-          <TemplateSearch
-            client:load
-            templates={templateList}
-            availableTags={availableTags}
-            repBioguideId={repBioguideId}
-          />
+          <TemplateSearch client:load repBioguideId={repBioguideId} />
         </div>
       </div>
     </div>

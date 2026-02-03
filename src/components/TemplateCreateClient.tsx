@@ -5,11 +5,13 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface TemplateCreateClientProps {
   turnstileSiteKey: string;
+  availableTags: string[];
   isAuthenticated?: boolean;
 }
 
 export function TemplateCreateClient({
   turnstileSiteKey,
+  availableTags,
   isAuthenticated = false,
 }: TemplateCreateClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,6 +103,7 @@ export function TemplateCreateClient({
 
       <TemplateForm
         onSubmit={handleSubmit}
+        availableTags={availableTags}
         submitLabel="Create Template"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}

@@ -20,3 +20,9 @@ blob-report/
 
 # Generated data
 public/data/
+
+# Vendor/minified scripts
+src/components/posthog.astro
+
+# Local settings
+.claude/

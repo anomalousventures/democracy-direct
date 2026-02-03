@@ -29,19 +29,19 @@ function createModerationResult(
 
 describe("Moderation Decision Logic", () => {
   describe("makeModerationDecision", () => {
-    it("rejects flagged content", () => {
+    it("sends flagged content to review", () => {
       const result = createModerationResult(true, { harassment: 0.9 });
       const decision = makeModerationDecision(result);
 
-      expect(decision.decision).toBe("reject");
+      expect(decision.decision).toBe("review");
       expect(decision.flagged).toBe(true);
     });
 
-    it("rejects content above rejection threshold", () => {
+    it("sends content above rejection threshold to review", () => {
       const result = createModerationResult(false, { hate: 0.85 });
       const decision = makeModerationDecision(result);
 
-      expect(decision.decision).toBe("reject");
+      expect(decision.decision).toBe("review");
       expect(decision.highestCategory).toBe("hate");
       expect(decision.highestScore).toBe(0.85);
     });
@@ -87,7 +87,7 @@ describe("Moderation Decision Logic", () => {
       const result = createModerationResult(false, { hate: 0.55 });
       const decision = makeModerationDecision(result, customThresholds);
 
-      expect(decision.decision).toBe("reject");
+      expect(decision.decision).toBe("review");
     });
 
     it("returns correct highest category", () => {
