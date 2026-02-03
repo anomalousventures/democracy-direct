@@ -2,9 +2,9 @@ name: Backfill Bills
 
 on:
   schedule:
-    # Initially every 4 hours for aggressive backfill
-    # After initial backfill (~1 week), reduce to daily or disable
-    - cron: "0 */4 * * *"
+    # Hourly, 8am-10pm Pacific (UTC-8/UTC-7 depending on DST)
+    # 15:00-06:00 UTC covers both PST and PDT windows
+    - cron: "0 0-6,15-23 * * *"
   workflow_dispatch:
 
 permissions:
@@ -33,12 +33,10 @@ jobs:
         id: bills
         run: |
           set +e
-          OUTPUT=$(pnpm sync:bills -- --direction backward 2>&1)
+          pnpm sync:bills -- --direction backward
           EXIT_CODE=$?
           set -e
-          echo "$OUTPUT"
-          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
-          echo "result=$JSON" >> $GITHUB_OUTPUT
+
           if [ $EXIT_CODE -ne 0 ]; then
             echo "failed=true" >> $GITHUB_OUTPUT
           else
@@ -60,6 +58,11 @@ jobs:
             exit 0
           fi
 
+          if [ -z "$BILLS_RESULT" ]; then
+            echo "Warning: BILLS_RESULT is empty, using default values"
+            BILLS_RESULT='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[],"warnings":[]}'
+          fi
+
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -68,14 +71,72 @@ jobs:
           CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
           OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
 
+          # Parse errors (fatal issues that prevented bill processing)
+          ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
+          SCHEMA_ISSUE_DETECTED="false"
+          ERROR_SUMMARY=""
+
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            ERROR_SUMMARY=$(echo "$BILLS_RESULT" | jq -r '
+              (.errors // [])
+              | group_by(.message // "Unknown error")
+              | map({
+                  message: (.[0].message // "Unknown error"),
+                  count: length
+                })
+              | map("\(.message): \(.count)")
+              | join("\n")
+            ')
+
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .message // empty] | unique | length')
+
+            if [ "$UNIQUE_ERRORS" -eq 1 ]; then
+              SCHEMA_ISSUE_DETECTED="true"
+              echo "⚠️ WARNING: All $ERROR_COUNT bills failed with the same error:"
+              echo "$ERROR_SUMMARY"
+            else
+              echo "ℹ️ Encountered $ERROR_COUNT errors across $UNIQUE_ERRORS unique error types:"
+              echo "$ERROR_SUMMARY"
+            fi
+          fi
+
+          # Parse warnings (recoverable issues like missing introducedDate with fallback)
+          WARNING_COUNT=$(echo "$BILLS_RESULT" | jq -r '.warnings | length // 0')
+          if [ "$WARNING_COUNT" -gt 0 ]; then
+            echo "ℹ️ $WARNING_COUNT bills processed with warnings (data recovered via fallbacks)"
+          fi
+
+          # Determine notification title, color, and status
           if [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Bill Backfill Failed"
             COLOR=16711680
             STATUS="❌ **Bills**: Backfill failed"
+          elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ] && [ "$BILLS_COUNT" -eq 0 ]; then
+            TITLE="⚠️ Bill Backfill - Schema Issue Detected"
+            COLOR=16744192
+            STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error"
+            STATUS="${STATUS}\n\`\`\`"
+            STATUS="${STATUS}\n${ERROR_SUMMARY}"
+            STATUS="${STATUS}\n\`\`\`"
+            STATUS="${STATUS}\n**This suggests a schema or code issue, not data problems.**"
+          elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
+            TITLE="🚨 Bill Backfill - All Bills Failed"
+            COLOR=16711680
+            STATUS="❌ **Bills**: All bills failed ($ERROR_COUNT errors across $UNIQUE_ERRORS types)\nCheck logs for error breakdown."
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
             COLOR=65280
-            STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
+            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}"
+            else
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest synced: ${OLDEST})"
+            fi
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              STATUS="${STATUS}\n⚠️ **Errors**: ${ERROR_COUNT} bills could not be processed"
+            fi
+            if [ "$WARNING_COUNT" -gt 0 ]; then
+              STATUS="${STATUS}\nℹ️ **Warnings**: ${WARNING_COUNT} bills used date fallbacks"
+            fi
           else
             TITLE="✅ Bill Backfill - Complete"
             COLOR=8421504
@@ -105,5 +166,62 @@ jobs:
       - name: Fail workflow if backfill failed
         if: steps.bills.outputs.failed == 'true'
         run: |
-          echo "Bill backfill failed"
+          echo "Bill backfill failed - check logs above for details"
           exit 1
+
+      - name: Fail workflow if schema issue detected
+        if: steps.bills.outputs.failed != 'true'
+        run: |
+          BILLS_RESULT='${{ steps.bills.outputs.result }}'
+
+          if [ -z "$BILLS_RESULT" ] || [ "$BILLS_RESULT" = "{}" ]; then
+            echo "No result data available, skipping schema check"
+            exit 0
+          fi
+
+          # Only check errors (not warnings) for schema issues
+          ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
+          BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
+          WARNING_COUNT=$(echo "$BILLS_RESULT" | jq -r '.warnings | length // 0')
+
+          # Log warnings as informational (these are expected data variations)
+          if [ "$WARNING_COUNT" -gt 0 ]; then
+            echo "ℹ️ $WARNING_COUNT bills processed with warnings (used date fallbacks)"
+          fi
+
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '(.errors // []) | [.[] | .message // empty] | unique | length')
+
+            ERROR_SUMMARY=$(echo "$BILLS_RESULT" | jq -r '
+              (.errors // [])
+              | group_by(.message // "Unknown error")
+              | map({
+                  message: (.[0].message // "Unknown error"),
+                  count: length
+                })
+              | map("  \(.message): \(.count)")
+              | join("\n")
+            ')
+
+            # If all errors are identical and no bills succeeded, fail the workflow
+            if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
+              echo "❌ SCHEMA ISSUE DETECTED ❌"
+              echo "All $ERROR_COUNT bills failed with the same error:"
+              echo "$ERROR_SUMMARY"
+              echo ""
+              echo "This indicates a problem with the schema or code, not the data."
+              exit 1
+            fi
+
+            if [ "$UNIQUE_ERRORS" -eq 1 ]; then
+              echo "⚠️ Warning: All $ERROR_COUNT errors have the same message:"
+              echo "$ERROR_SUMMARY"
+              echo "This may indicate a schema issue. Investigate if error rate is high."
+            else
+              echo "ℹ️ Encountered $ERROR_COUNT errors across $UNIQUE_ERRORS unique types:"
+              echo "$ERROR_SUMMARY"
+            fi
+          fi
+
+          echo "Schema check complete"
+          exit 0

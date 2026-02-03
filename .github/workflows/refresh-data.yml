@@ -106,13 +106,11 @@ jobs:
         id: bills
         run: |
           set +e
-          OUTPUT=$(pnpm sync:bills -- --direction forward 2>&1)
+          pnpm sync:bills -- --direction forward
           EXIT_CODE=$?
           set -e
-          echo "$OUTPUT"
-          JSON=$(echo "$OUTPUT" | grep -E '^\{' | head -1 || echo '{}')
-          echo "result=$JSON" >> $GITHUB_OUTPUT
-          if [ $EXIT_CODE -ne 0 ] || echo "$OUTPUT" | grep -q "Sync failed"; then
+
+          if [ $EXIT_CODE -ne 0 ]; then
             echo "failed=true" >> $GITHUB_OUTPUT
           else
             echo "failed=false" >> $GITHUB_OUTPUT
