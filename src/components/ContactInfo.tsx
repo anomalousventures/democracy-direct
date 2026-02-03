@@ -1,9 +1,18 @@
-import { TbPhone, TbMail, TbMapPin, TbLink, TbBrandX, TbBrandFacebook } from "react-icons/tb";
+import {
+  TbPhone,
+  TbMail,
+  TbMapPin,
+  TbWorld,
+  TbLink,
+  TbBrandX,
+  TbBrandFacebook,
+} from "react-icons/tb";
 
 export interface ContactInfoProps {
   phone?: string;
   contactFormUrl?: string;
   address?: string;
+  website?: string;
   twitterHandle?: string;
   facebookId?: string;
 }
@@ -12,11 +21,12 @@ export function ContactInfo({
   phone,
   contactFormUrl,
   address,
+  website,
   twitterHandle,
   facebookId,
 }: ContactInfoProps) {
   const hasSocial = twitterHandle || facebookId;
-  const hasAnyInfo = phone || contactFormUrl || address || hasSocial;
+  const hasAnyInfo = phone || contactFormUrl || address || website || hasSocial;
 
   if (!hasAnyInfo) {
     return (
@@ -44,6 +54,25 @@ export function ContactInfo({
         </div>
       )}
 
+      {website && (
+        <div className="info-item">
+          <div className="icon-box-sm">
+            <TbWorld className="w-5 h-5 text-accent" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="font-medium">Official Website</p>
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {website.replace(/^https?:\/\/(www\.)?/, "")}
+            </a>
+          </div>
+        </div>
+      )}
+
       {contactFormUrl && (
         <div className="info-item">
           <div className="icon-box-sm">
@@ -55,10 +84,9 @@ export function ContactInfo({
               href={contactFormUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
+              className="text-primary hover:underline"
             >
-              <span>Send a message</span>
-              <TbLink className="w-4 h-4" aria-hidden="true" />
+              Send a message
             </a>
           </div>
         </div>
