@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 import { createLogger } from "@/lib/logger";
+import { linkTemplateTags } from "@/db/queries/templates";
 
 export const prerender = false;
 
@@ -78,6 +79,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const templateIsPublic = user ? (isPublic ?? true) : true;
 
+    const normalizedTags = normalizeTags(issueTags);
+
     const [newTemplate] = await db
       .insert(templates)
       .values({
@@ -85,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         title: title.trim(),
         description: description?.trim() ?? null,
         body: templateBody.trim(),
-        issueTags: normalizeTags(issueTags),
+        issueTags: normalizedTags,
         userId: user?.id ?? null,
         isPublic: templateIsPublic,
         moderationStatus: "pending",
@@ -101,6 +104,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         moderationStatus: templates.moderationStatus,
         createdAt: templates.createdAt,
       });
+
+    if (normalizedTags.length > 0) {
+      await linkTemplateTags(db, newTemplate.id, normalizedTags);
+    }
 
     return jsonResponse({ template: newTemplate }, 201);
   } catch (error) {

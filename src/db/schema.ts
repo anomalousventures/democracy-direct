@@ -196,6 +196,24 @@ export const issueTags = pgTable(
   ]
 );
 
+export const templateIssueTags = pgTable(
+  "template_issue_tags",
+  {
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => templates.id, { onDelete: "cascade" }),
+    issueTagId: uuid("issue_tag_id")
+      .notNull()
+      .references(() => issueTags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.templateId, table.issueTagId] }),
+    index("template_issue_tags_template_id_idx").on(table.templateId),
+    index("template_issue_tags_issue_tag_id_idx").on(table.issueTagId),
+  ]
+);
+
 export const votes = pgTable(
   "votes",
   {
@@ -311,6 +329,8 @@ export type UserTemplate = typeof userTemplates.$inferSelect;
 export type NewUserTemplate = typeof userTemplates.$inferInsert;
 export type IssueTag = typeof issueTags.$inferSelect;
 export type NewIssueTag = typeof issueTags.$inferInsert;
+export type TemplateIssueTag = typeof templateIssueTags.$inferSelect;
+export type NewTemplateIssueTag = typeof templateIssueTags.$inferInsert;
 export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
 export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;
 export type Bill = typeof bills.$inferSelect;

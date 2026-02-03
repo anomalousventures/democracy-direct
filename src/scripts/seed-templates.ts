@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { createHash } from "crypto";
 import { createDb } from "@/db/client";
-import { templates } from "@/db/schema";
+import { templates, issueTags, templateIssueTags } from "@/db/schema";
 import { generateSlug } from "@/lib/template-validation";
+import { eq, inArray, sql } from "drizzle-orm";
 
 export interface SeedTemplate {
   title: string;
@@ -289,7 +290,7 @@ export async function seedTemplates(): Promise<{
     const contentHash = hashContent(tpl.title + tpl.body);
     const slug = generateSlug(tpl.title);
 
-    await db
+    const [insertedTemplate] = await db
       .insert(templates)
       .values({
         slug,
@@ -311,7 +312,28 @@ export async function seedTemplates(): Promise<{
           issueTags: tpl.issueTags,
           updatedAt: new Date(),
         },
-      });
+      })
+      .returning({ id: templates.id });
+
+    if (tpl.issueTags.length > 0) {
+      const lowerTags = tpl.issueTags.map((t) => t.toLowerCase());
+      const matchingTags = await db
+        .select({ id: issueTags.id })
+        .from(issueTags)
+        .where(inArray(sql`LOWER(${issueTags.name})`, lowerTags));
+
+      if (matchingTags.length > 0) {
+        await db
+          .delete(templateIssueTags)
+          .where(eq(templateIssueTags.templateId, insertedTemplate.id));
+        await db.insert(templateIssueTags).values(
+          matchingTags.map((tag) => ({
+            templateId: insertedTemplate.id,
+            issueTagId: tag.id,
+          }))
+        );
+      }
+    }
 
     upserted++;
     console.log(`  ✓ ${tpl.title}`);

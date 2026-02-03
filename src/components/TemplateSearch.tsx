@@ -1,8 +1,10 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Toggle } from "./ui/toggle";
 import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { Skeleton } from "./ui/skeleton";
 
 interface Template {
   id: string;
@@ -10,19 +12,157 @@ interface Template {
   title: string;
   description: string | null;
   body: string;
-  issueTags: string[] | null;
+  tags: string[];
   viewCount: number;
+  useCount: number;
+}
+
+interface SearchResponse {
+  templates: Template[];
+  pagination: {
+    nextCursor: string | null;
+    hasMore: boolean;
+  };
+  availableTags: string[];
 }
 
 interface TemplateSearchProps {
-  templates: Template[];
-  availableTags: string[];
   repBioguideId?: string | null;
 }
 
-export function TemplateSearch({ templates, availableTags, repBioguideId }: TemplateSearchProps) {
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+function TemplateCardSkeleton() {
+  return (
+    <Card variant="civic" className="block animate-pulse">
+      <Skeleton className="h-7 w-3/4 mb-3" />
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-2/3 mb-4" />
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-20" />
+      </div>
+    </Card>
+  );
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
+    </svg>
+  );
+}
+
+function LoadingSpinner({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const isInitialMount = useRef(true);
+
+  const fetchTemplates = useCallback(
+    async (nextCursor?: string, append = false) => {
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
+
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+
+      if (nextCursor) {
+        params.set("cursor", nextCursor);
+      }
+
+      if (debouncedSearch.trim()) {
+        params.set("search", debouncedSearch.trim());
+      }
+
+      if (selectedTags.length > 0) {
+        params.set("tags", selectedTags.join(","));
+      }
+
+      try {
+        const response = await fetch(`/api/templates/search?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch templates");
+        }
+
+        const data: SearchResponse = await response.json();
+
+        if (append) {
+          setTemplates((prev) => [...prev, ...data.templates]);
+        } else {
+          setTemplates(data.templates);
+        }
+
+        setCursor(data.pagination.nextCursor);
+        setHasMore(data.pagination.hasMore);
+        setAvailableTags(data.availableTags);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [debouncedSearch, selectedTags]
+  );
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchTemplates();
+      return;
+    }
+    fetchTemplates();
+  }, [debouncedSearch, selectedTags, fetchTemplates]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -34,48 +174,53 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
     );
   }, []);
 
-  const filteredTemplates = useMemo(() => {
-    return templates.filter((template) => {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch =
-        !searchQuery ||
-        template.title.toLowerCase().includes(searchLower) ||
-        template.body.toLowerCase().includes(searchLower);
+  const handleLoadMore = useCallback(() => {
+    if (cursor && hasMore && !isLoadingMore) {
+      fetchTemplates(cursor, true);
+    }
+  }, [cursor, hasMore, isLoadingMore, fetchTemplates]);
 
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.some((tag) =>
-          template.issueTags?.some((t) => t.toLowerCase() === tag.toLowerCase())
-        );
+  const clearFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedTags([]);
+  }, []);
 
-      return matchesSearch && matchesTags;
-    });
-  }, [templates, searchQuery, selectedTags]);
-
-  const truncateBody = (body: string, maxLength: number = 100): string => {
+  const truncateBody = (body: string, maxLength = 100): string => {
     if (body.length <= maxLength) return body;
     return body.slice(0, maxLength).trim() + "...";
   };
 
+  const hasActiveFilters = searchQuery.trim() || selectedTags.length > 0;
+  const totalCount = templates.length;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <Input
-            type="search"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            variant="civic"
-            aria-label="Search templates"
-            data-testid="template-search-input"
-          />
+    <div className="space-y-8">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+          <SearchIcon className="h-5 w-5 text-muted-foreground" />
         </div>
+        <Input
+          type="search"
+          placeholder="Search by title or description..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          variant="civic"
+          className="pl-12"
+          aria-label="Search templates"
+          data-testid="template-search-input"
+        />
+        {isLoading && searchQuery && (
+          <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+            <LoadingSpinner className="h-5 w-5 text-primary animate-spin" />
+          </div>
+        )}
       </div>
 
       {availableTags.length > 0 && (
-        <fieldset>
-          <legend className="sr-only">Filter by issue tags</legend>
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
+            Filter by Topic
+          </legend>
           <div className="flex flex-wrap gap-2" data-testid="tag-filter">
             {availableTags.map((tag) => (
               <Toggle
@@ -84,7 +229,14 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
                 size="sm"
                 pressed={selectedTags.includes(tag)}
                 onPressedChange={() => toggleTag(tag)}
-                className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                className="
+                  capitalize px-4 py-2 text-sm font-medium rounded-sm
+                  border-2 border-border bg-white
+                  transition-all duration-200
+                  hover:border-primary/50 hover:bg-secondary
+                  data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
+                  data-[state=on]:border-primary data-[state=on]:shadow-md
+                "
                 data-testid="tag-filter-button"
               >
                 {tag}
@@ -94,49 +246,190 @@ export function TemplateSearch({ templates, availableTags, repBioguideId }: Temp
         </fieldset>
       )}
 
+      {hasActiveFilters && (
+        <div className="flex items-center justify-between py-3 px-4 bg-secondary/50 border border-border rounded-sm">
+          <p className="text-sm text-muted-foreground">
+            {isLoading ? (
+              "Searching..."
+            ) : (
+              <>
+                <span className="font-semibold text-primary">{totalCount}</span>{" "}
+                {totalCount === 1 ? "template" : "templates"} found
+                {hasMore && !isLoading && " (scroll for more)"}
+              </>
+            )}
+          </p>
+          <button
+            onClick={clearFilters}
+            className="text-sm text-primary hover:text-accent font-medium transition-colors"
+            aria-label="Clear all filters"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div
+          className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm"
+          role="alert"
+        >
+          <p className="font-medium">Unable to load templates</p>
+          <p className="mt-1 text-destructive/80">{error}</p>
+          <button
+            onClick={() => fetchTemplates()}
+            className="mt-3 text-sm font-medium underline hover:no-underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       <div data-testid="template-search-results" className="space-y-6">
-        {filteredTemplates.length > 0 ? (
-          filteredTemplates.map((template) => {
-            const templateUrl = repBioguideId
-              ? `/templates/${template.slug}?rep=${repBioguideId}`
-              : `/templates/${template.slug}`;
-            return (
-              <Card key={template.id} variant="civic" data-testid="template-card" className="block">
-                <a href={templateUrl} className="block">
-                  <h2 className="text-xl font-semibold mb-2 text-primary hover:text-primary/80">
-                    {template.title}
-                  </h2>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">
-                    {template.description || truncateBody(template.body)}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {template.issueTags?.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="secondary"
-                          className="capitalize"
-                          data-testid="issue-tag"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
+        {isLoading && !templates.length ? (
+          <>
+            <TemplateCardSkeleton />
+            <TemplateCardSkeleton />
+            <TemplateCardSkeleton />
+          </>
+        ) : templates.length > 0 ? (
+          <>
+            {templates.map((template, index) => {
+              const templateUrl = repBioguideId
+                ? `/templates/${template.slug}?rep=${repBioguideId}`
+                : `/templates/${template.slug}`;
+              const popularity = template.viewCount + template.useCount;
+
+              return (
+                <Card
+                  key={template.id}
+                  variant="civic"
+                  data-testid="template-card"
+                  className="block group hover:shadow-[var(--shadow-civic-lg)] transition-shadow duration-300"
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                >
+                  <a href={templateUrl} className="block">
+                    <h2 className="text-xl font-semibold mb-2 text-primary group-hover:text-accent transition-colors duration-200">
+                      {template.title}
+                    </h2>
+                    <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
+                      {template.description || truncateBody(template.body)}
+                    </p>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-wrap gap-2 min-w-0">
+                        {template.tags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="capitalize text-xs"
+                            data-testid="issue-tag"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
+                        <span className="flex items-center gap-1.5" title="Views">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          {template.viewCount.toLocaleString()}
+                        </span>
+                        {popularity > 0 && (
+                          <span className="flex items-center gap-1.5 text-accent" title="Uses">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                              />
+                            </svg>
+                            {template.useCount.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {template.viewCount.toLocaleString()} views
-                    </span>
-                  </div>
-                </a>
-              </Card>
-            );
-          })
+                  </a>
+                </Card>
+              );
+            })}
+
+            {hasMore && (
+              <div className="pt-4 text-center">
+                <Button
+                  variant="civicSecondary"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="min-w-[200px]"
+                  data-testid="load-more-button"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <LoadingSpinner className="h-4 w-4 animate-spin mr-2" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More Templates"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="text-center py-12" data-testid="no-results">
-            <p className="text-muted-foreground">
-              {searchQuery || selectedTags.length > 0
-                ? "No templates match your search."
-                : "No templates available yet."}
+          <div
+            className="text-center py-16 px-8 bg-secondary/30 border border-border rounded-sm"
+            data-testid="no-results"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+              <svg
+                className="w-8 h-8 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                />
+              </svg>
+            </div>
+            <p className="text-muted-foreground text-lg">
+              {hasActiveFilters ? "No templates match your search." : "No templates available yet."}
             </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="mt-4 text-primary hover:text-accent font-medium transition-colors"
+              >
+                Clear filters and show all
+              </button>
+            )}
           </div>
         )}
       </div>

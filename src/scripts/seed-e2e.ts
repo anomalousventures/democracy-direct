@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { eq } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { createDb } from "../db/client";
-import { users, sessions, templates, issueTags } from "../db/schema";
+import { users, sessions, templates, issueTags, templateIssueTags } from "../db/schema";
 import { TRUST_LEVELS } from "../lib/trust-level";
 
 export const SESSION_DURATION_DAYS = 30;
@@ -85,27 +85,51 @@ async function seedE2E() {
 
   for (const template of SAMPLE_TEMPLATES) {
     const existing = await db
-      .select()
+      .select({ id: templates.id })
       .from(templates)
       .where(eq(templates.slug, template.slug))
       .limit(1);
 
+    let templateId: string;
+
     if (existing.length > 0) {
-      console.log(`  Template "${template.slug}" exists, skipping`);
-      continue;
+      console.log(`  Template "${template.slug}" exists, updating tags`);
+      templateId = existing[0].id;
+    } else {
+      const [inserted] = await db
+        .insert(templates)
+        .values({
+          slug: template.slug,
+          title: template.title,
+          body: template.body,
+          issueTags: template.issueTags,
+          userId: adminUser.id,
+          isPublic: true,
+          moderationStatus: "approved",
+        })
+        .returning({ id: templates.id });
+
+      templateId = inserted.id;
+      console.log(`  Created: ${template.slug}`);
     }
 
-    await db.insert(templates).values({
-      slug: template.slug,
-      title: template.title,
-      body: template.body,
-      issueTags: template.issueTags,
-      userId: adminUser.id,
-      isPublic: true,
-      moderationStatus: "approved",
-    });
+    if (template.issueTags.length > 0) {
+      const lowerTags = template.issueTags.map((t) => t.toLowerCase());
+      const matchingTags = await db
+        .select({ id: issueTags.id })
+        .from(issueTags)
+        .where(inArray(sql`LOWER(${issueTags.name})`, lowerTags));
 
-    console.log(`  Created: ${template.slug}`);
+      if (matchingTags.length > 0) {
+        await db.delete(templateIssueTags).where(eq(templateIssueTags.templateId, templateId));
+        await db.insert(templateIssueTags).values(
+          matchingTags.map((tag) => ({
+            templateId,
+            issueTagId: tag.id,
+          }))
+        );
+      }
+    }
   }
 
   console.log(`\nCreating pending tag suggestion...`);

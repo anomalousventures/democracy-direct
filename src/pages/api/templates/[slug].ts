@@ -15,6 +15,7 @@ import {
 } from "@/lib/api-response";
 import { parseJsonBody, templateBodySchema } from "@/lib/request-body";
 import { createLogger } from "@/lib/logger";
+import { syncTemplateTags } from "@/db/queries/templates";
 
 export const prerender = false;
 
@@ -142,13 +143,15 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       return forbidden();
     }
 
+    const normalizedTags = normalizeTags(issueTags);
+
     const [updatedTemplate] = await db
       .update(templates)
       .set({
         title: title.trim(),
         description: description?.trim() ?? null,
         body: templateBody.trim(),
-        issueTags: normalizeTags(issueTags),
+        issueTags: normalizedTags,
         isPublic: isPublic ?? true,
         moderationStatus: "pending",
         moderationScores: null,
@@ -156,6 +159,8 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       })
       .where(eq(templates.id, existingTemplate.id))
       .returning();
+
+    await syncTemplateTags(db, existingTemplate.id, normalizedTags);
 
     return jsonResponse({ template: updatedTemplate });
   } catch (error) {

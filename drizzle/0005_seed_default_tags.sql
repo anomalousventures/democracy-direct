@@ -9,11 +9,17 @@ VALUES
   ('environment', 'approved', NOW(), NOW()),
   ('economy', 'approved', NOW(), NOW()),
   ('immigration', 'approved', NOW(), NOW()),
-  ('civil rights', 'approved', NOW(), NOW()),
-  ('gun policy', 'approved', NOW(), NOW()),
-  ('foreign policy', 'approved', NOW(), NOW()),
-  ('social security', 'approved', NOW(), NOW()),
   ('infrastructure', 'approved', NOW(), NOW()),
-  ('veterans affairs', 'approved', NOW(), NOW()),
-  ('housing', 'approved', NOW(), NOW())
+  ('housing', 'approved', NOW(), NOW()),
+  ('climate', 'approved', NOW(), NOW()),
+  ('civil-rights', 'approved', NOW(), NOW()),
+  ('gun-violence', 'approved', NOW(), NOW()),
+  ('public-safety', 'approved', NOW(), NOW()),
+  ('social-security', 'approved', NOW(), NOW()),
+  ('medicare', 'approved', NOW(), NOW()),
+  ('seniors', 'approved', NOW(), NOW()),
+  ('veterans', 'approved', NOW(), NOW()),
+  ('small-business', 'approved', NOW(), NOW()),
+  ('transparency', 'approved', NOW(), NOW()),
+  ('government', 'approved', NOW(), NOW())
 ON CONFLICT ("name") DO NOTHING;

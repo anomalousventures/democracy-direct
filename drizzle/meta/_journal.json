@@ -43,6 +43,13 @@
       "when": 1770069600000,
       "tag": "0005_seed_default_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770156000000,
+      "tag": "0006_template_issue_tags",
+      "breakpoints": true
     }
   ]
 }
