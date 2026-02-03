@@ -104,8 +104,8 @@ jobs:
           COMMON_ERROR=""
           
           if [ "$ERROR_COUNT" -gt 0 ]; then
-            # Extract unique error messages
-            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[].error] | unique | length')
+            # Extract unique error messages (filtering out nulls for robustness)
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[] | .error // empty] | unique | length')
             
             # If all errors have the same message, it's likely a schema/code issue
             if [ "$UNIQUE_ERRORS" -eq 1 ]; then
@@ -125,7 +125,12 @@ jobs:
             # Special case: All errors are identical - likely schema issue
             TITLE="⚠️ Bill Backfill - Schema Issue Detected"
             COLOR=16744192  # Orange
-            STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error\n\`\`\`\n${COMMON_ERROR}\n\`\`\`\n**This suggests a schema or code issue, not data problems.**"
+            # Build multi-line status message for better readability
+            STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error"
+            STATUS="${STATUS}\n\`\`\`"
+            STATUS="${STATUS}\n${COMMON_ERROR}"
+            STATUS="${STATUS}\n\`\`\`"
+            STATUS="${STATUS}\n**This suggests a schema or code issue, not data problems.**"
           elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
             # All bills had errors, none succeeded
             TITLE="🚨 Bill Backfill - All Bills Failed"
@@ -188,7 +193,7 @@ jobs:
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
           
           if [ "$ERROR_COUNT" -gt 0 ]; then
-            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[].error] | unique | length')
+            UNIQUE_ERRORS=$(echo "$BILLS_RESULT" | jq -r '[.errors[] | .error // empty] | unique | length')
             
             # If all errors are identical and no bills succeeded, fail the workflow
             if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
