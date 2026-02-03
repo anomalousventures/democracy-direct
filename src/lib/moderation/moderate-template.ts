@@ -1,4 +1,4 @@
-import { moderateContent, getHighestCategoryScore } from "./openai";
+import { moderateContent } from "./openai";
 import { makeModerationDecision, scoresToRecord, type DecisionResult } from "./decision";
 import type { Logger } from "@/lib/logger";
 
@@ -38,14 +38,13 @@ export async function moderateTemplate(
   try {
     const result = await moderateContent(content, apiKey);
     const decision = makeModerationDecision(result, undefined, userTrustLevel);
-    const highest = getHighestCategoryScore(result.categoryScores);
 
     logger?.info("moderation_complete", {
       ...context,
       status: DECISION_TO_STATUS[decision.decision],
       flagged: result.flagged,
-      highestCategory: highest.category,
-      highestScore: highest.score,
+      highestCategory: decision.highestCategory,
+      highestScore: decision.highestScore,
       decision: decision.decision,
     });
 
