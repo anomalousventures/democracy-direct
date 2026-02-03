@@ -41,7 +41,7 @@ export function makeModerationDecision(
 
   if (result.flagged || score >= thresholds.rejectThreshold) {
     return {
-      decision: "reject",
+      decision: "review",
       reason: `Content flagged for ${category} (score: ${score.toFixed(3)})`,
       highestCategory: category,
       highestScore: score,
