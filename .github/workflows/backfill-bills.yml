@@ -126,7 +126,11 @@ jobs:
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
             COLOR=65280
-            STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest: ${OLDEST})"
+            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}"
+            else
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest synced: ${OLDEST})"
+            fi
             if [ "$ERROR_COUNT" -gt 0 ]; then
               STATUS="${STATUS}\n⚠️ **Errors**: ${ERROR_COUNT} bills could not be processed"
             fi
