@@ -46,8 +46,8 @@ jobs:
           # The script outputs JSON on the final line after completion
           JSON=$(grep -E '^\{' "$OUTPUT_FILE" | tail -1 || echo '{}')
           
-          # Validate JSON is not empty and store result
-          if [ -z "$JSON" ] || [ "$JSON" = "{}" ]; then
+          # Validate JSON is not empty and is valid JSON structure
+          if [ -z "$JSON" ] || [ "$JSON" = "{}" ] || ! echo "$JSON" | jq empty 2>/dev/null; then
             echo "Warning: No valid JSON result found in output" >&2
             JSON='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[]}'
           fi
@@ -197,7 +197,7 @@ jobs:
             
             # If all errors are identical and no bills succeeded, fail the workflow
             if [ "$UNIQUE_ERRORS" -eq 1 ] && [ "$BILLS_COUNT" -eq 0 ]; then
-              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error')
+              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
               echo "❌ SCHEMA ISSUE DETECTED ❌"
               echo "All $ERROR_COUNT bills failed with the same error:"
               echo "  $COMMON_ERROR"
@@ -209,7 +209,7 @@ jobs:
             
             # If errors exist but some bills succeeded, just warn
             if [ "$UNIQUE_ERRORS" -eq 1 ]; then
-              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error')
+              COMMON_ERROR=$(echo "$BILLS_RESULT" | jq -r '.errors[0].error // "Unknown error"')
               echo "⚠️ Warning: All $ERROR_COUNT errors have the same message:"
               echo "  $COMMON_ERROR"
               echo "This may indicate a schema issue. Investigate if error rate is high."
