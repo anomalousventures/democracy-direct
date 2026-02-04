@@ -341,6 +341,29 @@
     @apply absolute inset-0 flex items-center justify-center font-bold text-muted-foreground/30 text-6xl;
   }
 
+  /* Scroll Container - Civic Theme */
+  .scroll-container-civic {
+    @apply overflow-y-auto;
+    scrollbar-width: thin;
+    scrollbar-color: theme(colors.accent) theme(colors.secondary);
+  }
+
+  .scroll-container-civic::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-track {
+    @apply bg-secondary rounded-sm;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-thumb {
+    @apply bg-accent/50 rounded-sm;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent;
+  }
+
   /* Civic Cards - base styles with gradient accent bar */
   .card-civic,
   .card-civic-lg {

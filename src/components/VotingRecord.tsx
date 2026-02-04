@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
@@ -81,7 +81,13 @@ function PositionBadge({ position }: { position: VotePosition }) {
   );
 }
 
-function VoteStatsBar({ stats }: { stats: VoteStats }) {
+interface VoteStatsBarProps {
+  stats: VoteStats;
+  isSticky?: boolean;
+  isScrolled?: boolean;
+}
+
+function VoteStatsBar({ stats, isSticky = false, isScrolled = false }: VoteStatsBarProps) {
   const { totalVotes, yeas, nays, notVoting, present } = stats;
 
   if (totalVotes === 0) return null;
@@ -92,7 +98,13 @@ function VoteStatsBar({ stats }: { stats: VoteStats }) {
   const presentPercent = (present / totalVotes) * 100;
 
   return (
-    <div className="space-y-3">
+    <div
+      className={cn(
+        "space-y-3 p-4 bg-secondary border border-border rounded-sm transition-shadow duration-200",
+        isSticky && "sticky top-0 z-10",
+        isScrolled && "shadow-lg"
+      )}
+    >
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-primary">Voting Summary</span>
         <span className="text-muted-foreground">{totalVotes} total votes</span>
@@ -261,6 +273,8 @@ function EmptyState() {
 
 export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
   const [displayCount, setDisplayCount] = useState(10);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const visibleVotes = useMemo(() => votes.slice(0, displayCount), [votes, displayCount]);
 
@@ -268,6 +282,18 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + 10);
+  }, []);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setIsScrolled(scrollContainer.scrollTop > 0);
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll);
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (votes.length === 0) {
@@ -279,12 +305,14 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <div className="animate-fade-up p-4 bg-secondary/50 border border-border rounded-sm">
-        <VoteStatsBar stats={stats} />
-      </div>
+    <div
+      ref={scrollContainerRef}
+      className={cn("scroll-container-civic max-h-[350px] md:max-h-[500px] relative", className)}
+      data-testid="voting-record-scroll-container"
+    >
+      <VoteStatsBar stats={stats} isSticky={true} isScrolled={isScrolled} />
 
-      <div className="space-y-3">
+      <div className="space-y-3 pt-4">
         {visibleVotes.map((vote, index) => (
           <div
             key={vote.id}
@@ -297,7 +325,7 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
       </div>
 
       {hasMore && (
-        <div className="text-center pt-4">
+        <div className="text-center py-4">
           <button
             onClick={handleLoadMore}
             className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-primary border-2 border-primary rounded-sm hover:bg-primary hover:text-primary-foreground transition-colors"

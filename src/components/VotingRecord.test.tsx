@@ -156,4 +156,52 @@ describe("VotingRecord", () => {
       expect(screen.queryByText(/Load More Votes/)).not.toBeInTheDocument();
     });
   });
+
+  describe("scroll container", () => {
+    it("renders scroll container with correct test id", () => {
+      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+
+      expect(screen.getByTestId("voting-record-scroll-container")).toBeInTheDocument();
+    });
+
+    it("applies scroll container civic class", () => {
+      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+
+      const container = screen.getByTestId("voting-record-scroll-container");
+      expect(container).toHaveClass("scroll-container-civic");
+    });
+
+    it("applies max height constraints", () => {
+      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+
+      const container = screen.getByTestId("voting-record-scroll-container");
+      expect(container).toHaveClass("max-h-[350px]");
+      expect(container).toHaveClass("md:max-h-[500px]");
+    });
+
+    it("adds shadow to sticky header when scrolled", () => {
+      const manyVotes = Array.from({ length: 15 }, (_, i) => ({
+        ...mockVotes[0],
+        id: `vote-${i}`,
+        rollCall: 100 + i,
+      }));
+
+      render(
+        <VotingRecord
+          votes={manyVotes}
+          stats={{ ...mockStats, totalVotes: 15 }}
+          bioguideId="A000001"
+        />
+      );
+
+      const container = screen.getByTestId("voting-record-scroll-container");
+      const summarySection = screen.getByText("Voting Summary").closest("div")?.parentElement;
+
+      expect(summarySection).toHaveClass("sticky", "top-0", "z-10");
+
+      fireEvent.scroll(container, { target: { scrollTop: 100 } });
+
+      expect(summarySection).toHaveClass("shadow-md");
+    });
+  });
 });
