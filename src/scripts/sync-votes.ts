@@ -12,10 +12,31 @@ import {
   buildSenateVoteUrl,
   type SenateVoteClient,
 } from "@/lib/senate-votes";
-import { parseBillNumber, buildCongressGovUrl } from "@/lib/bill-utils";
+import { parseBillNumber, buildCongressGovUrl, BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
 import { detectAmendmentFromVote, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
 import type { Database } from "@/db/client";
 import type { VotePosition, BillType, Chamber, AmendmentType } from "@/lib/types/legislation";
+
+const LEGISLATION_TYPE_TO_BILL_TYPE: Record<string, BillType> = {
+  HR: "hr",
+  S: "s",
+  HJRES: "hjres",
+  SJRES: "sjres",
+  HCONRES: "hconres",
+  SCONRES: "sconres",
+  HRES: "hres",
+  SRES: "sres",
+};
+
+function formatHouseBillNumber(
+  legislationType: string | null,
+  legislationNumber: string | null
+): string | null {
+  if (!legislationType || !legislationNumber) return null;
+  const billType = LEGISLATION_TYPE_TO_BILL_TYPE[legislationType.toUpperCase()];
+  if (!billType) return null;
+  return `${BILL_TYPE_DISPLAY_NAMES[billType]}${legislationNumber}`;
+}
 
 export interface SyncVotesResult {
   source: "congress.gov + senate.gov";
@@ -62,13 +83,18 @@ function inferBillStatus(
   return "introduced";
 }
 
+interface ResolvedBill {
+  id: string;
+  title: string;
+}
+
 async function resolveBillId(
   db: Database,
   client: CongressClient,
   congress: number,
   billNumber: string | null,
   legislationType: string | null
-): Promise<string | null> {
+): Promise<ResolvedBill | null> {
   if (!billNumber || legislationType === "AMENDMENT") return null;
 
   const parsed = parseBillNumber(billNumber);
@@ -77,7 +103,7 @@ async function resolveBillId(
   const { bills } = await import("@/db/schema");
 
   const existing = await db
-    .select({ id: bills.id })
+    .select({ id: bills.id, title: bills.title })
     .from(bills)
     .where(
       and(
@@ -88,11 +114,13 @@ async function resolveBillId(
     )
     .limit(1);
 
-  if (existing[0]) return existing[0].id;
+  if (existing[0]) return { id: existing[0].id, title: existing[0].title };
 
   try {
     const detail = await client.getBill(congress, parsed.type, parsed.number);
     const bill = detail.bill;
+
+    const billTitle = bill.title;
 
     const [insertedBill] = await db
       .insert(bills)
@@ -100,7 +128,7 @@ async function resolveBillId(
         billNumber: bill.number.toString(),
         billType: bill.type.toLowerCase() as BillType,
         congress: bill.congress,
-        title: bill.title,
+        title: billTitle,
         summary: null,
         status: inferBillStatus(bill.latestAction?.text ?? ""),
         subjects: [],
@@ -114,11 +142,11 @@ async function resolveBillId(
       .returning({ id: bills.id });
 
     if (insertedBill) {
-      return insertedBill.id;
+      return { id: insertedBill.id, title: billTitle };
     }
 
     const refetch = await db
-      .select({ id: bills.id })
+      .select({ id: bills.id, title: bills.title })
       .from(bills)
       .where(
         and(
@@ -129,7 +157,7 @@ async function resolveBillId(
       )
       .limit(1);
 
-    return refetch[0]?.id ?? null;
+    return refetch[0] ? { id: refetch[0].id, title: refetch[0].title } : null;
   } catch {
     return null;
   }
@@ -300,9 +328,12 @@ async function syncHouseVotes(
 
       const question = voteData.voteQuestion ?? voteData.voteType ?? "Unknown";
       const legislationType = voteItem.legislationType ?? null;
-      const billNumber = voteItem.legislationNumber ?? null;
+      const rawBillNumber = voteItem.legislationNumber ?? null;
+      const billNumber = formatHouseBillNumber(legislationType, rawBillNumber);
 
-      const billId = await resolveBillId(db, client, congress, billNumber, legislationType);
+      const resolvedBill = await resolveBillId(db, client, congress, billNumber, legislationType);
+      const billId = resolvedBill?.id ?? null;
+      const billTitle = resolvedBill?.title ?? null;
       const amendmentId = await resolveAmendmentId(
         db,
         client,
@@ -323,7 +354,7 @@ async function syncHouseVotes(
           question,
           result: voteData.result,
           billNumber,
-          billTitle: null,
+          billTitle,
           billSubjects: null,
           billId,
           amendmentId,
@@ -341,6 +372,7 @@ async function syncHouseVotes(
             question: sql`excluded.question`,
             result: sql`excluded.result`,
             billNumber: sql`excluded.bill_number`,
+            billTitle: sql`excluded.bill_title`,
             billId: sql`excluded.bill_id`,
             amendmentId: sql`excluded.amendment_id`,
             legislationType: sql`excluded.legislation_type`,
@@ -406,7 +438,7 @@ async function syncSenateVotes(
   session: number,
   errors: SyncVotesResult["errors"]
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number; unmappedMembers: number }> {
-  const { votes, memberVotes, bills } = await import("@/db/schema");
+  const { votes, memberVotes } = await import("@/db/schema");
 
   console.log(`Fetching Senate votes for Congress ${congress}, Session ${session}...`);
 
@@ -438,7 +470,9 @@ async function syncSenateVotes(
       const question = voteDetail.question;
       const billNumber = voteDetail.documentName ?? null;
 
-      const billId = await resolveBillId(db, congressClient, congress, billNumber, null);
+      const resolvedBill = await resolveBillId(db, congressClient, congress, billNumber, null);
+      const billId = resolvedBill?.id ?? null;
+      const billTitle = resolvedBill?.title ?? voteDetail.documentTitle ?? null;
       const amendmentId = await resolveAmendmentId(
         db,
         congressClient,
@@ -447,16 +481,6 @@ async function syncSenateVotes(
         billNumber,
         null
       );
-
-      let billTitle = voteDetail.documentTitle ?? null;
-      if (billId) {
-        const bill = await db
-          .select({ title: bills.title })
-          .from(bills)
-          .where(eq(bills.id, billId))
-          .limit(1);
-        billTitle = bill[0]?.title ?? billTitle;
-      }
 
       const [insertedVote] = await db
         .insert(votes)
