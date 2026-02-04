@@ -29,6 +29,9 @@ export const BillTypeSchema = z.enum([
 ]);
 export type BillType = z.infer<typeof BillTypeSchema>;
 
+export const AmendmentTypeSchema = z.enum(["hamdt", "samdt"]);
+export type AmendmentType = z.infer<typeof AmendmentTypeSchema>;
+
 export const BillStatusSchema = z.enum([
   "introduced",
   "passed_house",
@@ -298,6 +301,40 @@ export const BillSummariesResponseSchema = z.object({
   ),
 });
 export type BillSummariesResponse = z.infer<typeof BillSummariesResponseSchema>;
+
+export const AmendmentDetailResponseSchema = z.object({
+  amendment: z.object({
+    congress: z.number(),
+    number: z.string(),
+    type: z.string(),
+    chamber: z.string(),
+    description: z.string().optional(),
+    purpose: z.string().optional(),
+    latestAction: z
+      .object({
+        actionDate: z.string(),
+        text: z.string(),
+      })
+      .optional(),
+    amendedBill: z
+      .object({
+        congress: z.number(),
+        number: z.coerce.number(),
+        type: z.string(),
+        title: z.string().optional(),
+      })
+      .optional(),
+    sponsors: z
+      .array(
+        z.object({
+          bioguideId: z.string(),
+          fullName: z.string(),
+        })
+      )
+      .optional(),
+  }),
+});
+export type AmendmentDetailResponse = z.infer<typeof AmendmentDetailResponseSchema>;
 
 // =============================================================================
 // Senate.gov XML Parsed Schemas (after XML parsing)

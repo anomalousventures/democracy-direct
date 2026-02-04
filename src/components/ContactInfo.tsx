@@ -29,106 +29,106 @@ export function ContactInfo({
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-primary">Contact Information</h2>
-
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {phone && (
-        <div className="info-item">
-          <div className="icon-box-sm">
+        <a href={`tel:${phone}`} className="info-item-link">
+          <div className="icon-box-sm self-center">
             <Icon name="phone" className="w-5 h-5 text-accent" />
           </div>
-          <div>
+          <div className="flex flex-col justify-center">
             <p className="font-medium">DC Office Phone</p>
-            <a href={`tel:${phone}`} className="text-primary hover:underline text-lg">
-              {phone}
-            </a>
+            <p className="text-primary text-lg">{phone}</p>
           </div>
-        </div>
+        </a>
       )}
 
       {website && (
-        <div className="info-item">
-          <div className="icon-box-sm">
+        <a href={website} target="_blank" rel="noopener noreferrer" className="info-item-link">
+          <div className="icon-box-sm self-center">
             <Icon name="globe" className="w-5 h-5 text-accent" />
           </div>
-          <div>
+          <div className="flex-1 flex flex-col justify-center">
             <p className="font-medium">Official Website</p>
-            <a
-              href={website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {website.replace(/^https?:\/\/(www\.)?/, "")}
-            </a>
+            <p className="inline-flex items-center gap-1 text-primary">
+              <span>{new URL(website).hostname.replace("www.", "")}</span>
+              <Icon name="external-link" className="w-4 h-4" />
+            </p>
           </div>
-        </div>
+        </a>
       )}
 
       {contactFormUrl && (
-        <div className="info-item">
-          <div className="icon-box-sm">
+        <a
+          href={contactFormUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="info-item-link"
+        >
+          <div className="icon-box-sm self-center">
             <Icon name="mail" className="w-5 h-5 text-accent" />
           </div>
-          <div>
+          <div className="flex-1 flex flex-col justify-center">
             <p className="font-medium">Online Contact Form</p>
-            <a
-              href={contactFormUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Send a message
-            </a>
+            <p className="inline-flex items-center gap-1 text-primary">
+              <span>Send a message</span>
+              <Icon name="external-link" className="w-4 h-4" />
+            </p>
           </div>
-        </div>
+        </a>
       )}
 
       {address && (
-        <div className="info-item">
-          <div className="icon-box-sm">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="info-item-link"
+        >
+          <div className="icon-box-sm self-center">
             <Icon name="map-pin" className="w-5 h-5 text-accent" />
           </div>
-          <div>
+          <div className="flex-1 flex flex-col justify-center">
             <p className="font-medium">DC Office Address</p>
-            <p className="text-muted-foreground whitespace-pre-line">{address}</p>
+            <p className="inline-flex items-center gap-1 text-primary">
+              <span className="whitespace-pre-line">{address}</span>
+              <Icon name="external-link" className="w-4 h-4 flex-shrink-0" />
+            </p>
           </div>
-        </div>
+        </a>
       )}
 
-      {hasSocial && (
-        <div className="info-item">
-          <div className="icon-box-sm">
-            <Icon name="link" className="w-5 h-5 text-accent" />
+      {twitterHandle && (
+        <a
+          href={`https://twitter.com/${twitterHandle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="info-item-link"
+        >
+          <div className="icon-box-sm self-center">
+            <Icon name="brand-x" className="w-5 h-5 text-accent" />
           </div>
-          <div>
-            <p className="font-medium">Social Media</p>
-            <div className="flex gap-4 mt-2">
-              {twitterHandle && (
-                <a
-                  href={`https://twitter.com/${twitterHandle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:underline"
-                >
-                  <Icon name="brand-x" className="w-5 h-5" />
-                  <span>@{twitterHandle}</span>
-                </a>
-              )}
-              {facebookId && (
-                <a
-                  href={`https://facebook.com/${facebookId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:underline"
-                >
-                  <Icon name="brand-facebook" className="w-5 h-5" />
-                  <span>Facebook</span>
-                </a>
-              )}
-            </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="font-medium">X (Twitter)</p>
+            <p className="text-primary">@{twitterHandle}</p>
           </div>
-        </div>
+        </a>
+      )}
+
+      {facebookId && (
+        <a
+          href={`https://facebook.com/${facebookId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="info-item-link"
+        >
+          <div className="icon-box-sm self-center">
+            <Icon name="brand-facebook" className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="font-medium">Facebook</p>
+            <p className="text-primary">View Profile</p>
+          </div>
+        </a>
       )}
     </div>
   );

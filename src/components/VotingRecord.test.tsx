@@ -24,6 +24,9 @@ const mockVotes: VoteWithPosition[] = [
     billNumber: "H.R.1234",
     billTitle: "Test Bill Title",
     billSubjects: ["Economy", "Taxes"],
+    billId: null,
+    amendmentId: null,
+    legislationType: "BILL",
     sourceUrl: "https://congress.gov/vote/119/house/123",
     yeas: 230,
     nays: 198,
@@ -44,6 +47,9 @@ const mockVotes: VoteWithPosition[] = [
     billNumber: null,
     billTitle: null,
     billSubjects: null,
+    billId: null,
+    amendmentId: null,
+    legislationType: null,
     sourceUrl: "https://congress.gov/vote/119/house/124",
     yeas: 198,
     nays: 230,
@@ -201,7 +207,7 @@ describe("VotingRecord", () => {
 
       fireEvent.scroll(container, { target: { scrollTop: 100 } });
 
-      expect(summarySection).toHaveClass("shadow-md");
+      expect(summarySection).toHaveClass("shadow-lg");
     });
   });
 });

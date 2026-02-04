@@ -30,7 +30,9 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
           const params = new URLSearchParams();
           if (templateSlug) params.set("template", templateSlug);
           const queryString = params.toString();
-          window.location.href = `/zip/${zipCode}${queryString ? `?${queryString}` : ""}`;
+          const state = lookupResult.state.toLowerCase();
+          const district = lookupResult.district.toLowerCase();
+          window.location.href = `/reps/${state}/${district}${queryString ? `?${queryString}` : ""}`;
         } else {
           setResult(lookupResult);
         }
@@ -72,13 +74,13 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
     triggerLookup(zip);
   };
 
-  const handleDistrictSelect = (district: string) => {
+  const handleDistrictSelect = (state: string, district: string) => {
     const params = new URLSearchParams();
-    params.set("district", district);
     if (templateSlug) {
       params.set("template", templateSlug);
     }
-    window.location.href = `/zip/${zip}?${params.toString()}`;
+    const queryString = params.toString();
+    window.location.href = `/reps/${state.toLowerCase()}/${district.toLowerCase()}${queryString ? `?${queryString}` : ""}`;
   };
 
   return (
@@ -203,7 +205,7 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
               {result.options.map((option, index) => (
                 <button
                   key={`${option.state}-${option.district}`}
-                  onClick={() => handleDistrictSelect(option.district)}
+                  onClick={() => handleDistrictSelect(option.state, option.district)}
                   className="w-full p-4 text-left bg-secondary hover:bg-muted border border-border rounded-md transition-all duration-200 hover:border-primary group animate-fade-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >

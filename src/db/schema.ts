@@ -13,7 +13,13 @@ import {
   jsonb,
   unique,
 } from "drizzle-orm/pg-core";
-import type { BillStatus, BillType, Chamber, VotePosition } from "@/lib/types/legislation";
+import type {
+  AmendmentType,
+  BillStatus,
+  BillType,
+  Chamber,
+  VotePosition,
+} from "@/lib/types/legislation";
 
 export const legislators = pgTable(
   "legislators",
@@ -228,6 +234,9 @@ export const votes = pgTable(
     billNumber: varchar("bill_number", { length: 50 }),
     billTitle: text("bill_title"),
     billSubjects: json("bill_subjects").$type<string[]>(),
+    billId: uuid("bill_id"),
+    amendmentId: uuid("amendment_id"),
+    legislationType: varchar("legislation_type", { length: 20 }),
     sourceUrl: text("source_url").notNull(),
     yeas: integer("yeas").notNull().default(0),
     nays: integer("nays").notNull().default(0),
@@ -244,6 +253,8 @@ export const votes = pgTable(
     ),
     index("votes_chamber_congress_idx").on(table.chamber, table.congress),
     index("votes_date_idx").on(table.date),
+    index("votes_bill_id_idx").on(table.billId),
+    index("votes_amendment_id_idx").on(table.amendmentId),
   ]
 );
 
@@ -297,6 +308,38 @@ export const bills = pgTable(
   ]
 );
 
+export const amendments = pgTable(
+  "amendments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    amendmentNumber: varchar("amendment_number", { length: 20 }).notNull(),
+    amendmentType: varchar("amendment_type", { length: 10 }).$type<AmendmentType>().notNull(),
+    congress: integer("congress").notNull(),
+    chamber: varchar("chamber", { length: 10 }).$type<Chamber>().notNull(),
+    description: text("description"),
+    purpose: text("purpose"),
+    latestActionDate: timestamp("latest_action_date"),
+    latestActionText: text("latest_action_text"),
+    sponsorBioguideId: varchar("sponsor_bioguide_id", { length: 10 }).references(
+      () => legislators.bioguideId,
+      { onDelete: "set null" }
+    ),
+    amendedBillId: uuid("amended_bill_id").references(() => bills.id, { onDelete: "set null" }),
+    congressGovUrl: text("congress_gov_url").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("amendments_congress_type_number_unique").on(
+      table.congress,
+      table.amendmentType,
+      table.amendmentNumber
+    ),
+    index("amendments_amended_bill_id_idx").on(table.amendedBillId),
+    index("amendments_congress_idx").on(table.congress),
+  ]
+);
+
 export const syncCursors = pgTable("sync_cursors", {
   id: varchar("id", { length: 50 }).primaryKey(),
   cursor: text("cursor"),
@@ -335,5 +378,7 @@ export type DataSourceMeta = typeof dataSourceMeta.$inferSelect;
 export type NewDataSourceMeta = typeof dataSourceMeta.$inferInsert;
 export type Bill = typeof bills.$inferSelect;
 export type NewBill = typeof bills.$inferInsert;
+export type Amendment = typeof amendments.$inferSelect;
+export type NewAmendment = typeof amendments.$inferInsert;
 export type SyncCursor = typeof syncCursors.$inferSelect;
 export type NewSyncCursor = typeof syncCursors.$inferInsert;

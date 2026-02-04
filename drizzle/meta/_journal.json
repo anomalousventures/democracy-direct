@@ -50,6 +50,13 @@
       "when": 1770156000000,
       "tag": "0006_template_issue_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1770166537371,
+      "tag": "0007_add_amendments_and_vote_relations",
+      "breakpoints": true
     }
   ]
 }

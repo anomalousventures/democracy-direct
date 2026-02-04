@@ -22,15 +22,15 @@ export interface RepTabsProps {
 type TabValue = "contact" | "votes" | "bills";
 
 const TAB_HASH_MAP: Record<string, TabValue> = {
+  "#contact": "contact",
   "#votes": "votes",
   "#bills": "bills",
-  "#contact": "contact",
 };
 
 const VALUE_HASH_MAP: Record<TabValue, string> = {
+  contact: "",
   votes: "#votes",
   bills: "#bills",
-  contact: "",
 };
 
 function getInitialTab(): TabValue {
@@ -88,7 +88,7 @@ export function RepTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className={cn("w-full", className)}>
-      <div className="border-b border-border bg-white rounded-t-sm">
+      <div className="border-b border-border">
         <TabsList className="w-full justify-start h-auto p-0 bg-transparent rounded-none">
           <TabsTrigger value="contact" className={tabTriggerClass}>
             Contact
@@ -112,24 +112,15 @@ export function RepTabs({
         </TabsList>
       </div>
 
-      <TabsContent
-        value="contact"
-        className="mt-0 p-6 bg-white border-x border-b border-border rounded-b-sm"
-      >
+      <TabsContent value="contact" className="mt-0 pt-6">
         <ContactInfo {...contactInfo} />
       </TabsContent>
 
-      <TabsContent
-        value="votes"
-        className="mt-0 p-6 bg-white border-x border-b border-border rounded-b-sm"
-      >
+      <TabsContent value="votes" className="mt-0 pt-6">
         <VotingRecord votes={votes} stats={voteStats} bioguideId={bioguideId} chamber={chamber} />
       </TabsContent>
 
-      <TabsContent
-        value="bills"
-        className="mt-0 p-6 bg-white border-x border-b border-border rounded-b-sm"
-      >
+      <TabsContent value="bills" className="mt-0 pt-6">
         <SponsoredBills bills={bills} totalCount={billCount} bioguideId={bioguideId} />
       </TabsContent>
     </Tabs>

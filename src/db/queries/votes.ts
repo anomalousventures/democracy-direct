@@ -1,10 +1,24 @@
 import { eq, and, desc, count } from "drizzle-orm";
 import type { Database } from "../client";
-import { votes, memberVotes, legislators, type Vote, type MemberVote } from "../schema";
+import {
+  votes,
+  memberVotes,
+  legislators,
+  bills,
+  amendments,
+  type Vote,
+  type MemberVote,
+} from "../schema";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
 
 export interface VoteWithPosition extends Vote {
   position: VotePosition;
+}
+
+export interface VoteWithRelations extends Vote {
+  position: VotePosition;
+  bill: { id: string; title: string; summary: string | null } | null;
+  amendment: { id: string; description: string | null; purpose: string | null } | null;
 }
 
 export interface MemberVoteWithLegislator extends MemberVote {
@@ -86,6 +100,9 @@ export async function getVotesByMember(
       billNumber: votes.billNumber,
       billTitle: votes.billTitle,
       billSubjects: votes.billSubjects,
+      billId: votes.billId,
+      amendmentId: votes.amendmentId,
+      legislationType: votes.legislationType,
       sourceUrl: votes.sourceUrl,
       yeas: votes.yeas,
       nays: votes.nays,
@@ -222,4 +239,142 @@ export async function getVotesByChamber(
     .orderBy(desc(votes.date))
     .limit(limit)
     .offset(offset);
+}
+
+export async function getVotesByMemberWithRelations(
+  db: Database,
+  bioguideId: string,
+  options: GetVotesByMemberOptions = {}
+): Promise<VoteWithRelations[]> {
+  const { limit = 50, offset = 0, congress, chamber } = options;
+
+  const conditions = [eq(memberVotes.bioguideId, bioguideId)];
+
+  if (congress) {
+    conditions.push(eq(votes.congress, congress));
+  }
+
+  if (chamber) {
+    conditions.push(eq(votes.chamber, chamber));
+  }
+
+  const results = await db
+    .select({
+      id: votes.id,
+      rollCall: votes.rollCall,
+      chamber: votes.chamber,
+      congress: votes.congress,
+      session: votes.session,
+      date: votes.date,
+      question: votes.question,
+      result: votes.result,
+      billNumber: votes.billNumber,
+      billTitle: votes.billTitle,
+      billSubjects: votes.billSubjects,
+      billId: votes.billId,
+      amendmentId: votes.amendmentId,
+      legislationType: votes.legislationType,
+      sourceUrl: votes.sourceUrl,
+      yeas: votes.yeas,
+      nays: votes.nays,
+      notVoting: votes.notVoting,
+      present: votes.present,
+      createdAt: votes.createdAt,
+      position: memberVotes.position,
+      billDbId: bills.id,
+      billDbTitle: bills.title,
+      billDbSummary: bills.summary,
+      amendmentDbId: amendments.id,
+      amendmentDbDescription: amendments.description,
+      amendmentDbPurpose: amendments.purpose,
+    })
+    .from(memberVotes)
+    .innerJoin(votes, eq(memberVotes.voteId, votes.id))
+    .leftJoin(bills, eq(votes.billId, bills.id))
+    .leftJoin(amendments, eq(votes.amendmentId, amendments.id))
+    .where(and(...conditions))
+    .orderBy(desc(votes.date))
+    .limit(limit)
+    .offset(offset);
+
+  return results.map((row) => ({
+    id: row.id,
+    rollCall: row.rollCall,
+    chamber: row.chamber,
+    congress: row.congress,
+    session: row.session,
+    date: row.date,
+    question: row.question,
+    result: row.result,
+    billNumber: row.billNumber,
+    billTitle: row.billTitle,
+    billSubjects: row.billSubjects,
+    billId: row.billId,
+    amendmentId: row.amendmentId,
+    legislationType: row.legislationType,
+    sourceUrl: row.sourceUrl,
+    yeas: row.yeas,
+    nays: row.nays,
+    notVoting: row.notVoting,
+    present: row.present,
+    createdAt: row.createdAt,
+    position: row.position,
+    bill: row.billDbId
+      ? { id: row.billDbId, title: row.billDbTitle!, summary: row.billDbSummary }
+      : null,
+    amendment: row.amendmentDbId
+      ? {
+          id: row.amendmentDbId,
+          description: row.amendmentDbDescription,
+          purpose: row.amendmentDbPurpose,
+        }
+      : null,
+  }));
+}
+
+export interface VoteForBill extends Vote {
+  memberPosition: VotePosition;
+  memberBioguideId: string;
+}
+
+export async function getVotesForBill(
+  db: Database,
+  billId: string,
+  options: { limit?: number; offset?: number } = {}
+): Promise<VoteForBill[]> {
+  const { limit = 50, offset = 0 } = options;
+
+  const results = await db
+    .select({
+      id: votes.id,
+      rollCall: votes.rollCall,
+      chamber: votes.chamber,
+      congress: votes.congress,
+      session: votes.session,
+      date: votes.date,
+      question: votes.question,
+      result: votes.result,
+      billNumber: votes.billNumber,
+      billTitle: votes.billTitle,
+      billSubjects: votes.billSubjects,
+      billId: votes.billId,
+      amendmentId: votes.amendmentId,
+      legislationType: votes.legislationType,
+      sourceUrl: votes.sourceUrl,
+      yeas: votes.yeas,
+      nays: votes.nays,
+      notVoting: votes.notVoting,
+      present: votes.present,
+      createdAt: votes.createdAt,
+      memberPosition: memberVotes.position,
+      memberBioguideId: memberVotes.bioguideId,
+    })
+    .from(votes)
+    .innerJoin(memberVotes, eq(votes.id, memberVotes.voteId))
+    .where(eq(votes.billId, billId))
+    .orderBy(desc(votes.date))
+    .limit(limit)
+    .offset(offset);
+
+  return results;
 }

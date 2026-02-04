@@ -148,7 +148,7 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
             <div class="container-wide">
               <AstroCard variant="civicLg" class="animate-fade-up no-print block">
                 {/* Header Section: Photo + Name/Party/Term */}
-                <div class="flex flex-col sm:flex-row gap-6 pb-6 border-b border-border">
+                <div class="flex flex-col sm:flex-row gap-6">
                   <div class="flex-shrink-0">
                     <div class="rep-photo-lg">
                       <img
@@ -200,29 +200,30 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                     </div>
                   </div>
                 </div>
+
+                {/* Contact, Voting Record & Bills Tabs */}
+                <div class="pt-6">
+                  <RepTabs
+                    client:load
+                    bioguideId={bioguideId!}
+                    chamber={rep.chamber as "house" | "senate"}
+                    contactInfo={{
+                      phone: rep.phoneCapitol || undefined,
+                      contactFormUrl: sanitizedContactUrl || undefined,
+                      address: rep.addressCapitol || undefined,
+                      website: rep.website || undefined,
+                      twitterHandle: rep.twitterHandle || undefined,
+                      facebookId: rep.facebookId || undefined,
+                    }}
+                    votes={votes}
+                    voteStats={voteStats}
+                    bills={bills}
+                    billCount={billCount}
+                  />
+                </div>
               </AstroCard>
 
-              <div class="mt-8 animate-fade-up-delay-1 no-print">
-                <RepTabs
-                  client:load
-                  bioguideId={bioguideId!}
-                  chamber={rep.chamber as "house" | "senate"}
-                  votes={votes}
-                  voteStats={voteStats}
-                  bills={bills}
-                  billCount={billCount}
-                  contactInfo={{
-                    phone: rep.phoneCapitol || undefined,
-                    contactFormUrl: sanitizedContactUrl || undefined,
-                    address: rep.addressCapitol || undefined,
-                    website: rep.website || undefined,
-                    twitterHandle: rep.twitterHandle || undefined,
-                    facebookId: rep.facebookId || undefined,
-                  }}
-                />
-              </div>
-
-              <div class="mt-8 animate-fade-up-delay-2">
+              <div class="mt-8 animate-fade-up-delay-1">
                 <ContactFlow
                   client:load
                   representative={{

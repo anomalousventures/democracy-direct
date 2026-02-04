@@ -25,6 +25,9 @@ const mockVotes: VoteWithPosition[] = [
     billNumber: "H.R.1234",
     billTitle: "Test Bill",
     billSubjects: null,
+    billId: null,
+    amendmentId: null,
+    legislationType: null,
     sourceUrl: "https://congress.gov/vote/119/house/123",
     yeas: 230,
     nays: 198,
@@ -59,6 +62,7 @@ const mockContactInfo = {
   phone: "202-555-1234",
   contactFormUrl: "https://example.gov/contact",
   address: "123 Capitol Hill",
+  website: "https://example.gov",
   twitterHandle: "reptest",
   facebookId: "reptest",
 };
@@ -133,11 +137,12 @@ describe("RepTabs", () => {
         />
       );
 
-      expect(screen.getByText("Contact Information")).toBeInTheDocument();
-      expect(screen.getByText("202-555-1234")).toBeInTheDocument();
+      const contactTab = screen.getByRole("tab", { name: /Contact/i });
+      expect(contactTab).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByText("DC Office Phone")).toBeInTheDocument();
     });
 
-    it("renders voting record tab trigger", () => {
+    it("renders voting record tab trigger with count badge", () => {
       render(
         <RepTabs
           bioguideId="A000001"
@@ -152,10 +157,10 @@ describe("RepTabs", () => {
 
       const votesTab = screen.getByRole("tab", { name: /Voting Record/i });
       expect(votesTab).toBeInTheDocument();
-      expect(votesTab).toHaveAttribute("aria-selected", "false");
+      expect(votesTab.textContent).toContain("50");
     });
 
-    it("renders sponsored bills tab trigger", () => {
+    it("renders sponsored bills tab trigger with count badge", () => {
       render(
         <RepTabs
           bioguideId="A000001"

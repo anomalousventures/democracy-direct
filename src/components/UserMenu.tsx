@@ -66,14 +66,12 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
         if (!response.ok) {
           throw new Error("Failed to clear district");
         }
-        window.location.reload();
       } else {
         clearSavedDistrict();
-        setLocalDistrict(null);
       }
+      window.location.href = "/";
     } catch (err) {
       console.error("Failed to clear district:", err);
-    } finally {
       setIsClearing(false);
     }
   }, [isLoggedIn]);
@@ -112,7 +110,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
         disabled={isClearing}
         className="cursor-pointer text-muted-foreground focus:text-foreground text-sm"
       >
-        {isClearing ? "Clearing..." : "Change District"}
+        {isClearing ? "Clearing..." : "Clear Saved District"}
       </DropdownMenuItem>
       <DropdownMenuSeparator />
     </>
@@ -210,7 +208,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
               disabled={isClearing}
               className="cursor-pointer text-muted-foreground focus:text-foreground"
             >
-              {isClearing ? "Clearing..." : "Change District"}
+              {isClearing ? "Clearing..." : "Clear Saved District"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -6,8 +6,8 @@ test.describe("Saved District - Anonymous User", () => {
     await page.evaluate(() => localStorage.clear());
   });
 
-  test("shows save district prompt after ZIP lookup", async ({ page }) => {
-    await page.goto("/zip/10001");
+  test("shows save district prompt on reps page", async ({ page }) => {
+    await page.goto("/reps/ny/12");
     await page.waitForLoadState("networkidle");
 
     const saveButton = page.getByTestId("save-district-button");
@@ -16,7 +16,7 @@ test.describe("Saved District - Anonymous User", () => {
   });
 
   test("saves district to localStorage when clicked", async ({ page }) => {
-    await page.goto("/zip/10001");
+    await page.goto("/reps/ny/12");
     await page.waitForLoadState("networkidle");
 
     const saveButton = page.getByTestId("save-district-button");
@@ -68,7 +68,7 @@ test.describe("Saved District - Anonymous User", () => {
     await expect(viewRepsLink).toHaveAttribute("href", "/reps/ny/12");
   });
 
-  test("Change District clears saved district", async ({ page }) => {
+  test("Clear Saved District clears saved district and redirects home", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.setItem(
@@ -83,9 +83,10 @@ test.describe("Saved District - Anonymous User", () => {
     const badge = page.getByTestId("district-badge");
     await badge.click();
 
-    const changeButton = page.getByRole("menuitem", { name: "Change District" });
-    await changeButton.click();
+    const clearButton = page.getByRole("menuitem", { name: "Clear Saved District" });
+    await clearButton.click();
 
+    await page.waitForURL("/");
     await expect(page.getByTestId("district-badge")).not.toBeVisible();
 
     const stored = await page.evaluate(() => localStorage.getItem("democracy-direct-district"));

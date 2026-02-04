@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import {
   createCongressClient,
   getCurrentCongress,
@@ -12,8 +12,10 @@ import {
   buildSenateVoteUrl,
   type SenateVoteClient,
 } from "@/lib/senate-votes";
+import { parseBillNumber, buildCongressGovUrl } from "@/lib/bill-utils";
+import { detectAmendmentFromVote, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
 import type { Database } from "@/db/client";
-import type { VotePosition } from "@/lib/types/legislation";
+import type { VotePosition, BillType, Chamber, AmendmentType } from "@/lib/types/legislation";
 
 export interface SyncVotesResult {
   source: "congress.gov + senate.gov";
@@ -51,6 +53,182 @@ async function buildLisIdMap(db: Database): Promise<Map<string, string>> {
   return map;
 }
 
+function inferBillStatus(
+  latestActionText: string
+): "introduced" | "passed_house" | "passed_senate" {
+  const lowerText = latestActionText.toLowerCase();
+  if (lowerText.includes("passed house")) return "passed_house";
+  if (lowerText.includes("passed senate")) return "passed_senate";
+  return "introduced";
+}
+
+async function resolveBillId(
+  db: Database,
+  client: CongressClient,
+  congress: number,
+  billNumber: string | null,
+  legislationType: string | null
+): Promise<string | null> {
+  if (!billNumber || legislationType === "AMENDMENT") return null;
+
+  const parsed = parseBillNumber(billNumber);
+  if (!parsed) return null;
+
+  const { bills } = await import("@/db/schema");
+
+  const existing = await db
+    .select({ id: bills.id })
+    .from(bills)
+    .where(
+      and(
+        eq(bills.congress, congress),
+        eq(bills.billType, parsed.type),
+        eq(bills.billNumber, parsed.number.toString())
+      )
+    )
+    .limit(1);
+
+  if (existing[0]) return existing[0].id;
+
+  try {
+    const detail = await client.getBill(congress, parsed.type, parsed.number);
+    const bill = detail.bill;
+
+    const [insertedBill] = await db
+      .insert(bills)
+      .values({
+        billNumber: bill.number.toString(),
+        billType: bill.type.toLowerCase() as BillType,
+        congress: bill.congress,
+        title: bill.title,
+        summary: null,
+        status: inferBillStatus(bill.latestAction?.text ?? ""),
+        subjects: [],
+        introducedDate: new Date(bill.introducedDate ?? Date.now()),
+        latestActionDate: new Date(bill.latestAction?.actionDate ?? Date.now()),
+        latestActionText: bill.latestAction?.text ?? "Introduced",
+        sponsorBioguideId: bill.sponsors?.[0]?.bioguideId ?? null,
+        congressGovUrl: buildCongressGovUrl(congress, parsed.type, parsed.number),
+      })
+      .onConflictDoNothing()
+      .returning({ id: bills.id });
+
+    if (insertedBill) {
+      return insertedBill.id;
+    }
+
+    const refetch = await db
+      .select({ id: bills.id })
+      .from(bills)
+      .where(
+        and(
+          eq(bills.congress, congress),
+          eq(bills.billType, parsed.type),
+          eq(bills.billNumber, parsed.number.toString())
+        )
+      )
+      .limit(1);
+
+    return refetch[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveAmendmentId(
+  db: Database,
+  client: CongressClient,
+  congress: number,
+  question: string,
+  billNumber: string | null,
+  legislationType: string | null
+): Promise<string | null> {
+  const parsed = detectAmendmentFromVote(question, billNumber, legislationType);
+  if (!parsed) return null;
+
+  const { amendments, bills } = await import("@/db/schema");
+
+  const existing = await db
+    .select({ id: amendments.id })
+    .from(amendments)
+    .where(
+      and(
+        eq(amendments.congress, congress),
+        eq(amendments.amendmentType, parsed.type),
+        eq(amendments.amendmentNumber, parsed.number.toString())
+      )
+    )
+    .limit(1);
+
+  if (existing[0]) return existing[0].id;
+
+  try {
+    const detail = await client.getAmendment(congress, parsed.type, parsed.number.toString());
+    const amendment = detail.amendment;
+
+    let amendedBillId: string | null = null;
+    if (amendment.amendedBill) {
+      const billType = amendment.amendedBill.type.toLowerCase() as BillType;
+      const existingBill = await db
+        .select({ id: bills.id })
+        .from(bills)
+        .where(
+          and(
+            eq(bills.congress, amendment.amendedBill.congress),
+            eq(bills.billType, billType),
+            eq(bills.billNumber, amendment.amendedBill.number.toString())
+          )
+        )
+        .limit(1);
+
+      amendedBillId = existingBill[0]?.id ?? null;
+    }
+
+    const chamber: Chamber = parsed.type === "hamdt" ? "house" : "senate";
+
+    const [insertedAmendment] = await db
+      .insert(amendments)
+      .values({
+        amendmentNumber: parsed.number.toString(),
+        amendmentType: parsed.type as AmendmentType,
+        congress,
+        chamber,
+        description: amendment.description ?? null,
+        purpose: amendment.purpose ?? null,
+        latestActionDate: amendment.latestAction?.actionDate
+          ? new Date(amendment.latestAction.actionDate)
+          : null,
+        latestActionText: amendment.latestAction?.text ?? null,
+        sponsorBioguideId: amendment.sponsors?.[0]?.bioguideId ?? null,
+        amendedBillId,
+        congressGovUrl: buildAmendmentCongressGovUrl(congress, parsed.type, parsed.number),
+      })
+      .onConflictDoNothing()
+      .returning({ id: amendments.id });
+
+    if (insertedAmendment) {
+      return insertedAmendment.id;
+    }
+
+    const refetch = await db
+      .select({ id: amendments.id })
+      .from(amendments)
+      .where(
+        and(
+          eq(amendments.congress, congress),
+          eq(amendments.amendmentType, parsed.type),
+          eq(amendments.amendmentNumber, parsed.number.toString())
+        )
+      )
+      .limit(1);
+
+    return refetch[0]?.id ?? null;
+  } catch (error) {
+    console.warn(`Failed to fetch amendment ${parsed.type}${parsed.number}: ${error}`);
+    return null;
+  }
+}
+
 async function syncHouseVotes(
   db: Database,
   client: CongressClient,
@@ -71,6 +249,7 @@ async function syncHouseVotes(
     startDate: string;
     result?: string;
     legislationNumber?: string;
+    legislationType?: string;
   }> = [];
 
   while (true) {
@@ -119,6 +298,20 @@ async function syncHouseVotes(
       }
       const sourceUrl = buildCongressGovVoteUrl(voteDate, voteItem.rollCallNumber);
 
+      const question = voteData.voteQuestion ?? voteData.voteType ?? "Unknown";
+      const legislationType = voteItem.legislationType ?? null;
+      const billNumber = voteItem.legislationNumber ?? null;
+
+      const billId = await resolveBillId(db, client, congress, billNumber, legislationType);
+      const amendmentId = await resolveAmendmentId(
+        db,
+        client,
+        congress,
+        question,
+        billNumber,
+        legislationType
+      );
+
       const [insertedVote] = await db
         .insert(votes)
         .values({
@@ -127,11 +320,14 @@ async function syncHouseVotes(
           congress,
           session,
           date: voteDate,
-          question: voteData.voteQuestion ?? voteData.voteType ?? "Unknown",
+          question,
           result: voteData.result,
-          billNumber: voteItem.legislationNumber ?? null,
+          billNumber,
           billTitle: null,
           billSubjects: null,
+          billId,
+          amendmentId,
+          legislationType,
           sourceUrl,
           yeas,
           nays,
@@ -145,6 +341,9 @@ async function syncHouseVotes(
             question: sql`excluded.question`,
             result: sql`excluded.result`,
             billNumber: sql`excluded.bill_number`,
+            billId: sql`excluded.bill_id`,
+            amendmentId: sql`excluded.amendment_id`,
+            legislationType: sql`excluded.legislation_type`,
             sourceUrl: sql`excluded.source_url`,
             yeas: sql`excluded.yeas`,
             nays: sql`excluded.nays`,
@@ -200,17 +399,18 @@ async function syncHouseVotes(
 
 async function syncSenateVotes(
   db: Database,
-  client: SenateVoteClient,
+  senateClient: SenateVoteClient,
+  congressClient: CongressClient,
   lisIdMap: Map<string, string>,
   congress: number,
   session: number,
   errors: SyncVotesResult["errors"]
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number; unmappedMembers: number }> {
-  const { votes, memberVotes } = await import("@/db/schema");
+  const { votes, memberVotes, bills } = await import("@/db/schema");
 
   console.log(`Fetching Senate votes for Congress ${congress}, Session ${session}...`);
 
-  const menu = await client.getVoteMenu(congress, session);
+  const menu = await senateClient.getVoteMenu(congress, session);
   console.log(`Found ${menu.votes.length} Senate votes to sync`);
 
   let totalVotesUpserted = 0;
@@ -220,7 +420,7 @@ async function syncSenateVotes(
   for (let i = 0; i < menu.votes.length; i++) {
     const voteMenuItem = menu.votes[i];
     try {
-      const voteDetail = await client.getVote(congress, session, voteMenuItem.voteNumber);
+      const voteDetail = await senateClient.getVote(congress, session, voteMenuItem.voteNumber);
 
       const sourceUrl = buildSenateVoteUrl(congress, session, voteMenuItem.voteNumber);
 
@@ -235,6 +435,29 @@ async function syncSenateVotes(
       }
       const voteDate = parsedDate;
 
+      const question = voteDetail.question;
+      const billNumber = voteDetail.documentName ?? null;
+
+      const billId = await resolveBillId(db, congressClient, congress, billNumber, null);
+      const amendmentId = await resolveAmendmentId(
+        db,
+        congressClient,
+        congress,
+        question,
+        billNumber,
+        null
+      );
+
+      let billTitle = voteDetail.documentTitle ?? null;
+      if (billId) {
+        const bill = await db
+          .select({ title: bills.title })
+          .from(bills)
+          .where(eq(bills.id, billId))
+          .limit(1);
+        billTitle = bill[0]?.title ?? billTitle;
+      }
+
       const [insertedVote] = await db
         .insert(votes)
         .values({
@@ -243,11 +466,14 @@ async function syncSenateVotes(
           congress,
           session,
           date: voteDate,
-          question: voteDetail.question,
+          question,
           result: voteDetail.result,
-          billNumber: voteDetail.documentName ?? null,
-          billTitle: voteDetail.documentTitle ?? null,
+          billNumber,
+          billTitle,
           billSubjects: null,
+          billId,
+          amendmentId,
+          legislationType: null,
           sourceUrl,
           yeas: voteDetail.yeas,
           nays: voteDetail.nays,
@@ -262,6 +488,8 @@ async function syncSenateVotes(
             result: sql`excluded.result`,
             billNumber: sql`excluded.bill_number`,
             billTitle: sql`excluded.bill_title`,
+            billId: sql`excluded.bill_id`,
+            amendmentId: sql`excluded.amendment_id`,
             sourceUrl: sql`excluded.source_url`,
             yeas: sql`excluded.yeas`,
             nays: sql`excluded.nays`,
@@ -402,7 +630,15 @@ export async function syncVotes(
   const errors: SyncVotesResult["errors"] = [];
 
   const houseResult = await syncHouseVotes(db, congressClient, congress, session, errors);
-  const senateResult = await syncSenateVotes(db, senateClient, lisIdMap, congress, session, errors);
+  const senateResult = await syncSenateVotes(
+    db,
+    senateClient,
+    congressClient,
+    lisIdMap,
+    congress,
+    session,
+    errors
+  );
 
   if (senateResult.unmappedMembers > 0) {
     console.warn(

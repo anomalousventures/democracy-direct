@@ -6,12 +6,12 @@ test.describe("ZIP Lookup Component", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("navigates to ZIP results page for valid ZIP using real data", async ({ page }) => {
+  test("navigates to reps page for valid ZIP using real data", async ({ page }) => {
     const zipInput = page.getByPlaceholder(/zip/i);
     await zipInput.fill("10001");
     await page.getByRole("button", { name: /find/i }).click();
 
-    await page.waitForURL("**/zip/10001**");
+    await page.waitForURL("**/reps/ny/12**");
     await expect(page.getByRole("heading", { name: /your representatives/i })).toBeVisible();
   });
 
@@ -50,7 +50,7 @@ test.describe("ZIP Lookup Component", () => {
 
     const submitButton = page.getByRole("button", { name: /find/i });
     await expect(submitButton).toBeDisabled();
-    expect(page.url()).not.toContain("/zip/");
+    expect(page.url()).not.toContain("/reps/");
   });
 
   test("shows error for unknown ZIP", async ({ page }) => {
@@ -132,7 +132,7 @@ test.describe("ZIP Lookup Component", () => {
     await zipInput.fill("01001");
     await page.getByRole("button", { name: /find/i }).click();
 
-    await page.waitForURL("**/zip/01001**");
+    await page.waitForURL("**/reps/ma/**");
     await expect(page.getByRole("heading", { name: /your representatives/i })).toBeVisible();
   });
 
@@ -141,7 +141,7 @@ test.describe("ZIP Lookup Component", () => {
     await zipInput.fill("20001");
     await page.getByRole("button", { name: /find/i }).click();
 
-    await page.waitForURL("**/zip/20001**");
+    await page.waitForURL("**/reps/dc/0**");
     await expect(page.getByText("DC At-Large").first()).toBeVisible();
   });
 
@@ -150,7 +150,7 @@ test.describe("ZIP Lookup Component", () => {
     await zipInput.fill("00601");
     await page.getByRole("button", { name: /find/i }).click();
 
-    await page.waitForURL("**/zip/00601**");
+    await page.waitForURL("**/reps/pr/0**");
     await expect(page.getByText("PR At-Large").first()).toBeVisible();
   });
 });

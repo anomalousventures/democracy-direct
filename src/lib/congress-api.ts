@@ -12,6 +12,7 @@ import {
   type BillListResponse,
   type BillDetailResponse,
   type BillSummariesResponse,
+  type AmendmentDetailResponse,
   type BillType,
   HouseVoteResponseSchema,
   HouseVoteListResponseSchema,
@@ -19,6 +20,7 @@ import {
   BillListResponseSchema,
   BillDetailResponseSchema,
   BillSummariesResponseSchema,
+  AmendmentDetailResponseSchema,
   parseResponse,
 } from "@/lib/types/legislation";
 
@@ -80,6 +82,12 @@ export interface CongressClient {
     billType: BillType | string,
     billNumber: number
   ): Promise<BillSummariesResponse>;
+
+  getAmendment(
+    congress: number,
+    amendmentType: string,
+    amendmentNumber: string
+  ): Promise<AmendmentDetailResponse>;
 }
 
 export function createCongressClient(options: CongressClientOptions): CongressClient {
@@ -227,6 +235,23 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
         `getBillSummaries(${congress}/${billType}/${billNumber})`
       );
     },
+
+    async getAmendment(
+      congress: number,
+      amendmentType: string,
+      amendmentNumber: string
+    ): Promise<AmendmentDetailResponse> {
+      const url = buildUrl(
+        `/amendment/${congress}/${amendmentType.toLowerCase()}/${amendmentNumber}`
+      );
+      const response = await rateLimitedFetch(url);
+      const data = await response.json();
+      return parseResponse(
+        AmendmentDetailResponseSchema,
+        data,
+        `getAmendment(${congress}/${amendmentType}/${amendmentNumber})`
+      );
+    },
   };
 }
 
@@ -256,4 +281,5 @@ export type {
   BillListResponse,
   BillDetailResponse,
   BillSummariesResponse,
+  AmendmentDetailResponse,
 };
