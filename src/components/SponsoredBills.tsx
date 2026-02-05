@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
@@ -102,7 +102,19 @@ function StatusBadge({ status }: { status: BillStatus }) {
   );
 }
 
-function BillStatsBar({ bills, totalCount }: { bills: Bill[]; totalCount: number }) {
+interface BillStatsBarProps {
+  bills: Bill[];
+  totalCount: number;
+  isSticky?: boolean;
+  isScrolled?: boolean;
+}
+
+function BillStatsBar({
+  bills,
+  totalCount,
+  isSticky = false,
+  isScrolled = false,
+}: BillStatsBarProps) {
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const bill of bills) {
@@ -120,28 +132,36 @@ function BillStatsBar({ bills, totalCount }: { bills: Bill[]; totalCount: number
     (statusCounts["veto_overridden"] || 0);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 text-sm">
-      <div className="flex items-center gap-2">
-        <span className="font-medium text-primary">{totalCount}</span>
-        <span className="text-muted-foreground">bills sponsored</span>
+    <div
+      className={cn(
+        "p-4 bg-secondary border border-border rounded-sm transition-shadow duration-200",
+        isSticky && "sticky top-0 z-10",
+        isScrolled && "shadow-lg"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-primary">{totalCount}</span>
+          <span className="text-muted-foreground">bills sponsored</span>
+        </div>
+        {passedCount > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{passedCount}</span> advanced
+            </span>
+          </div>
+        )}
+        {statusCounts["became_law"] > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent" />
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{statusCounts["became_law"]}</span>{" "}
+              became law
+            </span>
+          </div>
+        )}
       </div>
-      {passedCount > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-muted-foreground">
-            <span className="font-medium text-foreground">{passedCount}</span> advanced
-          </span>
-        </div>
-      )}
-      {statusCounts["became_law"] > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-accent" />
-          <span className="text-muted-foreground">
-            <span className="font-medium text-foreground">{statusCounts["became_law"]}</span> became
-            law
-          </span>
-        </div>
-      )}
     </div>
   );
 }
@@ -234,6 +254,8 @@ function EmptyState() {
 
 export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsProps) {
   const [displayCount, setDisplayCount] = useState(10);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const visibleBills = useMemo(() => bills.slice(0, displayCount), [bills, displayCount]);
 
@@ -241,6 +263,18 @@ export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsP
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + 10);
+  }, []);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setIsScrolled(scrollContainer.scrollTop > 0);
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll);
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (bills.length === 0) {
@@ -252,12 +286,14 @@ export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsP
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <div className="animate-fade-up p-4 bg-secondary/50 border border-border rounded-sm">
-        <BillStatsBar bills={bills} totalCount={totalCount} />
-      </div>
+    <div
+      ref={scrollContainerRef}
+      className={cn("scroll-container-civic max-h-[350px] md:max-h-[500px] relative", className)}
+      data-testid="sponsored-bills-scroll-container"
+    >
+      <BillStatsBar bills={bills} totalCount={totalCount} isSticky={true} isScrolled={isScrolled} />
 
-      <div className="space-y-3">
+      <div className="space-y-3 pt-4">
         {visibleBills.map((bill, index) => (
           <div
             key={bill.id}
@@ -270,7 +306,7 @@ export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsP
       </div>
 
       {hasMore && (
-        <div className="text-center pt-4">
+        <div className="text-center py-4">
           <button
             onClick={handleLoadMore}
             className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-primary border-2 border-primary rounded-sm hover:bg-primary hover:text-primary-foreground transition-colors"
