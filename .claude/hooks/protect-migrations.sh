@@ -1,0 +1,19 @@
+#!/bin/bash
+# Blocks manual creation of drizzle migration files
+# Use: pnpm db:generate (schema) or pnpm drizzle-kit generate --custom --name=<name> (data)
+
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+
+if [[ "$FILE_PATH" == */drizzle/*.sql ]] || [[ "$FILE_PATH" == */drizzle/meta/*.json ]]; then
+  jq -n '{
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "deny",
+      "permissionDecisionReason": "BLOCKED: Do not create migration files manually. Use: pnpm db:generate (schema) or pnpm drizzle-kit generate --custom --name=<name> (data)"
+    }
+  }'
+  exit 0
+fi
+
+exit 0

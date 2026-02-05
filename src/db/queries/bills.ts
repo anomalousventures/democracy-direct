@@ -1,4 +1,4 @@
-import { eq, and, desc, ilike, or, sql, type SQL } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, isNull, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
 import { bills, legislators, type Bill } from "../schema";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
@@ -255,4 +255,36 @@ export async function getBillCount(db: Database, options: BillCountOptions = {})
     .where(conditions.length > 0 ? and(...conditions) : undefined);
 
   return result[0]?.count ?? 0;
+}
+
+export interface BillForSummarySync {
+  id: string;
+  congress: number;
+  billType: BillType;
+  billNumber: string;
+}
+
+export async function getBillsWithoutSummary(
+  db: Database,
+  limit: number = 100
+): Promise<BillForSummarySync[]> {
+  return db
+    .select({
+      id: bills.id,
+      congress: bills.congress,
+      billType: bills.billType,
+      billNumber: bills.billNumber,
+    })
+    .from(bills)
+    .where(isNull(bills.summary))
+    .orderBy(desc(bills.latestActionDate))
+    .limit(limit);
+}
+
+export async function updateBillSummary(
+  db: Database,
+  billId: string,
+  summary: string
+): Promise<void> {
+  await db.update(bills).set({ summary, updatedAt: new Date() }).where(eq(bills.id, billId));
 }

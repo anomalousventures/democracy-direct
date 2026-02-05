@@ -39,6 +39,10 @@ Server-rendered Astro pages with React components hydrated via `client:load`. AP
 - Uses Neon serverless Postgres via HTTP driver (`@neondatabase/serverless`)
 - Schema in `src/db/schema.ts`, queries in `src/db/queries/`
 - **No global caching** - create fresh connection per request: `createDb(import.meta.env.DATABASE_URL)`
+- **Migrations (never create migration files manually)**:
+  - Schema changes: Update `src/db/schema.ts`, then `pnpm db:generate`
+  - Custom/data migrations: `pnpm drizzle-kit generate --custom --name=<name>`, then edit the generated SQL file
+  - Apply migrations: `pnpm db:migrate`
 
 ### Authentication
 

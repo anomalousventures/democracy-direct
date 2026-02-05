@@ -345,6 +345,8 @@ export const syncCursors = pgTable("sync_cursors", {
   cursor: text("cursor"),
   oldestCongress: integer("oldest_congress"),
   newestCongress: integer("newest_congress"),
+  currentSyncCongress: integer("current_sync_congress"),
+  currentOffset: integer("current_offset"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 

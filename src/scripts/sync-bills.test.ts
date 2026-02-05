@@ -30,11 +30,19 @@ describe("sync-bills module", () => {
       oldestCongress: 117,
       errors: [],
       warnings: [],
+      firstBill: { type: "hr", number: "1" },
+      lastBill: { type: "hr", number: "10" },
+      cursorState: {
+        oldestCongress: 117,
+        currentSyncCongress: null,
+        currentOffset: null,
+      },
     };
 
     expect(result.source).toBe("congress.gov");
     expect(result.direction).toBe("forward");
     expect(result.billsUpserted).toBe(10);
+    expect(result.cursorState.oldestCongress).toBe(117);
   });
 });
 
@@ -136,7 +144,7 @@ describe("transformBillItem", () => {
     const result = transformBillItem(item, "2025-01-01");
 
     expect(result.data).not.toBeNull();
-    expect(result.data?.billNumber).toBe("HR.1");
+    expect(result.data?.billNumber).toBe("1");
     expect(result.data?.billType).toBe("hr");
     expect(result.data?.congress).toBe(119);
     expect(result.data?.introducedDate).toEqual(new Date("2025-01-01"));
@@ -234,59 +242,88 @@ describe("transformBillItem", () => {
 });
 
 describe("SyncBillsResult structure", () => {
-  it("has correct structure for forward sync", () => {
-    const result: syncBillsModule.SyncBillsResult = {
-      source: "congress.gov",
-      changed: true,
-      direction: "forward",
-      congressNumber: 119,
-      billsUpserted: 100,
-      duration: "30.5s",
-      cursorPosition: "2025-02-01T12:00:00.000Z",
+  const baseForwardResult: syncBillsModule.SyncBillsResult = {
+    source: "congress.gov",
+    changed: true,
+    direction: "forward",
+    congressNumber: 119,
+    billsUpserted: 100,
+    duration: "30.5s",
+    cursorPosition: "2025-02-01T12:00:00.000Z",
+    oldestCongress: null,
+    errors: [],
+    warnings: [],
+    firstBill: { type: "hr", number: "1" },
+    lastBill: { type: "hr", number: "100" },
+    cursorState: {
       oldestCongress: null,
-      errors: [],
-      warnings: [],
-    };
+      currentSyncCongress: null,
+      currentOffset: null,
+    },
+  };
 
-    expect(result.direction).toBe("forward");
-    expect(result.cursorPosition).not.toBeNull();
-    expect(result.oldestCongress).toBeNull();
+  const baseBackwardResult: syncBillsModule.SyncBillsResult = {
+    source: "congress.gov",
+    changed: true,
+    direction: "backward",
+    congressNumber: 118,
+    billsUpserted: 3000,
+    duration: "120.0s",
+    cursorPosition: null,
+    oldestCongress: 118,
+    errors: [],
+    warnings: [],
+    firstBill: { type: "hr", number: "1" },
+    lastBill: { type: "s", number: "500" },
+    cursorState: {
+      oldestCongress: 118,
+      currentSyncCongress: null,
+      currentOffset: null,
+    },
+  };
+
+  it("has correct structure for forward sync", () => {
+    expect(baseForwardResult.direction).toBe("forward");
+    expect(baseForwardResult.cursorPosition).not.toBeNull();
+    expect(baseForwardResult.oldestCongress).toBeNull();
+    expect(baseForwardResult.firstBill).toEqual({ type: "hr", number: "1" });
+    expect(baseForwardResult.lastBill).toEqual({ type: "hr", number: "100" });
+    expect(baseForwardResult.cursorState.currentSyncCongress).toBeNull();
   });
 
-  it("has correct structure for backward sync", () => {
-    const result: syncBillsModule.SyncBillsResult = {
-      source: "congress.gov",
-      changed: true,
-      direction: "backward",
-      congressNumber: 118,
-      billsUpserted: 3000,
-      duration: "120.0s",
-      cursorPosition: null,
-      oldestCongress: 118,
-      errors: [],
-      warnings: [],
+  it("has correct structure for backward sync with full Congress synced", () => {
+    expect(baseBackwardResult.direction).toBe("backward");
+    expect(baseBackwardResult.cursorPosition).toBeNull();
+    expect(baseBackwardResult.oldestCongress).toBe(118);
+    expect(baseBackwardResult.cursorState.oldestCongress).toBe(118);
+    expect(baseBackwardResult.cursorState.currentSyncCongress).toBeNull();
+    expect(baseBackwardResult.cursorState.currentOffset).toBeNull();
+  });
+
+  it("has correct structure for backward sync with partial Congress (offset tracking)", () => {
+    const partialResult: syncBillsModule.SyncBillsResult = {
+      ...baseBackwardResult,
+      oldestCongress: null,
+      cursorState: {
+        oldestCongress: null,
+        currentSyncCongress: 119,
+        currentOffset: 1500,
+      },
     };
 
-    expect(result.direction).toBe("backward");
-    expect(result.cursorPosition).toBeNull();
-    expect(result.oldestCongress).toBe(118);
+    expect(partialResult.cursorState.currentSyncCongress).toBe(119);
+    expect(partialResult.cursorState.currentOffset).toBe(1500);
+    expect(partialResult.cursorState.oldestCongress).toBeNull();
   });
 
   it("tracks errors during sync (fatal issues)", () => {
     const result: syncBillsModule.SyncBillsResult = {
-      source: "congress.gov",
-      changed: true,
-      direction: "forward",
-      congressNumber: 119,
+      ...baseForwardResult,
       billsUpserted: 95,
-      duration: "30.0s",
-      cursorPosition: "2025-02-01T00:00:00.000Z",
-      oldestCongress: null,
       errors: [
         { billNumber: "HR1234", message: "Failed to parse bill" },
         { billNumber: "S567", message: "Missing both dates" },
       ],
-      warnings: [],
     };
 
     expect(result.errors).toHaveLength(2);
@@ -296,15 +333,7 @@ describe("SyncBillsResult structure", () => {
 
   it("tracks warnings during sync (recoverable issues)", () => {
     const result: syncBillsModule.SyncBillsResult = {
-      source: "congress.gov",
-      changed: true,
-      direction: "forward",
-      congressNumber: 119,
-      billsUpserted: 100,
-      duration: "30.0s",
-      cursorPosition: "2025-02-01T00:00:00.000Z",
-      oldestCongress: null,
-      errors: [],
+      ...baseForwardResult,
       warnings: [
         {
           billNumber: "HR123",
@@ -326,14 +355,8 @@ describe("SyncBillsResult structure", () => {
 
   it("tracks both errors and warnings separately", () => {
     const result: syncBillsModule.SyncBillsResult = {
-      source: "congress.gov",
-      changed: true,
-      direction: "forward",
-      congressNumber: 119,
+      ...baseForwardResult,
       billsUpserted: 98,
-      duration: "30.0s",
-      cursorPosition: "2025-02-01T00:00:00.000Z",
-      oldestCongress: null,
       errors: [
         { billNumber: "HR999", message: "Missing both introducedDate and latestActionDate" },
       ],
@@ -348,5 +371,97 @@ describe("SyncBillsResult structure", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.warnings).toHaveLength(1);
     expect(result.billsUpserted).toBe(98);
+  });
+
+  it("tracks first and last bill synced for notifications", () => {
+    expect(baseForwardResult.firstBill).not.toBeNull();
+    expect(baseForwardResult.lastBill).not.toBeNull();
+    expect(baseForwardResult.firstBill?.type).toBe("hr");
+    expect(baseForwardResult.firstBill?.number).toBe("1");
+  });
+
+  it("has null first/last bill when no bills synced", () => {
+    const emptyResult: syncBillsModule.SyncBillsResult = {
+      ...baseForwardResult,
+      changed: false,
+      billsUpserted: 0,
+      firstBill: null,
+      lastBill: null,
+    };
+
+    expect(emptyResult.firstBill).toBeNull();
+    expect(emptyResult.lastBill).toBeNull();
+  });
+});
+
+describe("cursor state transitions", () => {
+  it("partial sync preserves previous oldest and tracks current progress", () => {
+    const previousState = {
+      oldestCongress: 118,
+      currentSyncCongress: null,
+      currentOffset: null,
+    };
+
+    const afterPartialSync = {
+      oldestCongress: 118,
+      currentSyncCongress: 117,
+      currentOffset: 1500,
+    };
+
+    expect(afterPartialSync.oldestCongress).toBe(previousState.oldestCongress);
+    expect(afterPartialSync.currentSyncCongress).toBe(117);
+    expect(afterPartialSync.currentOffset).toBe(1500);
+  });
+
+  it("full Congress sync clears progress and updates oldest", () => {
+    const beforeFullSync = {
+      oldestCongress: 118,
+      currentSyncCongress: 117,
+      currentOffset: 10000,
+    };
+
+    const afterFullSync = {
+      oldestCongress: 117,
+      currentSyncCongress: null,
+      currentOffset: null,
+    };
+
+    expect(afterFullSync.oldestCongress).toBe(117);
+    expect(afterFullSync.currentSyncCongress).toBeNull();
+    expect(afterFullSync.currentOffset).toBeNull();
+    expect(afterFullSync.oldestCongress).toBe(beforeFullSync.currentSyncCongress);
+  });
+
+  it("next run after partial sync continues from saved offset", () => {
+    const savedState = {
+      oldestCongress: 118,
+      currentSyncCongress: 117,
+      currentOffset: 1500,
+    };
+
+    const targetCongress =
+      savedState.currentSyncCongress ??
+      (savedState.oldestCongress ? savedState.oldestCongress - 1 : 119);
+    const startOffset = savedState.currentOffset ?? 0;
+
+    expect(targetCongress).toBe(117);
+    expect(startOffset).toBe(1500);
+  });
+
+  it("initial state starts from current Congress", () => {
+    const initialState = {
+      oldestCongress: null,
+      currentSyncCongress: null,
+      currentOffset: null,
+    };
+
+    const currentCongress = 119;
+    const targetCongress =
+      initialState.currentSyncCongress ??
+      (initialState.oldestCongress ? initialState.oldestCongress - 1 : currentCongress);
+    const startOffset = initialState.currentOffset ?? 0;
+
+    expect(targetCongress).toBe(currentCongress);
+    expect(startOffset).toBe(0);
   });
 });

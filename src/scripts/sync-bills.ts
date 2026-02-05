@@ -16,6 +16,13 @@ export interface SyncBillsResult {
   oldestCongress: number | null;
   errors: Array<{ billNumber: string; message: string }>;
   warnings: Array<{ billNumber: string; message: string }>;
+  firstBill: { type: string; number: string } | null;
+  lastBill: { type: string; number: string } | null;
+  cursorState: {
+    oldestCongress: number | null;
+    currentSyncCongress: number | null;
+    currentOffset: number | null;
+  };
 }
 
 interface BillUpsertData {
@@ -35,8 +42,10 @@ interface BillUpsertData {
 
 const BATCH_SIZE = 50;
 const TARGET_OLDEST_CONGRESS = 117;
-const BACKWARD_BILLS_PER_RUN = 1500;
+const DEFAULT_BACKWARD_BILLS_PER_RUN = 1500;
 const LOG_INTERVAL = 250;
+
+let BACKWARD_BILLS_PER_RUN = DEFAULT_BACKWARD_BILLS_PER_RUN;
 
 function formatElapsed(startTime: number): string {
   const elapsed = (Date.now() - startTime) / 1000;
@@ -137,7 +146,7 @@ export function transformBillItem(
 
   return {
     data: {
-      billNumber: `${item.type.toUpperCase()}.${item.number}`,
+      billNumber: item.number.toString(),
       billType: parsed.type,
       congress: item.congress,
       title: item.title,
@@ -160,14 +169,15 @@ export function transformBillItem(
   };
 }
 
-async function getOrCreateCursor(
-  db: Database,
-  cursorId: string
-): Promise<{
+interface CursorState {
   cursor: string | null;
   oldestCongress: number | null;
   newestCongress: number | null;
-}> {
+  currentSyncCongress: number | null;
+  currentOffset: number | null;
+}
+
+async function getOrCreateCursor(db: Database, cursorId: string): Promise<CursorState> {
   const { syncCursors } = await import("@/db/schema");
 
   const [existing] = await db.select().from(syncCursors).where(eq(syncCursors.id, cursorId));
@@ -177,36 +187,50 @@ async function getOrCreateCursor(
       cursor: existing.cursor,
       oldestCongress: existing.oldestCongress,
       newestCongress: existing.newestCongress,
+      currentSyncCongress: existing.currentSyncCongress,
+      currentOffset: existing.currentOffset,
     };
   }
 
-  return { cursor: null, oldestCongress: null, newestCongress: null };
+  return {
+    cursor: null,
+    oldestCongress: null,
+    newestCongress: null,
+    currentSyncCongress: null,
+    currentOffset: null,
+  };
 }
 
-async function updateCursor(
-  db: Database,
-  cursorId: string,
-  cursor: string | null,
-  oldestCongress: number | null,
-  newestCongress: number | null
-): Promise<void> {
+interface CursorUpdate {
+  cursor?: string | null;
+  oldestCongress?: number | null;
+  newestCongress?: number | null;
+  currentSyncCongress?: number | null;
+  currentOffset?: number | null;
+}
+
+async function updateCursor(db: Database, cursorId: string, update: CursorUpdate): Promise<void> {
   const { syncCursors } = await import("@/db/schema");
 
   await db
     .insert(syncCursors)
     .values({
       id: cursorId,
-      cursor,
-      oldestCongress,
-      newestCongress,
+      cursor: update.cursor ?? null,
+      oldestCongress: update.oldestCongress ?? null,
+      newestCongress: update.newestCongress ?? null,
+      currentSyncCongress: update.currentSyncCongress ?? null,
+      currentOffset: update.currentOffset ?? null,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: syncCursors.id,
       set: {
-        cursor,
-        oldestCongress,
-        newestCongress,
+        cursor: update.cursor ?? null,
+        oldestCongress: update.oldestCongress ?? null,
+        newestCongress: update.newestCongress ?? null,
+        currentSyncCongress: update.currentSyncCongress ?? null,
+        currentOffset: update.currentOffset ?? null,
         updatedAt: new Date(),
       },
     });
@@ -346,9 +370,24 @@ async function syncForward(
   console.log(`Upserted ${upsertCount} bills in ${formatElapsed(upsertStartTime)}`);
 
   const newCursor = formatDateForApi(new Date());
-  await updateCursor(db, cursorId, newCursor, null, newestCongress ?? currentCongress);
+  await updateCursor(db, cursorId, {
+    cursor: newCursor,
+    newestCongress: newestCongress ?? currentCongress,
+  });
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+
+  const firstBill =
+    billsToUpsert.length > 0
+      ? { type: billsToUpsert[0].billType, number: billsToUpsert[0].billNumber }
+      : null;
+  const lastBill =
+    billsToUpsert.length > 0
+      ? {
+          type: billsToUpsert[billsToUpsert.length - 1].billType,
+          number: billsToUpsert[billsToUpsert.length - 1].billNumber,
+        }
+      : null;
 
   console.log("\n=== FORWARD SYNC COMPLETE ===");
   console.log(`Duration: ${duration}`);
@@ -368,6 +407,13 @@ async function syncForward(
     oldestCongress: null,
     errors,
     warnings,
+    firstBill,
+    lastBill,
+    cursorState: {
+      oldestCongress: null,
+      currentSyncCongress: null,
+      currentOffset: null,
+    },
   };
 }
 
@@ -381,9 +427,12 @@ async function syncBackward(
   const cursorId = "bills_backward";
   const currentCongress = getCurrentCongress();
 
-  const { oldestCongress: previousOldest } = await getOrCreateCursor(db, cursorId);
+  const cursorState = await getOrCreateCursor(db, cursorId);
+  const { oldestCongress: previousOldest, currentSyncCongress, currentOffset } = cursorState;
 
-  const targetCongress = previousOldest ? previousOldest - 1 : currentCongress;
+  const targetCongress =
+    currentSyncCongress ?? (previousOldest ? previousOldest - 1 : currentCongress);
+  let offset = currentOffset ?? 0;
 
   if (targetCongress < TARGET_OLDEST_CONGRESS) {
     console.log("=== BACKWARD SYNC COMPLETE ===");
@@ -400,6 +449,13 @@ async function syncBackward(
       oldestCongress: previousOldest,
       errors: [],
       warnings: [],
+      firstBill: null,
+      lastBill: null,
+      cursorState: {
+        oldestCongress: previousOldest,
+        currentSyncCongress: null,
+        currentOffset: null,
+      },
     };
   }
 
@@ -407,6 +463,7 @@ async function syncBackward(
 
   console.log("=== BACKWARD SYNC START ===");
   console.log(`Target Congress: ${targetCongress}`);
+  console.log(`Starting offset: ${offset}`);
   console.log(`Previously synced oldest: ${previousOldest ?? "none"}`);
   console.log(`Target oldest: ${TARGET_OLDEST_CONGRESS}`);
   console.log(`Max bills per run: ${BACKWARD_BILLS_PER_RUN}`);
@@ -417,22 +474,23 @@ async function syncBackward(
   const billsToUpsert: BillUpsertData[] = [];
   let billsFetched = 0;
   let billsSkipped = 0;
-  let offset = 0;
-  const limit = 250;
+  const maxPageSize = 250;
   let hasMore = true;
 
   console.log("\n--- Fetching from Congress.gov API ---");
   const fetchStartTime = Date.now();
 
   while (hasMore && billsFetched < BACKWARD_BILLS_PER_RUN) {
+    const remaining = BACKWARD_BILLS_PER_RUN - billsFetched;
+    const pageSize = Math.min(maxPageSize, remaining);
+
     const response = await client.listBills({
       congress: targetCongress,
-      limit,
+      limit: pageSize,
       offset,
     });
 
     for (const item of response.bills) {
-      if (billsFetched >= BACKWARD_BILLS_PER_RUN) break;
       billsFetched++;
 
       let detailIntroducedDate: string | undefined;
@@ -462,10 +520,10 @@ async function syncBackward(
       }
     }
 
-    hasMore = !!response.pagination?.next && response.bills.length === limit;
-    offset += limit;
+    hasMore = !!response.pagination?.next && response.bills.length === pageSize;
+    offset += response.bills.length;
 
-    if (offset % LOG_INTERVAL === 0) {
+    if (billsFetched % LOG_INTERVAL === 0) {
       logProgress("Fetch", fetchStartTime, billsFetched, BACKWARD_BILLS_PER_RUN, errors.length);
     }
   }
@@ -491,22 +549,50 @@ async function syncBackward(
   const upsertCount = await upsertBills(db, billsToUpsert);
   console.log(`Upserted ${upsertCount} bills in ${formatElapsed(upsertStartTime)}`);
 
-  const congressFullySynced = !hasMore || billsFetched < BACKWARD_BILLS_PER_RUN;
-  const newOldestCongress = congressFullySynced ? targetCongress : previousOldest;
+  const congressFullySynced = !hasMore;
 
-  await updateCursor(db, cursorId, null, newOldestCongress, currentCongress);
+  let newCursorState: CursorUpdate;
+  if (congressFullySynced) {
+    newCursorState = {
+      oldestCongress: targetCongress,
+      newestCongress: currentCongress,
+      currentSyncCongress: null,
+      currentOffset: null,
+    };
+  } else {
+    newCursorState = {
+      oldestCongress: previousOldest,
+      newestCongress: currentCongress,
+      currentSyncCongress: targetCongress,
+      currentOffset: offset,
+    };
+  }
+
+  await updateCursor(db, cursorId, newCursorState);
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+
+  const firstBill =
+    billsToUpsert.length > 0
+      ? { type: billsToUpsert[0].billType, number: billsToUpsert[0].billNumber }
+      : null;
+  const lastBill =
+    billsToUpsert.length > 0
+      ? {
+          type: billsToUpsert[billsToUpsert.length - 1].billType,
+          number: billsToUpsert[billsToUpsert.length - 1].billNumber,
+        }
+      : null;
 
   console.log("\n=== BACKWARD SYNC COMPLETE ===");
   console.log(`Duration: ${duration}`);
   console.log(
-    `Congress ${targetCongress}: ${congressFullySynced ? "FULLY SYNCED" : "PARTIAL - will continue"}`
+    `Congress ${targetCongress}: ${congressFullySynced ? "FULLY SYNCED" : `PARTIAL - offset ${offset}`}`
   );
   console.log(`Bills upserted: ${upsertCount}`);
   console.log(`Warnings: ${warnings.length}`);
   console.log(`Errors: ${errors.length}`);
-  console.log(`Oldest synced Congress: ${newOldestCongress ?? "none yet"}`);
+  console.log(`Oldest synced Congress: ${newCursorState.oldestCongress ?? "none yet"}`);
 
   return {
     source: "congress.gov",
@@ -516,9 +602,16 @@ async function syncBackward(
     billsUpserted: upsertCount,
     duration,
     cursorPosition: null,
-    oldestCongress: newOldestCongress,
+    oldestCongress: newCursorState.oldestCongress ?? null,
     errors,
     warnings,
+    firstBill,
+    lastBill,
+    cursorState: {
+      oldestCongress: newCursorState.oldestCongress ?? null,
+      currentSyncCongress: newCursorState.currentSyncCongress ?? null,
+      currentOffset: newCursorState.currentOffset ?? null,
+    },
   };
 }
 
@@ -565,7 +658,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     direction = dirArg;
   }
 
-  console.log(`Starting bill sync in ${direction} mode...`);
+  const limitArgIndex = process.argv.findIndex((arg) => arg === "--limit");
+  if (limitArgIndex !== -1) {
+    const limitArg = process.argv[limitArgIndex + 1];
+    const parsed = parseInt(limitArg, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      console.error("--limit requires a positive integer value");
+      process.exit(1);
+    }
+    BACKWARD_BILLS_PER_RUN = parsed;
+  }
+
+  console.log(`Starting bill sync in ${direction} mode (limit: ${BACKWARD_BILLS_PER_RUN})...`);
 
   syncBills(direction)
     .then(async (result) => {

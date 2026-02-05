@@ -79,6 +79,8 @@ export function parseSenateVoteXml(xml: string): ParsedSenateVote {
 
   const presentCount = parsedMembers.filter((m) => m.voteCast === "Present").length;
 
+  const amendment = vote.amendment as Record<string, unknown> | undefined;
+
   const rawData = {
     congress: parseInt(String(vote.congress), 10),
     session: parseInt(String(vote.session), 10),
@@ -93,6 +95,13 @@ export function parseSenateVoteXml(xml: string): ParsedSenateVote {
     members: parsedMembers,
     documentName: vote.document?.document_name ? String(vote.document.document_name) : undefined,
     documentTitle: vote.document?.document_title ? String(vote.document.document_title) : undefined,
+    amendmentNumber: amendment?.amendment_number ? String(amendment.amendment_number) : undefined,
+    amendmentToBillNumber: amendment?.amendment_to_document_number
+      ? String(amendment.amendment_to_document_number)
+      : undefined,
+    amendmentPurpose: amendment?.amendment_purpose
+      ? String(amendment.amendment_purpose)
+      : undefined,
   };
 
   return parseResponse(ParsedSenateVoteSchema, rawData, "parseSenateVoteXml");

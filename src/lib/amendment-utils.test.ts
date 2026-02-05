@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseAmendmentNumber,
+  parseAmendmentFromUrl,
   detectAmendmentFromVote,
   buildAmendmentCongressGovUrl,
 } from "./amendment-utils";
@@ -38,6 +39,42 @@ describe("parseAmendmentNumber", () => {
   });
 });
 
+describe("parseAmendmentFromUrl", () => {
+  it("parses House amendment URL", () => {
+    const result = parseAmendmentFromUrl(
+      "https://www.congress.gov/amendment/119/house-amendment/156"
+    );
+    expect(result).toEqual({ type: "hamdt", number: 156 });
+  });
+
+  it("parses Senate amendment URL", () => {
+    const result = parseAmendmentFromUrl(
+      "https://www.congress.gov/amendment/119/senate-amendment/4272"
+    );
+    expect(result).toEqual({ type: "samdt", number: 4272 });
+  });
+
+  it("handles URL with query parameters", () => {
+    const result = parseAmendmentFromUrl(
+      "https://www.congress.gov/amendment/119/house-amendment/123?overview=closed"
+    );
+    expect(result).toEqual({ type: "hamdt", number: 123 });
+  });
+
+  it("returns null for non-amendment URLs", () => {
+    expect(parseAmendmentFromUrl("https://www.congress.gov/bill/119/hr/1234")).toBeNull();
+    expect(parseAmendmentFromUrl("https://example.com")).toBeNull();
+    expect(parseAmendmentFromUrl("")).toBeNull();
+  });
+
+  it("handles case insensitivity", () => {
+    const result = parseAmendmentFromUrl(
+      "https://www.congress.gov/amendment/119/HOUSE-AMENDMENT/789"
+    );
+    expect(result).toEqual({ type: "hamdt", number: 789 });
+  });
+});
+
 describe("detectAmendmentFromVote", () => {
   it("detects amendment when legislationType is AMENDMENT", () => {
     const result = detectAmendmentFromVote("On the Amendment", "H.AMDT.123", "AMENDMENT");
@@ -67,6 +104,26 @@ describe("detectAmendmentFromVote", () => {
   it("returns null for null inputs", () => {
     const result = detectAmendmentFromVote("On Passage", null, null);
     expect(result).toBeNull();
+  });
+
+  it("detects amendment from legislationUrl first", () => {
+    const result = detectAmendmentFromVote(
+      "On Agreeing to the Amendment",
+      "H.R.7148",
+      "HR",
+      "https://www.congress.gov/amendment/119/house-amendment/156"
+    );
+    expect(result).toEqual({ type: "hamdt", number: 156 });
+  });
+
+  it("falls back to billNumber when legislationUrl has no amendment", () => {
+    const result = detectAmendmentFromVote(
+      "On the Amendment",
+      "S.AMDT.123",
+      null,
+      "https://www.congress.gov/bill/119/hr/1234"
+    );
+    expect(result).toEqual({ type: "samdt", number: 123 });
   });
 });
 

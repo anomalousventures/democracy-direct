@@ -169,9 +169,10 @@ async function resolveAmendmentId(
   congress: number,
   question: string,
   billNumber: string | null,
-  legislationType: string | null
+  legislationType: string | null,
+  legislationUrl?: string | null
 ): Promise<string | null> {
-  const parsed = detectAmendmentFromVote(question, billNumber, legislationType);
+  const parsed = detectAmendmentFromVote(question, billNumber, legislationType, legislationUrl);
   if (!parsed) return null;
 
   const { amendments, bills } = await import("@/db/schema");
@@ -262,7 +263,8 @@ async function syncHouseVotes(
   client: CongressClient,
   congress: number,
   session: number,
-  errors: SyncVotesResult["errors"]
+  errors: SyncVotesResult["errors"],
+  maxVotes?: number
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number }> {
   const { votes, memberVotes } = await import("@/db/schema");
 
@@ -290,10 +292,13 @@ async function syncHouseVotes(
     offset += limit;
   }
 
-  console.log(`Found ${allVotes.length} House votes to sync`);
+  const votesToProcess = maxVotes ? allVotes.slice(0, maxVotes) : allVotes;
+  console.log(
+    `Found ${allVotes.length} House votes${maxVotes ? `, processing ${votesToProcess.length}` : ""}`
+  );
 
-  for (let i = 0; i < allVotes.length; i++) {
-    const voteItem = allVotes[i];
+  for (let i = 0; i < votesToProcess.length; i++) {
+    const voteItem = votesToProcess[i];
     try {
       const [voteDetail, membersResponse] = await Promise.all([
         client.getHouseVote(congress, session, voteItem.rollCallNumber),
@@ -327,8 +332,9 @@ async function syncHouseVotes(
       const sourceUrl = buildCongressGovVoteUrl(voteDate, voteItem.rollCallNumber);
 
       const question = voteData.voteQuestion ?? voteData.voteType ?? "Unknown";
-      const legislationType = voteItem.legislationType ?? null;
-      const rawBillNumber = voteItem.legislationNumber ?? null;
+      const legislationType = voteData.legislationType ?? voteItem.legislationType ?? null;
+      const rawBillNumber = voteData.legislationNumber ?? voteItem.legislationNumber ?? null;
+      const legislationUrl = voteData.legislationUrl ?? null;
       const billNumber = formatHouseBillNumber(legislationType, rawBillNumber);
 
       const resolvedBill = await resolveBillId(db, client, congress, billNumber, legislationType);
@@ -340,7 +346,8 @@ async function syncHouseVotes(
         congress,
         question,
         billNumber,
-        legislationType
+        legislationType,
+        legislationUrl
       );
 
       const [insertedVote] = await db
@@ -417,7 +424,7 @@ async function syncHouseVotes(
       }
 
       if ((i + 1) % 10 === 0) {
-        console.log(`Processed ${i + 1} / ${allVotes.length} House votes...`);
+        console.log(`Processed ${i + 1} / ${votesToProcess.length} House votes...`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -436,21 +443,25 @@ async function syncSenateVotes(
   lisIdMap: Map<string, string>,
   congress: number,
   session: number,
-  errors: SyncVotesResult["errors"]
+  errors: SyncVotesResult["errors"],
+  maxVotes?: number
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number; unmappedMembers: number }> {
   const { votes, memberVotes } = await import("@/db/schema");
 
   console.log(`Fetching Senate votes for Congress ${congress}, Session ${session}...`);
 
   const menu = await senateClient.getVoteMenu(congress, session);
-  console.log(`Found ${menu.votes.length} Senate votes to sync`);
+  const votesToProcess = maxVotes ? menu.votes.slice(0, maxVotes) : menu.votes;
+  console.log(
+    `Found ${menu.votes.length} Senate votes${maxVotes ? `, processing ${votesToProcess.length}` : ""}`
+  );
 
   let totalVotesUpserted = 0;
   let totalMemberVotesUpserted = 0;
   let unmappedMembers = 0;
 
-  for (let i = 0; i < menu.votes.length; i++) {
-    const voteMenuItem = menu.votes[i];
+  for (let i = 0; i < votesToProcess.length; i++) {
+    const voteMenuItem = votesToProcess[i];
     try {
       const voteDetail = await senateClient.getVote(congress, session, voteMenuItem.voteNumber);
 
@@ -468,7 +479,8 @@ async function syncSenateVotes(
       const voteDate = parsedDate;
 
       const question = voteDetail.question;
-      const billNumber = voteDetail.documentName ?? null;
+      const amendmentRef = voteDetail.amendmentNumber ?? null;
+      const billNumber = voteDetail.amendmentToBillNumber ?? voteDetail.documentName ?? null;
 
       const resolvedBill = await resolveBillId(db, congressClient, congress, billNumber, null);
       const billId = resolvedBill?.id ?? null;
@@ -478,7 +490,8 @@ async function syncSenateVotes(
         congressClient,
         congress,
         question,
-        billNumber,
+        amendmentRef ?? billNumber,
+        null,
         null
       );
 
@@ -568,7 +581,7 @@ async function syncSenateVotes(
       }
 
       if ((i + 1) % 10 === 0) {
-        console.log(`Processed ${i + 1} / ${menu.votes.length} Senate votes...`);
+        console.log(`Processed ${i + 1} / ${votesToProcess.length} Senate votes...`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -586,7 +599,8 @@ async function syncSenateVotes(
 
 export async function syncVotes(
   congressNumber?: number,
-  force: boolean = false
+  force: boolean = false,
+  limit?: number
 ): Promise<SyncVotesResult> {
   const startTime = Date.now();
 
@@ -653,7 +667,7 @@ export async function syncVotes(
 
   const errors: SyncVotesResult["errors"] = [];
 
-  const houseResult = await syncHouseVotes(db, congressClient, congress, session, errors);
+  const houseResult = await syncHouseVotes(db, congressClient, congress, session, errors, limit);
   const senateResult = await syncSenateVotes(
     db,
     senateClient,
@@ -661,7 +675,8 @@ export async function syncVotes(
     lisIdMap,
     congress,
     session,
-    errors
+    errors,
+    limit
   );
 
   if (senateResult.unmappedMembers > 0) {
@@ -714,6 +729,7 @@ export async function syncVotes(
 if (import.meta.url === `file://${process.argv[1]}`) {
   const force = process.argv.includes("--force");
   let congress: number | undefined;
+  let limit: number | undefined;
 
   const congressArgIndex = process.argv.findIndex((arg) => arg === "--congress");
   if (congressArgIndex !== -1 && process.argv[congressArgIndex + 1]) {
@@ -724,11 +740,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
 
+  const limitArgIndex = process.argv.findIndex((arg) => arg === "--limit");
+  if (limitArgIndex !== -1) {
+    const limitArg = process.argv[limitArgIndex + 1];
+    const parsed = parseInt(limitArg, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      console.error("--limit requires a positive integer value");
+      process.exit(1);
+    }
+    limit = parsed;
+  }
+
   if (force) {
     console.log("Force mode: bypassing time-based change detection");
   }
 
-  syncVotes(congress, force)
+  syncVotes(congress, force, limit)
     .then((result) => {
       console.log(JSON.stringify(result));
       process.exit(0);

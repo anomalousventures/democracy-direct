@@ -117,7 +117,8 @@ async function syncLegislatorBills(
 }
 
 export async function syncSponsoredBills(
-  congressNumber?: number
+  congressNumber?: number,
+  maxLegislators?: number
 ): Promise<SyncSponsoredBillsResult> {
   const startTime = Date.now();
 
@@ -146,13 +147,18 @@ export async function syncSponsoredBills(
     .select({ bioguideId: legislators.bioguideId, fullName: legislators.fullName })
     .from(legislators);
 
-  console.log(`Syncing sponsored bills for ${allLegislators.length} legislators...`);
+  const legislatorsToProcess = maxLegislators
+    ? allLegislators.slice(0, maxLegislators)
+    : allLegislators;
+  console.log(
+    `Syncing sponsored bills for ${legislatorsToProcess.length}${maxLegislators ? ` of ${allLegislators.length}` : ""} legislators...`
+  );
 
   let legislatorsProcessed = 0;
   let totalBillsUpserted = 0;
   const errors: SyncSponsoredBillsResult["errors"] = [];
 
-  for (const legislator of allLegislators) {
+  for (const legislator of legislatorsToProcess) {
     try {
       const billsUpserted = await syncLegislatorBills(db, client, legislator.bioguideId, congress);
       totalBillsUpserted += billsUpserted;
@@ -160,7 +166,7 @@ export async function syncSponsoredBills(
 
       if (legislatorsProcessed % 50 === 0) {
         console.log(
-          `Processed ${legislatorsProcessed}/${allLegislators.length} legislators, ${totalBillsUpserted} bills upserted...`
+          `Processed ${legislatorsProcessed}/${legislatorsToProcess.length} legislators, ${totalBillsUpserted} bills upserted...`
         );
       }
     } catch (error) {
@@ -188,6 +194,7 @@ export async function syncSponsoredBills(
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   let congress: number | undefined;
+  let limit: number | undefined;
 
   const congressArgIndex = process.argv.findIndex((arg) => arg === "--congress");
   if (congressArgIndex !== -1 && process.argv[congressArgIndex + 1]) {
@@ -198,7 +205,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
 
-  syncSponsoredBills(congress)
+  const limitArgIndex = process.argv.findIndex((arg) => arg === "--limit");
+  if (limitArgIndex !== -1) {
+    const limitArg = process.argv[limitArgIndex + 1];
+    const parsed = parseInt(limitArg, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      console.error("--limit requires a positive integer value");
+      process.exit(1);
+    }
+    limit = parsed;
+  }
+
+  syncSponsoredBills(congress, limit)
     .then((result) => {
       console.log(JSON.stringify(result));
       process.exit(0);

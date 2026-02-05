@@ -36,6 +36,8 @@
     "seed:templates": "npx tsx src/scripts/seed-templates.ts",
     "sync:votes": "npx tsx src/scripts/sync-votes.ts",
     "sync:bills": "npx tsx src/scripts/sync-bills.ts",
+    "sync:summaries": "npx tsx src/scripts/sync-summaries.ts",
+    "sync:sponsored-bills": "npx tsx src/scripts/sync-sponsored-bills.ts",
     "moderate:pending": "npx tsx src/scripts/moderate-pending.ts",
     "prepare": "husky"
   },

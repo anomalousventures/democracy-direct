@@ -8,6 +8,7 @@ export interface ParsedAmendmentRef {
 const AMENDMENT_PATTERN = /^([HS])\.?\s*AMDT\.?\s*(\d+)$/i;
 const AMENDMENT_IN_QUESTION_PATTERN =
   /(?:On the Amendment|Amendment)\s+([HS])\.?\s*AMDT\.?\s*(\d+)/i;
+const AMENDMENT_URL_PATTERN = /congress\.gov\/amendment\/\d+\/(house|senate)-amendment\/(\d+)/i;
 
 export function parseAmendmentNumber(input: string): ParsedAmendmentRef | null {
   const match = input.trim().match(AMENDMENT_PATTERN);
@@ -24,13 +25,29 @@ export function parseAmendmentNumber(input: string): ParsedAmendmentRef | null {
   };
 }
 
+export function parseAmendmentFromUrl(url: string): ParsedAmendmentRef | null {
+  const match = url.match(AMENDMENT_URL_PATTERN);
+  if (!match) return null;
+
+  const chamber = match[1].toLowerCase();
+  const number = parseInt(match[2], 10);
+
+  if (isNaN(number)) return null;
+
+  return {
+    type: chamber === "house" ? "hamdt" : "samdt",
+    number,
+  };
+}
+
 export function detectAmendmentFromVote(
   question: string,
   billNumber: string | null,
-  legislationType: string | null
+  legislationType: string | null,
+  legislationUrl?: string | null
 ): ParsedAmendmentRef | null {
-  if (legislationType === "AMENDMENT" && billNumber) {
-    const parsed = parseAmendmentNumber(billNumber);
+  if (legislationUrl) {
+    const parsed = parseAmendmentFromUrl(legislationUrl);
     if (parsed) return parsed;
   }
 
