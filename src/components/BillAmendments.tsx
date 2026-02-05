@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { AmendmentWithRelations } from "@/db/queries/amendments";
 import type { BillAmendmentsResponse } from "@/pages/api/bill/[billId]/amendments";
 
@@ -40,7 +41,10 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="text-sm font-semibold text-accent">{displayNumber}</span>
-            <span className="text-xs text-muted-foreground">{amendment.congress}th Congress</span>
+            <span className="text-xs text-muted-foreground">
+              {amendment.congress}
+              {getOrdinalSuffix(amendment.congress)} Congress
+            </span>
             <span className="text-xs text-muted-foreground capitalize">{amendment.chamber}</span>
           </div>
 

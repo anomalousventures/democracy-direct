@@ -25,11 +25,23 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
   const isLongSummary = hasSummary && bill.summary!.length > 500;
   const truncatedSummary = isLongSummary ? bill.summary!.slice(0, 500) + "..." : bill.summary;
 
+  const sponsorInitials = bill.sponsorName
+    ? bill.sponsorName
+        .split(" ")
+        .filter(Boolean)
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "";
+
   return (
     <div className={cn("space-y-6", className)}>
-      {hasSummary && (
+      {hasSummary ? (
         <div className="prose prose-sm max-w-none">
-          <h3 className="text-lg font-semibold text-primary mb-3">Bill Summary</h3>
+          <h3 className="text-lg font-semibold text-primary mb-3 border-l-4 border-accent pl-3">
+            Bill Summary
+          </h3>
           <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
             {expanded ? bill.summary : truncatedSummary}
           </p>
@@ -46,15 +58,23 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
             </button>
           )}
         </div>
+      ) : (
+        <div className="prose prose-sm max-w-none">
+          <h3 className="text-lg font-semibold text-primary mb-3 border-l-4 border-accent pl-3">
+            Bill Summary
+          </h3>
+          <p className="text-muted-foreground italic">No summary available for this bill yet.</p>
+        </div>
       )}
 
       {bill.sponsorBioguideId && (
         <div className="flex items-center gap-3 p-4 bg-secondary/50 border border-border rounded-sm">
-          <div className="w-12 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
+          <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
+            <div className="rep-photo-fallback-sm !text-2xl">{sponsorInitials}</div>
             <img
               src={`https://theunitedstates.io/images/congress/225x275/${bill.sponsorBioguideId}.jpg`}
               alt={bill.sponsorName || "Sponsor"}
-              className="w-full h-full object-cover object-top"
+              className="absolute inset-0 w-full h-full object-cover object-top"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -77,7 +97,7 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-secondary/30 border border-border rounded-sm">
           <p className="text-sm text-muted-foreground mb-1">Introduced</p>
           <p className="font-medium text-primary">{formatDate(bill.introducedDate)}</p>

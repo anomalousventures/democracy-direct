@@ -35,7 +35,7 @@ export function selectBestSummary(summaries: SummaryItem[]): string | null {
 
 export function stripHtmlTags(html: string): string {
   return html
-    .replace(/<[^>]*>/g, "")
+    .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")

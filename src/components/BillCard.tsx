@@ -3,6 +3,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillWithSponsor } from "@/db/queries/bills";
 
 export interface BillCardProps {
@@ -123,7 +124,10 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="text-sm font-semibold text-accent">{displayNumber}</span>
             <StatusBadge status={bill.status as BillStatus} />
-            <span className="text-xs text-muted-foreground">{bill.congress}th Congress</span>
+            <span className="text-xs text-muted-foreground">
+              {bill.congress}
+              {getOrdinalSuffix(bill.congress)} Congress
+            </span>
           </div>
 
           <a

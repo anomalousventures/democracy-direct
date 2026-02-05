@@ -12,6 +12,10 @@ describe("stripHtmlTags", () => {
     expect(stripHtmlTags("non&nbsp;breaking")).toBe("non breaking");
   });
 
+  it("preserves space between adjacent HTML elements", () => {
+    expect(stripHtmlTags("<p>Title 2025</p><p>This bill</p>")).toBe("Title 2025 This bill");
+  });
+
   it("normalizes whitespace", () => {
     expect(stripHtmlTags("  too   many    spaces  ")).toBe("too many spaces");
     expect(stripHtmlTags("<p>line1</p>\n\n<p>line2</p>")).toBe("line1 line2");

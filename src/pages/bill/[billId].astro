@@ -13,6 +13,7 @@ import { getVoteCountForBill } from "@/db/queries/votes";
 import { getAmendmentCountForBill } from "@/db/queries/amendments";
 import { BillTabs } from "@/components/BillTabs";
 import { parseBillId, BILL_TYPE_DISPLAY_NAMES, getBillChamber } from "@/lib/bill-utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType, BillStatus } from "@/lib/types/legislation";
 import { getConfig } from "@/lib/config";
 
@@ -170,7 +171,8 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
                   )}
                 </div>
                 <p class="text-sm text-muted-foreground mb-4">
-                  {bill.congress}th Congress · {chamberLabel}
+                  {bill.congress}
+                  {getOrdinalSuffix(bill.congress)} Congress · {chamberLabel}
                 </p>
                 <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary max-w-4xl mx-auto leading-tight">
                   {bill.title}

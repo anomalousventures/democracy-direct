@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
 import type { BillStatus } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType } from "@/lib/types/legislation";
 
 export interface SponsoredBillsProps {
@@ -184,7 +185,10 @@ function BillCard({ bill }: { bill: Bill }) {
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="text-sm font-semibold text-accent">{displayNumber}</span>
             <StatusBadge status={bill.status as BillStatus} />
-            <span className="text-xs text-muted-foreground">{bill.congress}th Congress</span>
+            <span className="text-xs text-muted-foreground">
+              {bill.congress}
+              {getOrdinalSuffix(bill.congress)} Congress
+            </span>
           </div>
 
           <a
