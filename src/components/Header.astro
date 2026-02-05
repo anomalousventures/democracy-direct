@@ -1,6 +1,5 @@
 ---
 import { UserMenu } from "./UserMenu";
-import { isAdmin } from "@/lib/trust-level";
 
 interface Props {
   currentPath?: string;
@@ -12,17 +11,12 @@ interface Props {
   } | null;
 }
 
-const { currentPath = "/", user } = Astro.props;
-
-const showAdminLink = isAdmin(user);
+const { currentPath = "/" } = Astro.props;
 
 const publicNavLinks = [
   { href: "/about", label: "About" },
   { href: "/templates", label: "Templates" },
 ];
-
-const savedState = user?.savedState ?? null;
-const savedDistrict = user?.savedDistrict ?? null;
 ---
 
 <header class="border-b border-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -56,13 +50,7 @@ const savedDistrict = user?.savedDistrict ?? null;
             ))
           }
         </div>
-        <UserMenu
-          client:load
-          isLoggedIn={!!user}
-          savedState={savedState}
-          savedDistrict={savedDistrict}
-          isAdmin={showAdminLink}
-        />
+        <UserMenu client:load />
       </div>
     </nav>
   </div>

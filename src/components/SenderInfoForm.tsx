@@ -4,10 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { type Address, createEmptyAddress } from "@/types/representative";
-import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
-
-const STORAGE_KEY = "democracy-direct-sender-info";
-const SAVE_PREF_KEY = "democracy-direct-save-sender-info";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export interface SenderInfo extends Address {
   name: string;
@@ -35,26 +32,37 @@ export function SenderInfoForm({
 }: SenderInfoFormProps) {
   const [senderInfo, setSenderInfo] = useState<SenderInfo>(createEmptySenderInfo);
   const [saveEnabled, setSaveEnabled] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  useEffect(() => {
-    const savedPref = getItem(SAVE_PREF_KEY);
-    if (savedPref === "true") {
-      setSaveEnabled(true);
-      const saved = getJSON<SenderInfo>(STORAGE_KEY);
-      if (saved) {
-        setSenderInfo(saved);
-        onChangeRef.current(saved);
-      }
-    }
-  }, []);
+  const senderInfoStorage = useLocalStorage<SenderInfo>("SENDER_INFO");
+  const savePrefStorage = useLocalStorage<boolean>("SAVE_SENDER_PREF");
 
   useEffect(() => {
-    if (saveEnabled) {
-      setJSON(STORAGE_KEY, senderInfo);
-    }
-  }, [senderInfo, saveEnabled]);
+    if (!senderInfoStorage.isReady || hasLoaded) return;
+
+    const loadSavedData = async () => {
+      const savedPref = await savePrefStorage.get();
+      if (savedPref === true) {
+        setSaveEnabled(true);
+        const saved = await senderInfoStorage.get();
+        if (saved) {
+          setSenderInfo(saved);
+          onChangeRef.current(saved);
+        }
+      }
+      setHasLoaded(true);
+    };
+
+    loadSavedData();
+  }, [senderInfoStorage.isReady, hasLoaded, senderInfoStorage, savePrefStorage]);
+
+  useEffect(() => {
+    if (!hasLoaded || !saveEnabled) return;
+
+    senderInfoStorage.set(senderInfo);
+  }, [senderInfo, saveEnabled, hasLoaded, senderInfoStorage]);
 
   const handleChange = useCallback(
     (field: keyof SenderInfo) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,22 +79,22 @@ export function SenderInfoForm({
   const handleSaveToggle = useCallback(
     (checked: boolean) => {
       setSaveEnabled(checked);
-      setItem(SAVE_PREF_KEY, String(checked));
+      savePrefStorage.set(checked);
       if (!checked) {
-        removeItem(STORAGE_KEY);
+        senderInfoStorage.remove();
       } else {
-        setJSON(STORAGE_KEY, senderInfo);
+        senderInfoStorage.set(senderInfo);
       }
     },
-    [senderInfo]
+    [senderInfo, savePrefStorage, senderInfoStorage]
   );
 
   const handleClear = useCallback(() => {
     const empty = createEmptySenderInfo();
     setSenderInfo(empty);
-    removeItem(STORAGE_KEY);
+    senderInfoStorage.remove();
     onChange(empty);
-  }, [onChange]);
+  }, [onChange, senderInfoStorage]);
 
   const requiredHint = (field: "name" | "city") =>
     requiredForTemplate[field] ? <span className="text-destructive ml-0.5">*</span> : null;

@@ -10,53 +10,67 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LoginDialog } from "@/components/LoginDialog";
 import { Button } from "@/components/ui/button";
-import {
-  formatDistrictDisplay,
-  getSavedDistrict,
-  clearSavedDistrict,
-  type SavedDistrict,
-} from "@/lib/saved-district";
+import { formatDistrictDisplay, type SavedDistrict } from "@/lib/saved-district";
 import { getStateName } from "@/lib/states";
+import { useMe } from "@/hooks/useMe";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { hasLegacyData, hasAnonData, migrateAnonymousData } from "@/lib/storage-migration";
 
 const publicNavLinks = [
   { href: "/about", label: "About" },
   { href: "/templates", label: "Templates" },
 ];
 
-interface UserMenuProps {
-  isLoggedIn: boolean;
-  savedState: string | null;
-  savedDistrict: string | null;
-  isAdmin?: boolean;
-}
-
-export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: UserMenuProps) {
+export function UserMenu() {
+  const { user, isLoggedIn, isLoading, refetch, clear } = useMe();
+  const districtStorage = useLocalStorage<SavedDistrict>("DISTRICT");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [localDistrict, setLocalDistrict] = useState<SavedDistrict | null>(null);
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      setLocalDistrict(getSavedDistrict());
-    }
-  }, [isLoggedIn]);
+    if (isLoading) return;
+
+    const loadLocalDistrict = async () => {
+      if (!isLoggedIn) {
+        const saved = await districtStorage.get();
+        setLocalDistrict(saved);
+      }
+    };
+
+    loadLocalDistrict();
+  }, [isLoggedIn, isLoading, districtStorage]);
+
+  useEffect(() => {
+    if (isLoading || !isLoggedIn || !user) return;
+
+    const migrate = async () => {
+      if (hasLegacyData() || hasAnonData()) {
+        await migrateAnonymousData(user.id, user.emailHash);
+      }
+    };
+
+    migrate();
+  }, [isLoading, isLoggedIn, user]);
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      clear();
       window.location.reload();
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
       setIsLoggingOut(false);
     }
-  }, []);
+  }, [clear]);
 
   const handleLoginSuccess = useCallback(() => {
+    refetch();
     window.location.reload();
-  }, []);
+  }, [refetch]);
 
   const handleClearDistrict = useCallback(async () => {
     setIsClearing(true);
@@ -66,18 +80,17 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
         if (!response.ok) {
           throw new Error("Failed to clear district");
         }
-      } else {
-        clearSavedDistrict();
       }
+      await districtStorage.remove();
       window.location.href = "/";
     } catch (err) {
       console.error("Failed to clear district:", err);
       setIsClearing(false);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, districtStorage]);
 
-  const effectiveState = isLoggedIn ? savedState : (localDistrict?.state ?? null);
-  const effectiveDistrict = isLoggedIn ? savedDistrict : (localDistrict?.district ?? null);
+  const effectiveState = isLoggedIn ? user?.savedState : (localDistrict?.state ?? null);
+  const effectiveDistrict = isLoggedIn ? user?.savedDistrict : (localDistrict?.district ?? null);
   const hasDistrict = effectiveState && effectiveDistrict;
   const districtDisplay = hasDistrict
     ? formatDistrictDisplay(effectiveState, effectiveDistrict)
@@ -149,7 +162,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
                   My Templates
                 </a>
               </DropdownMenuItem>
-              {isAdmin && (
+              {user?.isAdmin && (
                 <DropdownMenuItem asChild>
                   <a href="/admin" className="cursor-pointer">
                     Admin
@@ -247,7 +260,7 @@ export function UserMenu({ isLoggedIn, savedState, savedDistrict, isAdmin }: Use
                 My Templates
               </a>
             </DropdownMenuItem>
-            {isAdmin && (
+            {user?.isAdmin && (
               <DropdownMenuItem asChild>
                 <a href="/admin" className="cursor-pointer">
                   Admin

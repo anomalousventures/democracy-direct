@@ -1,15 +1,15 @@
 import { useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { getSavedDistrict } from "@/lib/saved-district";
+import { useMe } from "@/hooks/useMe";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import type { SavedDistrict } from "@/lib/saved-district";
 
 interface TemplateUseButtonProps {
   href: string;
   templateSlug: string;
   templateTitle: string;
   repBioguideId?: string | null;
-  savedState?: string | null;
-  savedDistrict?: string | null;
 }
 
 export function TemplateUseButton({
@@ -17,27 +17,33 @@ export function TemplateUseButton({
   templateSlug,
   templateTitle,
   repBioguideId,
-  savedState,
-  savedDistrict,
 }: TemplateUseButtonProps) {
   const { capture } = useAnalytics();
+  const { user, isLoggedIn, isLoading } = useMe();
+  const districtStorage = useLocalStorage<SavedDistrict>("DISTRICT");
   const [resolvedHref, setResolvedHref] = useState(href);
 
   useEffect(() => {
-    if (repBioguideId) {
+    if (repBioguideId || isLoading) {
       return;
     }
-    if (savedState && savedDistrict) {
-      setResolvedHref(`/reps/${savedState}/${savedDistrict}?template=${templateSlug}`);
-      return;
-    }
-    const localDistrict = getSavedDistrict();
-    if (localDistrict) {
-      setResolvedHref(
-        `/reps/${localDistrict.state}/${localDistrict.district}?template=${templateSlug}`
-      );
-    }
-  }, [repBioguideId, templateSlug, savedState, savedDistrict]);
+
+    const resolveHref = async () => {
+      if (isLoggedIn && user?.savedState && user?.savedDistrict) {
+        setResolvedHref(`/reps/${user.savedState}/${user.savedDistrict}?template=${templateSlug}`);
+        return;
+      }
+
+      const localDistrict = await districtStorage.get();
+      if (localDistrict) {
+        setResolvedHref(
+          `/reps/${localDistrict.state}/${localDistrict.district}?template=${templateSlug}`
+        );
+      }
+    };
+
+    resolveHref();
+  }, [repBioguideId, templateSlug, isLoading, isLoggedIn, user, districtStorage]);
 
   const handleClick = useCallback(() => {
     capture("template_used", {

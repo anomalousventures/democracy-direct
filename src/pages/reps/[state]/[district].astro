@@ -18,6 +18,7 @@ import {
 } from "@/lib/legislator-utils";
 import { getConfig } from "@/lib/config";
 import { getStateName, isValidState } from "@/lib/states";
+import { SaveDistrictPrompt } from "@/components/SaveDistrictPrompt";
 
 const user = Astro.locals.user;
 
@@ -135,6 +136,10 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
                 </span>
               </div>
               <h1 class="heading-section">Your Representatives</h1>
+            </div>
+
+            <div class="mb-8">
+              <SaveDistrictPrompt state={state} district={district} client:load />
             </div>
 
             <div class="grid gap-6">
