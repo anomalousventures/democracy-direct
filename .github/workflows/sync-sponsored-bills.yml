@@ -1,0 +1,113 @@
+name: Sync Sponsored Bills
+
+on:
+  schedule:
+    # Weekly on Sunday at 10:00 UTC (when no backfill jobs run)
+    # Rate limit optimization: runs alone to avoid Congress API quota conflicts
+    - cron: "0 10 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync Sponsored Bills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync sponsored bills
+        id: sync
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:sponsored-bills 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | tail -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SYNC_RESULT: ${{ steps.sync.outputs.result }}
+          SYNC_FAILED: ${{ steps.sync.outputs.failed }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
+            exit 0
+          fi
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          CHANGED=$(echo "$SYNC_RESULT" | jq -r '.changed // false')
+          LEGISLATORS=$(echo "$SYNC_RESULT" | jq -r '.legislatorsProcessed // 0')
+          BILLS=$(echo "$SYNC_RESULT" | jq -r '.billsUpserted // 0')
+          DURATION=$(echo "$SYNC_RESULT" | jq -r '.duration // "unknown"')
+          ERROR_COUNT=$(echo "$SYNC_RESULT" | jq -r '.errors | length // 0')
+
+          if [ "$SYNC_FAILED" = "true" ]; then
+            TITLE="Sponsored Bills Sync Failed"
+            COLOR=16711680
+            STATUS="**Sync**: Failed"
+          elif [ "$CHANGED" = "true" ]; then
+            TITLE="Sponsored Bills Sync Complete"
+            COLOR=65280
+            STATUS="**Bills**: ${BILLS} upserted from ${LEGISLATORS} legislators in ${DURATION}"
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              STATUS="${STATUS}\n**Errors**: ${ERROR_COUNT} legislators had issues"
+            fi
+          else
+            TITLE="Sponsored Bills Sync - No Changes"
+            COLOR=8421504
+            STATUS="**Bills**: No new bills found (${LEGISLATORS} legislators checked)"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --argjson color "$COLOR" \
+            --arg status "$STATUS" \
+            --arg gh_run "$GH_RUN" \
+            --arg timestamp "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "Results", value: $status, inline: false },
+                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
+                ],
+                timestamp: $timestamp
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+
+      - name: Fail workflow if sync failed
+        if: steps.sync.outputs.failed == 'true'
+        run: |
+          echo "Sponsored bills sync failed - check logs above for details"
+          exit 1

@@ -538,7 +538,7 @@ export async function syncBills(direction: "forward" | "backward"): Promise<Sync
 
   const client = createCongressClient({
     apiKey: congressApiKey,
-    minDelayMs: 20,
+    minDelayMs: 200,
   });
 
   const errors: SyncBillsResult["errors"] = [];

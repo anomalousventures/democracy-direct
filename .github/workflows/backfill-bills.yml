@@ -2,9 +2,9 @@ name: Backfill Bills
 
 on:
   schedule:
-    # Hourly, 8am-10pm Pacific (UTC-8/UTC-7 depending on DST)
-    # 15:00-06:00 UTC covers both PST and PDT windows
-    - cron: "0 0-6,15-23 * * *"
+    # Every 2 hours, avoiding 6:00 UTC (when refresh-data runs)
+    # Rate limit optimization: reduces overlap with other Congress API jobs
+    - cron: "0 0,2,4,8,10,12,14,16,18,20,22 * * *"
   workflow_dispatch:
 
 permissions:
