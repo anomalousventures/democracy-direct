@@ -3,6 +3,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
+import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
 
 export interface VotingRecordProps {
   votes: VoteWithPosition[];
@@ -175,9 +176,17 @@ function VoteStatsBar({ stats, isSticky = false, isScrolled = false }: VoteStats
   );
 }
 
+function getBillLink(billNumber: string | null, congress: number): string | null {
+  if (!billNumber) return null;
+  const parsed = parseBillNumber(billNumber);
+  if (!parsed) return null;
+  return getBillPageUrl(parsed.type, String(parsed.number), congress);
+}
+
 function VoteCard({ vote }: { vote: VoteWithPosition }) {
   const chamberLabel = vote.chamber === "house" ? "House" : "Senate";
   const displayTitle = getVoteDisplayTitle(vote);
+  const billLink = getBillLink(vote.billNumber, vote.congress);
 
   return (
     <article className="group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
@@ -188,9 +197,14 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
             <span className="text-xs text-muted-foreground uppercase tracking-wide">
               {chamberLabel} Roll Call #{vote.rollCall}
             </span>
-            {vote.billNumber && (
-              <span className="text-xs font-semibold text-accent">{vote.billNumber}</span>
-            )}
+            {vote.billNumber &&
+              (billLink ? (
+                <a href={billLink} className="text-xs font-semibold text-accent hover:underline">
+                  {vote.billNumber}
+                </a>
+              ) : (
+                <span className="text-xs font-semibold text-accent">{vote.billNumber}</span>
+              ))}
           </div>
 
           {vote.sourceUrl ? (

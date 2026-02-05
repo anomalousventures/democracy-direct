@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import type { Database } from "../client";
 import { amendments, bills, legislators, type Amendment } from "../schema";
 import type { AmendmentType } from "@/lib/types/legislation";
@@ -98,4 +98,13 @@ export async function getAmendmentsByCongress(
     .orderBy(desc(amendments.latestActionDate))
     .limit(limit)
     .offset(offset);
+}
+
+export async function getAmendmentCountForBill(db: Database, billId: string): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(amendments)
+    .where(eq(amendments.amendedBillId, billId));
+
+  return Number(result[0]?.count ?? 0);
 }

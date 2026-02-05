@@ -3,7 +3,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
 import type { BillStatus } from "@/lib/types/legislation";
-import { BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
+import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
 import type { BillType } from "@/lib/types/legislation";
 
 export interface SponsoredBillsProps {
@@ -169,6 +169,7 @@ function BillStatsBar({
 function BillCard({ bill }: { bill: Bill }) {
   const [expanded, setExpanded] = useState(false);
   const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType]}${bill.billNumber}`;
+  const billPageUrl = getBillPageUrl(bill.billType as BillType, bill.billNumber, bill.congress);
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
@@ -186,19 +187,12 @@ function BillCard({ bill }: { bill: Bill }) {
             <span className="text-xs text-muted-foreground">{bill.congress}th Congress</span>
           </div>
 
-          {bill.congressGovUrl ? (
-            <a
-              href={bill.congressGovUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
-            >
-              {bill.title}
-              <Icon name="external-link" className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60" />
-            </a>
-          ) : (
-            <p className="block font-medium text-primary line-clamp-2 mb-2">{bill.title}</p>
-          )}
+          <a
+            href={billPageUrl}
+            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
+          >
+            {bill.title}
+          </a>
 
           {hasSummary && (
             <div className="mt-2">
@@ -231,6 +225,20 @@ function BillCard({ bill }: { bill: Bill }) {
               </span>
             )}
           </div>
+
+          {bill.congressGovUrl && (
+            <div className="mt-3">
+              <a
+                href={bill.congressGovUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Congress.gov
+                <Icon name="external-link" className="w-3 h-3 opacity-60" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </article>

@@ -6,6 +6,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { getPreviewLines } from "@/lib/markdown";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Template {
   id: string;
@@ -29,17 +30,6 @@ interface SearchResponse {
 
 interface TemplateSearchProps {
   repBioguideId?: string | null;
-}
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
 }
 
 function TemplateCardSkeleton() {

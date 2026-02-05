@@ -1,0 +1,206 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import { createDb } from "@/db/client";
+import { getBillByNumber, type BillWithSponsor } from "@/db/queries/bills";
+import { getVoteCountForBill } from "@/db/queries/votes";
+import { getAmendmentCountForBill } from "@/db/queries/amendments";
+import { BillTabs } from "@/components/BillTabs";
+import { parseBillId, BILL_TYPE_DISPLAY_NAMES, getBillChamber } from "@/lib/bill-utils";
+import type { BillType, BillStatus } from "@/lib/types/legislation";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+
+const { billId } = Astro.params;
+
+let bill: BillWithSponsor | null = null;
+let voteCount = 0;
+let amendmentCount = 0;
+let error: string | null = null;
+
+if (!billId) {
+  error = "Bill ID is required.";
+} else {
+  const parsed = parseBillId(billId);
+  if (!parsed || parsed.congress === undefined) {
+    error = "Invalid bill ID format.";
+  } else {
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
+
+    try {
+      bill = await getBillByNumber(db, parsed.congress, parsed.type, String(parsed.number));
+
+      if (!bill) {
+        Astro.response.status = 404;
+        error = "Bill not found.";
+      } else {
+        [voteCount, amendmentCount] = await Promise.all([
+          getVoteCountForBill(db, bill.id),
+          getAmendmentCountForBill(db, bill.id),
+        ]);
+      }
+    } catch (e) {
+      console.error("Database error:", e);
+      error = "Failed to load bill details.";
+    }
+  }
+}
+
+type StatusStyle = {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+};
+
+const STATUS_STYLES: Record<BillStatus, StatusStyle> = {
+  introduced: {
+    label: "Introduced",
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    border: "border-gray-200",
+  },
+  passed_house: {
+    label: "Passed House",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-200",
+  },
+  passed_senate: {
+    label: "Passed Senate",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-200",
+  },
+  resolving_differences: {
+    label: "In Conference",
+    bg: "bg-amber-100",
+    text: "text-amber-800",
+    border: "border-amber-200",
+  },
+  to_president: {
+    label: "To President",
+    bg: "bg-purple-100",
+    text: "text-purple-800",
+    border: "border-purple-200",
+  },
+  signed: {
+    label: "Signed",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+  vetoed: {
+    label: "Vetoed",
+    bg: "bg-red-100",
+    text: "text-red-800",
+    border: "border-red-200",
+  },
+  veto_overridden: {
+    label: "Veto Overridden",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+  became_law: {
+    label: "Became Law",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+};
+
+const displayNumber = bill
+  ? `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType]}${bill.billNumber}`
+  : "";
+const statusStyle = bill ? STATUS_STYLES[bill.status as BillStatus] : null;
+const chamber = bill ? getBillChamber(bill.billType as BillType) : "house";
+const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
+---
+
+<Layout
+  title={bill ? `${displayNumber} - ${bill.title}` : "Bill Not Found"}
+  description={bill
+    ? `${displayNumber}: ${bill.title}. View summary, voting record, and amendments.`
+    : "Bill not found"}
+>
+  <Header currentPath={`/bill/${billId}`} user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
+                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
+              </div>
+              <h1 class="heading-card-lg">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The bill you're looking for couldn't be found.
+              </p>
+              <AstroButton href="/bills" variant="civic">
+                Search Bills
+              </AstroButton>
+            </AstroCard>
+          </div>
+        ) : (
+          bill && (
+            <div class="container-wide">
+              {/* Hero Section */}
+              <div class="text-center mb-8 animate-fade-up">
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
+                  <span class="inline-flex items-center px-4 py-2 text-lg font-bold bg-primary text-primary-foreground rounded-sm">
+                    {displayNumber}
+                  </span>
+                  {statusStyle && (
+                    <span
+                      class={`inline-flex items-center px-3 py-1.5 text-sm font-semibold border rounded-sm ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}
+                    >
+                      {statusStyle.label}
+                    </span>
+                  )}
+                </div>
+                <p class="text-sm text-muted-foreground mb-4">
+                  {bill.congress}th Congress · {chamberLabel}
+                </p>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary max-w-4xl mx-auto leading-tight">
+                  {bill.title}
+                </h1>
+              </div>
+
+              {/* Main Content Card */}
+              <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
+                <BillTabs
+                  client:load
+                  billId={billId!}
+                  bill={bill}
+                  voteCount={voteCount}
+                  amendmentCount={amendmentCount}
+                />
+              </AstroCard>
+
+              {/* Back Link */}
+              <div class="text-center mt-12">
+                <a href="/bills" class="link-back">
+                  <Icon name="chevron-left" class="w-4 h-4" />
+                  <span>Back to Bills</span>
+                </a>
+              </div>
+            </div>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath={`/bill/${billId}`} />
+</Layout>

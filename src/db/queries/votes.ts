@@ -378,3 +378,13 @@ export async function getVotesForBill(
 
   return results;
 }
+
+export async function getVoteCountForBill(db: Database, billId: string): Promise<number> {
+  const result = await db.select({ count: count() }).from(votes).where(eq(votes.billId, billId));
+
+  return Number(result[0]?.count ?? 0);
+}
+
+export async function getVotesByBillId(db: Database, billId: string): Promise<Vote[]> {
+  return db.select().from(votes).where(eq(votes.billId, billId)).orderBy(desc(votes.date));
+}

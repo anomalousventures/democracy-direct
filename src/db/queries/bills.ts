@@ -2,6 +2,7 @@ import { eq, and, desc, ilike, or, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
 import { bills, legislators, type Bill } from "../schema";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
+export type { BillType };
 
 export interface BillWithSponsor extends Bill {
   sponsorName: string | null;
@@ -216,4 +217,42 @@ export async function getDistinctSubjects(db: Database, congress?: number): Prom
   `);
 
   return (result.rows as Array<{ subject: string }>).map((row) => row.subject);
+}
+
+export interface BillCountOptions {
+  congress?: number;
+  status?: BillStatus;
+  subject?: string;
+  billType?: BillType;
+  query?: string;
+}
+
+export async function getBillCount(db: Database, options: BillCountOptions = {}): Promise<number> {
+  const { congress, status, subject, billType, query } = options;
+
+  const conditions: SQL[] = [];
+
+  if (congress) {
+    conditions.push(eq(bills.congress, congress));
+  }
+  if (status) {
+    conditions.push(eq(bills.status, status));
+  }
+  if (billType) {
+    conditions.push(eq(bills.billType, billType));
+  }
+  if (subject) {
+    conditions.push(sql`${bills.subjects}::jsonb @> ${JSON.stringify([subject])}::jsonb`);
+  }
+  if (query) {
+    const searchPattern = `%${query}%`;
+    conditions.push(or(ilike(bills.billNumber, searchPattern), ilike(bills.title, searchPattern))!);
+  }
+
+  const result = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bills)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return result[0]?.count ?? 0;
 }

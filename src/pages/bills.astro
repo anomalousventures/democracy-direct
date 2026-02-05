@@ -1,0 +1,44 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Icon from "@/components/icons/Icon.astro";
+import { BillSearch } from "@/components/BillSearch";
+
+const user = Astro.locals.user;
+---
+
+<Layout
+  title="Search Bills"
+  description="Search and browse bills before Congress. View summaries, voting records, and amendments for House and Senate legislation."
+>
+  <Header currentPath="/bills" user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      <div class="container-wide">
+        <div class="text-center mb-12">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 bg-secondary border border-border rounded-sm text-sm text-muted-foreground mb-6"
+          >
+            <Icon name="file-text" class="w-4 h-4" />
+            <span>Legislation</span>
+          </div>
+          <h1 class="heading-section">Search Bills</h1>
+          <p class="text-body max-w-2xl mx-auto">
+            Browse bills before Congress. View summaries, voting records, and amendments for House
+            and Senate legislation.
+          </p>
+        </div>
+
+        <div data-testid="bill-search">
+          <BillSearch client:load />
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer currentPath="/bills" />
+</Layout>
