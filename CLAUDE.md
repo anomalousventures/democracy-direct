@@ -39,6 +39,9 @@ Server-rendered Astro pages with React components hydrated via `client:load`. AP
 - Uses Neon serverless Postgres via HTTP driver (`@neondatabase/serverless`)
 - Schema in `src/db/schema.ts`, queries in `src/db/queries/`
 - **No global caching** - create fresh connection per request: `createDb(import.meta.env.DATABASE_URL)`
+- **Neon project**: `floral-term-50641531`
+  - **Dev branch**: `br-winter-recipe-afwrwb8w` — always specify this branchId when using Neon MCP tools for dev work (the default branch is prod)
+  - **Prod branch**: `br-old-waterfall-afvo9cny` (default) — do not modify without explicit confirmation
 - **Migrations (never create migration files manually)**:
   - Schema changes: Update `src/db/schema.ts`, then `pnpm db:generate`
   - Custom/data migrations: `pnpm drizzle-kit generate --custom --name=<name>`, then edit the generated SQL file

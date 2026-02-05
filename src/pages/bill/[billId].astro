@@ -156,6 +156,13 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
         ) : (
           bill && (
             <div class="container-wide">
+              <div class="mb-6">
+                <a href="/bills" class="link-back">
+                  <Icon name="chevron-left" class="w-4 h-4" />
+                  <span>Back to Bills</span>
+                </a>
+              </div>
+
               {/* Hero Section */}
               <div class="text-center mb-8 animate-fade-up">
                 <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
@@ -189,14 +196,6 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
                   amendmentCount={amendmentCount}
                 />
               </AstroCard>
-
-              {/* Back Link */}
-              <div class="text-center mt-12">
-                <a href="/bills" class="link-back">
-                  <Icon name="chevron-left" class="w-4 h-4" />
-                  <span>Back to Bills</span>
-                </a>
-              </div>
             </div>
           )
         )

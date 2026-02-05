@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { getPhotoUrl } from "@/lib/legislator-utils";
 import type { BillWithSponsor } from "@/db/queries/bills";
 
 interface BillSummaryProps {
@@ -14,6 +15,7 @@ function formatDate(date: Date | string): string {
     month: "long",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -72,7 +74,7 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
           <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
             <div className="rep-photo-fallback-sm !text-2xl">{sponsorInitials}</div>
             <img
-              src={`https://theunitedstates.io/images/congress/225x275/${bill.sponsorBioguideId}.jpg`}
+              src={getPhotoUrl(bill.sponsorBioguideId)}
               alt={bill.sponsorName || "Sponsor"}
               className="absolute inset-0 w-full h-full object-cover object-top"
               onError={(e) => {
