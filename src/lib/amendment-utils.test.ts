@@ -4,6 +4,8 @@ import {
   parseAmendmentFromUrl,
   detectAmendmentFromVote,
   buildAmendmentCongressGovUrl,
+  getAmendmentPageUrl,
+  parseAmendmentId,
 } from "./amendment-utils";
 
 describe("parseAmendmentNumber", () => {
@@ -136,5 +138,53 @@ describe("buildAmendmentCongressGovUrl", () => {
   it("builds Senate amendment URL", () => {
     const url = buildAmendmentCongressGovUrl(118, "samdt", 456);
     expect(url).toBe("https://www.congress.gov/amendment/118th-congress/senate-amendment/456");
+  });
+});
+
+describe("getAmendmentPageUrl", () => {
+  it("builds House amendment page URL", () => {
+    const url = getAmendmentPageUrl("hamdt", "123", 119);
+    expect(url).toBe("/legislation/amendment/hamdt123-119");
+  });
+
+  it("builds Senate amendment page URL", () => {
+    const url = getAmendmentPageUrl("samdt", "456", 118);
+    expect(url).toBe("/legislation/amendment/samdt456-118");
+  });
+});
+
+describe("parseAmendmentId", () => {
+  it("parses House amendment ID", () => {
+    const result = parseAmendmentId("hamdt123-119");
+    expect(result).toEqual({ type: "hamdt", number: "123", congress: 119 });
+  });
+
+  it("parses Senate amendment ID", () => {
+    const result = parseAmendmentId("samdt456-118");
+    expect(result).toEqual({ type: "samdt", number: "456", congress: 118 });
+  });
+
+  it("handles case insensitivity", () => {
+    const result = parseAmendmentId("HAMDT789-119");
+    expect(result).toEqual({ type: "hamdt", number: "789", congress: 119 });
+  });
+
+  it("returns null for invalid format", () => {
+    expect(parseAmendmentId("invalid")).toBeNull();
+    expect(parseAmendmentId("hr1234-119")).toBeNull();
+    expect(parseAmendmentId("hamdt-119")).toBeNull();
+    expect(parseAmendmentId("hamdt123")).toBeNull();
+  });
+
+  it("returns null for invalid congress number", () => {
+    expect(parseAmendmentId("hamdt123-0")).toBeNull();
+    expect(parseAmendmentId("hamdt123-abc")).toBeNull();
+  });
+
+  it("round-trips with getAmendmentPageUrl", () => {
+    const url = getAmendmentPageUrl("samdt", "4272", 119);
+    const id = url.split("/").pop()!;
+    const parsed = parseAmendmentId(id);
+    expect(parsed).toEqual({ type: "samdt", number: "4272", congress: 119 });
   });
 });

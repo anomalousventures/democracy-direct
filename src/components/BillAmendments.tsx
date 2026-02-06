@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import { getAmendmentPageUrl } from "@/lib/amendment-utils";
 import type { AmendmentWithRelations } from "@/db/queries/amendments";
-import type { BillAmendmentsResponse } from "@/pages/api/bill/[billId]/amendments";
+import type { AmendmentType } from "@/lib/types/legislation";
+import type { BillAmendmentsResponse } from "@/pages/api/legislation/[billId]/amendments";
 
 interface BillAmendmentsProps {
   billId: string;
@@ -25,6 +27,11 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
   const [expanded, setExpanded] = useState(false);
 
   const displayNumber = `${amendment.amendmentType.toUpperCase()}.Amdt.${amendment.amendmentNumber}`;
+  const detailUrl = getAmendmentPageUrl(
+    amendment.amendmentType as AmendmentType,
+    amendment.amendmentNumber,
+    amendment.congress
+  );
   const hasDescription = amendment.description && amendment.description.length > 0;
   const hasPurpose = amendment.purpose && amendment.purpose.length > 0;
 
@@ -41,7 +48,9 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-accent">{displayNumber}</span>
+            <a href={detailUrl} className="text-sm font-semibold text-accent hover:underline">
+              {displayNumber}
+            </a>
             <span className="text-xs text-muted-foreground">
               {amendment.congress}
               {getOrdinalSuffix(amendment.congress)} Congress
@@ -100,8 +109,15 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
             )}
           </div>
 
-          {amendment.congressGovUrl && (
-            <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <a
+              href={detailUrl}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-accent transition-colors"
+            >
+              View details
+              <Icon name="chevron-right" className="w-3.5 h-3.5" />
+            </a>
+            {amendment.congressGovUrl && (
               <a
                 href={amendment.congressGovUrl}
                 target="_blank"
@@ -111,8 +127,8 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
                 View on Congress.gov
                 <Icon name="external-link" className="w-3.5 h-3.5" />
               </a>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </article>
@@ -162,7 +178,7 @@ export function BillAmendments({ billId, className }: BillAmendmentsProps) {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/bill/${billId}/amendments`);
+        const response = await fetch(`/api/legislation/${billId}/amendments`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch amendments");

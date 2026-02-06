@@ -12,16 +12,16 @@ const user = Astro.locals.user;
 ---
 
 <Layout
-  title="Search Bills"
+  title="Search Legislation"
   description="Search and browse bills before Congress. View summaries, voting records, and amendments for House and Senate legislation."
 >
-  <Header currentPath="/bills" user={user} />
+  <Header currentPath="/legislation" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
     <PageSection width="wide">
       <PageHeader
-        title="Search Bills"
-        gradientWord="Bills"
+        title="Search Legislation"
+        gradientWord="Legislation"
         description="Browse bills before Congress. View summaries, voting records, and amendments for House and Senate legislation."
       />
 
@@ -31,5 +31,5 @@ const user = Astro.locals.user;
     </PageSection>
   </main>
 
-  <Footer currentPath="/bills" />
+  <Footer currentPath="/legislation" />
 </Layout>

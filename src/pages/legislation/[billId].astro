@@ -12,6 +12,7 @@ import { getBillByNumber, type BillWithSponsor } from "@/db/queries/bills";
 import { getVoteCountForBill } from "@/db/queries/votes";
 import { getAmendmentCountForBill } from "@/db/queries/amendments";
 import { BillTabs } from "@/components/BillTabs";
+import BillTemplateCtas from "@/components/BillTemplateCtas.astro";
 import { parseBillId, BILL_TYPE_DISPLAY_NAMES, getBillChamber } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType, BillStatus } from "@/lib/types/legislation";
@@ -133,7 +134,7 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
     ? `${displayNumber}: ${bill.title}. View summary, voting record, and amendments.`
     : "Bill not found"}
 >
-  <Header currentPath={`/bill/${billId}`} user={user} />
+  <Header currentPath={`/legislation/${billId}`} user={user} />
 
   <main id="main-content" class="flex-1 py-12">
     <div class="container-page">
@@ -148,8 +149,8 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
               <p class="text-muted-foreground mb-8">
                 The bill you're looking for couldn't be found.
               </p>
-              <AstroButton href="/bills" variant="civic">
-                Search Bills
+              <AstroButton href="/legislation" variant="civic">
+                Search Legislation
               </AstroButton>
             </AstroCard>
           </div>
@@ -157,9 +158,9 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
           bill && (
             <div class="container-wide">
               <div class="mb-6">
-                <a href="/bills" class="link-back">
+                <a href="/legislation" class="link-back">
                   <Icon name="chevron-left" class="w-4 h-4" />
-                  <span>Back to Bills</span>
+                  <span>Back to Legislation</span>
                 </a>
               </div>
 
@@ -196,6 +197,10 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
                   amendmentCount={amendmentCount}
                 />
               </AstroCard>
+
+              <div class="mt-6 animate-fade-up-delay-1">
+                <BillTemplateCtas billNumber={displayNumber} />
+              </div>
             </div>
           )
         )
@@ -203,5 +208,5 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
     </div>
   </main>
 
-  <Footer currentPath={`/bill/${billId}`} />
+  <Footer currentPath={`/legislation/${billId}`} />
 </Layout>

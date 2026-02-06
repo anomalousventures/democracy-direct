@@ -1,0 +1,24 @@
+---
+import AstroButton from "@/components/ui/AstroButton.astro";
+import Icon from "@/components/icons/Icon.astro";
+
+interface Props {
+  billNumber: string;
+}
+
+const { billNumber } = Astro.props;
+const searchUrl = `/templates?q=${encodeURIComponent(billNumber)}`;
+const createUrl = `/templates/new?bill=${encodeURIComponent(billNumber)}`;
+---
+
+<div class="flex flex-wrap items-center gap-3 p-4 bg-secondary/50 border border-border rounded-sm">
+  <p class="text-sm font-medium text-primary mr-auto">Take action on {billNumber}</p>
+  <AstroButton href={searchUrl} variant="outline" size="sm">
+    <Icon name="search" class="w-4 h-4 mr-1.5" />
+    Browse templates
+  </AstroButton>
+  <AstroButton href={createUrl} variant="civic" size="sm">
+    <Icon name="file-text" class="w-4 h-4 mr-1.5" />
+    Write a template
+  </AstroButton>
+</div>

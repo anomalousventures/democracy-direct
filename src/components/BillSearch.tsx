@@ -7,6 +7,7 @@ import { BillCard } from "./BillCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
+import { isValidBillType } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 
 interface SearchResponse {
@@ -35,6 +36,55 @@ const BILL_STATUSES: { value: BillStatus; label: string }[] = [
   { value: "passed_senate", label: "Passed Senate" },
   { value: "became_law", label: "Became Law" },
 ];
+
+const VALID_STATUSES = new Set<string>(BILL_STATUSES.map((s) => s.value));
+
+interface SearchState {
+  q: string;
+  congress: number | null;
+  types: BillType[];
+  statuses: BillStatus[];
+  subjects: string[];
+}
+
+export function parseSearchParams(search: string): SearchState {
+  const params = new URLSearchParams(search);
+
+  const q = params.get("q")?.trim() ?? "";
+
+  const congressStr = params.get("congress");
+  let congress: number | null = null;
+  if (congressStr) {
+    const parsed = parseInt(congressStr, 10);
+    if (!isNaN(parsed) && parsed > 0) congress = parsed;
+  }
+
+  const typeStr = params.get("type") ?? "";
+  const types = typeStr.split(",").filter((t) => t && isValidBillType(t)) as BillType[];
+
+  const statusStr = params.get("status") ?? "";
+  const statuses = statusStr.split(",").filter((s) => s && VALID_STATUSES.has(s)) as BillStatus[];
+
+  const subjectStr = params.get("subject") ?? "";
+  const subjects = subjectStr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return { q, congress, types, statuses, subjects };
+}
+
+export function serializeSearchParams(state: SearchState): string {
+  const params = new URLSearchParams();
+
+  if (state.q.trim()) params.set("q", state.q.trim());
+  if (state.congress !== null) params.set("congress", String(state.congress));
+  if (state.types.length > 0) params.set("type", state.types.join(","));
+  if (state.statuses.length > 0) params.set("status", state.statuses.join(","));
+  if (state.subjects.length > 0) params.set("subject", state.subjects.join(","));
+
+  return params.toString();
+}
 
 function BillCardSkeleton() {
   return (
@@ -82,13 +132,32 @@ function LoadingSpinner({ className }: { className?: string }) {
 }
 
 export function BillSearch() {
+  const initial = useRef(() => {
+    if (typeof window === "undefined") {
+      return {
+        q: "",
+        congress: 119 as number | null,
+        types: [] as BillType[],
+        statuses: [] as BillStatus[],
+        subjects: [] as string[],
+      };
+    }
+    const parsed = parseSearchParams(window.location.search);
+    return {
+      ...parsed,
+      congress: parsed.congress ?? 119,
+    };
+  }).current;
+
+  const initialState = useRef(initial()).current;
+
   const [bills, setBills] = useState<BillWithSponsor[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [congress, setCongress] = useState<number | null>(119);
-  const [selectedTypes, setSelectedTypes] = useState<BillType[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<BillStatus[]>([]);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState(initialState.q);
+  const [congress, setCongress] = useState<number | null>(initialState.congress);
+  const [selectedTypes, setSelectedTypes] = useState<BillType[]>(initialState.types);
+  const [selectedStatuses, setSelectedStatuses] = useState<BillStatus[]>(initialState.statuses);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialState.subjects);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -98,6 +167,20 @@ export function BillSearch() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
   const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    const serialized = serializeSearchParams({
+      q: debouncedSearch,
+      congress,
+      types: selectedTypes,
+      statuses: selectedStatuses,
+      subjects: selectedSubjects,
+    });
+    const newUrl = serialized ? `/legislation?${serialized}` : "/legislation";
+    if (window.location.pathname + window.location.search !== newUrl) {
+      history.replaceState(null, "", newUrl);
+    }
+  }, [debouncedSearch, congress, selectedTypes, selectedStatuses, selectedSubjects]);
 
   const fetchBills = useCallback(
     async (newOffset = 0, append = false) => {
@@ -133,7 +216,7 @@ export function BillSearch() {
       }
 
       try {
-        const response = await fetch(`/api/bills/search?${params.toString()}`);
+        const response = await fetch(`/api/legislation/search?${params.toString()}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch bills");
@@ -230,7 +313,6 @@ export function BillSearch() {
 
   return (
     <div className="space-y-4">
-      {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
           <SearchIcon className="h-5 w-5 text-muted-foreground" />
@@ -252,7 +334,6 @@ export function BillSearch() {
         )}
       </div>
 
-      {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-2">
         {[119, 118, 117].map((c) => (
           <Toggle
@@ -303,7 +384,6 @@ export function BillSearch() {
         </div>
       </div>
 
-      {/* Topic Filter */}
       {availableSubjects.length > 0 && (
         <div className="flex flex-wrap gap-2" data-testid="subject-filter">
           {availableSubjects.slice(0, 12).map((subject) => (
@@ -321,7 +401,6 @@ export function BillSearch() {
         </div>
       )}
 
-      {/* Active Filters Bar */}
       {hasActiveFilters && (
         <div className="flex items-center justify-between py-3 px-4 bg-secondary/50 border border-border rounded-sm">
           <p className="text-sm text-muted-foreground">
@@ -346,7 +425,6 @@ export function BillSearch() {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div
           className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm"
@@ -363,7 +441,6 @@ export function BillSearch() {
         </div>
       )}
 
-      {/* Results */}
       <div data-testid="bill-search-results" className="space-y-4">
         {isLoading && !bills.length ? (
           <>

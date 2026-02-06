@@ -18,7 +18,7 @@ import { hasLegacyData, hasAnonData, migrateAnonymousData } from "@/lib/storage-
 
 const publicNavLinks = [
   { href: "/about", label: "About" },
-  { href: "/bills", label: "Bills" },
+  { href: "/legislation", label: "Legislation" },
   { href: "/templates", label: "Templates" },
 ];
 

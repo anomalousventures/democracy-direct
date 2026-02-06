@@ -72,6 +72,29 @@ export function detectAmendmentFromVote(
   return null;
 }
 
+export function getAmendmentPageUrl(
+  amendmentType: AmendmentType,
+  amendmentNumber: string,
+  congress: number
+): string {
+  return `/legislation/amendment/${amendmentType}${amendmentNumber}-${congress}`;
+}
+
+export function parseAmendmentId(
+  id: string
+): { type: AmendmentType; number: string; congress: number } | null {
+  const match = id.match(/^(hamdt|samdt)(\d+)-(\d+)$/i);
+  if (!match) return null;
+
+  const type = match[1].toLowerCase() as AmendmentType;
+  const number = match[2];
+  const congress = parseInt(match[3], 10);
+
+  if (isNaN(congress) || congress < 1) return null;
+
+  return { type, number, congress };
+}
+
 export function buildAmendmentCongressGovUrl(
   congress: number,
   amendmentType: AmendmentType,

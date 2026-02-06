@@ -115,6 +115,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
 
   return (
     <article
+      data-testid="bill-card"
       className={cn(
         "group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200",
         className

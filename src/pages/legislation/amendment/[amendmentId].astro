@@ -1,0 +1,263 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import PageSection from "@/components/PageSection.astro";
+import { createDb } from "@/db/client";
+import { getAmendmentByNumber, type AmendmentWithRelations } from "@/db/queries/amendments";
+import { getVotesByAmendmentId, getMemberVotesForVote } from "@/db/queries/votes";
+import { parseAmendmentId, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
+import { getBillPageUrl, parseBillNumber } from "@/lib/bill-utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import { VoteDetail } from "@/components/VoteDetail";
+import type { Chamber, VotePosition } from "@/lib/types/legislation";
+import type { Vote } from "@/db/schema";
+import type { VoteMember } from "@/lib/types/vote";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+const { amendmentId } = Astro.params;
+
+let amendment: AmendmentWithRelations | null = null;
+let amendmentVotes: Array<{ vote: Vote; members: VoteMember[] }> = [];
+let parentBillLink: { url: string; label: string } | null = null;
+let error: string | null = null;
+
+if (!amendmentId) {
+  error = "Amendment ID is required.";
+} else {
+  const parsed = parseAmendmentId(amendmentId);
+  if (!parsed) {
+    Astro.response.status = 404;
+    error = "Invalid amendment ID format.";
+  } else {
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
+
+    try {
+      amendment = await getAmendmentByNumber(db, parsed.congress, parsed.type, parsed.number);
+
+      if (!amendment) {
+        Astro.response.status = 404;
+        error = "Amendment not found.";
+      } else {
+        const votes = await getVotesByAmendmentId(db, amendment.id);
+        for (const vote of votes) {
+          const rawMembers = await getMemberVotesForVote(db, vote.id);
+          amendmentVotes.push({
+            vote,
+            members: rawMembers.map((mv) => ({
+              bioguideId: mv.bioguideId,
+              name: mv.fullName,
+              party: mv.party,
+              state: mv.state,
+              position: mv.position as VotePosition,
+            })),
+          });
+        }
+
+        if (amendment.amendedBillNumber && amendment.amendedBillTitle) {
+          const parsedBill = parseBillNumber(amendment.amendedBillNumber);
+          if (parsedBill) {
+            parentBillLink = {
+              url: getBillPageUrl(parsedBill.type, String(parsedBill.number), amendment.congress),
+              label: amendment.amendedBillNumber,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Database error:", e);
+      error = "Failed to load amendment details.";
+    }
+  }
+}
+
+const displayNumber = amendment
+  ? `${amendment.amendmentType.toUpperCase()}.Amdt.${amendment.amendmentNumber}`
+  : "";
+const chamberLabel = amendment?.chamber === "house" ? "House" : "Senate";
+const congressGovUrl = amendment
+  ? (amendment.congressGovUrl ??
+    buildAmendmentCongressGovUrl(
+      amendment.congress,
+      amendment.amendmentType as "hamdt" | "samdt",
+      parseInt(amendment.amendmentNumber, 10)
+    ))
+  : null;
+---
+
+<Layout
+  title={amendment ? `${displayNumber} — ${chamberLabel} Amendment` : "Amendment Not Found"}
+  description={amendment
+    ? `${displayNumber}: ${amendment.description || amendment.purpose || chamberLabel + " amendment"}. View details and vote breakdown.`
+    : "Amendment not found"}
+>
+  <Header currentPath="/legislation" user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
+                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
+              </div>
+              <h1 class="heading-card-lg">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The amendment you're looking for couldn't be found.
+              </p>
+              <AstroButton href="/legislation" variant="civic">
+                Search Legislation
+              </AstroButton>
+            </AstroCard>
+          </div>
+        ) : (
+          amendment && (
+            <PageSection width="wide">
+              <div class="mb-6">
+                {parentBillLink ? (
+                  <a href={parentBillLink.url} class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to {parentBillLink.label}</span>
+                  </a>
+                ) : (
+                  <a href="/legislation" class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to Legislation</span>
+                  </a>
+                )}
+              </div>
+
+              {/* Hero Section */}
+              <div class="text-center mb-8 animate-fade-up">
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
+                  <span class="inline-flex items-center px-4 py-2 text-lg font-bold bg-primary text-primary-foreground rounded-sm">
+                    {displayNumber}
+                  </span>
+                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border rounded-sm bg-gray-100 text-gray-700 border-gray-200 capitalize">
+                    {chamberLabel}
+                  </span>
+                </div>
+                <p class="text-sm text-muted-foreground mb-4">
+                  {amendment.congress}
+                  {getOrdinalSuffix(amendment.congress)} Congress
+                  {parentBillLink && (
+                    <>
+                      {" "}
+                      &middot;{" "}
+                      <a href={parentBillLink.url} class="text-accent hover:underline">
+                        {parentBillLink.label}: {amendment.amendedBillTitle}
+                      </a>
+                    </>
+                  )}
+                </p>
+
+                {(amendment.description || amendment.purpose) && (
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-primary max-w-4xl mx-auto leading-tight">
+                    {amendment.description || amendment.purpose}
+                  </h1>
+                )}
+              </div>
+
+              {/* Details Card */}
+              <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
+                <div class="space-y-6">
+                  {/* Sponsor */}
+                  {amendment.sponsorBioguideId && (
+                    <div class="flex items-center gap-3">
+                      <span class="text-sm text-muted-foreground">Sponsored by</span>
+                      <a
+                        href={`/rep/${amendment.sponsorBioguideId}`}
+                        class="text-sm font-medium text-primary hover:text-accent transition-colors"
+                      >
+                        {amendment.sponsorName}
+                        {amendment.sponsorParty && amendment.sponsorState && (
+                          <span class="text-muted-foreground ml-1">
+                            ({amendment.sponsorParty}-{amendment.sponsorState})
+                          </span>
+                        )}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Latest Action */}
+                  {amendment.latestActionText && (
+                    <div class="p-4 bg-secondary/50 border border-border rounded-sm">
+                      <p class="text-xs text-muted-foreground mb-1">Latest Action</p>
+                      <p class="text-sm text-primary">{amendment.latestActionText}</p>
+                      {amendment.latestActionDate && (
+                        <p class="text-xs text-muted-foreground mt-1">
+                          {new Date(amendment.latestActionDate).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Votes Section */}
+                  {amendmentVotes.length > 0 && (
+                    <div class="space-y-6">
+                      <h2 class="text-lg font-semibold text-primary">Roll Call Votes</h2>
+                      {amendmentVotes.map(({ vote, members }) => (
+                        <VoteDetail
+                          client:load
+                          vote={{
+                            id: vote.id,
+                            rollCall: vote.rollCall,
+                            chamber: vote.chamber as Chamber,
+                            congress: vote.congress,
+                            session: vote.session,
+                            date: vote.date.toISOString(),
+                            question: vote.question,
+                            result: vote.result,
+                            yeas: vote.yeas,
+                            nays: vote.nays,
+                            notVoting: vote.notVoting,
+                            present: vote.present,
+                            sourceUrl: vote.sourceUrl,
+                            billNumber: vote.billNumber,
+                            billTitle: vote.billTitle,
+                          }}
+                          members={members}
+                          billLink={null}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* External Link */}
+                  {congressGovUrl && (
+                    <div class="pt-4 border-t border-border">
+                      <a
+                        href={congressGovUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 text-sm text-primary hover:text-accent transition-colors"
+                      >
+                        View on Congress.gov
+                        <Icon name="external-link" class="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </AstroCard>
+            </PageSection>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath="/legislation" />
+</Layout>

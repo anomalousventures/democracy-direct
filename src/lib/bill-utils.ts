@@ -162,8 +162,8 @@ export function buildCongressGovUrl(
 
 /**
  * Builds an internal bill detail page URL.
- * @example getBillPageUrl("hr", "1234", 119) => "/bill/hr1234-119"
+ * @example getBillPageUrl("hr", "1234", 119) => "/legislation/hr1234-119"
  */
 export function getBillPageUrl(billType: BillType, billNumber: string, congress: number): string {
-  return `/bill/${billType}${billNumber}-${congress}`;
+  return `/legislation/${billType}${billNumber}-${congress}`;
 }

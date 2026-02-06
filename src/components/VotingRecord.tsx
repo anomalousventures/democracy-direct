@@ -1,9 +1,10 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import type { VotePosition, Chamber } from "@/lib/types/legislation";
+import type { Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
+import { PositionBadge } from "@/components/vote/PositionBadge";
 
 export interface VotingRecordProps {
   votes: VoteWithPosition[];
@@ -12,40 +13,6 @@ export interface VotingRecordProps {
   chamber?: Chamber;
   className?: string;
 }
-
-type PositionStyle = {
-  label: string;
-  bg: string;
-  text: string;
-  border: string;
-};
-
-const POSITION_STYLES: Record<VotePosition, PositionStyle> = {
-  yea: {
-    label: "Yea",
-    bg: "bg-green-100",
-    text: "text-green-800",
-    border: "border-green-200",
-  },
-  nay: {
-    label: "Nay",
-    bg: "bg-red-100",
-    text: "text-red-800",
-    border: "border-red-200",
-  },
-  not_voting: {
-    label: "Not Voting",
-    bg: "bg-gray-100",
-    text: "text-gray-700",
-    border: "border-gray-200",
-  },
-  present: {
-    label: "Present",
-    bg: "bg-amber-100",
-    text: "text-amber-800",
-    border: "border-amber-200",
-  },
-};
 
 function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -65,22 +32,6 @@ function getVoteDisplayTitle(vote: VoteWithPosition): string {
     return `${vote.billNumber}: ${vote.question}`;
   }
   return vote.question;
-}
-
-function PositionBadge({ position }: { position: VotePosition }) {
-  const style = POSITION_STYLES[position];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-2.5 py-1 text-xs font-semibold border rounded-sm",
-        style.bg,
-        style.text,
-        style.border
-      )}
-    >
-      {style.label}
-    </span>
-  );
 }
 
 interface VoteStatsBarProps {
@@ -184,20 +135,28 @@ function getBillLink(billNumber: string | null, congress: number): string | null
   return getBillPageUrl(parsed.type, String(parsed.number), congress);
 }
 
+function getVoteDetailUrl(vote: VoteWithPosition): string {
+  return `/vote/${vote.chamber}/${vote.congress}/${vote.session}/${vote.rollCall}`;
+}
+
 function VoteCard({ vote }: { vote: VoteWithPosition }) {
   const chamberLabel = vote.chamber === "house" ? "House" : "Senate";
   const displayTitle = getVoteDisplayTitle(vote);
   const billLink = getBillLink(vote.billNumber, vote.congress);
+  const voteDetailUrl = getVoteDetailUrl(vote);
 
   return (
     <article className="group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <PositionBadge position={vote.position} />
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            <PositionBadge position={vote.position} className="px-2.5 py-1" />
+            <a
+              href={voteDetailUrl}
+              className="text-xs text-muted-foreground uppercase tracking-wide hover:text-primary transition-colors"
+            >
               {chamberLabel} Roll Call #{vote.rollCall}
-            </span>
+            </a>
             {vote.billNumber &&
               (billLink ? (
                 <a href={billLink} className="text-xs font-semibold text-accent hover:underline">
@@ -264,6 +223,12 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
             >
               {vote.result}
             </span>
+            <a
+              href={voteDetailUrl}
+              className="text-primary hover:text-accent font-medium transition-colors"
+            >
+              View vote details
+            </a>
           </div>
         </div>
       </div>

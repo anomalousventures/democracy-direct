@@ -12,20 +12,17 @@ import { parseBillId } from "@/lib/bill-utils";
 import { notFound, badRequest, jsonResponse, serverError } from "@/lib/api-response";
 import { getConfig } from "@/lib/config";
 import type { Vote } from "@/db/schema";
-import type { VotePosition, Chamber } from "@/lib/types/legislation";
+import type { Chamber } from "@/lib/types/legislation";
+import type { VoteMember } from "@/lib/types/vote";
 
-export interface VoteMember {
-  bioguideId: string;
-  name: string;
-  party: string;
-  state: string;
-  position: VotePosition;
-}
+export type { VoteMember };
 
 export interface BillVote {
   id: string;
   rollCall: number;
   chamber: Chamber;
+  congress: number;
+  session: number;
   date: Date;
   question: string;
   result: string;
@@ -47,7 +44,7 @@ function transformMemberVote(mv: MemberVoteWithLegislator): VoteMember {
     name: mv.fullName,
     party: mv.party,
     state: mv.state,
-    position: mv.position as VotePosition,
+    position: mv.position as VoteMember["position"],
   };
 }
 
@@ -58,6 +55,8 @@ async function loadVoteWithMembers(db: ReturnType<typeof createDb>, vote: Vote):
     id: vote.id,
     rollCall: vote.rollCall,
     chamber: vote.chamber as Chamber,
+    congress: vote.congress,
+    session: vote.session,
     date: vote.date,
     question: vote.question,
     result: vote.result,
