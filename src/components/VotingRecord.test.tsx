@@ -101,7 +101,9 @@ describe("VotingRecord", () => {
       render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
 
       const links = screen.getAllByRole("link");
-      const sourceLink = links.find((link) => link.getAttribute("href")?.includes("congress.gov"));
+      const sourceLink = links.find(
+        (link) => link.getAttribute("href") === "https://congress.gov/vote/119/house/123"
+      );
       expect(sourceLink).toHaveAttribute("href", "https://congress.gov/vote/119/house/123");
     });
 
