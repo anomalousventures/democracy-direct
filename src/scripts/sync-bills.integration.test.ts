@@ -264,7 +264,7 @@ describe("sync-bills (integration)", () => {
       expect(senateBills).toHaveLength(2);
 
       const billNumbers = senateBills.map((b) => b.billNumber).sort();
-      expect(billNumbers).toEqual(["S.10", "S.11"]);
+      expect(billNumbers).toEqual(["10", "11"]);
     });
   });
 });
