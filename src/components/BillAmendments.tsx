@@ -78,17 +78,17 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
             </div>
           )}
 
-          {amendment.sponsorBioguideId && (
+          {amendment.sponsor && (
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs text-muted-foreground">Sponsored by</span>
               <a
-                href={`/rep/${amendment.sponsorBioguideId}`}
+                href={`/rep/${amendment.sponsor.bioguideId}`}
                 className="text-sm font-medium text-primary hover:text-accent transition-colors"
               >
-                {amendment.sponsorName}
-                {amendment.sponsorParty && amendment.sponsorState && (
+                {amendment.sponsor.fullName}
+                {amendment.sponsor.party && amendment.sponsor.state && (
                   <span className="text-muted-foreground ml-1">
-                    ({amendment.sponsorParty}-{amendment.sponsorState})
+                    ({amendment.sponsor.party}-{amendment.sponsor.state})
                   </span>
                 )}
               </a>

@@ -1,45 +1,44 @@
-import { eq, and, desc, ilike, or, sql, isNull, type SQL } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, isNull, count, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
-import { bills, legislators, type Bill } from "../schema";
+import { bills, type Bill, type Legislator } from "../schema";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
 export type { BillType };
 
-export interface BillWithSponsor extends Bill {
-  sponsorName: string | null;
-  sponsorParty: string | null;
-  sponsorState: string | null;
+export type BillWithSponsor = Bill & { sponsor: Legislator | null };
+
+export interface BillFilterOptions {
+  congress?: number;
+  status?: BillStatus;
+  billType?: BillType;
+  subject?: string;
+  query?: string;
+  bioguideId?: string;
 }
 
-const billWithSponsorSelect = {
-  id: bills.id,
-  billNumber: bills.billNumber,
-  billType: bills.billType,
-  congress: bills.congress,
-  title: bills.title,
-  summary: bills.summary,
-  status: bills.status,
-  subjects: bills.subjects,
-  introducedDate: bills.introducedDate,
-  latestActionDate: bills.latestActionDate,
-  latestActionText: bills.latestActionText,
-  sponsorBioguideId: bills.sponsorBioguideId,
-  congressGovUrl: bills.congressGovUrl,
-  createdAt: bills.createdAt,
-  updatedAt: bills.updatedAt,
-  sponsorName: legislators.fullName,
-  sponsorParty: legislators.party,
-  sponsorState: legislators.state,
-} as const;
+const conditionBuilders: {
+  [K in keyof Required<BillFilterOptions>]: (options: BillFilterOptions) => SQL | undefined;
+} = {
+  congress: (o) => (o.congress ? eq(bills.congress, o.congress) : undefined),
+  status: (o) => (o.status ? eq(bills.status, o.status) : undefined),
+  billType: (o) => (o.billType ? eq(bills.billType, o.billType) : undefined),
+  bioguideId: (o) => (o.bioguideId ? eq(bills.sponsorBioguideId, o.bioguideId) : undefined),
+  subject: (o) =>
+    o.subject ? sql`${bills.subjects}::jsonb @> ${JSON.stringify([o.subject])}::jsonb` : undefined,
+  query: (o) => {
+    if (!o.query) return undefined;
+    const p = `%${o.query}%`;
+    return or(ilike(bills.billNumber, p), ilike(bills.title, p))!;
+  },
+};
 
-function buildCongressStatusConditions(congress?: number, status?: BillStatus): SQL[] {
-  const conditions: SQL[] = [];
-  if (congress) {
-    conditions.push(eq(bills.congress, congress));
-  }
-  if (status) {
-    conditions.push(eq(bills.status, status));
-  }
-  return conditions;
+function buildBillConditions(options: BillFilterOptions): SQL[] {
+  return Object.values(conditionBuilders)
+    .map((builder) => builder(options))
+    .filter((c): c is SQL => c !== undefined);
+}
+
+function combineConditions(conditions: SQL[]): SQL | undefined {
+  return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
 export interface GetBillsByMemberOptions {
@@ -50,8 +49,8 @@ export interface GetBillsByMemberOptions {
 }
 
 export async function getBillById(db: Database, billId: string): Promise<Bill | null> {
-  const results = await db.select().from(bills).where(eq(bills.id, billId)).limit(1);
-  return results[0] ?? null;
+  const [result] = await db.select().from(bills).where(eq(bills.id, billId)).limit(1);
+  return result ?? null;
 }
 
 export async function getBillByNumber(
@@ -60,20 +59,15 @@ export async function getBillByNumber(
   billType: BillType,
   billNumber: string
 ): Promise<BillWithSponsor | null> {
-  const results = await db
-    .select(billWithSponsorSelect)
-    .from(bills)
-    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId))
-    .where(
-      and(
-        eq(bills.congress, congress),
-        eq(bills.billType, billType),
-        eq(bills.billNumber, billNumber)
-      )
-    )
-    .limit(1);
-
-  return results[0] ?? null;
+  const result = await db.query.bills.findFirst({
+    where: and(
+      eq(bills.congress, congress),
+      eq(bills.billType, billType),
+      eq(bills.billNumber, billNumber)
+    ),
+    with: { sponsor: true },
+  });
+  return result ?? null;
 }
 
 export async function getBillsByMember(
@@ -82,38 +76,24 @@ export async function getBillsByMember(
   options: GetBillsByMemberOptions = {}
 ): Promise<Bill[]> {
   const { limit = 50, offset = 0, congress, status } = options;
-
-  const conditions = [
-    eq(bills.sponsorBioguideId, bioguideId),
-    ...buildCongressStatusConditions(congress, status),
-  ];
+  const conditions = buildBillConditions({ bioguideId, congress, status });
 
   return db
     .select()
     .from(bills)
-    .where(and(...conditions))
+    .where(combineConditions(conditions))
     .orderBy(desc(bills.latestActionDate))
     .limit(limit)
     .offset(offset);
 }
 
-export async function getBillCountByMember(
-  db: Database,
-  bioguideId: string,
-  congress?: number
-): Promise<number> {
-  const conditions = [eq(bills.sponsorBioguideId, bioguideId)];
-
-  if (congress) {
-    conditions.push(eq(bills.congress, congress));
-  }
-
-  const result = await db
-    .select({ count: sql<number>`count(*)::int` })
+export async function getBillCount(db: Database, options: BillFilterOptions = {}): Promise<number> {
+  const conditions = buildBillConditions(options);
+  const [result] = await db
+    .select({ count: count() })
     .from(bills)
-    .where(and(...conditions));
-
-  return result[0]?.count ?? 0;
+    .where(combineConditions(conditions));
+  return Number(result?.count ?? 0);
 }
 
 export interface SearchBillsOptions {
@@ -121,12 +101,11 @@ export interface SearchBillsOptions {
   offset?: number;
   congress?: number;
   status?: BillStatus;
+  billType?: BillType;
   subject?: string;
 }
 
 /**
- * Search bills by bill number or title.
- *
  * Performance note: ILIKE with wildcards requires a full table scan. This is
  * acceptable for the current dataset size. For larger datasets, consider adding
  * a GIN index with pg_trgm or using PostgreSQL full-text search.
@@ -136,26 +115,16 @@ export async function searchBills(
   query: string,
   options: SearchBillsOptions = {}
 ): Promise<BillWithSponsor[]> {
-  const { limit = 50, offset = 0, congress, status, subject } = options;
+  const { limit = 50, offset = 0, ...filters } = options;
+  const conditions = buildBillConditions({ ...filters, query });
 
-  const searchPattern = `%${query}%`;
-  const conditions: SQL[] = [
-    or(ilike(bills.billNumber, searchPattern), ilike(bills.title, searchPattern))!,
-    ...buildCongressStatusConditions(congress, status),
-  ];
-
-  if (subject) {
-    conditions.push(sql`${bills.subjects}::jsonb @> ${JSON.stringify([subject])}::jsonb`);
-  }
-
-  return db
-    .select(billWithSponsorSelect)
-    .from(bills)
-    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId))
-    .where(and(...conditions))
-    .orderBy(desc(bills.latestActionDate))
-    .limit(limit)
-    .offset(offset);
+  return db.query.bills.findMany({
+    where: combineConditions(conditions),
+    with: { sponsor: true },
+    orderBy: desc(bills.latestActionDate),
+    limit,
+    offset,
+  });
 }
 
 export async function getBillsBySubject(
@@ -163,46 +132,32 @@ export async function getBillsBySubject(
   subject: string,
   options: Omit<SearchBillsOptions, "subject"> = {}
 ): Promise<BillWithSponsor[]> {
-  const { limit = 50, offset = 0, congress, status } = options;
+  const { limit = 50, offset = 0, ...filters } = options;
+  const conditions = buildBillConditions({ ...filters, subject });
 
-  const conditions: SQL[] = [
-    sql`${bills.subjects}::jsonb @> ${JSON.stringify([subject])}::jsonb`,
-    ...buildCongressStatusConditions(congress, status),
-  ];
-
-  return db
-    .select(billWithSponsorSelect)
-    .from(bills)
-    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId))
-    .where(and(...conditions))
-    .orderBy(desc(bills.latestActionDate))
-    .limit(limit)
-    .offset(offset);
-}
-
-export interface GetBillsOptions {
-  limit?: number;
-  offset?: number;
-  congress?: number;
-  status?: BillStatus;
+  return db.query.bills.findMany({
+    where: combineConditions(conditions),
+    with: { sponsor: true },
+    orderBy: desc(bills.latestActionDate),
+    limit,
+    offset,
+  });
 }
 
 export async function getBills(
   db: Database,
-  options: GetBillsOptions = {}
+  options: SearchBillsOptions = {}
 ): Promise<BillWithSponsor[]> {
-  const { limit = 50, offset = 0, congress, status } = options;
+  const { limit = 50, offset = 0, ...filters } = options;
+  const conditions = buildBillConditions(filters);
 
-  const conditions = buildCongressStatusConditions(congress, status);
-
-  return db
-    .select(billWithSponsorSelect)
-    .from(bills)
-    .leftJoin(legislators, eq(bills.sponsorBioguideId, legislators.bioguideId))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(bills.latestActionDate))
-    .limit(limit)
-    .offset(offset);
+  return db.query.bills.findMany({
+    where: combineConditions(conditions),
+    with: { sponsor: true },
+    orderBy: desc(bills.latestActionDate),
+    limit,
+    offset,
+  });
 }
 
 export async function getDistinctSubjects(db: Database, congress?: number): Promise<string[]> {
@@ -217,44 +172,6 @@ export async function getDistinctSubjects(db: Database, congress?: number): Prom
   `);
 
   return (result.rows as Array<{ subject: string }>).map((row) => row.subject);
-}
-
-export interface BillCountOptions {
-  congress?: number;
-  status?: BillStatus;
-  subject?: string;
-  billType?: BillType;
-  query?: string;
-}
-
-export async function getBillCount(db: Database, options: BillCountOptions = {}): Promise<number> {
-  const { congress, status, subject, billType, query } = options;
-
-  const conditions: SQL[] = [];
-
-  if (congress) {
-    conditions.push(eq(bills.congress, congress));
-  }
-  if (status) {
-    conditions.push(eq(bills.status, status));
-  }
-  if (billType) {
-    conditions.push(eq(bills.billType, billType));
-  }
-  if (subject) {
-    conditions.push(sql`${bills.subjects}::jsonb @> ${JSON.stringify([subject])}::jsonb`);
-  }
-  if (query) {
-    const searchPattern = `%${query}%`;
-    conditions.push(or(ilike(bills.billNumber, searchPattern), ilike(bills.title, searchPattern))!);
-  }
-
-  const result = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(bills)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-  return result[0]?.count ?? 0;
 }
 
 export interface BillForSummarySync {

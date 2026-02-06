@@ -12,7 +12,8 @@ import { createDb } from "@/db/client";
 import { getAmendmentByNumber, type AmendmentWithRelations } from "@/db/queries/amendments";
 import { getVotesByAmendmentId, getMemberVotesForVote } from "@/db/queries/votes";
 import { parseAmendmentId, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
-import { getBillPageUrl, parseBillNumber } from "@/lib/bill-utils";
+import { getBillPageUrl, BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
+import type { BillType } from "@/lib/types/legislation";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { VoteDetail } from "@/components/VoteDetail";
 import type { Chamber, VotePosition } from "@/lib/types/legislation";
@@ -25,7 +26,7 @@ const { amendmentId } = Astro.params;
 
 let amendment: AmendmentWithRelations | null = null;
 let amendmentVotes: Array<{ vote: Vote; members: VoteMember[] }> = [];
-let parentBillLink: { url: string; label: string } | null = null;
+let parentBillLink: { url: string; label: string; title: string } | null = null;
 let error: string | null = null;
 
 if (!amendmentId) {
@@ -53,22 +54,27 @@ if (!amendmentId) {
             vote,
             members: rawMembers.map((mv) => ({
               bioguideId: mv.bioguideId,
-              name: mv.fullName,
-              party: mv.party,
-              state: mv.state,
+              name: mv.legislator.fullName,
+              party: mv.legislator.party,
+              state: mv.legislator.state,
               position: mv.position as VotePosition,
             })),
           });
         }
 
-        if (amendment.amendedBillNumber && amendment.amendedBillTitle) {
-          const parsedBill = parseBillNumber(amendment.amendedBillNumber);
-          if (parsedBill) {
-            parentBillLink = {
-              url: getBillPageUrl(parsedBill.type, String(parsedBill.number), amendment.congress),
-              label: amendment.amendedBillNumber,
-            };
-          }
+        if (amendment.amendedBill) {
+          const displayName = BILL_TYPE_DISPLAY_NAMES[amendment.amendedBill.billType as BillType];
+          parentBillLink = {
+            url: getBillPageUrl(
+              amendment.amendedBill.billType as BillType,
+              amendment.amendedBill.billNumber,
+              amendment.congress
+            ),
+            label: displayName
+              ? `${displayName}${amendment.amendedBill.billNumber}`
+              : amendment.amendedBill.billNumber,
+            title: amendment.amendedBill.title,
+          };
         }
       }
     } catch (e) {
@@ -151,7 +157,7 @@ const congressGovUrl = amendment
                       {" "}
                       &middot;{" "}
                       <a href={parentBillLink.url} class="text-accent hover:underline">
-                        {parentBillLink.label}: {amendment.amendedBillTitle}
+                        {parentBillLink.label}: {parentBillLink.title}
                       </a>
                     </>
                   )}
@@ -166,17 +172,17 @@ const congressGovUrl = amendment
 
               <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
                 <div class="space-y-6">
-                  {amendment.sponsorBioguideId && (
+                  {amendment.sponsor && (
                     <div class="flex items-center gap-3">
                       <span class="text-sm text-muted-foreground">Sponsored by</span>
                       <a
-                        href={`/rep/${amendment.sponsorBioguideId}`}
+                        href={`/rep/${amendment.sponsor.bioguideId}`}
                         class="text-sm font-medium text-primary hover:text-accent transition-colors"
                       >
-                        {amendment.sponsorName}
-                        {amendment.sponsorParty && amendment.sponsorState && (
+                        {amendment.sponsor.fullName}
+                        {amendment.sponsor.party && amendment.sponsor.state && (
                           <span class="text-muted-foreground ml-1">
-                            ({amendment.sponsorParty}-{amendment.sponsorState})
+                            ({amendment.sponsor.party}-{amendment.sponsor.state})
                           </span>
                         )}
                       </a>

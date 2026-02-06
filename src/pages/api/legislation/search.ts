@@ -89,29 +89,20 @@ export async function GET(context: APIContext): Promise<Response> {
     let bills: BillWithSponsor[];
     let total: number;
 
-    const queryOptions = {
-      limit: limit + 1,
-      offset,
-      congress,
-      status,
-      subject,
-    };
+    const filterOptions = { congress, status, subject, billType };
+    const queryOptions = { ...filterOptions, limit: limit + 1, offset };
 
     if (q) {
       bills = await searchBills(db, q, queryOptions);
-      total = await getBillCount(db, { query: q, congress, status, subject, billType });
+      total = await getBillCount(db, { ...filterOptions, query: q });
     } else {
       bills = await getBills(db, queryOptions);
-      total = await getBillCount(db, { congress, status, subject, billType });
+      total = await getBillCount(db, filterOptions);
     }
 
     const hasMore = bills.length > limit;
     if (hasMore) {
       bills = bills.slice(0, limit);
-    }
-
-    if (billType) {
-      bills = bills.filter((b) => b.billType === billType);
     }
 
     const availableSubjects = await getDistinctSubjects(db, congress);

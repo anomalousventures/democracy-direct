@@ -3,11 +3,11 @@ import type { Database } from "../client";
 import {
   votes,
   memberVotes,
-  legislators,
   bills,
   amendments,
   type Vote,
   type MemberVote,
+  type Legislator,
 } from "../schema";
 import type { VotePosition, Chamber } from "@/lib/types/legislation";
 
@@ -21,12 +21,7 @@ export interface VoteWithRelations extends Vote {
   amendment: { id: string; description: string | null; purpose: string | null } | null;
 }
 
-export interface MemberVoteWithLegislator extends MemberVote {
-  fullName: string;
-  party: string;
-  state: string;
-  chamber: string;
-}
+export type MemberVoteWithLegislator = MemberVote & { legislator: Legislator };
 
 export interface VoteStats {
   totalVotes: number;
@@ -37,8 +32,8 @@ export interface VoteStats {
 }
 
 export async function getVoteById(db: Database, voteId: string): Promise<Vote | null> {
-  const results = await db.select().from(votes).where(eq(votes.id, voteId)).limit(1);
-  return results[0] ?? null;
+  const [result] = await db.select().from(votes).where(eq(votes.id, voteId)).limit(1);
+  return result ?? null;
 }
 
 export async function getVoteByRollCall(
@@ -48,7 +43,7 @@ export async function getVoteByRollCall(
   session: number,
   rollCall: number
 ): Promise<Vote | null> {
-  const results = await db
+  const [result] = await db
     .select()
     .from(votes)
     .where(
@@ -60,7 +55,7 @@ export async function getVoteByRollCall(
       )
     )
     .limit(1);
-  return results[0] ?? null;
+  return result ?? null;
 }
 
 export interface GetVotesByMemberOptions {
@@ -174,37 +169,30 @@ export async function getMemberVotesForVote(
   db: Database,
   voteId: string
 ): Promise<MemberVoteWithLegislator[]> {
-  const results = await db
-    .select({
-      voteId: memberVotes.voteId,
-      bioguideId: memberVotes.bioguideId,
-      position: memberVotes.position,
-      fullName: legislators.fullName,
-      party: legislators.party,
-      state: legislators.state,
-      chamber: legislators.chamber,
-    })
-    .from(memberVotes)
-    .innerJoin(legislators, eq(memberVotes.bioguideId, legislators.bioguideId))
-    .where(eq(memberVotes.voteId, voteId));
-
-  return results;
+  return db.query.memberVotes.findMany({
+    where: eq(memberVotes.voteId, voteId),
+    with: { legislator: true },
+  });
 }
 
 export async function getVoteWithMembers(
   db: Database,
   voteId: string
 ): Promise<(Vote & { members: MemberVoteWithLegislator[] }) | null> {
-  const vote = await getVoteById(db, voteId);
-  if (!vote) {
-    return null;
-  }
+  const result = await db.query.votes.findFirst({
+    where: eq(votes.id, voteId),
+    with: {
+      memberVotes: {
+        with: { legislator: true },
+      },
+    },
+  });
 
-  const members = await getMemberVotesForVote(db, voteId);
+  if (!result) return null;
 
   return {
-    ...vote,
-    members,
+    ...result,
+    members: result.memberVotes,
   };
 }
 
@@ -380,9 +368,8 @@ export async function getVotesForBill(
 }
 
 export async function getVoteCountForBill(db: Database, billId: string): Promise<number> {
-  const result = await db.select({ count: count() }).from(votes).where(eq(votes.billId, billId));
-
-  return Number(result[0]?.count ?? 0);
+  const [result] = await db.select({ count: count() }).from(votes).where(eq(votes.billId, billId));
+  return Number(result?.count ?? 0);
 }
 
 export async function getVotesByBillId(db: Database, billId: string): Promise<Vote[]> {

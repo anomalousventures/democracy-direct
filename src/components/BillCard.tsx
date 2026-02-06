@@ -170,16 +170,16 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
             )}
           </div>
 
-          {showSponsor && bill.sponsorBioguideId && (
+          {showSponsor && bill.sponsor && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
               <a
-                href={`/rep/${bill.sponsorBioguideId}`}
+                href={`/rep/${bill.sponsor.bioguideId}`}
                 className="relative z-10 text-sm text-primary hover:text-accent transition-colors"
               >
-                {bill.sponsorName}
-                {bill.sponsorParty && bill.sponsorState && (
+                {bill.sponsor.fullName}
+                {bill.sponsor.party && bill.sponsor.state && (
                   <span className="text-muted-foreground ml-1">
-                    ({bill.sponsorParty}-{bill.sponsorState})
+                    ({bill.sponsor.party}-{bill.sponsor.state})
                   </span>
                 )}
               </a>

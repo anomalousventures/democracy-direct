@@ -27,8 +27,8 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
   const isLongSummary = hasSummary && bill.summary!.length > 500;
   const truncatedSummary = isLongSummary ? bill.summary!.slice(0, 500) + "..." : bill.summary;
 
-  const sponsorInitials = bill.sponsorName
-    ? bill.sponsorName
+  const sponsorInitials = bill.sponsor?.fullName
+    ? bill.sponsor.fullName
         .split(" ")
         .filter(Boolean)
         .map((w) => w[0])
@@ -69,13 +69,13 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
         </div>
       )}
 
-      {bill.sponsorBioguideId && (
+      {bill.sponsor && (
         <div className="flex items-center gap-3 p-4 bg-secondary/50 border border-border rounded-sm">
           <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
             <div className="rep-photo-fallback-sm !text-2xl">{sponsorInitials}</div>
             <img
-              src={getPhotoUrl(bill.sponsorBioguideId)}
-              alt={bill.sponsorName || "Sponsor"}
+              src={getPhotoUrl(bill.sponsor.bioguideId)}
+              alt={bill.sponsor.fullName}
               className="absolute inset-0 w-full h-full object-cover object-top"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
@@ -85,13 +85,13 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
           <div>
             <p className="text-sm text-muted-foreground">Sponsored by</p>
             <a
-              href={`/rep/${bill.sponsorBioguideId}`}
+              href={`/rep/${bill.sponsor.bioguideId}`}
               className="font-medium text-primary hover:text-accent transition-colors"
             >
-              {bill.sponsorName}
-              {bill.sponsorParty && bill.sponsorState && (
+              {bill.sponsor.fullName}
+              {bill.sponsor.party && bill.sponsor.state && (
                 <span className="text-muted-foreground ml-1">
-                  ({bill.sponsorParty}-{bill.sponsorState})
+                  ({bill.sponsor.party}-{bill.sponsor.state})
                 </span>
               )}
             </a>

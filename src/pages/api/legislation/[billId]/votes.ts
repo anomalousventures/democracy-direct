@@ -41,9 +41,9 @@ export interface BillVotesResponse {
 function transformMemberVote(mv: MemberVoteWithLegislator): VoteMember {
   return {
     bioguideId: mv.bioguideId,
-    name: mv.fullName,
-    party: mv.party,
-    state: mv.state,
+    name: mv.legislator.fullName,
+    party: mv.legislator.party,
+    state: mv.legislator.state,
     position: mv.position as VoteMember["position"],
   };
 }

@@ -118,8 +118,10 @@ describe("RepTabs", () => {
       const votesTab = screen.getByRole("tab", { name: /Voting Record/i });
       const billsTab = screen.getByRole("tab", { name: /Sponsored Bills/i });
 
-      expect(votesTab.textContent).toBe("Voting Record");
-      expect(billsTab.textContent).toBe("Sponsored Bills");
+      expect(votesTab.textContent).toContain("Voting Record");
+      expect(votesTab.textContent).not.toMatch(/\d/);
+      expect(billsTab.textContent).toContain("Sponsored Bills");
+      expect(billsTab.textContent).not.toMatch(/\d/);
     });
   });
 

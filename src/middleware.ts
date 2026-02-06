@@ -1,7 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 import { eq, and, gt } from "drizzle-orm";
 import { createDb } from "./db/client";
-import { sessions, users } from "./db/schema";
+import { sessions } from "./db/schema";
 import { getConfig } from "./lib/config";
 import { createLogger } from "./lib/logger";
 
@@ -23,22 +23,21 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, request }, n
       const config = getConfig(locals);
       const db = createDb(config.database.url);
 
-      const results = await db
-        .select({
-          id: users.id,
-          emailHash: users.emailHash,
-          trustLevel: users.trustLevel,
-          savedState: users.savedState,
-          savedDistrict: users.savedDistrict,
-        })
-        .from(sessions)
-        .innerJoin(users, eq(sessions.userId, users.id))
-        .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())));
+      const result = await db.query.sessions.findFirst({
+        where: and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())),
+        with: { user: true },
+      });
 
-      if (results.length === 0) {
+      if (!result) {
         cookies.delete("session", { path: "/" });
       } else {
-        locals.user = results[0] as SessionUser;
+        locals.user = {
+          id: result.user.id,
+          emailHash: result.user.emailHash,
+          trustLevel: result.user.trustLevel,
+          savedState: result.user.savedState,
+          savedDistrict: result.user.savedDistrict,
+        };
       }
     } catch (error) {
       const logger = createLogger(locals, request);

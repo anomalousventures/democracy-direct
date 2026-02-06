@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { createDb } from "@/db/client";
 import { getConfig } from "@/lib/config";
-import { getBillsByMember, getBillCountByMember } from "@/db/queries/bills";
+import { getBillsByMember, getBillCount } from "@/db/queries/bills";
 import { jsonResponse, badRequest, notFound } from "@/lib/api-response";
 import { createLogger } from "@/lib/logger";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ params, url, locals, request }) => {
         congress,
         status: statusResult.data,
       }),
-      getBillCountByMember(db, bioguideId, congress),
+      getBillCount(db, { bioguideId, congress }),
     ]);
 
     const hasMore = bills.length > limit;

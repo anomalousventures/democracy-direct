@@ -94,7 +94,8 @@ export function RepTabs({
             Contact
           </TabsTrigger>
           <TabsTrigger value="votes" className={tabTriggerClass}>
-            Voting Record
+            <span className="hidden sm:inline">Voting Record</span>
+            <span className="sm:hidden">Votes</span>
             {voteCount > 0 && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-secondary text-muted-foreground rounded-full">
                 {voteCount}
@@ -102,7 +103,8 @@ export function RepTabs({
             )}
           </TabsTrigger>
           <TabsTrigger value="bills" className={tabTriggerClass}>
-            Sponsored Bills
+            <span className="hidden sm:inline">Sponsored Bills</span>
+            <span className="sm:hidden">Bills</span>
             {billCount > 0 && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-secondary text-muted-foreground rounded-full">
                 {billCount}

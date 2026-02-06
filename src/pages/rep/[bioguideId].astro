@@ -11,7 +11,7 @@ import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
 import { getVotesByMember, getVoteStats } from "@/db/queries/votes";
-import { getBillsByMember, getBillCountByMember } from "@/db/queries/bills";
+import { getBillsByMember, getBillCount } from "@/db/queries/bills";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
@@ -97,7 +97,7 @@ if (!error) {
         getVotesByMember(db, bioguideId!, { limit: 50 }),
         getVoteStats(db, bioguideId!),
         getBillsByMember(db, bioguideId!, { limit: 50 }),
-        getBillCountByMember(db, bioguideId!),
+        getBillCount(db, { bioguideId: bioguideId! }),
       ]);
       votes = loadedVotes;
       voteStats = loadedStats;
