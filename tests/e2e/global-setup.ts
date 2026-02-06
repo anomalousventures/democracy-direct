@@ -172,15 +172,12 @@ async function globalSetup() {
     console.log(`Created E2E private template: ${E2E_PRIVATE_TEMPLATE_SLUG}`);
   }
 
-  // Seed legislation data for e2e tests
-  // Use a known legislator as sponsor (first one found)
   const [sponsor] = await db
     .select({ bioguideId: legislators.bioguideId })
     .from(legislators)
     .limit(1);
 
   if (sponsor) {
-    // Seed bill
     const [existingBill] = await db
       .select()
       .from(bills)
@@ -211,7 +208,6 @@ async function globalSetup() {
       console.log(`Created E2E bill: ${billId}`);
     }
 
-    // Seed amendment linked to the bill
     const [existingAmendment] = await db
       .select()
       .from(amendments)
@@ -235,7 +231,6 @@ async function globalSetup() {
       console.log("Created E2E amendment");
     }
 
-    // Seed vote linked to the bill
     const [existingVote] = await db
       .select()
       .from(votes)
@@ -259,7 +254,6 @@ async function globalSetup() {
         })
         .returning();
 
-      // Seed a couple member votes using the sponsor
       await db.insert(memberVotes).values({
         voteId: newVote.id,
         bioguideId: sponsor.bioguideId,

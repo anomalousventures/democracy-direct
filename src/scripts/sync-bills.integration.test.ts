@@ -114,11 +114,7 @@ describe("sync-bills (integration)", () => {
         .select()
         .from(bills)
         .where(
-          and(
-            eq(bills.congress, testCongress),
-            eq(bills.billType, "hr"),
-            eq(bills.billNumber, "HR.1")
-          )
+          and(eq(bills.congress, testCongress), eq(bills.billType, "hr"), eq(bills.billNumber, "1"))
         );
 
       expect(insertedBill).toBeDefined();
@@ -241,7 +237,7 @@ describe("sync-bills (integration)", () => {
       expect(warnings).toHaveLength(1);
       expect(errors).toHaveLength(1);
 
-      expect(billsToUpsert.map((b) => b.billNumber).sort()).toEqual(["S.10", "S.11"]);
+      expect(billsToUpsert.map((b) => b.billNumber).sort()).toEqual(["10", "11"]);
       expect(warnings.map((w) => w.billNumber)).toEqual(["s11"]);
       expect(errors.map((e) => e.billNumber)).toEqual(["s12"]);
 

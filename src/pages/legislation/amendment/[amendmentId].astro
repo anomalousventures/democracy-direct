@@ -135,7 +135,6 @@ const congressGovUrl = amendment
                 )}
               </div>
 
-              {/* Hero Section */}
               <div class="text-center mb-8 animate-fade-up">
                 <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
                   <span class="inline-flex items-center px-4 py-2 text-lg font-bold bg-primary text-primary-foreground rounded-sm">
@@ -166,10 +165,8 @@ const congressGovUrl = amendment
                 )}
               </div>
 
-              {/* Details Card */}
               <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
                 <div class="space-y-6">
-                  {/* Sponsor */}
                   {amendment.sponsorBioguideId && (
                     <div class="flex items-center gap-3">
                       <span class="text-sm text-muted-foreground">Sponsored by</span>
@@ -187,7 +184,6 @@ const congressGovUrl = amendment
                     </div>
                   )}
 
-                  {/* Latest Action */}
                   {amendment.latestActionText && (
                     <div class="p-4 bg-secondary/50 border border-border rounded-sm">
                       <p class="text-xs text-muted-foreground mb-1">Latest Action</p>
@@ -205,7 +201,6 @@ const congressGovUrl = amendment
                     </div>
                   )}
 
-                  {/* Votes Section */}
                   {amendmentVotes.length > 0 && (
                     <div class="space-y-6">
                       <h2 class="text-lg font-semibold text-primary">Roll Call Votes</h2>
@@ -236,7 +231,6 @@ const congressGovUrl = amendment
                     </div>
                   )}
 
-                  {/* External Link */}
                   {congressGovUrl && (
                     <div class="pt-4 border-t border-border">
                       <a
