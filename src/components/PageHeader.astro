@@ -1,19 +1,30 @@
 ---
 interface Props {
   title: string;
-  gradientWord: string;
+  gradientWord?: string;
   description?: string;
 }
 
 const { title, gradientWord, description } = Astro.props;
-const idx = title.indexOf(gradientWord);
-const before = idx > 0 ? title.slice(0, idx) : "";
-const after = idx >= 0 ? title.slice(idx + gradientWord.length) : "";
+const idx = gradientWord ? title.indexOf(gradientWord) : -1;
+const hasGradient = idx >= 0 && gradientWord;
+const before = hasGradient ? title.slice(0, idx) : "";
+const after = hasGradient ? title.slice(idx + gradientWord.length) : "";
 ---
 
 <div class="text-center mb-12">
   <h1 class="heading-page animate-fade-up">
-    {before}<span class="text-gradient">{gradientWord}</span>{after}
+    {
+      hasGradient ? (
+        <>
+          {before}
+          <span class="text-gradient">{gradientWord}</span>
+          {after}
+        </>
+      ) : (
+        title
+      )
+    }
   </h1>
   <slot name="subtitle" />
   {

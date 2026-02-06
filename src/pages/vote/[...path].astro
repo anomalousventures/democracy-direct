@@ -72,10 +72,14 @@ if (segments.length !== 4) {
         }));
 
         if (vote.billNumber) {
-          const parsed = parseBillNumber(vote.billNumber);
-          if (parsed) {
+          const parsedBillNumber = parseBillNumber(vote.billNumber);
+          if (parsedBillNumber) {
             billLink = {
-              url: getBillPageUrl(parsed.type, String(parsed.number), vote.congress),
+              url: getBillPageUrl(
+                parsedBillNumber.type,
+                String(parsedBillNumber.number),
+                vote.congress
+              ),
               label: vote.billNumber,
             };
           }

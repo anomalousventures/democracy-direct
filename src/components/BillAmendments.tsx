@@ -26,7 +26,7 @@ function formatDate(date: Date | string | null): string {
 function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
   const [expanded, setExpanded] = useState(false);
 
-  const displayNumber = `${amendment.amendmentType.toUpperCase()}.Amdt.${amendment.amendmentNumber}`;
+  const formattedAmendmentNumber = `${amendment.amendmentType.toUpperCase()}.Amdt.${amendment.amendmentNumber}`;
   const detailUrl = getAmendmentPageUrl(
     amendment.amendmentType as AmendmentType,
     amendment.amendmentNumber,
@@ -49,7 +49,7 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <a href={detailUrl} className="text-sm font-semibold text-accent hover:underline">
-              {displayNumber}
+              {formattedAmendmentNumber}
             </a>
             <span className="text-xs text-muted-foreground">
               {amendment.congress}

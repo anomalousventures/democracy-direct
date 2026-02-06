@@ -17,6 +17,14 @@ export function ContactInfo({
   twitterHandle,
   facebookId,
 }: ContactInfoProps) {
+  function getHostname(url: string): string {
+    try {
+      return new URL(url).hostname.replace("www.", "");
+    } catch {
+      return url;
+    }
+  }
+
   const hasSocial = twitterHandle || facebookId;
   const hasAnyInfo = phone || contactFormUrl || address || website || hasSocial;
 
@@ -52,7 +60,7 @@ export function ContactInfo({
             <div className="flex-1 flex flex-col justify-center">
               <p className="font-medium">Official Website</p>
               <p className="inline-flex items-center gap-1 text-primary">
-                <span>{new URL(website).hostname.replace("www.", "")}</span>
+                <span>{getHostname(website)}</span>
                 <Icon name="external-link" className="w-4 h-4" />
               </p>
             </div>
