@@ -4,6 +4,8 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import PageSection from "@/components/PageSection.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import { createDb } from "@/db/client";
@@ -86,9 +88,9 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
   <Header currentPath={`/reps/${state.toLowerCase()}/${district.toLowerCase()}`} user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container-page">
-      {
-        error ? (
+    {
+      error ? (
+        <div class="container-page">
           <div class="container-narrow text-center">
             <AstroCard variant="civicLg">
               <div class="icon-box-lg mx-auto mb-6">
@@ -113,134 +115,74 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
               </AstroButton>
             </AstroCard>
           </div>
-        ) : (
-          <div class="container-wide">
-            <div class="text-center mb-12 animate-fade-up">
-              <div class="hero-badge mb-6">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span>
-                  {stateName} {districtDisplay}
-                </span>
-              </div>
-              <h1 class="heading-section">Your Representatives</h1>
-            </div>
+        </div>
+      ) : (
+        <PageSection width="wide">
+          <PageHeader
+            title="Your Representatives"
+            gradientWord="Representatives"
+            description={`Your elected officials for ${stateName}'s ${districtDisplay}`}
+          />
 
-            <div class="mb-8">
-              <SaveDistrictPrompt state={state} district={district} client:load />
-            </div>
+          <div class="mb-8">
+            <SaveDistrictPrompt state={state} district={district} client:load />
+          </div>
 
-            <div class="grid gap-6">
-              {reps.map((rep, index) => (
-                <a
-                  href={`/rep/${rep.bioguideId}${templateQueryParam}`}
-                  class="block group animate-fade-up"
-                  style={`animation-delay: ${index * 100}ms`}
+          <div class="grid gap-6">
+            {reps.map((rep, index) => (
+              <a
+                href={`/rep/${rep.bioguideId}${templateQueryParam}`}
+                class="block group animate-fade-up"
+                style={`animation-delay: ${index * 100}ms`}
+              >
+                <AstroCard
+                  variant="civic"
+                  class="group-hover:-translate-y-1 group-hover:shadow-civic-lg transition-all duration-300"
                 >
-                  <AstroCard
-                    variant="civic"
-                    class="group-hover:-translate-y-1 group-hover:shadow-civic-lg transition-all duration-300"
-                  >
-                    <div class="flex flex-col sm:flex-row gap-6">
-                      <div class="flex-shrink-0">
-                        <div class="rep-photo-sm">
-                          <img
-                            src={getPhotoUrl(rep.bioguideId)}
-                            alt={`${rep.firstName} ${rep.lastName}`}
-                            class="w-full h-full object-cover object-top"
-                            loading="lazy"
-                            onerror="this.style.display='none'"
-                          />
-                          <div
-                            class="rep-photo-fallback-sm"
-                            style="font-family: var(--font-display)"
-                          >
-                            {rep.firstName[0]}
-                            {rep.lastName[0]}
-                          </div>
+                  <div class="flex flex-col sm:flex-row gap-6">
+                    <div class="flex-shrink-0">
+                      <div class="rep-photo-sm">
+                        <img
+                          src={getPhotoUrl(rep.bioguideId)}
+                          alt={`${rep.firstName} ${rep.lastName}`}
+                          class="w-full h-full object-cover object-top"
+                          loading="lazy"
+                          onerror="this.style.display='none'"
+                        />
+                        <div class="rep-photo-fallback-sm" style="font-family: var(--font-display)">
+                          {rep.firstName[0]}
+                          {rep.lastName[0]}
                         </div>
                       </div>
+                    </div>
 
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-4 mb-2">
-                          <div>
-                            <h2 class="text-xl sm:text-2xl font-bold group-hover:text-accent transition-colors">
-                              {rep.firstName} {rep.lastName}
-                            </h2>
-                            <p class="text-muted-foreground">
-                              {getRepTitle(rep.chamber, rep.state, rep.district, "short")}
-                            </p>
-                          </div>
-                          <span class={`${getPartyColor(rep.party)} party-badge`}>
-                            {getPartyLabel(rep.party, true)}
-                          </span>
-                        </div>
-
-                        {rep.termStart && (
-                          <p class="text-sm text-muted-foreground mb-3">
-                            <span class="font-medium">Term:</span> {formatDate(rep.termStart)}
-                            {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                          <h2 class="text-xl sm:text-2xl font-bold group-hover:text-accent transition-colors">
+                            {rep.firstName} {rep.lastName}
+                          </h2>
+                          <p class="text-muted-foreground">
+                            {getRepTitle(rep.chamber, rep.state, rep.district, "short")}
                           </p>
-                        )}
-
-                        <div class="flex flex-wrap items-center gap-3">
-                          {rep.website && (
-                            <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                              <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                                />
-                              </svg>
-                              <span class="truncate max-w-[150px]">
-                                {new URL(rep.website).hostname.replace("www.", "")}
-                              </span>
-                            </span>
-                          )}
-
-                          {rep.twitterHandle && (
-                            <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                              </svg>
-                              <span>@{rep.twitterHandle}</span>
-                            </span>
-                          )}
-
-                          {rep.facebookId && (
-                            <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                              </svg>
-                              <span>Facebook</span>
-                            </span>
-                          )}
                         </div>
+                        <span class={`${getPartyColor(rep.party)} party-badge`}>
+                          {getPartyLabel(rep.party, true)}
+                        </span>
+                      </div>
 
-                        <div class="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
-                          <span class="text-sm font-medium text-primary group-hover:text-accent transition-colors flex items-center gap-2">
-                            View Details
+                      {rep.termStart && (
+                        <p class="text-sm text-muted-foreground mb-3">
+                          <span class="font-medium">Term:</span> {formatDate(rep.termStart)}
+                          {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
+                        </p>
+                      )}
+
+                      <div class="flex flex-wrap items-center gap-3">
+                        {rep.website && (
+                          <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                             <svg
-                              class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                              class="w-4 h-4"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -249,35 +191,75 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="2"
-                                d="M9 5l7 7-7 7"
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
                               />
                             </svg>
+                            <span class="truncate max-w-[150px]">
+                              {new URL(rep.website).hostname.replace("www.", "")}
+                            </span>
                           </span>
-                        </div>
+                        )}
+
+                        {rep.twitterHandle && (
+                          <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                            <span>@{rep.twitterHandle}</span>
+                          </span>
+                        )}
+
+                        {rep.facebookId && (
+                          <span class="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                            <span>Facebook</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div class="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
+                        <span class="text-sm font-medium text-primary group-hover:text-accent transition-colors flex items-center gap-2">
+                          View Details
+                          <svg
+                            class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </span>
                       </div>
                     </div>
-                  </AstroCard>
-                </a>
-              ))}
-            </div>
-
-            <div class="text-center mt-12">
-              <a href="/" class="link-back">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                <span>Look up a different district</span>
+                  </div>
+                </AstroCard>
               </a>
-            </div>
+            ))}
           </div>
-        )
-      }
-    </div>
+
+          <div class="text-center mt-12">
+            <a href="/" class="link-back">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              <span>Look up a different district</span>
+            </a>
+          </div>
+        </PageSection>
+      )
+    }
   </main>
 
   <Footer currentPath={`/reps/${state.toLowerCase()}/${district.toLowerCase()}`} />

@@ -2,6 +2,8 @@
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import PageHeader from "../components/PageHeader.astro";
+import PageSection from "../components/PageSection.astro";
 
 export const prerender = false;
 
@@ -86,250 +88,217 @@ const future: Feature[] = [
 >
   <Header currentPath="/roadmap" user={user} />
 
-  <main id="main-content" class="flex-1">
-    <section class="section-page">
-      <div class="backdrop-container" aria-hidden="true">
-        <div class="backdrop-blob-primary top-0 right-1/4"></div>
-        <div class="backdrop-blob-accent bottom-0 left-1/4"></div>
-      </div>
+  <main id="main-content" class="flex-1 py-12">
+    <PageSection>
+      <PageHeader
+        title="Feature Roadmap"
+        gradientWord="Roadmap"
+        description="We're building tools to make civic engagement easier. Here's what we're working on."
+      />
 
-      <div class="container-page relative">
-        <div class="container-medium">
-          <div class="hero-badge mb-8 animate-fade-up">
-            <span class="accent-dot"></span>
-            <span>What's Coming</span>
-          </div>
-
-          <h1 class="heading-page animate-fade-up-delay-1">
-            Feature <span class="text-gradient">Roadmap</span>
-          </h1>
-
-          <p class="text-lg md:text-xl text-muted-foreground mb-12 animate-fade-up-delay-2">
-            We're building tools to make civic engagement easier. Here's what we're working on.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <div class="divider-civic"></div>
-
-    <section class="section-content">
-      <div class="container-page">
-        <div class="container-medium space-y-12">
-          <section aria-labelledby="completed-heading">
-            <h2 id="completed-heading" class="roadmap-badge-completed">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13l4 4L19 7"></path>
-              </svg>
-              Completed
-            </h2>
-            <div class="space-y-4">
-              {
-                completed.map((feature) => (
-                  <div class="roadmap-item">
-                    <div class="roadmap-circle-completed">
-                      <svg
-                        class="w-4 h-4 text-green-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-primary">{feature.name}</h3>
-                      <p class="text-caption">{feature.description}</p>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </section>
-
-          <section aria-labelledby="upnext-heading">
-            <h2 id="upnext-heading" class="roadmap-badge-upnext">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-              </svg>
-              Up Next
-            </h2>
-            <div class="space-y-4">
-              {
-                upNext.map((feature) => (
-                  <div class="roadmap-item">
-                    <div class="roadmap-circle-upnext">
-                      <svg
-                        class="w-4 h-4 text-blue-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-primary">{feature.name}</h3>
-                      <p class="text-caption">{feature.description}</p>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </section>
-
-          <section aria-labelledby="planned-heading">
-            <h2 id="planned-heading" class="roadmap-badge-planned">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                ></path>
-              </svg>
-              Planned
-            </h2>
-            <div class="space-y-4">
-              {
-                planned.map((feature) => (
-                  <div class="roadmap-item">
-                    <div class="roadmap-circle-planned">
-                      <svg
-                        class="w-4 h-4 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-primary">{feature.name}</h3>
-                      <p class="text-caption">{feature.description}</p>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </section>
-
-          <section aria-labelledby="future-heading">
-            <h2 id="future-heading" class="roadmap-badge-future">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                ></path>
-              </svg>
-              Future
-            </h2>
-            <div class="space-y-4">
-              {
-                future.map((feature) => (
-                  <div class="roadmap-item">
-                    <div class="roadmap-circle-future">
-                      <svg
-                        class="w-4 h-4 text-purple-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-primary">{feature.name}</h3>
-                      <p class="text-caption">{feature.description}</p>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </section>
-        </div>
-      </div>
-    </section>
-
-    <section class="section-cta">
-      <div class="cta-grid-pattern" aria-hidden="true">
-        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
-          </pattern>
-          <rect width="100" height="100" fill="url(#grid)"></rect>
-        </svg>
-      </div>
-
-      <div class="container-page relative">
-        <div class="container-medium text-center">
-          <div class="icon-box-accent mb-8">
-            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="space-y-12">
+        <section aria-labelledby="completed-heading">
+          <h2 id="completed-heading" class="roadmap-badge-completed">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              ></path>
+                stroke-width="2"
+                d="M5 13l4 4L19 7"></path>
             </svg>
+            Completed
+          </h2>
+          <div class="space-y-4">
+            {
+              completed.map((feature) => (
+                <div class="roadmap-item">
+                  <div class="roadmap-circle-completed">
+                    <svg
+                      class="w-4 h-4 text-green-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-primary">{feature.name}</h3>
+                    <p class="text-caption">{feature.description}</p>
+                  </div>
+                </div>
+              ))
+            }
           </div>
+        </section>
 
-          <h2 class="heading-section text-primary-foreground mb-6">Have a Feature Idea?</h2>
-          <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
-            We'd love to hear your suggestions for making civic engagement easier. Share your ideas
-            on GitHub Discussions.
-          </p>
-
-          <a
-            href="https://github.com/anomalousventures/democracy-direct/discussions"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="link-accent"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-              ></path>
-            </svg>
-            <span>Suggest a Feature</span>
+        <section aria-labelledby="upnext-heading">
+          <h2 id="upnext-heading" class="roadmap-badge-upnext">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+            Up Next
+          </h2>
+          <div class="space-y-4">
+            {
+              upNext.map((feature) => (
+                <div class="roadmap-item">
+                  <div class="roadmap-circle-upnext">
+                    <svg
+                      class="w-4 h-4 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-primary">{feature.name}</h3>
+                    <p class="text-caption">{feature.description}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section aria-labelledby="planned-heading">
+          <h2 id="planned-heading" class="roadmap-badge-planned">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               ></path>
             </svg>
-          </a>
-        </div>
+            Planned
+          </h2>
+          <div class="space-y-4">
+            {
+              planned.map((feature) => (
+                <div class="roadmap-item">
+                  <div class="roadmap-circle-planned">
+                    <svg
+                      class="w-4 h-4 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-primary">{feature.name}</h3>
+                    <p class="text-caption">{feature.description}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section aria-labelledby="future-heading">
+          <h2 id="future-heading" class="roadmap-badge-future">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              ></path>
+            </svg>
+            Future
+          </h2>
+          <div class="space-y-4">
+            {
+              future.map((feature) => (
+                <div class="roadmap-item">
+                  <div class="roadmap-circle-future">
+                    <svg
+                      class="w-4 h-4 text-purple-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-primary">{feature.name}</h3>
+                    <p class="text-caption">{feature.description}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </section>
       </div>
-    </section>
+    </PageSection>
+
+    <PageSection variant="cta" divider>
+      <div class="text-center">
+        <div class="icon-box-accent mb-8">
+          <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+            ></path>
+          </svg>
+        </div>
+
+        <h2 class="heading-section text-primary-foreground mb-6">Have a Feature Idea?</h2>
+        <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
+          We'd love to hear your suggestions for making civic engagement easier. Share your ideas on
+          GitHub Discussions.
+        </p>
+
+        <a
+          href="https://github.com/anomalousventures/democracy-direct/discussions"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="link-accent"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+            ></path>
+          </svg>
+          <span>Suggest a Feature</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
+            ></path>
+          </svg>
+        </a>
+      </div>
+    </PageSection>
   </main>
 
   <Footer currentPath="/roadmap" />

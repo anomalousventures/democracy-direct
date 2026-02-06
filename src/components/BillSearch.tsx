@@ -7,6 +7,7 @@ import { BillCard } from "./BillCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 
 interface SearchResponse {
   bills: BillWithSponsor[];
@@ -228,7 +229,7 @@ export function BillSearch() {
     selectedSubjects.length > 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
@@ -251,32 +252,24 @@ export function BillSearch() {
         )}
       </div>
 
-      {/* Congress Filter */}
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
-          Congress
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {[119, 118, 117].map((c) => (
-            <Toggle
-              key={c}
-              variant="outline"
-              size="sm"
-              pressed={congress === c}
-              onPressedChange={() => setCongress(congress === c ? null : c)}
-              className="px-4 py-2 text-sm font-medium rounded-sm border-2 border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-md"
-            >
-              {c}th
-            </Toggle>
-          ))}
-        </div>
-      </fieldset>
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {[119, 118, 117].map((c) => (
+          <Toggle
+            key={c}
+            variant="outline"
+            size="sm"
+            pressed={congress === c}
+            onPressedChange={() => setCongress(congress === c ? null : c)}
+            className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
+          >
+            {c}
+            {getOrdinalSuffix(c)}
+          </Toggle>
+        ))}
 
-      {/* Bill Type Filter */}
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
-          Bill Type
-        </legend>
+        <div className="w-px h-6 bg-border mx-1" aria-hidden="true" />
+
         <div className="flex flex-wrap gap-2" data-testid="type-filter">
           {BILL_TYPES.map(({ value, label }) => (
             <Toggle
@@ -285,19 +278,15 @@ export function BillSearch() {
               size="sm"
               pressed={selectedTypes.includes(value)}
               onPressedChange={() => toggleType(value)}
-              className="px-4 py-2 text-sm font-medium rounded-sm border-2 border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-md"
+              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
             >
               {label}
             </Toggle>
           ))}
         </div>
-      </fieldset>
 
-      {/* Status Filter */}
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
-          Status
-        </legend>
+        <div className="w-px h-6 bg-border mx-1" aria-hidden="true" />
+
         <div className="flex flex-wrap gap-2" data-testid="status-filter">
           {BILL_STATUSES.map(({ value, label }) => (
             <Toggle
@@ -306,35 +295,30 @@ export function BillSearch() {
               size="sm"
               pressed={selectedStatuses.includes(value)}
               onPressedChange={() => toggleStatus(value)}
-              className="px-4 py-2 text-sm font-medium rounded-sm border-2 border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-md"
+              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
             >
               {label}
             </Toggle>
           ))}
         </div>
-      </fieldset>
+      </div>
 
-      {/* Subject Filter */}
+      {/* Topic Filter */}
       {availableSubjects.length > 0 && (
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
-            Topics
-          </legend>
-          <div className="flex flex-wrap gap-2" data-testid="subject-filter">
-            {availableSubjects.slice(0, 12).map((subject) => (
-              <Toggle
-                key={subject}
-                variant="outline"
-                size="sm"
-                pressed={selectedSubjects.includes(subject)}
-                onPressedChange={() => toggleSubject(subject)}
-                className="px-4 py-2 text-sm font-medium rounded-sm border-2 border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-md"
-              >
-                {subject}
-              </Toggle>
-            ))}
-          </div>
-        </fieldset>
+        <div className="flex flex-wrap gap-2" data-testid="subject-filter">
+          {availableSubjects.slice(0, 12).map((subject) => (
+            <Toggle
+              key={subject}
+              variant="outline"
+              size="sm"
+              pressed={selectedSubjects.includes(subject)}
+              onPressedChange={() => toggleSubject(subject)}
+              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
+            >
+              {subject}
+            </Toggle>
+          ))}
+        </div>
       )}
 
       {/* Active Filters Bar */}

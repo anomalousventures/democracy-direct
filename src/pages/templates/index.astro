@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import PageSection from "@/components/PageSection.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroAlert from "@/components/ui/AstroAlert.astro";
 import { TemplateSearch } from "@/components/TemplateSearch";
@@ -42,48 +44,45 @@ if (repBioguideId) {
   <Header currentPath="/templates" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
-    <div class="container-page">
-      <div class="container-wide">
-        {
-          repBioguideId && repName && (
-            <AstroAlert variant="info" class="mb-6">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p class="text-sm text-primary">
-                  Choosing a template to contact <span class="font-semibold">{repName}</span>
-                </p>
-                <a
-                  href={`/rep/${repBioguideId}`}
-                  class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-accent transition-colors"
-                >
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Return without template
-                </a>
-              </div>
-            </AstroAlert>
-          )
-        }
+    <PageSection width="wide">
+      {
+        repBioguideId && repName && (
+          <AstroAlert variant="info" class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p class="text-sm text-primary">
+                Choosing a template to contact <span class="font-semibold">{repName}</span>
+              </p>
+              <a
+                href={`/rep/${repBioguideId}`}
+                class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-accent transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Return without template
+              </a>
+            </div>
+          </AstroAlert>
+        )
+      }
 
-        <div class="text-center mb-12">
-          <h1 class="heading-section">Letter Templates</h1>
-          <p class="text-body max-w-2xl mx-auto mb-6">
-            Browse community-contributed letter templates for common issues. Use them as a starting
-            point or inspiration for your own message to Congress.
-          </p>
-          <AstroButton href="/templates/new">Create New Template</AstroButton>
-        </div>
+      <PageHeader
+        title="Letter Templates"
+        gradientWord="Templates"
+        description="Browse community-contributed letter templates for common issues. Use them as a starting point or inspiration for your own message to Congress."
+      >
+        <AstroButton href="/templates/new">Create New Template</AstroButton>
+      </PageHeader>
 
-        <div data-testid="template-list">
-          <TemplateSearch client:load repBioguideId={repBioguideId} />
-        </div>
+      <div data-testid="template-list">
+        <TemplateSearch client:load repBioguideId={repBioguideId} />
       </div>
-    </div>
+    </PageSection>
   </main>
 
   <Footer currentPath="/templates" />
