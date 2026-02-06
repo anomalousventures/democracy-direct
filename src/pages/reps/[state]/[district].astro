@@ -145,7 +145,7 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
                         <img
                           src={getPhotoUrl(rep.bioguideId)}
                           alt={`${rep.firstName} ${rep.lastName}`}
-                          class="w-full h-full object-cover object-top"
+                          class="w-full h-full object-cover object-top relative z-10"
                           loading="lazy"
                           onerror="this.style.display='none'"
                         />
