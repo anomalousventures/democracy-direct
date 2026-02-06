@@ -127,14 +127,13 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
             <span className="text-sm font-semibold text-accent">{displayNumber}</span>
             <StatusBadge status={bill.status as BillStatus} />
             <span className="text-xs text-muted-foreground">
-              {bill.congress}
-              {getOrdinalSuffix(bill.congress)} Congress
+              {`${bill.congress}${getOrdinalSuffix(bill.congress)} Congress`}
             </span>
           </div>
 
           <a
             href={billPageUrl}
-            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
+            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2 after:absolute after:inset-0"
           >
             {bill.title}
           </a>
@@ -147,7 +146,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
               {bill.summary!.length > 200 && (
                 <button
                   onClick={toggleExpand}
-                  className="inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
+                  className="relative z-10 inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
                 >
                   <Icon
                     name="chevron-down"
@@ -175,7 +174,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
               <a
                 href={`/rep/${bill.sponsorBioguideId}`}
-                className="text-sm text-primary hover:text-accent transition-colors"
+                className="relative z-10 text-sm text-primary hover:text-accent transition-colors"
               >
                 {bill.sponsorName}
                 {bill.sponsorParty && bill.sponsorState && (
@@ -193,7 +192,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
                 href={bill.congressGovUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="relative z-10 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
               >
                 Congress.gov
                 <Icon name="external-link" className="w-3 h-3 opacity-60" />

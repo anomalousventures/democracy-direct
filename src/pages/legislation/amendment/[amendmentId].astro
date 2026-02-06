@@ -145,8 +145,7 @@ const congressGovUrl = amendment
                   </span>
                 </div>
                 <p class="text-sm text-muted-foreground mb-4">
-                  {amendment.congress}
-                  {getOrdinalSuffix(amendment.congress)} Congress
+                  {`${amendment.congress}${getOrdinalSuffix(amendment.congress)} Congress`}
                   {parentBillLink && (
                     <>
                       {" "}

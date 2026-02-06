@@ -75,8 +75,29 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
     }
   }, [state, district, isLoggedIn, capture, districtStorage]);
 
-  if (isLoading || isSaved) {
+  if (isLoading) {
     return null;
+  }
+
+  if (isSaved) {
+    return (
+      <div
+        className="p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-md"
+        data-testid="save-district-success"
+      >
+        <div className="flex items-center gap-3">
+          <Icon name="check-circle" className="w-5 h-5 text-emerald-600" />
+          <div>
+            <p className="font-semibold text-emerald-800">District saved!</p>
+            <p className="text-sm text-emerald-700 mt-0.5">
+              {isLoggedIn
+                ? `${displayText} has been saved to your account.`
+                : `${displayText} has been saved for your next visit.`}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

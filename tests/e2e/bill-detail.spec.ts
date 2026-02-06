@@ -14,13 +14,13 @@ test.describe("Bill Detail Page", () => {
   test("displays bill number badge", async ({ page }) => {
     await page.goto(BILL_URL);
 
-    await expect(page.getByText("H.R.9999")).toBeVisible();
+    await expect(page.getByText("H.R.9999", { exact: true })).toBeVisible();
   });
 
   test("displays status badge", async ({ page }) => {
     await page.goto(BILL_URL);
 
-    await expect(page.getByText("Introduced")).toBeVisible();
+    await expect(page.locator("span").filter({ hasText: "Introduced" }).first()).toBeVisible();
   });
 
   test("displays congress and chamber info", async ({ page }) => {

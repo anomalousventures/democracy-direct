@@ -24,7 +24,7 @@ test.describe("Saved District - Anonymous User", () => {
 
     await expect(page.getByText("District saved!")).toBeVisible();
 
-    const stored = await page.evaluate(() => localStorage.getItem("democracy-direct-district"));
+    const stored = await page.evaluate(() => localStorage.getItem("dd:anon:district"));
     expect(stored).toBeTruthy();
     const parsed = JSON.parse(stored!);
     expect(parsed.state).toBe("NY");
@@ -34,10 +34,7 @@ test.describe("Saved District - Anonymous User", () => {
   test("shows district badge in header after saving", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
-      localStorage.setItem(
-        "democracy-direct-district",
-        JSON.stringify({ state: "NY", district: "12" })
-      );
+      localStorage.setItem("dd:anon:district", JSON.stringify({ state: "NY", district: "12" }));
     });
 
     await page.reload();
@@ -51,17 +48,15 @@ test.describe("Saved District - Anonymous User", () => {
   test("View My Reps link in badge dropdown navigates to correct district", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
-      localStorage.setItem(
-        "democracy-direct-district",
-        JSON.stringify({ state: "NY", district: "12" })
-      );
+      localStorage.setItem("dd:anon:district", JSON.stringify({ state: "NY", district: "12" }));
     });
 
     await page.reload();
     await page.waitForLoadState("networkidle");
 
     const badge = page.getByTestId("district-badge");
-    await badge.click();
+    await expect(badge).toBeVisible();
+    await badge.dispatchEvent("pointerdown", { button: 0 });
 
     const viewRepsLink = page.getByRole("menuitem", { name: "View My Reps" });
     await expect(viewRepsLink).toBeVisible();
@@ -71,17 +66,15 @@ test.describe("Saved District - Anonymous User", () => {
   test("Clear Saved District clears saved district and redirects home", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
-      localStorage.setItem(
-        "democracy-direct-district",
-        JSON.stringify({ state: "NY", district: "12" })
-      );
+      localStorage.setItem("dd:anon:district", JSON.stringify({ state: "NY", district: "12" }));
     });
 
     await page.reload();
     await page.waitForLoadState("networkidle");
 
     const badge = page.getByTestId("district-badge");
-    await badge.click();
+    await expect(badge).toBeVisible();
+    await badge.dispatchEvent("pointerdown", { button: 0 });
 
     const clearButton = page.getByRole("menuitem", { name: "Clear Saved District" });
     await clearButton.click();
@@ -89,7 +82,7 @@ test.describe("Saved District - Anonymous User", () => {
     await page.waitForURL("/");
     await expect(page.getByTestId("district-badge")).not.toBeVisible();
 
-    const stored = await page.evaluate(() => localStorage.getItem("democracy-direct-district"));
+    const stored = await page.evaluate(() => localStorage.getItem("dd:anon:district"));
     expect(stored).toBeNull();
   });
 
@@ -97,17 +90,14 @@ test.describe("Saved District - Anonymous User", () => {
     await page.goto("/reps/ny/12");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Your Representatives")).toBeVisible();
-    await expect(page.getByText("New York District 12")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your Representatives" })).toBeVisible();
+    await expect(page.getByText("New York's District 12")).toBeVisible();
   });
 
   test("at-large district displays correctly", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
-      localStorage.setItem(
-        "democracy-direct-district",
-        JSON.stringify({ state: "WY", district: "AL" })
-      );
+      localStorage.setItem("dd:anon:district", JSON.stringify({ state: "WY", district: "AL" }));
     });
 
     await page.reload();

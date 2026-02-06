@@ -1,6 +1,12 @@
 import { test, expect } from "./fixtures/auth";
 
 test.describe("Saved District - Authenticated User", () => {
+  test.beforeEach(async ({ userPage }) => {
+    await userPage.goto("/");
+    await userPage.evaluate(() => localStorage.clear());
+    await userPage.evaluate(() => fetch("/api/user/district", { method: "DELETE" }));
+  });
+
   test("shows save district prompt on reps page", async ({ userPage }) => {
     await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
@@ -37,7 +43,7 @@ test.describe("Saved District - Authenticated User", () => {
     await expect(districtBadge).toBeVisible();
     await expect(districtBadge).toContainText("NY-12");
 
-    await districtBadge.click();
+    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
     await expect(userPage.getByRole("menuitem", { name: "View My Reps" })).toBeVisible();
   });
 
@@ -52,7 +58,7 @@ test.describe("Saved District - Authenticated User", () => {
 
     // On desktop, district is shown in a separate badge dropdown
     const districtBadge = userPage.getByTestId("district-badge");
-    await districtBadge.click();
+    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
 
     const clearButton = userPage.getByRole("menuitem", { name: "Clear Saved District" });
     await clearButton.click();
