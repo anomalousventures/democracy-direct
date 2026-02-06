@@ -1,6 +1,8 @@
 # Legislation Search
 
-## Status: Ready
+## Status: In Progress
+
+**Bill Search Page**: Complete — implemented at `/bills` with `BillSearch` component. Needs migration to `/legislation` and acceptance criteria review.
 
 ## Problem Statement
 

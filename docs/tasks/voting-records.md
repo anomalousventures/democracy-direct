@@ -4,6 +4,7 @@
 
 **PR #1 (Shared Infrastructure)**: Merged (#50)
 **PR #2 (Voting Records Data Layer)**: Merged (#51) - schema, sync script, queries, GitHub Action complete
+**UI Components (Epic 4)**: Complete - VotingRecord, RepTabs, ContactInfo components, unit and E2E tests
 
 ## Problem Statement
 

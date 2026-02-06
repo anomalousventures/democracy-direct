@@ -536,6 +536,7 @@
       "description": "Add voting records and sponsored bills sections to representative profile pages",
       "totalPoints": 13,
       "prNumber": 4,
+      "status": "complete",
       "dependencies": ["epic-2", "epic-3"],
       "stories": [
         {
@@ -544,6 +545,7 @@
           "description": "As a user, I want to see how my representative voted so that I can understand their positions on issues.",
           "points": 3,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["votes-6"],
           "acceptanceCriteria": [
             "Displays list of recent votes for the representative",
@@ -569,6 +571,7 @@
           "description": "As a user, I want to see bills my representative has sponsored so that I can understand their legislative priorities.",
           "points": 3,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["bills-8"],
           "acceptanceCriteria": [
             "Displays list of bills sponsored by the representative",
@@ -595,6 +598,7 @@
           "description": "As a user, I want tabbed navigation on rep pages so that I can easily switch between contact info, votes, and bills.",
           "points": 5,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["rep-1", "rep-2"],
           "acceptanceCriteria": [
             "Rep page has three tabs: Contact, Voting Record, Sponsored Bills",
@@ -621,6 +625,7 @@
           "description": "As a user, I want to filter votes and bills so that I can find specific topics or types.",
           "points": 2,
           "prNumber": 4,
+          "status": "deferred",
           "dependencies": ["rep-3"],
           "acceptanceCriteria": [
             "VotingRecord has filter dropdown for topic/subject",
@@ -647,6 +652,7 @@
       "description": "Create browse/search pages for legislation with vote breakdowns and rep position displays",
       "totalPoints": 26,
       "prNumber": 5,
+      "status": "in_progress",
       "dependencies": ["epic-2", "epic-3"],
       "stories": [
         {
@@ -655,6 +661,7 @@
           "description": "As a user, I want to browse and search legislation so that I can find bills I care about.",
           "points": 5,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["bills-8"],
           "acceptanceCriteria": [
             "Page at /legislation displays searchable list of bills",
