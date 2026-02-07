@@ -384,5 +384,3 @@ export type Amendment = typeof amendments.$inferSelect;
 export type NewAmendment = typeof amendments.$inferInsert;
 export type SyncCursor = typeof syncCursors.$inferSelect;
 export type NewSyncCursor = typeof syncCursors.$inferInsert;
-
-export * from "./relations";
