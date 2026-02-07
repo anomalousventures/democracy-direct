@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
@@ -6,6 +6,7 @@ import type { BillStatus } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType } from "@/lib/types/legislation";
+import { useScrollShadow } from "@/hooks/useScrollShadow";
 
 export interface SponsoredBillsProps {
   bills: Bill[];
@@ -267,8 +268,7 @@ function EmptyState() {
 
 export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsProps) {
   const [displayCount, setDisplayCount] = useState(10);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { ref: scrollContainerRef, isScrolled } = useScrollShadow();
 
   const visibleBills = useMemo(() => bills.slice(0, displayCount), [bills, displayCount]);
 
@@ -276,18 +276,6 @@ export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsP
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + 10);
-  }, []);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const handleScroll = () => {
-      setIsScrolled(scrollContainer.scrollTop > 0);
-    };
-
-    scrollContainer.addEventListener("scroll", handleScroll);
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (bills.length === 0) {

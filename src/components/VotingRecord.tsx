@@ -1,10 +1,11 @@
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
 import { PositionBadge } from "@/components/vote/PositionBadge";
+import { useScrollShadow } from "@/hooks/useScrollShadow";
 
 export interface VotingRecordProps {
   votes: VoteWithPosition[];
@@ -253,8 +254,7 @@ function EmptyState() {
 
 export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
   const [displayCount, setDisplayCount] = useState(10);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { ref: scrollContainerRef, isScrolled } = useScrollShadow();
 
   const visibleVotes = useMemo(() => votes.slice(0, displayCount), [votes, displayCount]);
 
@@ -262,18 +262,6 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + 10);
-  }, []);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const handleScroll = () => {
-      setIsScrolled(scrollContainer.scrollTop > 0);
-    };
-
-    scrollContainer.addEventListener("scroll", handleScroll);
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (votes.length === 0) {

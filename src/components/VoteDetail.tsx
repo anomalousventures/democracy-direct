@@ -26,10 +26,17 @@ interface VoteData {
   billTitle: string | null;
 }
 
+interface AmendmentContext {
+  url: string;
+  displayNumber: string;
+  purpose: string | null;
+}
+
 interface VoteDetailProps {
   vote: VoteData;
   members: VoteMember[];
   billLink: { url: string; label: string } | null;
+  amendment?: AmendmentContext | null;
 }
 
 function formatDate(dateStr: string): string {
@@ -43,7 +50,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function VoteDetail({ vote, members, billLink }: VoteDetailProps) {
+export function VoteDetail({ vote, members, billLink, amendment }: VoteDetailProps) {
   const chamberLabel = vote.chamber === "house" ? "House" : "Senate";
 
   return (
@@ -87,9 +94,29 @@ export function VoteDetail({ vote, members, billLink }: VoteDetailProps) {
           <p className="mt-4 text-sm">
             <a href={billLink.url} className="text-accent hover:underline font-medium">
               {billLink.label}
-              {vote.billTitle && `: ${vote.billTitle}`}
+              {vote.billTitle ? `: ${vote.billTitle}` : null}
             </a>
+            {!vote.billTitle && (
+              <span className="block mt-1 text-xs text-muted-foreground italic">
+                Bill details are not available yet. Check back as legislative data is updated
+                regularly.
+              </span>
+            )}
           </p>
+        )}
+
+        {amendment && (
+          <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-sm text-sm">
+            <a
+              href={amendment.url}
+              className="font-medium text-purple-800 hover:text-purple-900 transition-colors"
+            >
+              {amendment.displayNumber}
+            </a>
+            {amendment.purpose && (
+              <span className="text-purple-700 ml-1">— {amendment.purpose}</span>
+            )}
+          </div>
         )}
       </div>
 

@@ -383,3 +383,83 @@ export async function getVotesByAmendmentId(db: Database, amendmentId: string): 
     .where(eq(votes.amendmentId, amendmentId))
     .orderBy(desc(votes.date));
 }
+
+export interface BillVoteSummary {
+  id: string;
+  rollCall: number;
+  chamber: string;
+  congress: number;
+  session: number;
+  date: Date;
+  question: string;
+  result: string;
+  yeas: number;
+  nays: number;
+  notVoting: number;
+  present: number;
+  sourceUrl: string | null;
+  amendmentId: string | null;
+  amendmentNumber: string | null;
+  amendmentPurpose: string | null;
+}
+
+export async function getVoteSummariesForBill(
+  db: Database,
+  billId: string
+): Promise<{ billVotes: BillVoteSummary[]; amendmentVotes: BillVoteSummary[] }> {
+  const results = await db
+    .select({
+      id: votes.id,
+      rollCall: votes.rollCall,
+      chamber: votes.chamber,
+      congress: votes.congress,
+      session: votes.session,
+      date: votes.date,
+      question: votes.question,
+      result: votes.result,
+      yeas: votes.yeas,
+      nays: votes.nays,
+      notVoting: votes.notVoting,
+      present: votes.present,
+      sourceUrl: votes.sourceUrl,
+      amendmentId: votes.amendmentId,
+      amendmentNumber: amendments.amendmentNumber,
+      amendmentPurpose: amendments.purpose,
+    })
+    .from(votes)
+    .leftJoin(amendments, eq(votes.amendmentId, amendments.id))
+    .where(eq(votes.billId, billId))
+    .orderBy(desc(votes.date));
+
+  const billVotes: BillVoteSummary[] = [];
+  const amendmentVotes: BillVoteSummary[] = [];
+
+  for (const row of results) {
+    const summary: BillVoteSummary = {
+      id: row.id,
+      rollCall: row.rollCall,
+      chamber: row.chamber,
+      congress: row.congress,
+      session: row.session,
+      date: row.date,
+      question: row.question,
+      result: row.result,
+      yeas: row.yeas,
+      nays: row.nays,
+      notVoting: row.notVoting,
+      present: row.present,
+      sourceUrl: row.sourceUrl,
+      amendmentId: row.amendmentId,
+      amendmentNumber: row.amendmentNumber,
+      amendmentPurpose: row.amendmentPurpose,
+    };
+
+    if (row.amendmentId) {
+      amendmentVotes.push(summary);
+    } else {
+      billVotes.push(summary);
+    }
+  }
+
+  return { billVotes, amendmentVotes };
+}

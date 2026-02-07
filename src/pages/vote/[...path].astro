@@ -10,10 +10,12 @@ import Icon from "@/components/icons/Icon.astro";
 import PageSection from "@/components/PageSection.astro";
 import { createDb } from "@/db/client";
 import { getVoteByRollCall, getMemberVotesForVote } from "@/db/queries/votes";
+import { getAmendmentById } from "@/db/queries/amendments";
 import { VoteDetail } from "@/components/VoteDetail";
 import BillTemplateCtas from "@/components/BillTemplateCtas.astro";
 import { getBillPageUrl, parseBillNumber } from "@/lib/bill-utils";
-import type { Chamber, VotePosition } from "@/lib/types/legislation";
+import { getAmendmentPageUrl } from "@/lib/amendment-utils";
+import type { Chamber, VotePosition, AmendmentType } from "@/lib/types/legislation";
 import type { Vote } from "@/db/schema";
 import type { VoteMember } from "@/lib/types/vote";
 import { getConfig } from "@/lib/config";
@@ -25,6 +27,7 @@ const { path } = Astro.params;
 let vote: Vote | null = null;
 let members: VoteMember[] = [];
 let billLink: { url: string; label: string } | null = null;
+let amendmentContext: { url: string; displayNumber: string; purpose: string | null } | null = null;
 let error: string | null = null;
 
 const segments = path?.split("/") ?? [];
@@ -81,6 +84,21 @@ if (segments.length !== 4) {
                 vote.congress
               ),
               label: vote.billNumber,
+            };
+          }
+        }
+
+        if (vote.amendmentId) {
+          const amdt = await getAmendmentById(db, vote.amendmentId);
+          if (amdt) {
+            amendmentContext = {
+              url: getAmendmentPageUrl(
+                amdt.amendmentType as AmendmentType,
+                amdt.amendmentNumber,
+                amdt.congress
+              ),
+              displayNumber: `${amdt.amendmentType.toUpperCase()}.Amdt.${amdt.amendmentNumber}`,
+              purpose: amdt.purpose ?? amdt.description,
             };
           }
         }
@@ -162,6 +180,7 @@ const pageTitle = vote
                 }}
                 members={members}
                 billLink={billLink}
+                amendment={amendmentContext}
               />
 
               {vote.billNumber && (

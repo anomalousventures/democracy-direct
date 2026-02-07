@@ -10,22 +10,19 @@ import Icon from "@/components/icons/Icon.astro";
 import PageSection from "@/components/PageSection.astro";
 import { createDb } from "@/db/client";
 import { getAmendmentByNumber, type AmendmentWithRelations } from "@/db/queries/amendments";
-import { getVotesByAmendmentId, getMemberVotesForVote } from "@/db/queries/votes";
+import { getVotesByAmendmentId } from "@/db/queries/votes";
 import { parseAmendmentId, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
 import { getBillPageUrl, BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
 import type { BillType } from "@/lib/types/legislation";
-import { getOrdinalSuffix } from "@/lib/legislator-utils";
-import { VoteDetail } from "@/components/VoteDetail";
-import type { Chamber, VotePosition } from "@/lib/types/legislation";
 import type { Vote } from "@/db/schema";
-import type { VoteMember } from "@/lib/types/vote";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
 const { amendmentId } = Astro.params;
 
 let amendment: AmendmentWithRelations | null = null;
-let amendmentVotes: Array<{ vote: Vote; members: VoteMember[] }> = [];
+let votes: Vote[] = [];
 let parentBillLink: { url: string; label: string; title: string } | null = null;
 let error: string | null = null;
 
@@ -47,20 +44,7 @@ if (!amendmentId) {
         Astro.response.status = 404;
         error = "Amendment not found.";
       } else {
-        const votes = await getVotesByAmendmentId(db, amendment.id);
-        for (const vote of votes) {
-          const rawMembers = await getMemberVotesForVote(db, vote.id);
-          amendmentVotes.push({
-            vote,
-            members: rawMembers.map((mv) => ({
-              bioguideId: mv.bioguideId,
-              name: mv.legislator.fullName,
-              party: mv.legislator.party,
-              state: mv.legislator.state,
-              position: mv.position as VotePosition,
-            })),
-          });
-        }
+        votes = await getVotesByAmendmentId(db, amendment.id);
 
         if (amendment.amendedBill) {
           const displayName = BILL_TYPE_DISPLAY_NAMES[amendment.amendedBill.billType as BillType];
@@ -96,6 +80,29 @@ const congressGovUrl = amendment
       parseInt(amendment.amendmentNumber, 10)
     ))
   : null;
+
+function formatDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function getResultStyle(result: string): string {
+  const lower = result.toLowerCase();
+  if (lower.includes("passed") || lower.includes("agreed")) {
+    return "bg-green-50 text-green-700";
+  }
+  if (lower.includes("failed") || lower.includes("rejected")) {
+    return "bg-red-50 text-red-700";
+  }
+  return "bg-gray-50 text-gray-600";
+}
+
+const DATA_PENDING_TEXT = "Check back as legislative data is updated regularly.";
 ---
 
 <Layout
@@ -163,16 +170,20 @@ const congressGovUrl = amendment
                   )}
                 </p>
 
-                {(amendment.description || amendment.purpose) && (
+                {amendment.description || amendment.purpose ? (
                   <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-primary max-w-4xl mx-auto leading-tight">
                     {amendment.description || amendment.purpose}
                   </h1>
+                ) : (
+                  <p class="text-sm text-muted-foreground italic max-w-lg mx-auto">
+                    Amendment details are not available yet. {DATA_PENDING_TEXT}
+                  </p>
                 )}
               </div>
 
               <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
                 <div class="space-y-6">
-                  {amendment.sponsor && (
+                  {amendment.sponsor ? (
                     <div class="flex items-center gap-3">
                       <span class="text-sm text-muted-foreground">Sponsored by</span>
                       <a
@@ -187,6 +198,10 @@ const congressGovUrl = amendment
                         )}
                       </a>
                     </div>
+                  ) : (
+                    <p class="text-sm text-muted-foreground italic">
+                      Sponsor information is not available yet. {DATA_PENDING_TEXT}
+                    </p>
                   )}
 
                   {amendment.latestActionText && (
@@ -206,33 +221,73 @@ const congressGovUrl = amendment
                     </div>
                   )}
 
-                  {amendmentVotes.length > 0 && (
-                    <div class="space-y-6">
+                  {votes.length > 0 && (
+                    <div class="space-y-4">
                       <h2 class="text-lg font-semibold text-primary">Roll Call Votes</h2>
-                      {amendmentVotes.map(({ vote, members }) => (
-                        <VoteDetail
-                          client:load
-                          vote={{
-                            id: vote.id,
-                            rollCall: vote.rollCall,
-                            chamber: vote.chamber as Chamber,
-                            congress: vote.congress,
-                            session: vote.session,
-                            date: vote.date.toISOString(),
-                            question: vote.question,
-                            result: vote.result,
-                            yeas: vote.yeas,
-                            nays: vote.nays,
-                            notVoting: vote.notVoting,
-                            present: vote.present,
-                            sourceUrl: vote.sourceUrl,
-                            billNumber: vote.billNumber,
-                            billTitle: vote.billTitle,
-                          }}
-                          members={members}
-                          billLink={null}
-                        />
-                      ))}
+                      {votes.map((vote) => {
+                        const voteDetailUrl = `/vote/${vote.chamber}/${vote.congress}/${vote.session}/${vote.rollCall}`;
+                        const vChamberLabel = vote.chamber === "house" ? "House" : "Senate";
+                        return (
+                          <article class="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
+                            <div class="flex flex-col gap-2">
+                              <div class="flex flex-wrap items-center gap-2">
+                                <a
+                                  href={voteDetailUrl}
+                                  class="text-xs text-muted-foreground uppercase tracking-wide hover:text-primary transition-colors"
+                                >
+                                  {vChamberLabel} Roll Call #{vote.rollCall}
+                                </a>
+                                <span
+                                  class:list={[
+                                    "px-2 py-0.5 text-xs rounded-sm font-medium",
+                                    getResultStyle(vote.result),
+                                  ]}
+                                >
+                                  {vote.result}
+                                </span>
+                              </div>
+
+                              <a
+                                href={voteDetailUrl}
+                                class="font-medium text-primary hover:text-accent transition-colors line-clamp-2"
+                              >
+                                {vote.question}
+                              </a>
+
+                              <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span class="text-green-600 font-medium">{vote.yeas} Yea</span>
+                                <span class="text-red-600 font-medium">{vote.nays} Nay</span>
+                                {vote.notVoting > 0 && <span>{vote.notVoting} Not Voting</span>}
+                                {vote.present > 0 && <span>{vote.present} Present</span>}
+                              </div>
+
+                              <div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                                <span class="flex items-center gap-1.5">
+                                  <Icon name="calendar" class="w-3.5 h-3.5" />
+                                  {formatDate(vote.date)}
+                                </span>
+                                {vote.sourceUrl && (
+                                  <a
+                                    href={vote.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                                  >
+                                    Official record
+                                    <Icon name="external-link" class="w-3 h-3 opacity-60" />
+                                  </a>
+                                )}
+                                <a
+                                  href={voteDetailUrl}
+                                  class="text-primary hover:text-accent font-medium transition-colors"
+                                >
+                                  View full details
+                                </a>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   )}
 
