@@ -877,6 +877,7 @@
       "description": "Enable linking templates to bills with autocomplete picker, auto-detection, and filtering",
       "totalPoints": 18,
       "prNumber": 6,
+      "status": "complete",
       "dependencies": ["epic-3"],
       "stories": [
         {
@@ -885,6 +886,7 @@
           "description": "As a developer, I want a linkedBillNumbers field on templates so that I can associate templates with legislation.",
           "points": 2,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": [],
           "acceptanceCriteria": [
             "templates table has linkedBillNumbers column (json, string array, nullable)",
@@ -908,6 +910,7 @@
           "description": "As a template author, I want to search and select bills so that I can link my template to relevant legislation.",
           "points": 5,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["bills-8", "tpl-1"],
           "acceptanceCriteria": [
             "Text input with autocomplete dropdown",
@@ -935,6 +938,7 @@
           "description": "As a template author, I want the bill picker in create/edit forms so that I can link bills when writing templates.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-2"],
           "acceptanceCriteria": [
             "BillPicker appears on template create form (/templates/new)",
@@ -963,6 +967,7 @@
           "description": "As a template author, I want the system to detect bill numbers in my text so that I don't forget to link mentioned bills.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["infra-4", "tpl-3"],
           "acceptanceCriteria": [
             "detectBillNumbers(text) function returns array of found bill numbers",
@@ -988,6 +993,7 @@
           "description": "As a user, I want to find templates about a specific bill so that I can use or adapt them for my letter.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-1"],
           "acceptanceCriteria": [
             "/templates?bill=H.R.1234 filters to templates linked to that bill",
@@ -1016,6 +1022,7 @@
           "description": "As a user coming from a bill page, I want the bill pre-selected when creating a template so that I don't have to search for it again.",
           "points": 2,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-3"],
           "acceptanceCriteria": [
             "/templates/new?bill=H.R.1234 pre-selects the bill in BillPicker",
