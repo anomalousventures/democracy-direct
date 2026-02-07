@@ -12,7 +12,9 @@ const createUrl = `/templates/new?bill=${encodeURIComponent(billNumber)}`;
 ---
 
 <div class="flex flex-wrap items-center gap-3 p-4 bg-secondary/50 border border-border rounded-sm">
-  <p class="text-sm font-medium text-primary mr-auto">Take action on {billNumber}</p>
+  <p class="text-sm font-medium text-primary flex-1 basis-full sm:basis-auto">
+    Take action on {billNumber}
+  </p>
   <AstroButton href={searchUrl} variant="outline" size="sm">
     <Icon name="search" class="w-4 h-4 mr-1.5" />
     Browse templates
