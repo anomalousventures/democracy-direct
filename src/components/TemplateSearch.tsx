@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Toggle } from "./ui/toggle";
@@ -30,6 +30,8 @@ interface SearchResponse {
 
 interface TemplateSearchProps {
   repBioguideId?: string | null;
+  billFilter?: string | null;
+  billTitle?: string | null;
 }
 
 function TemplateCardSkeleton() {
@@ -80,7 +82,7 @@ function LoadingSpinner({ className }: { className?: string }) {
   );
 }
 
-export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
+export function TemplateSearch({ repBioguideId, billFilter, billTitle }: TemplateSearchProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,7 +94,6 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
   const [error, setError] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const isInitialMount = useRef(true);
 
   const fetchTemplates = useCallback(
     async (nextCursor?: string, append = false) => {
@@ -116,6 +117,10 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
 
       if (selectedTags.length > 0) {
         params.set("tags", selectedTags.join(","));
+      }
+
+      if (billFilter) {
+        params.set("bill", billFilter);
       }
 
       try {
@@ -143,15 +148,10 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
         setIsLoadingMore(false);
       }
     },
-    [debouncedSearch, selectedTags]
+    [debouncedSearch, selectedTags, billFilter]
   );
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      fetchTemplates();
-      return;
-    }
     fetchTemplates();
   }, [debouncedSearch, selectedTags, fetchTemplates]);
 
@@ -176,15 +176,29 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
     setSelectedTags([]);
   }, []);
 
-  const getBodyPreview = (body: string): string => {
-    return getPreviewLines(body, 3);
-  };
-
   const hasActiveFilters = searchQuery.trim() || selectedTags.length > 0;
-  const totalCount = templates.length;
 
   return (
     <div className="space-y-8">
+      {billFilter && (
+        <div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-accent/5 border border-accent/20 rounded-sm"
+          data-testid="bill-filter-banner"
+        >
+          <p className="text-sm text-primary">
+            Showing templates linked to{" "}
+            <span className="font-semibold text-accent">{billFilter}</span>
+            {billTitle && <span className="text-muted-foreground"> — {billTitle}</span>}
+          </p>
+          <a
+            href="/templates"
+            className="text-sm font-medium text-primary hover:text-accent transition-colors"
+          >
+            Show all templates
+          </a>
+        </div>
+      )}
+
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
           <SearchIcon className="h-5 w-5 text-muted-foreground" />
@@ -243,8 +257,8 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
               "Searching..."
             ) : (
               <>
-                <span className="font-semibold text-primary">{totalCount}</span>{" "}
-                {totalCount === 1 ? "template" : "templates"} found
+                <span className="font-semibold text-primary">{templates.length}</span>{" "}
+                {templates.length === 1 ? "template" : "templates"} found
                 {hasMore && !isLoading && " (scroll for more)"}
               </>
             )}
@@ -289,7 +303,6 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
               const templateUrl = repBioguideId
                 ? `/templates/${template.slug}?rep=${repBioguideId}`
                 : `/templates/${template.slug}`;
-              const popularity = template.viewCount + template.useCount;
 
               return (
                 <Card
@@ -306,7 +319,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
                       {template.title}
                     </h2>
                     <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-                      {template.description || getBodyPreview(template.body)}
+                      {template.description ?? getPreviewLines(template.body, 3)}
                     </p>
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex flex-wrap gap-2 min-w-0">
@@ -344,7 +357,7 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
                           </svg>
                           {template.viewCount.toLocaleString()}
                         </span>
-                        {popularity > 0 && (
+                        {template.useCount > 0 && (
                           <span className="flex items-center gap-1.5 text-accent" title="Uses">
                             <svg
                               className="w-4 h-4"
@@ -410,16 +423,34 @@ export function TemplateSearch({ repBioguideId }: TemplateSearchProps) {
                 />
               </svg>
             </div>
-            <p className="text-muted-foreground text-lg">
-              {hasActiveFilters ? "No templates match your search." : "No templates available yet."}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 text-primary hover:text-accent font-medium transition-colors"
-              >
-                Clear filters and show all
-              </button>
+            {billFilter ? (
+              <>
+                <p className="text-muted-foreground text-lg">
+                  No templates linked to <span className="font-semibold">{billFilter}</span> yet.
+                </p>
+                <a
+                  href={`/templates/new?bill=${encodeURIComponent(billFilter)}`}
+                  className="mt-4 inline-block text-primary hover:text-accent font-medium transition-colors"
+                >
+                  Be the first to write one
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground text-lg">
+                  {hasActiveFilters
+                    ? "No templates match your search."
+                    : "No templates available yet."}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 text-primary hover:text-accent font-medium transition-colors"
+                  >
+                    Clear filters and show all
+                  </button>
+                )}
+              </>
             )}
           </div>
         ) : null}

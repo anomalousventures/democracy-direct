@@ -1,0 +1,1 @@
+ALTER TABLE "templates" ADD COLUMN "linked_bill_numbers" jsonb DEFAULT '[]'::jsonb;

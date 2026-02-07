@@ -12,6 +12,7 @@ import {
   json,
   jsonb,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type {
   AmendmentType,
@@ -114,6 +115,7 @@ export const templates = pgTable(
     description: varchar("description", { length: 200 }),
     body: text("body").notNull(),
     issueTags: json("issue_tags").$type<string[]>().default([]),
+    linkedBillNumbers: jsonb("linked_bill_numbers").$type<string[]>().default([]),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     isPublic: boolean("is_public").notNull().default(false),
     forkedFrom: uuid("forked_from"),
@@ -340,6 +342,29 @@ export const amendments = pgTable(
   ]
 );
 
+export const templateUses = pgTable(
+  "template_uses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => templates.id, { onDelete: "cascade" }),
+    repBioguideId: varchar("rep_bioguide_id", { length: 10 }).notNull(),
+    contactType: varchar("contact_type", { length: 20 }).notNull(),
+    visitorId: uuid("visitor_id").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("template_uses_dedup_idx").on(
+      table.templateId,
+      table.repBioguideId,
+      table.contactType,
+      table.visitorId
+    ),
+    index("template_uses_template_id_idx").on(table.templateId),
+  ]
+);
+
 export const syncCursors = pgTable("sync_cursors", {
   id: varchar("id", { length: 50 }).primaryKey(),
   cursor: text("cursor"),
@@ -384,3 +409,5 @@ export type Amendment = typeof amendments.$inferSelect;
 export type NewAmendment = typeof amendments.$inferInsert;
 export type SyncCursor = typeof syncCursors.$inferSelect;
 export type NewSyncCursor = typeof syncCursors.$inferInsert;
+export type TemplateUse = typeof templateUses.$inferSelect;
+export type NewTemplateUse = typeof templateUses.$inferInsert;

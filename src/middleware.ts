@@ -13,8 +13,65 @@ export interface SessionUser {
   savedDistrict: string | null;
 }
 
+async function getHmacKey(secret: string): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+async function hmacSign(uuid: string, key: CryptoKey): Promise<string> {
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(uuid));
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function hmacVerify(uuid: string, signature: string, key: CryptoKey): Promise<boolean> {
+  const sigBytes = new Uint8Array(signature.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
+  return crypto.subtle.verify("HMAC", key, sigBytes, new TextEncoder().encode(uuid));
+}
+
 export const onRequest = defineMiddleware(async ({ cookies, locals, request }, next) => {
   locals.user = null;
+
+  const cookieSecret =
+    locals.runtime?.env?.VISITOR_COOKIE_SECRET ?? import.meta.env.VISITOR_COOKIE_SECRET;
+
+  if (cookieSecret) {
+    const hmacKey = await getHmacKey(cookieSecret);
+    const existing = cookies.get("visitor_id")?.value;
+    let visitorId: string | null = null;
+
+    if (existing) {
+      const dotIndex = existing.lastIndexOf(".");
+      if (dotIndex > 0) {
+        const uuid = existing.slice(0, dotIndex);
+        const sig = existing.slice(dotIndex + 1);
+        if (await hmacVerify(uuid, sig, hmacKey)) {
+          visitorId = uuid;
+        }
+      }
+    }
+
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      const sig = await hmacSign(visitorId, hmacKey);
+      cookies.set("visitor_id", `${visitorId}.${sig}`, {
+        path: "/",
+        httpOnly: true,
+        secure: !import.meta.env.DEV,
+        sameSite: "strict",
+      });
+    }
+
+    locals.visitorId = visitorId;
+  } else {
+    locals.visitorId = crypto.randomUUID();
+  }
 
   const sessionId = cookies.get("session")?.value;
 

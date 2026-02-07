@@ -1,8 +1,3 @@
-/**
- * Utilities for parsing and normalizing bill numbers.
- * Handles various input formats and converts to standard format.
- */
-
 import type { BillType, ParsedBillNumber } from "@/lib/types/legislation";
 
 export const BILL_TYPE_DISPLAY_NAMES: Record<BillType, string> = {

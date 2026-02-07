@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeBillNumber } from "@/lib/bill-utils";
 
 export type ParseResult<T> =
   | { success: true; data: T }
@@ -28,6 +29,10 @@ export const templateBodySchema = z.object({
   description: z.string().max(200).optional(),
   body: z.string().min(1),
   issueTags: z.array(z.string()).optional(),
+  linkedBillNumbers: z
+    .array(z.string())
+    .transform((arr) => arr.map(normalizeBillNumber).filter((v): v is string => v !== null))
+    .optional(),
   turnstileToken: z.string().optional(),
   forkedFromId: z.string().optional(),
   isPublic: z.boolean().optional(),

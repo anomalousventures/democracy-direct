@@ -26,6 +26,15 @@ import { markdownToPlainText } from "@/lib/markdown";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 type ViewMode = "edit" | "preview" | "print";
+type ContactType = "call" | "contact_form" | "print" | "copy";
+
+function recordTemplateUse(templateSlug: string, repBioguideId: string, contactType: ContactType) {
+  fetch(`/api/templates/${templateSlug}/use`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repBioguideId, contactType }),
+  }).catch(() => {});
+}
 
 interface ContactFlowProps {
   representative: Representative;
@@ -89,13 +98,16 @@ export function ContactFlow({
       const plainText = markdownToPlainText(substitutedContent);
       await navigator.clipboard.writeText(plainText);
       capture("letter_copied", { repBioguideId, repName });
+      if (templateSlug && repBioguideId) {
+        recordTemplateUse(templateSlug, repBioguideId, "copy");
+      }
       toast.success("Copied to clipboard!");
       return true;
     } catch {
       toast.error("Failed to copy to clipboard");
       return false;
     }
-  }, [substitutedContent, capture, repBioguideId, repName]);
+  }, [substitutedContent, capture, repBioguideId, repName, templateSlug]);
 
   const handleContactFormClick = useCallback(async () => {
     const copied = await copyToClipboard();
@@ -106,15 +118,24 @@ export function ContactFlow({
 
   const handleGoToForm = useCallback(() => {
     capture("contact_form_clicked", { repBioguideId, repName });
+    if (templateSlug && repBioguideId) {
+      recordTemplateUse(templateSlug, repBioguideId, "contact_form");
+    }
     setIsRedirectDialogOpen(false);
-  }, [capture, repBioguideId, repName]);
+  }, [capture, repBioguideId, repName, templateSlug]);
 
   const handlePhoneClick = useCallback(() => {
     capture("phone_called", { repBioguideId, repName });
-  }, [capture, repBioguideId, repName]);
+    if (templateSlug && repBioguideId) {
+      recordTemplateUse(templateSlug, repBioguideId, "call");
+    }
+  }, [capture, repBioguideId, repName, templateSlug]);
 
   const handlePrint = useCallback(() => {
     capture("letter_printed", { repBioguideId, repName, templateSlug });
+    if (templateSlug && repBioguideId) {
+      recordTemplateUse(templateSlug, repBioguideId, "print");
+    }
     window.print();
   }, [capture, repBioguideId, repName, templateSlug]);
 

@@ -27,6 +27,7 @@ type PublicTemplateFields = Pick<
   | "description"
   | "body"
   | "issueTags"
+  | "linkedBillNumbers"
   | "viewCount"
   | "useCount"
   | "forkedFrom"
@@ -42,6 +43,7 @@ function filterPublicFields(template: Template): PublicTemplateFields {
     description: template.description,
     body: template.body,
     issueTags: template.issueTags,
+    linkedBillNumbers: template.linkedBillNumbers,
     viewCount: template.viewCount,
     useCount: template.useCount,
     forkedFrom: template.forkedFrom,
@@ -114,7 +116,14 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return badRequest(parseResult.error);
   }
 
-  const { title, description, body: templateBody, issueTags, isPublic } = parseResult.data;
+  const {
+    title,
+    description,
+    body: templateBody,
+    issueTags,
+    linkedBillNumbers,
+    isPublic,
+  } = parseResult.data;
 
   if (!title || !templateBody) {
     return badRequest("Title and body are required");
@@ -152,6 +161,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
         description: description?.trim() ?? null,
         body: templateBody.trim(),
         issueTags: normalizedTags,
+        linkedBillNumbers: linkedBillNumbers ?? [],
         isPublic: isPublic ?? true,
         moderationStatus: "pending",
         moderationScores: null,

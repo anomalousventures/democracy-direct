@@ -30,6 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     description,
     body: templateBody,
     issueTags,
+    linkedBillNumbers,
     turnstileToken,
     isPublic,
   } = parseResult.data;
@@ -89,6 +90,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         description: description?.trim() ?? null,
         body: templateBody.trim(),
         issueTags: normalizedTags,
+        linkedBillNumbers: linkedBillNumbers ?? [],
         userId: user?.id ?? null,
         isPublic: templateIsPublic,
         moderationStatus: "pending",

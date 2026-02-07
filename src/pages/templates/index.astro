@@ -8,9 +8,10 @@ import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroAlert from "@/components/ui/AstroAlert.astro";
 import { TemplateSearch } from "@/components/TemplateSearch";
 import { createDb } from "@/db/client";
-import { legislators } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { legislators, bills } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
+import { normalizeBillNumber, parseBillNumber } from "@/lib/bill-utils";
 
 export const prerender = false;
 
@@ -19,10 +20,15 @@ const rawRepId = Astro.url.searchParams.get("rep");
 const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
 let repName: string | null = null;
 
+const rawBillParam = Astro.url.searchParams.get("bill");
+const billFilter = rawBillParam ? normalizeBillNumber(rawBillParam) : null;
+let billTitle: string | null = null;
+
+const config = getConfig(Astro.locals);
+const db = createDb(config.database.url);
+
 if (repBioguideId) {
   try {
-    const config = getConfig(Astro.locals);
-    const db = createDb(config.database.url);
     const [rep] = await db
       .select({ firstName: legislators.firstName, lastName: legislators.lastName })
       .from(legislators)
@@ -33,6 +39,25 @@ if (repBioguideId) {
     }
   } catch (error) {
     console.error("Failed to load representative:", error);
+  }
+}
+
+if (billFilter) {
+  try {
+    const parsed = parseBillNumber(billFilter);
+    if (parsed) {
+      const [bill] = await db
+        .select({ title: bills.title })
+        .from(bills)
+        .where(and(eq(bills.billType, parsed.type), eq(bills.billNumber, String(parsed.number))))
+        .orderBy(desc(bills.congress))
+        .limit(1);
+      if (bill) {
+        billTitle = bill.title;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to look up bill title:", error);
   }
 }
 ---
@@ -80,7 +105,12 @@ if (repBioguideId) {
       </PageHeader>
 
       <div data-testid="template-list">
-        <TemplateSearch client:load repBioguideId={repBioguideId} />
+        <TemplateSearch
+          client:load
+          repBioguideId={repBioguideId}
+          billFilter={billFilter}
+          billTitle={billTitle}
+        />
       </div>
     </PageSection>
   </main>

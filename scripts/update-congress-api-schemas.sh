@@ -2,7 +2,7 @@
 set -e
 
 # Fetch the latest swagger spec
-curl -sL "https://raw.githubusercontent.com/LibraryOfCongress/api.congress.gov/main/Documentation/swagger.yaml" -o /tmp/congress-api-swagger.yaml
+curl -sL "https://raw.githubusercontent.com/LibraryOfCongress/api.congress.gov/main/Documentation/swagger.yaml" -o /tmp/congress-api-swagger.yaml || { echo 'Failed to download swagger spec'; exit 1; }
 
 # Generate Zod schemas
 npx openapi-zod-client /tmp/congress-api-swagger.yaml -o src/lib/generated/congress-api.ts

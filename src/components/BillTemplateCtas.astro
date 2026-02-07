@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { billNumber } = Astro.props;
-const searchUrl = `/templates?q=${encodeURIComponent(billNumber)}`;
+const searchUrl = `/templates?bill=${encodeURIComponent(billNumber)}`;
 const createUrl = `/templates/new?bill=${encodeURIComponent(billNumber)}`;
 ---
 

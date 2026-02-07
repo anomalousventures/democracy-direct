@@ -120,6 +120,32 @@ describe("PUT /api/templates/[slug]", () => {
     expect(data.error).toBe("Invalid request body");
   });
 
+  it("accepts linkedBillNumbers in PUT body", async () => {
+    const response = await PUT({
+      params: { slug: "test-template" },
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+      request: new Request("http://localhost/api/templates/test-template", {
+        method: "PUT",
+        body: JSON.stringify({
+          title: "Updated Template",
+          body: "This is an updated template body that is long enough to pass validation requirements.",
+          linkedBillNumbers: ["H.R.1234", "S.567"],
+        }),
+      }),
+    } as never);
+
+    expect(response.status).not.toBe(400);
+  });
+
   it("returns 400 for validation errors", async () => {
     const response = await PUT({
       params: { slug: "test-template" },

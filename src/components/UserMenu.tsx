@@ -15,6 +15,7 @@ import { getStateName } from "@/lib/states";
 import { useMe } from "@/hooks/useMe";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { hasLegacyData, hasAnonData, migrateAnonymousData } from "@/lib/storage-migration";
+import { toast } from "sonner";
 
 const publicNavLinks = [
   { href: "/about", label: "About" },
@@ -86,6 +87,7 @@ export function UserMenu() {
       window.location.href = "/";
     } catch (err) {
       console.error("Failed to clear district:", err);
+      toast.error("Failed to clear district");
       setIsClearing(false);
     }
   }, [isLoggedIn, districtStorage]);

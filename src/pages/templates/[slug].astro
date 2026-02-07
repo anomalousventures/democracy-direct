@@ -27,6 +27,7 @@ let template: {
   description: string | null;
   body: string;
   issueTags: string[] | null;
+  linkedBillNumbers: string[] | null;
   isPublic: boolean;
   viewCount: number;
   useCount: number;
@@ -53,6 +54,7 @@ if (!slug) {
         description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
+        linkedBillNumbers: templates.linkedBillNumbers,
         isPublic: templates.isPublic,
         moderationStatus: templates.moderationStatus,
         viewCount: templates.viewCount,
@@ -105,7 +107,7 @@ function getCleanDescription(body: string): string {
 }
 
 const metaDescription = template
-  ? template.description || getCleanDescription(template.body)
+  ? (template.description ?? getCleanDescription(template.body))
   : "Template not found";
 ---
 
@@ -187,6 +189,25 @@ const metaDescription = template
                         {tag}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {template.linkedBillNumbers && template.linkedBillNumbers.length > 0 && (
+                  <div class="mb-6" data-testid="linked-legislation">
+                    <p class="text-sm font-medium text-muted-foreground mb-2">
+                      Related Legislation
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      {template.linkedBillNumbers.map((bill) => (
+                        <a
+                          href={`/templates?bill=${encodeURIComponent(bill)}`}
+                          class="px-3 py-1 text-sm bg-accent/10 text-accent border border-accent/20 rounded hover:bg-accent/20 transition-colors"
+                          data-testid="linked-bill"
+                        >
+                          {bill}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
 

@@ -8,6 +8,7 @@ import {
   userTemplates,
   issueTags,
   templateIssueTags,
+  templateUses,
   legislators,
   bills,
   amendments,
@@ -37,6 +38,7 @@ export const templatesRelations = relations(templates, ({ one, many }) => ({
   flags: many(templateFlags),
   moderationLogs: many(moderationLog),
   issueTags: many(templateIssueTags),
+  uses: many(templateUses),
 }));
 
 export const templateFlagsRelations = relations(templateFlags, ({ one }) => ({
@@ -94,6 +96,13 @@ export const templateIssueTagsRelations = relations(templateIssueTags, ({ one })
   issueTag: one(issueTags, {
     fields: [templateIssueTags.issueTagId],
     references: [issueTags.id],
+  }),
+}));
+
+export const templateUsesRelations = relations(templateUses, ({ one }) => ({
+  template: one(templates, {
+    fields: [templateUses.templateId],
+    references: [templates.id],
   }),
 }));
 
