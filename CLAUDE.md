@@ -51,7 +51,7 @@ Server-rendered Astro pages with React components hydrated via `client:load`. AP
 
 - **ALWAYS use `db.query.*` relational queries** (`findFirst`, `findMany`) with `with:` for fetching entities with related data. NEVER write manual `.leftJoin()`/`.innerJoin()` + custom select objects when a relational query can do the same thing.
 - **SQL-like API (`db.select().from()`) is ONLY for:** aggregation (`count`, `sum`), `GROUP BY`, computed columns (`sql\`...\``), mutations (`insert`/`update`/`delete`), and raw SQL operations. `ILIKE`, `JSONB`, and other `where` operators work fine in the relational API — use it whenever you need related data.
-- **When adding a new table:** add the table to `src/db/schema.ts`, define its relations in `src/db/relations.ts`, and re-export from schema.ts. Relations must be defined for EVERY foreign key.
+- **When adding a new table:** add the table to `src/db/schema.ts` and define its relations in `src/db/relations.ts`. Do NOT re-export relations from schema.ts (circular dependency). Relations must be defined for EVERY foreign key.
 - **When adding a new FK column to an existing table:** update the corresponding `relations()` call in `src/db/relations.ts` immediately.
 - **Return types from query functions** should be inferred from Drizzle's relational API, not manually declared interfaces. Export type aliases derived from return types (e.g., `type BillWithSponsor = NonNullable<Awaited<ReturnType<typeof getBillByNumber>>>`).
 - **No client-side filtering** — all filtering must happen in the query. Never fetch extra rows and `.find()`/`.filter()` in JS.
