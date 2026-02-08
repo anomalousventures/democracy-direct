@@ -39,8 +39,8 @@ export async function migrateAnonymousData(userId: string, emailHash: string): P
         const encrypted = await encrypt(value, emailHash);
         localStorage.setItem(buildNamespacedKey(userId, STORAGE_KEYS[key]), encrypted);
         localStorage.removeItem(legacy);
-      } catch {
-        // Migration failed for this key, leave legacy in place
+      } catch (e) {
+        console.warn("[storage-migration] legacy key failed:", key, e);
       }
     }
   }
@@ -55,8 +55,8 @@ export async function migrateAnonymousData(userId: string, emailHash: string): P
         const encrypted = await encrypt(value, emailHash);
         localStorage.setItem(buildNamespacedKey(userId, STORAGE_KEYS[key]), encrypted);
         localStorage.removeItem(anonKey);
-      } catch {
-        // Migration failed for this key, leave anon in place
+      } catch (e) {
+        console.warn("[storage-migration] anon key failed:", key, e);
       }
     }
   }

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Fetch the latest swagger spec
 curl -sL "https://raw.githubusercontent.com/LibraryOfCongress/api.congress.gov/main/Documentation/swagger.yaml" -o /tmp/congress-api-swagger.yaml || { echo 'Failed to download swagger spec'; exit 1; }
