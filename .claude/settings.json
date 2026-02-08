@@ -17,7 +17,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",

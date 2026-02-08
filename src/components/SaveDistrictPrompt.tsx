@@ -55,8 +55,14 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
         });
 
         if (!response.ok) {
-          const data = (await response.json()) as { error?: string };
-          throw new Error(data.error ?? "Failed to save district");
+          let message = "Failed to save district";
+          try {
+            const data = (await response.json()) as { error?: string };
+            if (data.error) message = data.error;
+          } catch {
+            // non-JSON error response
+          }
+          throw new Error(message);
         }
       }
 

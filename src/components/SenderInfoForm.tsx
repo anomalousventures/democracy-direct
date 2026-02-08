@@ -72,7 +72,9 @@ export function SenderInfoForm({
   useEffect(() => {
     if (!hasLoaded || !saveEnabled) return;
 
-    senderInfoStorage.set(debouncedSenderInfo);
+    void senderInfoStorage
+      .set(debouncedSenderInfo)
+      .catch((err) => console.error("Failed to save sender info:", err));
   }, [debouncedSenderInfo, saveEnabled, hasLoaded, senderInfoStorage]);
 
   const handleChange = useCallback(

@@ -24,7 +24,7 @@ export function TemplateUseButton({
   const [resolvedHref, setResolvedHref] = useState(href);
 
   useEffect(() => {
-    if (repBioguideId || isLoading) {
+    if (repBioguideId || isLoading || !districtStorage.isReady) {
       return;
     }
 
@@ -53,7 +53,15 @@ export function TemplateUseButton({
     return () => {
       cancelled = true;
     };
-  }, [repBioguideId, templateSlug, isLoading, isLoggedIn, user, districtStorage]);
+  }, [
+    repBioguideId,
+    templateSlug,
+    isLoading,
+    isLoggedIn,
+    user,
+    districtStorage,
+    districtStorage.isReady,
+  ]);
 
   const handleClick = useCallback(() => {
     capture("template_used", {

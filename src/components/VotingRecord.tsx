@@ -71,7 +71,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
             {displayTitle}
           </a>
 
-          {vote.question !== displayTitle && (
+          {vote.billTitle && vote.question !== displayTitle && (
             <p className="text-sm text-muted-foreground mb-2">{vote.question}</p>
           )}
 

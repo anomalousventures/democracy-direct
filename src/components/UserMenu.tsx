@@ -32,7 +32,7 @@ export function UserMenu() {
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !districtStorage.isReady) return;
 
     const loadLocalDistrict = async () => {
       if (!isLoggedIn) {
@@ -42,7 +42,7 @@ export function UserMenu() {
     };
 
     loadLocalDistrict();
-  }, [isLoggedIn, isLoading, districtStorage]);
+  }, [isLoggedIn, isLoading, districtStorage, districtStorage.isReady]);
 
   useEffect(() => {
     if (isLoading || !isLoggedIn || !user) return;
