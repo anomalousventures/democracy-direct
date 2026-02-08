@@ -1,11 +1,28 @@
+import { cn } from "@/lib/utils";
+
 export interface VoteStatsBarProps {
   yeas: number;
   nays: number;
   notVoting: number;
   present: number;
+  header?: string;
+  totalLabel?: string;
+  isSticky?: boolean;
+  isScrolled?: boolean;
+  className?: string;
 }
 
-export function VoteStatsBar({ yeas, nays, notVoting, present }: VoteStatsBarProps) {
+export function VoteStatsBar({
+  yeas,
+  nays,
+  notVoting,
+  present,
+  header,
+  totalLabel,
+  isSticky = false,
+  isScrolled = false,
+  className,
+}: VoteStatsBarProps) {
   const total = yeas + nays + notVoting + present;
   if (total === 0) return null;
 
@@ -15,7 +32,24 @@ export function VoteStatsBar({ yeas, nays, notVoting, present }: VoteStatsBarPro
   const presentPercent = (present / total) * 100;
 
   return (
-    <div data-testid="vote-stats-bar" className="space-y-2">
+    <div
+      data-testid="vote-stats-bar"
+      className={cn(
+        header
+          ? "space-y-3 p-4 bg-secondary border border-border rounded-sm transition-shadow duration-200"
+          : "space-y-2",
+        isSticky && "sticky top-0 z-10",
+        isScrolled && "shadow-lg",
+        className
+      )}
+    >
+      {header && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium text-primary">{header}</span>
+          {totalLabel && <span className="text-muted-foreground">{totalLabel}</span>}
+        </div>
+      )}
+
       <div className="h-3 flex rounded-sm overflow-hidden bg-gray-100 border border-border">
         {yeaPercent > 0 && (
           <div
