@@ -24,7 +24,7 @@ const publicNavLinks = [
 ];
 
 export function UserMenu() {
-  const { user, isLoggedIn, isLoading, refetch, clear } = useMe();
+  const { user, isLoggedIn, isLoading, clear } = useMe();
   const districtStorage = useLocalStorage<SavedDistrict>("DISTRICT");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -70,9 +70,8 @@ export function UserMenu() {
   }, [clear]);
 
   const handleLoginSuccess = useCallback(() => {
-    refetch();
     window.location.reload();
-  }, [refetch]);
+  }, []);
 
   const handleClearDistrict = useCallback(async () => {
     setIsClearing(true);

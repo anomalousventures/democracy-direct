@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import type { BillStatus, BillType } from "@/lib/types/legislation";
+import type { BillStatus } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { Bill, Legislator } from "@/db/schema";
@@ -95,8 +95,8 @@ export function StatusBadge({ status }: { status: BillStatus }) {
 
 export function BillCard({ bill, showSponsor = false, className }: BillCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType] ?? bill.billType}${bill.billNumber}`;
-  const billPageUrl = getBillPageUrl(bill.billType as BillType, bill.billNumber, bill.congress);
+  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType] ?? bill.billType}${bill.billNumber}`;
+  const billPageUrl = getBillPageUrl(bill.billType, bill.billNumber, bill.congress);
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
@@ -116,7 +116,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="text-sm font-semibold text-accent">{displayNumber}</span>
-            <StatusBadge status={bill.status as BillStatus} />
+            <StatusBadge status={bill.status} />
             <span className="text-xs text-muted-foreground">
               {`${bill.congress}${getOrdinalSuffix(bill.congress)} Congress`}
             </span>

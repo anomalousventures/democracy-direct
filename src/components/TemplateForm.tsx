@@ -124,6 +124,15 @@ export function TemplateForm({
   const debouncedBody = useDebounce(body, 1000);
 
   useEffect(() => {
+    const linked = new Set(linkedBillNumbers);
+    for (const bill of suggestedBillsRef.current) {
+      if (!linked.has(bill)) {
+        suggestedBillsRef.current.delete(bill);
+      }
+    }
+  }, [linkedBillNumbers]);
+
+  useEffect(() => {
     if (!debouncedBody.trim()) return;
     const detected = detectBillNumbers(debouncedBody);
     const unlinked = detected.filter(

@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import type { BillVotesResponse, BillVoteSummary } from "@/pages/api/legislation/[billId]/votes";
 import { VoteSummaryCard } from "@/components/vote/VoteSummaryCard";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
-import type { Chamber } from "@/lib/types/legislation";
 
 interface BillVotesProps {
   billId: string;
@@ -63,7 +62,13 @@ function VoteListSection({ votes, label }: { votes: BillVoteSummary[]; label: st
             className="animate-fade-up"
             style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
           >
-            <VoteSummaryCard vote={{ ...vote, chamber: vote.chamber as Chamber }} />
+            <VoteSummaryCard
+              vote={{
+                ...vote,
+                chamber:
+                  vote.chamber === "house" || vote.chamber === "senate" ? vote.chamber : "house",
+              }}
+            />
           </div>
         ))}
       </div>
