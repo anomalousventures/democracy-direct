@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ params, url, locals, request }) => {
         congress,
         status: statusResult.data,
       }),
-      getBillCount(db, { bioguideId, congress }),
+      getBillCount(db, { bioguideId, congress, status: statusResult.data }),
     ]);
 
     const hasMore = bills.length > limit;

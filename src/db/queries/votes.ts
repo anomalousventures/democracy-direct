@@ -119,12 +119,17 @@ export async function getVotesByMember(
 export async function getVoteStats(
   db: Database,
   bioguideId: string,
-  congress?: number
+  congress?: number,
+  chamber?: Chamber
 ): Promise<VoteStats> {
   const conditions = [eq(memberVotes.bioguideId, bioguideId)];
 
   if (congress) {
     conditions.push(eq(votes.congress, congress));
+  }
+
+  if (chamber) {
+    conditions.push(eq(votes.chamber, chamber));
   }
 
   const results = await db
