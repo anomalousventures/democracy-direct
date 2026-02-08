@@ -125,8 +125,6 @@ test.describe("Template Bill Linking - Create Page", () => {
     const billPickerInput = page.locator("[data-testid='bill-picker-input']");
     await billPickerInput.fill("HR 1");
 
-    await page.waitForTimeout(400);
-
     const dropdown = page.locator("[data-testid='bill-picker-dropdown']");
     await expect(dropdown).toBeVisible({ timeout: 5000 });
     await expect(dropdown).toContainText("H.R.1");

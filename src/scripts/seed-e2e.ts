@@ -95,8 +95,17 @@ async function seedE2E() {
     let templateId: string;
 
     if (existing.length > 0) {
-      console.log(`  Template "${template.slug}" exists, updating tags`);
       templateId = existing[0].id;
+      await db
+        .update(templates)
+        .set({
+          title: template.title,
+          body: template.body,
+          issueTags: template.issueTags,
+          linkedBillNumbers: template.linkedBillNumbers ?? [],
+        })
+        .where(eq(templates.id, templateId));
+      console.log(`  Template "${template.slug}" updated`);
     } else {
       const [inserted] = await db
         .insert(templates)
