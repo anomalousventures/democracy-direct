@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseSearchParams, serializeSearchParams } from "./BillSearch";
+import { getCurrentCongress } from "@/lib/congress-api";
 
 describe("parseSearchParams", () => {
   it("parses empty search string", () => {
@@ -115,7 +116,7 @@ describe("serializeSearchParams", () => {
   it("omits default congress from serialization", () => {
     const result = serializeSearchParams({
       q: "",
-      congress: 119,
+      congress: getCurrentCongress(),
       types: [],
       statuses: [],
       subjects: [],
@@ -150,10 +151,10 @@ describe("serializeSearchParams", () => {
     expect(params.get("subject")).toBe("Finance");
   });
 
-  it("omits default congress (119) from serialization", () => {
+  it("omits default congress from serialization with other params", () => {
     const result = serializeSearchParams({
       q: "tax",
-      congress: 119,
+      congress: getCurrentCongress(),
       types: [],
       statuses: [],
       subjects: [],

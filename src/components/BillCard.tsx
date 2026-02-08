@@ -126,7 +126,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
 
           <a
             href={billPageUrl}
-            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2 after:absolute after:inset-0"
+            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2 after:absolute after:inset-0 after:content-['']"
           >
             {bill.title}
           </a>

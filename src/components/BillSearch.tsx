@@ -8,6 +8,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
 import { isValidBillType } from "@/lib/bill-utils";
+import { getCurrentCongress } from "@/lib/congress-api";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 
 interface SearchResponse {
@@ -39,7 +40,7 @@ const BILL_STATUSES: { value: BillStatus; label: string }[] = [
 
 const VALID_STATUSES = new Set<string>(BILL_STATUSES.map((s) => s.value));
 
-const DEFAULT_CONGRESS = 119;
+const DEFAULT_CONGRESS = getCurrentCongress();
 
 interface SearchState {
   q: string;
@@ -330,7 +331,7 @@ export function BillSearch() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {[119, 118, 117].map((c) => (
+        {Array.from({ length: 3 }, (_, i) => DEFAULT_CONGRESS - i).map((c) => (
           <Toggle
             key={c}
             variant="outline"

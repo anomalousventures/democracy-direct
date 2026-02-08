@@ -142,7 +142,9 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
 
   return (
     <fieldset className="space-y-2">
-      <Label className="text-primary">Linked Legislation (optional)</Label>
+      <Label className="text-primary" htmlFor={`${pickerId}-input`}>
+        Linked Legislation (optional)
+      </Label>
 
       {selectedBills.length > 0 && (
         <div className="flex flex-wrap gap-2" data-testid="linked-bills">
@@ -172,6 +174,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
       <div ref={containerRef} className="relative">
         <Input
           ref={inputRef}
+          id={`${pickerId}-input`}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -187,7 +190,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
           aria-expanded={isOpen}
           aria-autocomplete="list"
           aria-haspopup="listbox"
-          aria-controls={`${pickerId}-listbox`}
+          aria-controls={isOpen ? `${pickerId}-listbox` : undefined}
           aria-activedescendant={activeIndex >= 0 ? `${pickerId}-option-${activeIndex}` : undefined}
         />
 
