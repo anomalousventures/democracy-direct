@@ -79,7 +79,10 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
   return (
     <div className="border border-border rounded-sm overflow-hidden">
       <button
+        type="button"
         onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls="amendment-votes"
         className="w-full p-3 bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-between"
       >
         <span className="text-sm font-medium text-primary">Amendment Votes ({votes.length})</span>
@@ -93,7 +96,7 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
       </button>
 
       {expanded && (
-        <div className="p-4">
+        <div id="amendment-votes" className="p-4">
           <VoteListSection votes={votes} label="Amendment Roll Call Votes" />
         </div>
       )}
