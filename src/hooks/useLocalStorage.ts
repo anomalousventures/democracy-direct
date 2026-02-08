@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMe } from "@/hooks/useMe";
 import { STORAGE_KEYS, type StorageKey } from "@/lib/storage-keys";
 import { encrypt, decrypt, isEncryptedPayload } from "@/lib/storage-encryption";
@@ -62,7 +62,7 @@ export function useLocalStorage<T>(key: StorageKey) {
     }
   }, [namespacedKey]);
 
-  return { get, set, remove, isReady: !isLoading };
+  return useMemo(() => ({ get, set, remove, isReady: !isLoading }), [get, set, remove, isLoading]);
 }
 
 export function getNamespacedKey(userId: string | undefined, key: StorageKey): string {
