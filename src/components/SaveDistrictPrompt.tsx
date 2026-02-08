@@ -24,13 +24,17 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
     if (isLoading) return;
 
     const checkIfSaved = async () => {
-      if (isLoggedIn && user?.savedState === state && user?.savedDistrict === district) {
+      if (
+        isLoggedIn &&
+        user?.savedState === state.toUpperCase() &&
+        user?.savedDistrict === district.toUpperCase()
+      ) {
         setIsSaved(true);
         return;
       }
 
       const saved = await districtStorage.get();
-      if (saved?.state === state && saved?.district === district) {
+      if (saved?.state === state.toUpperCase() && saved?.district === district.toUpperCase()) {
         setIsSaved(true);
       }
     };

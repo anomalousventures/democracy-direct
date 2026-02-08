@@ -7,7 +7,7 @@ interface Props {
 
 const { title, gradientWord, description } = Astro.props;
 const idx = gradientWord ? title.indexOf(gradientWord) : -1;
-const hasGradient = idx >= 0 && gradientWord;
+const hasGradient = typeof gradientWord === "string" && idx >= 0;
 const before = hasGradient ? title.slice(0, idx) : "";
 const after = hasGradient ? title.slice(idx + gradientWord.length) : "";
 ---

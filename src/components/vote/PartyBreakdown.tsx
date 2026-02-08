@@ -25,8 +25,12 @@ export function PartyBreakdown({ members }: PartyBreakdownProps) {
     }
 
     const partyOrder = ["D", "R", "I"];
+    const partyRank = (p: string) => {
+      const i = partyOrder.indexOf(p);
+      return i === -1 ? 999 : i;
+    };
     return Object.entries(stats)
-      .sort((a, b) => partyOrder.indexOf(a[0]) - partyOrder.indexOf(b[0]))
+      .sort((a, b) => partyRank(a[0]) - partyRank(b[0]))
       .map(([party, counts]) => ({
         party,
         label: PARTY_LABELS[party] ?? party,

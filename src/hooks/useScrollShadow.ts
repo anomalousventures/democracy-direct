@@ -12,7 +12,8 @@ export function useScrollShadow<T extends HTMLElement = HTMLDivElement>() {
       setIsScrolled(el.scrollTop > 0);
     };
 
-    el.addEventListener("scroll", handleScroll);
+    handleScroll();
+    el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
