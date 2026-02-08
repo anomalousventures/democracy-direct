@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VotingRecord } from "./VotingRecord";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 
@@ -174,7 +174,7 @@ describe("VotingRecord", () => {
       expect(container).toHaveClass("md:max-h-[500px]");
     });
 
-    it("adds shadow to sticky header when scrolled", () => {
+    it("adds shadow to sticky header when scrolled", async () => {
       const manyVotes = Array.from({ length: 15 }, (_, i) => ({
         ...mockVotes[0],
         id: `vote-${i}`,
@@ -188,9 +188,12 @@ describe("VotingRecord", () => {
 
       expect(summarySection).toHaveClass("sticky", "top-0", "z-10");
 
-      fireEvent.scroll(container, { target: { scrollTop: 100 } });
+      Object.defineProperty(container, "scrollTop", { value: 100, writable: true });
+      fireEvent.scroll(container);
 
-      expect(summarySection).toHaveClass("shadow-lg");
+      await waitFor(() => {
+        expect(summarySection).toHaveClass("shadow-lg");
+      });
     });
   });
 });

@@ -57,7 +57,7 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
               </p>
               {isLong && (
                 <button
-                  onClick={() => setExpanded(!expanded)}
+                  onClick={() => setExpanded((prev) => !prev)}
                   className="inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
                 >
                   <Icon

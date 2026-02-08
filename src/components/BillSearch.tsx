@@ -214,15 +214,15 @@ export function BillSearch() {
       }
 
       if (selectedTypes.length > 0) {
-        params.set("types", selectedTypes.join(","));
+        params.set("type", selectedTypes.join(","));
       }
 
       if (selectedStatuses.length > 0) {
-        params.set("statuses", selectedStatuses.join(","));
+        params.set("status", selectedStatuses.join(","));
       }
 
       if (selectedSubjects.length > 0) {
-        params.set("subjects", selectedSubjects.join(","));
+        params.set("subject", selectedSubjects.join(","));
       }
 
       try {

@@ -185,7 +185,9 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
           autoComplete="off"
           role="combobox"
           aria-expanded={isOpen}
-          aria-controls={results.length > 0 ? `${pickerId}-listbox` : undefined}
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-controls={`${pickerId}-listbox`}
           aria-activedescendant={activeIndex >= 0 ? `${pickerId}-option-${activeIndex}` : undefined}
         />
 
