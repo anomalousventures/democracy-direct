@@ -39,6 +39,8 @@ const BILL_STATUSES: { value: BillStatus; label: string }[] = [
 
 const VALID_STATUSES = new Set<string>(BILL_STATUSES.map((s) => s.value));
 
+const DEFAULT_CONGRESS = 119;
+
 interface SearchState {
   q: string;
   congress: number | null;
@@ -78,7 +80,8 @@ export function serializeSearchParams(state: SearchState): string {
   const params = new URLSearchParams();
 
   if (state.q.trim()) params.set("q", state.q.trim());
-  if (state.congress !== null) params.set("congress", String(state.congress));
+  if (state.congress !== null && state.congress !== DEFAULT_CONGRESS)
+    params.set("congress", String(state.congress));
   if (state.types.length > 0) params.set("type", state.types.join(","));
   if (state.statuses.length > 0) params.set("status", state.statuses.join(","));
   if (state.subjects.length > 0) params.set("subject", state.subjects.join(","));
@@ -136,7 +139,7 @@ export function BillSearch() {
     if (typeof window === "undefined") {
       return {
         q: "",
-        congress: 119 as number | null,
+        congress: DEFAULT_CONGRESS as number | null,
         types: [] as BillType[],
         statuses: [] as BillStatus[],
         subjects: [] as string[],
@@ -145,7 +148,7 @@ export function BillSearch() {
     const parsed = parseSearchParams(window.location.search);
     return {
       ...parsed,
-      congress: parsed.congress ?? 119,
+      congress: parsed.congress ?? DEFAULT_CONGRESS,
     };
   }).current;
 
@@ -283,7 +286,7 @@ export function BillSearch() {
 
   const clearFilters = useCallback(() => {
     setSearchQuery("");
-    setCongress(119);
+    setCongress(DEFAULT_CONGRESS);
     setSelectedTypes([]);
     setSelectedStatuses([]);
     setSelectedSubjects([]);
@@ -291,7 +294,7 @@ export function BillSearch() {
 
   const hasActiveFilters =
     searchQuery.trim() ||
-    congress !== 119 ||
+    congress !== DEFAULT_CONGRESS ||
     selectedTypes.length > 0 ||
     selectedStatuses.length > 0 ||
     selectedSubjects.length > 0;

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useDebounce } from "@/hooks/useDebounce";
 import { BILL_TYPE_DISPLAY_NAMES, normalizeBillNumber } from "@/lib/bill-utils";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType } from "@/lib/types/legislation";
 
 const TITLE_TRUNCATE_LENGTH = 80;
@@ -59,7 +60,10 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
     setIsLoading(true);
 
     fetch(`/api/legislation/search?q=${encodeURIComponent(debouncedQuery.trim())}&limit=5`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Search failed");
+        return res.json();
+      })
       .then((data: SearchResponse) => {
         if (!cancelled) {
           setResults(data.bills ?? []);
@@ -208,7 +212,8 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
                       {billToDisplayName(bill)}
                     </span>
                     <span className="text-xs text-muted-foreground shrink-0">
-                      ({bill.congress}th)
+                      ({bill.congress}
+                      {getOrdinalSuffix(bill.congress)})
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">

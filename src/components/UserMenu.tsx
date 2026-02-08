@@ -88,6 +88,7 @@ export function UserMenu() {
     } catch (err) {
       console.error("Failed to clear district:", err);
       toast.error("Failed to clear district");
+    } finally {
       setIsClearing(false);
     }
   }, [isLoggedIn, districtStorage]);

@@ -63,6 +63,7 @@ describe("BillPicker", () => {
 
   it("shows dropdown results when typing", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve({ bills: mockBillResults }),
     });
 
@@ -85,6 +86,7 @@ describe("BillPicker", () => {
 
   it("hides dropdown when clicking outside", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve({ bills: mockBillResults }),
     });
 
@@ -109,6 +111,7 @@ describe("BillPicker", () => {
 
   it("does not add duplicate bills", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve({ bills: mockBillResults }),
     });
 
@@ -135,6 +138,7 @@ describe("BillPicker", () => {
 
   it("shows no results message when search returns empty", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve({ bills: [] }),
     });
 
@@ -153,6 +157,7 @@ describe("BillPicker", () => {
 
   it("adds a bill when clicking a non-selected result", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve({ bills: [mockBillResults[0]] }),
     });
 

@@ -77,8 +77,11 @@ export function SenderInfoForm({
       };
       setSenderInfo(newInfo);
       onChange(newInfo);
+      if (saveEnabled) {
+        senderInfoStorage.set(newInfo);
+      }
     },
-    [senderInfo, onChange]
+    [senderInfo, onChange, saveEnabled, senderInfoStorage]
   );
 
   const handleSaveToggle = useCallback(

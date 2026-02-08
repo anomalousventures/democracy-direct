@@ -9,6 +9,7 @@ import { YourRepsBanner } from "@/components/vote/YourRepsBanner";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { formatDateLong as formatDate } from "@/lib/date-utils";
 import { getVoteResultStyle } from "@/lib/vote-result-style";
+import { sanitizeExternalUrl } from "@/lib/url";
 
 interface VoteData {
   id: string;
@@ -119,19 +120,22 @@ export function VoteDetail({ vote, members, billLink, amendment }: VoteDetailPro
 
         <MemberVoteList members={members} />
 
-        {vote.sourceUrl && (
-          <div className="pt-4 border-t border-border">
-            <a
-              href={vote.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-primary hover:text-accent transition-colors"
-            >
-              View official record on Congress.gov
-              <Icon name="external-link" className="w-4 h-4" />
-            </a>
-          </div>
-        )}
+        {(() => {
+          const safeUrl = sanitizeExternalUrl(vote.sourceUrl);
+          return safeUrl ? (
+            <div className="pt-4 border-t border-border">
+              <a
+                href={safeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:text-accent transition-colors"
+              >
+                View official record
+                <Icon name="external-link" className="w-4 h-4" />
+              </a>
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );

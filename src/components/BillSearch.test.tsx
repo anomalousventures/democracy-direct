@@ -85,7 +85,18 @@ describe("serializeSearchParams", () => {
     expect(result).toBe("q=education");
   });
 
-  it("serializes congress", () => {
+  it("serializes non-default congress", () => {
+    const result = serializeSearchParams({
+      q: "",
+      congress: 118,
+      types: [],
+      statuses: [],
+      subjects: [],
+    });
+    expect(result).toBe("congress=118");
+  });
+
+  it("omits default congress from serialization", () => {
     const result = serializeSearchParams({
       q: "",
       congress: 119,
@@ -93,7 +104,7 @@ describe("serializeSearchParams", () => {
       statuses: [],
       subjects: [],
     });
-    expect(result).toBe("congress=119");
+    expect(result).toBe("");
   });
 
   it("serializes types as comma-separated", () => {
@@ -110,17 +121,30 @@ describe("serializeSearchParams", () => {
   it("serializes full state", () => {
     const result = serializeSearchParams({
       q: "tax",
-      congress: 119,
+      congress: 118,
       types: ["hr"],
       statuses: ["introduced"],
       subjects: ["Finance"],
     });
     const params = new URLSearchParams(result);
     expect(params.get("q")).toBe("tax");
-    expect(params.get("congress")).toBe("119");
+    expect(params.get("congress")).toBe("118");
     expect(params.get("type")).toBe("hr");
     expect(params.get("status")).toBe("introduced");
     expect(params.get("subject")).toBe("Finance");
+  });
+
+  it("omits default congress (119) from serialization", () => {
+    const result = serializeSearchParams({
+      q: "tax",
+      congress: 119,
+      types: [],
+      statuses: [],
+      subjects: [],
+    });
+    const params = new URLSearchParams(result);
+    expect(params.get("q")).toBe("tax");
+    expect(params.get("congress")).toBeNull();
   });
 
   it("round-trips through parse", () => {

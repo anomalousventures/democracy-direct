@@ -44,7 +44,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
-            const output = `${{ steps.validate.outputs.output }}`;
+            const output = ${{ toJson(steps.validate.outputs.output) }};
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,

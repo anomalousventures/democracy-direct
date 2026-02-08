@@ -123,7 +123,10 @@ test.describe("Template Bill Linking - Create Page", () => {
     await page.waitForLoadState("domcontentloaded");
 
     const billPickerInput = page.locator("[data-testid='bill-picker-input']");
+
+    const responsePromise = page.waitForResponse("**/api/legislation/search**");
     await billPickerInput.fill("HR 1");
+    await responsePromise;
 
     const dropdown = page.locator("[data-testid='bill-picker-dropdown']");
     await expect(dropdown).toBeVisible({ timeout: 5000 });

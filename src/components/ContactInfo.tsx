@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icons";
+import { sanitizeExternalUrl } from "@/lib/url";
 
 export interface ContactInfoProps {
   phone?: string;
@@ -24,6 +25,9 @@ export function ContactInfo({
       return url;
     }
   }
+
+  const safeWebsite = sanitizeExternalUrl(website ?? null);
+  const safeContactFormUrl = sanitizeExternalUrl(contactFormUrl ?? null);
 
   const hasSocial = twitterHandle || facebookId;
   const hasAnyInfo = phone || contactFormUrl || address || website || hasSocial;
@@ -52,24 +56,29 @@ export function ContactInfo({
           </a>
         )}
 
-        {website && (
-          <a href={website} target="_blank" rel="noopener noreferrer" className="info-item-link">
+        {safeWebsite && (
+          <a
+            href={safeWebsite}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="info-item-link"
+          >
             <div className="icon-box-sm self-center">
               <Icon name="globe" className="w-5 h-5 text-accent" />
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <p className="font-medium">Official Website</p>
               <p className="inline-flex items-center gap-1 text-primary">
-                <span>{getHostname(website)}</span>
+                <span>{getHostname(safeWebsite)}</span>
                 <Icon name="external-link" className="w-4 h-4" />
               </p>
             </div>
           </a>
         )}
 
-        {contactFormUrl && (
+        {safeContactFormUrl && (
           <a
-            href={contactFormUrl}
+            href={safeContactFormUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="info-item-link"
