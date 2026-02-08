@@ -120,7 +120,7 @@ test.describe("Template Bill Linking - Create Page", () => {
     });
 
     await page.goto("/templates/new");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
 
     const billPickerInput = page.locator("[data-testid='bill-picker-input']");
 
