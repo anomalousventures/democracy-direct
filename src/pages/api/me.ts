@@ -1,8 +1,8 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
+import { isAdmin } from "@/lib/admin";
 import { jsonResponse } from "@/lib/api-response";
-import type { SessionUser } from "@/middleware";
 
 export interface MeResponse {
   id: string;
@@ -13,11 +13,6 @@ export interface MeResponse {
 }
 
 export type MeApiResponse = MeResponse | null;
-
-function isAdmin(user: SessionUser): boolean {
-  const ADMIN_TRUST_LEVEL = 100;
-  return user.trustLevel >= ADMIN_TRUST_LEVEL;
-}
 
 export const GET: APIRoute = async ({ locals }) => {
   const user = locals.user;
