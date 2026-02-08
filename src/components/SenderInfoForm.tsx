@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { type Address, createEmptyAddress } from "@/types/representative";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export interface SenderInfo extends Address {
   name: string;
@@ -38,21 +39,25 @@ export function SenderInfoForm({
 
   const senderInfoStorage = useLocalStorage<SenderInfo>("SENDER_INFO");
   const savePrefStorage = useLocalStorage<boolean>("SAVE_SENDER_PREF");
+  const debouncedSenderInfo = useDebounce(senderInfo, 400);
 
   useEffect(() => {
     if (!senderInfoStorage.isReady || hasLoaded) return;
 
     const loadSavedData = async () => {
-      const savedPref = await savePrefStorage.get();
-      if (savedPref === true) {
-        setSaveEnabled(true);
-        const saved = await senderInfoStorage.get();
-        if (saved) {
-          setSenderInfo(saved);
-          onChangeRef.current(saved);
+      try {
+        const savedPref = await savePrefStorage.get();
+        if (savedPref === true) {
+          setSaveEnabled(true);
+          const saved = await senderInfoStorage.get();
+          if (saved) {
+            setSenderInfo(saved);
+            onChangeRef.current(saved);
+          }
         }
+      } finally {
+        setHasLoaded(true);
       }
-      setHasLoaded(true);
     };
 
     loadSavedData();
@@ -61,8 +66,8 @@ export function SenderInfoForm({
   useEffect(() => {
     if (!hasLoaded || !saveEnabled) return;
 
-    senderInfoStorage.set(senderInfo);
-  }, [senderInfo, saveEnabled, hasLoaded, senderInfoStorage]);
+    senderInfoStorage.set(debouncedSenderInfo);
+  }, [debouncedSenderInfo, saveEnabled, hasLoaded, senderInfoStorage]);
 
   const handleChange = useCallback(
     (field: keyof SenderInfo) => (e: React.ChangeEvent<HTMLInputElement>) => {

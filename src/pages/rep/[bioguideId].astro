@@ -209,7 +209,9 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                       phone: rep.phoneCapitol || undefined,
                       contactFormUrl: sanitizedContactUrl || undefined,
                       address: rep.addressCapitol || undefined,
-                      website: rep.website || undefined,
+                      website: rep.website
+                        ? (sanitizeExternalUrl(rep.website) ?? undefined)
+                        : undefined,
                       twitterHandle: rep.twitterHandle || undefined,
                       facebookId: rep.facebookId || undefined,
                     }}
