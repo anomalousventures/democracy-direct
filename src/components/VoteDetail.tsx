@@ -8,6 +8,7 @@ import { MemberVoteList } from "@/components/vote/MemberVoteList";
 import { YourRepsBanner } from "@/components/vote/YourRepsBanner";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { formatDateLong as formatDate } from "@/lib/date-utils";
+import { getVoteResultStyle } from "@/lib/vote-result-style";
 
 interface VoteData {
   id: string;
@@ -57,13 +58,7 @@ export function VoteDetail({ vote, members, billLink, amendment }: VoteDetailPro
             data-testid="vote-result"
             className={cn(
               "inline-flex items-center px-3 py-1.5 text-sm font-semibold border rounded-sm",
-              vote.result.toLowerCase().includes("passed") ||
-                vote.result.toLowerCase().includes("agreed")
-                ? "bg-green-100 text-green-800 border-green-200"
-                : vote.result.toLowerCase().includes("failed") ||
-                    vote.result.toLowerCase().includes("rejected")
-                  ? "bg-red-100 text-red-800 border-red-200"
-                  : "bg-gray-100 text-gray-700 border-gray-200"
+              getVoteResultStyle(vote.result, "detail")
             )}
           >
             {vote.result}

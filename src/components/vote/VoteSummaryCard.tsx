@@ -2,6 +2,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { enrichVoteQuestion } from "@/lib/vote-question-utils";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
+import { getVoteResultStyle } from "@/lib/vote-result-style";
 import type { Chamber } from "@/lib/types/legislation";
 
 export interface VoteSummaryCardProps {
@@ -23,17 +24,6 @@ export interface VoteSummaryCardProps {
     amendmentNumber?: string | null;
     amendmentPurpose?: string | null;
   };
-}
-
-function getResultStyle(result: string) {
-  const lower = result.toLowerCase();
-  if (lower.includes("passed") || lower.includes("agreed")) {
-    return "bg-green-50 text-green-700";
-  }
-  if (lower.includes("failed") || lower.includes("rejected")) {
-    return "bg-red-50 text-red-700";
-  }
-  return "bg-gray-50 text-gray-600";
 }
 
 export function VoteSummaryCard({ vote }: VoteSummaryCardProps) {
@@ -60,7 +50,7 @@ export function VoteSummaryCard({ vote }: VoteSummaryCardProps) {
           <span
             className={cn(
               "px-2 py-0.5 text-xs rounded-sm font-medium",
-              getResultStyle(vote.result)
+              getVoteResultStyle(vote.result)
             )}
           >
             {vote.result}

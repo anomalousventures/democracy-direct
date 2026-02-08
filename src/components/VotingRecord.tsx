@@ -5,6 +5,7 @@ import type { Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
+import { getVoteResultStyle } from "@/lib/vote-result-style";
 import { PositionBadge } from "@/components/vote/PositionBadge";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
 
@@ -202,16 +203,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
               {formatDate(vote.date)}
             </span>
             <span
-              className={cn(
-                "px-2 py-0.5 rounded-sm font-medium",
-                vote.result.toLowerCase().includes("passed") ||
-                  vote.result.toLowerCase().includes("agreed")
-                  ? "bg-green-50 text-green-700"
-                  : vote.result.toLowerCase().includes("failed") ||
-                      vote.result.toLowerCase().includes("rejected")
-                    ? "bg-red-50 text-red-700"
-                    : "bg-gray-50 text-gray-600"
-              )}
+              className={cn("px-2 py-0.5 rounded-sm font-medium", getVoteResultStyle(vote.result))}
             >
               {vote.result}
             </span>
