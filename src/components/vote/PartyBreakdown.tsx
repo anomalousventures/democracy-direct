@@ -6,6 +6,12 @@ interface PartyBreakdownProps {
   members: VoteMember[];
 }
 
+const PARTY_LABELS: Record<string, string> = {
+  D: "Democrats",
+  R: "Republicans",
+  I: "Independents",
+};
+
 export function PartyBreakdown({ members }: PartyBreakdownProps) {
   const breakdown = useMemo(() => {
     const stats: Record<string, Record<VotePosition, number>> = {};
@@ -23,14 +29,7 @@ export function PartyBreakdown({ members }: PartyBreakdownProps) {
       .sort((a, b) => partyOrder.indexOf(a[0]) - partyOrder.indexOf(b[0]))
       .map(([party, counts]) => ({
         party,
-        label:
-          party === "D"
-            ? "Democrats"
-            : party === "R"
-              ? "Republicans"
-              : party === "I"
-                ? "Independents"
-                : party,
+        label: PARTY_LABELS[party] ?? party,
         ...counts,
       }));
   }, [members]);

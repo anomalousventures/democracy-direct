@@ -6,6 +6,14 @@ import type { VoteMember } from "@/lib/types/vote";
 import { PositionBadge } from "./PositionBadge";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
 
+const POSITION_LABELS: Record<string, string> = {
+  all: "All",
+  yea: "Yea",
+  nay: "Nay",
+  not_voting: "Not Voting",
+  present: "Present",
+};
+
 interface MemberVoteListProps {
   members: VoteMember[];
   defaultFilter?: VotePosition | "all";
@@ -99,11 +107,7 @@ export function MemberVoteList({ members, defaultFilter = "all" }: MemberVoteLis
                     : "bg-white text-muted-foreground border-border hover:border-primary/50"
                 )}
               >
-                {pos === "all"
-                  ? "All"
-                  : pos === "not_voting"
-                    ? "Not Voting"
-                    : pos.charAt(0).toUpperCase() + pos.slice(1)}
+                {POSITION_LABELS[pos] ?? pos}
               </button>
             ))}
           </div>
