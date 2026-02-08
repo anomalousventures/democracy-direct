@@ -1,3 +1,5 @@
+export const DISTRICT_PATTERN = /^(\d{1,2}|AL)$/;
+
 export interface SavedDistrict {
   state: string;
   district: string;

@@ -1,3 +1,5 @@
+import { escapeXml } from "@/lib/escape";
+
 const SITE_URL = "https://democracy-direct.com";
 
 export interface SitemapEntry {
@@ -5,15 +7,6 @@ export interface SitemapEntry {
   lastmod?: string;
   changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: number;
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 }
 
 export function formatDate(date: Date): string {

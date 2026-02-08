@@ -6,6 +6,7 @@ import { jsonResponse, badRequest, notFound } from "@/lib/api-response";
 import { createLogger } from "@/lib/logger";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
 import { BillStatusSchema } from "@/lib/types/legislation";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 
 export const prerender = false;
 
@@ -16,7 +17,7 @@ export const GET: APIRoute = async ({ params, url, locals, request }) => {
   const logger = createLogger(locals, request);
   const { bioguideId } = params;
 
-  if (!bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId)) {
+  if (!bioguideId || !BIOGUIDE_RE.test(bioguideId)) {
     return badRequest("Invalid bioguideId format");
   }
 

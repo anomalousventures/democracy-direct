@@ -27,6 +27,7 @@ import {
   formatDate,
 } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
@@ -45,7 +46,7 @@ let voteStats: VoteStats = { totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, pres
 let bills: Bill[] = [];
 let billCount = 0;
 
-const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
+const isInvalidId = !bioguideId || !BIOGUIDE_RE.test(bioguideId);
 if (isInvalidId) {
   error = "Invalid representative ID.";
 }

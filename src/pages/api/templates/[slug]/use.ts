@@ -7,10 +7,9 @@ import { badRequest, notFound, jsonResponse, serverError } from "@/lib/api-respo
 import { parseJsonBody } from "@/lib/request-body";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 
 export const prerender = false;
-
-const BIOGUIDE_RE = /^[A-Z]\d{6}$/;
 const CONTACT_TYPES = ["call", "contact_form", "print", "copy"] as const;
 
 const useBodySchema = z.object({

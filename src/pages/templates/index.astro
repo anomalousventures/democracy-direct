@@ -12,12 +12,13 @@ import { legislators, bills } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 import { normalizeBillNumber, parseBillNumber } from "@/lib/bill-utils";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 
 export const prerender = false;
 
 const user = Astro.locals.user;
 const rawRepId = Astro.url.searchParams.get("rep");
-const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
+const repBioguideId = rawRepId && BIOGUIDE_RE.test(rawRepId) ? rawRepId : null;
 let repName: string | null = null;
 
 const rawBillParam = Astro.url.searchParams.get("bill");

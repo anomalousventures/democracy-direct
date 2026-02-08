@@ -6,6 +6,7 @@ import { getLegislatorsByStateAndDistrict } from "@/db/queries/legislators";
 import { getConfig } from "@/lib/config";
 import { badRequest, jsonResponse, serverError } from "@/lib/api-response";
 import { isValidState } from "@/lib/states";
+import { DISTRICT_PATTERN } from "@/lib/saved-district";
 
 export interface RepresentativeInfo {
   bioguideId: string;
@@ -18,8 +19,6 @@ export interface RepresentativeInfo {
 export interface RepresentativesResponse {
   representatives: RepresentativeInfo[];
 }
-
-const DISTRICT_PATTERN = /^(\d{1,2}|AL)$/;
 
 export const GET: APIRoute = async ({ url, locals }) => {
   const state = url.searchParams.get("state")?.toUpperCase();

@@ -14,11 +14,12 @@ import { createDb } from "@/db/client";
 import { templates } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 
 const user = Astro.locals.user;
 const { slug } = Astro.params;
 const rawRepId = Astro.url.searchParams.get("rep");
-const repBioguideId = rawRepId && /^[A-Z]{1,2}\d{5,6}$/.test(rawRepId) ? rawRepId : null;
+const repBioguideId = rawRepId && BIOGUIDE_RE.test(rawRepId) ? rawRepId : null;
 
 let template: {
   id: string;

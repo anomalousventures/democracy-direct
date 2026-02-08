@@ -20,6 +20,7 @@ import {
   validateTemplateVariables,
   getSupportedVariablesList,
 } from "@/lib/template-validation";
+import { formatDateMedium } from "@/lib/date-utils";
 
 const SAMPLE_PREVIEW_DATA = {
   REP_NAME: "Jane Smith",
@@ -31,11 +32,7 @@ const SAMPLE_PREVIEW_DATA = {
   DISTRICT: "12",
   USER_NAME: "John Doe",
   USER_CITY: "San Francisco",
-  TODAY_DATE: new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
+  TODAY_DATE: formatDateMedium(new Date()),
 };
 
 declare global {

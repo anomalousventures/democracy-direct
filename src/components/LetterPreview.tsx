@@ -1,9 +1,5 @@
-import {
-  type Representative,
-  type Address,
-  getRepresentativeTitle,
-  formatLetterDate,
-} from "../types/representative";
+import { type Representative, type Address, getRepresentativeTitle } from "../types/representative";
+import { formatDateMedium } from "@/lib/date-utils";
 import { MarkdownContent } from "./MarkdownContent";
 import { Icon } from "@/components/icons";
 
@@ -96,7 +92,9 @@ export function LetterPreview({
             </div>
           )}
 
-          {printOptions.includeDate && <div className="text-sm">{formatLetterDate()}</div>}
+          {printOptions.includeDate && (
+            <div className="text-sm">{formatDateMedium(new Date())}</div>
+          )}
 
           {printOptions.includeRecipientAddress && (
             <div className="text-sm">
