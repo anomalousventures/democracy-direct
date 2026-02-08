@@ -394,7 +394,7 @@ export async function getVotesByAmendmentId(db: Database, amendmentId: string): 
 export interface BillVoteSummary {
   id: string;
   rollCall: number;
-  chamber: string;
+  chamber: Chamber;
   congress: number;
   session: number;
   date: Date;

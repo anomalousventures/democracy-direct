@@ -137,6 +137,7 @@ test.describe("Phase 3: Contact Flow", () => {
       const cityInput = page.locator("#sender-city");
       await cityInput.fill("Los Angeles");
 
+      await page.waitForTimeout(500);
       await page.reload();
       await expect(page.locator("#sender-name")).toHaveValue("John Smith");
       await expect(page.locator("#sender-city")).toHaveValue("Los Angeles");

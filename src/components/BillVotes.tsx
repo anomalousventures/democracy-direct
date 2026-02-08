@@ -62,13 +62,7 @@ function VoteListSection({ votes, label }: { votes: BillVoteSummary[]; label: st
             className="animate-fade-up"
             style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
           >
-            <VoteSummaryCard
-              vote={{
-                ...vote,
-                chamber:
-                  vote.chamber === "house" || vote.chamber === "senate" ? vote.chamber : "house",
-              }}
-            />
+            <VoteSummaryCard vote={vote} />
           </div>
         ))}
       </div>
