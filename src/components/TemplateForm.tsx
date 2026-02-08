@@ -123,13 +123,17 @@ export function TemplateForm({
 
   const debouncedBody = useDebounce(body, 1000);
 
+  const prevLinkedRef = useRef<Set<string>>(new Set(linkedBillNumbers));
+
   useEffect(() => {
-    const linked = new Set(linkedBillNumbers);
-    for (const bill of suggestedBillsRef.current) {
-      if (!linked.has(bill)) {
+    const current = new Set(linkedBillNumbers);
+    const previous = prevLinkedRef.current;
+    for (const bill of previous) {
+      if (!current.has(bill)) {
         suggestedBillsRef.current.delete(bill);
       }
     }
+    prevLinkedRef.current = current;
   }, [linkedBillNumbers]);
 
   useEffect(() => {

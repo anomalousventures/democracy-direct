@@ -21,7 +21,7 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
   const displayText = formatDistrictDisplay(state, district);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !districtStorage.isReady) return;
 
     const checkIfSaved = async () => {
       if (
