@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { VotingRecord } from "./VotingRecord";
 import { SponsoredBills } from "./SponsoredBills";
 import { ContactInfo, type ContactInfoProps } from "./ContactInfo";
 import { cn } from "@/lib/utils";
+import { useHashTabs, TAB_TRIGGER_CLASS } from "@/hooks/useHashTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";
 import type { Chamber } from "@/lib/types/legislation";
@@ -27,18 +27,6 @@ const TAB_HASH_MAP: Record<string, TabValue> = {
   "#bills": "bills",
 };
 
-const VALUE_HASH_MAP: Record<TabValue, string> = {
-  contact: "",
-  votes: "#votes",
-  bills: "#bills",
-};
-
-function getInitialTab(): TabValue {
-  if (typeof window === "undefined") return "contact";
-  const hash = window.location.hash;
-  return TAB_HASH_MAP[hash] || "contact";
-}
-
 export function RepTabs({
   bioguideId,
   chamber,
@@ -49,51 +37,18 @@ export function RepTabs({
   billCount,
   className,
 }: RepTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabValue>("contact");
-
-  useEffect(() => {
-    setActiveTab(getInitialTab());
-
-    const handleHashChange = () => {
-      setActiveTab(getInitialTab());
-    };
-
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
-
-  const handleTabChange = useCallback((value: string) => {
-    const tabValue = value as TabValue;
-    setActiveTab(tabValue);
-    const hash = VALUE_HASH_MAP[tabValue];
-    if (hash) {
-      window.history.replaceState(null, "", hash);
-    } else {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-  }, []);
+  const { activeTab, handleTabChange } = useHashTabs(TAB_HASH_MAP, "contact" as TabValue);
 
   const voteCount = voteStats.totalVotes;
-
-  const tabTriggerClass = useMemo(
-    () =>
-      cn(
-        "relative px-4 py-3 text-sm font-medium transition-colors rounded-none",
-        "text-muted-foreground hover:text-foreground",
-        "data-[state=active]:text-primary data-[state=active]:font-semibold",
-        "data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-accent"
-      ),
-    []
-  );
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className={cn("w-full", className)}>
       <div className="border-b border-border">
         <TabsList className="w-full justify-start h-auto p-0 bg-transparent rounded-none">
-          <TabsTrigger value="contact" className={tabTriggerClass}>
+          <TabsTrigger value="contact" className={TAB_TRIGGER_CLASS}>
             Contact
           </TabsTrigger>
-          <TabsTrigger value="votes" className={tabTriggerClass}>
+          <TabsTrigger value="votes" className={TAB_TRIGGER_CLASS}>
             <span className="hidden sm:inline">Voting Record</span>
             <span className="sm:hidden">Votes</span>
             {voteCount > 0 && (
@@ -102,7 +57,7 @@ export function RepTabs({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="bills" className={tabTriggerClass}>
+          <TabsTrigger value="bills" className={TAB_TRIGGER_CLASS}>
             <span className="hidden sm:inline">Sponsored Bills</span>
             <span className="sm:hidden">Bills</span>
             {billCount > 0 && (
