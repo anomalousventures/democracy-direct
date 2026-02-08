@@ -1,4 +1,4 @@
-import { eq, and, desc, ilike, or, sql, isNull, count, type SQL } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, isNull, count, inArray, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
 import { bills, type Bill, type Legislator } from "../schema";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
@@ -13,22 +13,43 @@ export interface BillFilterOptions {
   subject?: string;
   query?: string;
   bioguideId?: string;
+  billTypes?: BillType[];
+  statuses?: BillStatus[];
+  subjects?: string[];
 }
 
 const conditionBuilders: {
   [K in keyof Required<BillFilterOptions>]: (options: BillFilterOptions) => SQL | undefined;
 } = {
   congress: (o) => (o.congress ? eq(bills.congress, o.congress) : undefined),
-  status: (o) => (o.status ? eq(bills.status, o.status) : undefined),
-  billType: (o) => (o.billType ? eq(bills.billType, o.billType) : undefined),
+  status: (o) => {
+    if (o.statuses?.length) return inArray(bills.status, o.statuses);
+    return o.status ? eq(bills.status, o.status) : undefined;
+  },
+  billType: (o) => {
+    if (o.billTypes?.length) return inArray(bills.billType, o.billTypes);
+    return o.billType ? eq(bills.billType, o.billType) : undefined;
+  },
   bioguideId: (o) => (o.bioguideId ? eq(bills.sponsorBioguideId, o.bioguideId) : undefined),
-  subject: (o) =>
-    o.subject ? sql`${bills.subjects}::jsonb @> ${JSON.stringify([o.subject])}::jsonb` : undefined,
+  subject: (o) => {
+    if (o.subjects?.length) {
+      const conditions = o.subjects.map(
+        (s) => sql`${bills.subjects}::jsonb @> ${JSON.stringify([s])}::jsonb`
+      );
+      return or(...conditions);
+    }
+    return o.subject
+      ? sql`${bills.subjects}::jsonb @> ${JSON.stringify([o.subject])}::jsonb`
+      : undefined;
+  },
   query: (o) => {
     if (!o.query) return undefined;
     const p = `%${o.query}%`;
     return or(ilike(bills.billNumber, p), ilike(bills.title, p))!;
   },
+  billTypes: () => undefined,
+  statuses: () => undefined,
+  subjects: () => undefined,
 };
 
 function buildBillConditions(options: BillFilterOptions): SQL[] {
@@ -103,6 +124,9 @@ export interface SearchBillsOptions {
   status?: BillStatus;
   billType?: BillType;
   subject?: string;
+  billTypes?: BillType[];
+  statuses?: BillStatus[];
+  subjects?: string[];
 }
 
 /**

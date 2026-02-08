@@ -203,16 +203,16 @@ export function BillSearch() {
         params.set("congress", String(congress));
       }
 
-      if (selectedTypes.length === 1) {
-        params.set("type", selectedTypes[0]);
+      if (selectedTypes.length > 0) {
+        params.set("types", selectedTypes.join(","));
       }
 
-      if (selectedStatuses.length === 1) {
-        params.set("status", selectedStatuses[0]);
+      if (selectedStatuses.length > 0) {
+        params.set("statuses", selectedStatuses.join(","));
       }
 
-      if (selectedSubjects.length === 1) {
-        params.set("subject", selectedSubjects[0]);
+      if (selectedSubjects.length > 0) {
+        params.set("subjects", selectedSubjects.join(","));
       }
 
       try {
@@ -224,27 +224,10 @@ export function BillSearch() {
 
         const data: SearchResponse = await response.json();
 
-        let filteredBills = data.bills;
-        if (selectedTypes.length > 1) {
-          filteredBills = filteredBills.filter((b) =>
-            selectedTypes.includes(b.billType as BillType)
-          );
-        }
-        if (selectedStatuses.length > 1) {
-          filteredBills = filteredBills.filter((b) =>
-            selectedStatuses.includes(b.status as BillStatus)
-          );
-        }
-        if (selectedSubjects.length > 1) {
-          filteredBills = filteredBills.filter((b) =>
-            b.subjects?.some((s) => selectedSubjects.includes(s))
-          );
-        }
-
         if (append) {
-          setBills((prev) => [...prev, ...filteredBills]);
+          setBills((prev) => [...prev, ...data.bills]);
         } else {
-          setBills(filteredBills);
+          setBills(data.bills);
         }
 
         setOffset(newOffset);

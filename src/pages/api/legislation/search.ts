@@ -50,6 +50,9 @@ export async function GET(context: APIContext): Promise<Response> {
   const typeParam = url.searchParams.get("type");
   const statusParam = url.searchParams.get("status");
   const subjectParam = url.searchParams.get("subject");
+  const typesParam = url.searchParams.get("types");
+  const statusesParam = url.searchParams.get("statuses");
+  const subjectsParam = url.searchParams.get("subjects");
   const limitParam = url.searchParams.get("limit");
   const offsetParam = url.searchParams.get("offset");
 
@@ -82,6 +85,19 @@ export async function GET(context: APIContext): Promise<Response> {
 
   const subject = subjectParam?.trim() || undefined;
 
+  const billTypes = typesParam
+    ? (typesParam.split(",").filter(isValidBillType) as BillType[])
+    : undefined;
+  const statuses = statusesParam
+    ? (statusesParam.split(",").filter(isValidStatus) as BillStatus[])
+    : undefined;
+  const subjects = subjectsParam
+    ? subjectsParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : undefined;
+
   try {
     const config = getConfig(context.locals);
     const db = createDb(config.database.url);
@@ -89,7 +105,7 @@ export async function GET(context: APIContext): Promise<Response> {
     let bills: BillWithSponsor[];
     let total: number;
 
-    const filterOptions = { congress, status, subject, billType };
+    const filterOptions = { congress, status, subject, billType, billTypes, statuses, subjects };
     const queryOptions = { ...filterOptions, limit: limit + 1, offset };
 
     if (q) {
