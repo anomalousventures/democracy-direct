@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
-import type { BillWithSponsor } from "@/db/queries/bills";
+import type { Bill, Legislator } from "@/db/schema";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
 
 export interface BillCardProps {
-  bill: BillWithSponsor;
+  bill: Bill & { sponsor?: Legislator | null };
   showSponsor?: boolean;
   className?: string;
 }

@@ -2,13 +2,8 @@ import { useMemo, useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
-import type { BillStatus } from "@/lib/types/legislation";
-import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
-import { getOrdinalSuffix } from "@/lib/legislator-utils";
-import type { BillType } from "@/lib/types/legislation";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
-import { StatusBadge } from "@/components/BillCard";
-import { formatDateShort as formatDate } from "@/lib/date-utils";
+import { BillCard } from "@/components/BillCard";
 
 export interface SponsoredBillsProps {
   bills: Bill[];
@@ -78,88 +73,6 @@ function BillStatsBar({
         )}
       </div>
     </div>
-  );
-}
-
-function BillCard({ bill }: { bill: Bill }) {
-  const [expanded, setExpanded] = useState(false);
-  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType]}${bill.billNumber}`;
-  const billPageUrl = getBillPageUrl(bill.billType as BillType, bill.billNumber, bill.congress);
-
-  const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
-
-  const hasSummary = bill.summary && bill.summary.length > 0;
-  const truncatedSummary =
-    hasSummary && bill.summary!.length > 200 ? bill.summary!.slice(0, 200) + "..." : bill.summary;
-
-  return (
-    <article className="group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-accent">{displayNumber}</span>
-            <StatusBadge status={bill.status as BillStatus} />
-            <span className="text-xs text-muted-foreground">
-              {bill.congress}
-              {getOrdinalSuffix(bill.congress)} Congress
-            </span>
-          </div>
-
-          <a
-            href={billPageUrl}
-            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
-          >
-            {bill.title}
-          </a>
-
-          {hasSummary && (
-            <div className="mt-2">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {expanded ? bill.summary : truncatedSummary}
-              </p>
-              {bill.summary!.length > 200 && (
-                <button
-                  onClick={toggleExpand}
-                  className="inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
-                >
-                  <Icon
-                    name="chevron-down"
-                    className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-180")}
-                  />
-                  {expanded ? "Show less" : "Read more"}
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Icon name="calendar" className="w-3.5 h-3.5" />
-              Introduced {formatDate(bill.introducedDate)}
-            </span>
-            {bill.latestActionText && (
-              <span className="hidden sm:inline text-muted-foreground/80 truncate max-w-[250px]">
-                Latest: {bill.latestActionText}
-              </span>
-            )}
-          </div>
-
-          {bill.congressGovUrl && (
-            <div className="mt-3">
-              <a
-                href={bill.congressGovUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                Congress.gov
-                <Icon name="external-link" className="w-3 h-3 opacity-60" />
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
-    </article>
   );
 }
 
