@@ -67,7 +67,6 @@ describe("VotingRecord", () => {
         <VotingRecord
           votes={[]}
           stats={{ totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, present: 0 }}
-          bioguideId="A000001"
         />
       );
 
@@ -77,14 +76,14 @@ describe("VotingRecord", () => {
 
   describe("with votes", () => {
     it("renders vote stats bar", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.getByText("Voting Summary")).toBeInTheDocument();
       expect(screen.getByText(/100 total votes/)).toBeInTheDocument();
     });
 
     it("renders vote cards with position badges", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.getByText("On Passage of the Bill")).toBeInTheDocument();
       const badges = screen.getAllByText(/^(Yea|Nay)$/);
@@ -92,13 +91,13 @@ describe("VotingRecord", () => {
     });
 
     it("displays bill number when available", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.getByText(/H\.R\.1234/)).toBeInTheDocument();
     });
 
     it("renders vote links to source URL", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       const links = screen.getAllByRole("link");
       const sourceLink = links.find(
@@ -108,7 +107,7 @@ describe("VotingRecord", () => {
     });
 
     it("shows result badge with correct styling", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.getByText("Passed")).toBeInTheDocument();
       expect(screen.getByText("Failed")).toBeInTheDocument();
@@ -123,13 +122,7 @@ describe("VotingRecord", () => {
         rollCall: 100 + i,
       }));
 
-      render(
-        <VotingRecord
-          votes={manyVotes}
-          stats={{ ...mockStats, totalVotes: 15 }}
-          bioguideId="A000001"
-        />
-      );
+      render(<VotingRecord votes={manyVotes} stats={{ ...mockStats, totalVotes: 15 }} />);
 
       expect(screen.getByText(/Load More Votes/)).toBeInTheDocument();
       expect(screen.getByText(/5 remaining/)).toBeInTheDocument();
@@ -143,13 +136,7 @@ describe("VotingRecord", () => {
         question: `Vote Question ${i}`,
       }));
 
-      render(
-        <VotingRecord
-          votes={manyVotes}
-          stats={{ ...mockStats, totalVotes: 15 }}
-          bioguideId="A000001"
-        />
-      );
+      render(<VotingRecord votes={manyVotes} stats={{ ...mockStats, totalVotes: 15 }} />);
 
       expect(screen.queryByText("Vote Question 10")).not.toBeInTheDocument();
 
@@ -159,7 +146,7 @@ describe("VotingRecord", () => {
     });
 
     it("hides load more button when all votes displayed", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.queryByText(/Load More Votes/)).not.toBeInTheDocument();
     });
@@ -167,20 +154,20 @@ describe("VotingRecord", () => {
 
   describe("scroll container", () => {
     it("renders scroll container with correct test id", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       expect(screen.getByTestId("voting-record-scroll-container")).toBeInTheDocument();
     });
 
     it("applies scroll container civic class", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       const container = screen.getByTestId("voting-record-scroll-container");
       expect(container).toHaveClass("scroll-container-civic");
     });
 
     it("applies max height constraints", () => {
-      render(<VotingRecord votes={mockVotes} stats={mockStats} bioguideId="A000001" />);
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
       const container = screen.getByTestId("voting-record-scroll-container");
       expect(container).toHaveClass("max-h-[350px]");
@@ -194,13 +181,7 @@ describe("VotingRecord", () => {
         rollCall: 100 + i,
       }));
 
-      render(
-        <VotingRecord
-          votes={manyVotes}
-          stats={{ ...mockStats, totalVotes: 15 }}
-          bioguideId="A000001"
-        />
-      );
+      render(<VotingRecord votes={manyVotes} stats={{ ...mockStats, totalVotes: 15 }} />);
 
       const container = screen.getByTestId("voting-record-scroll-container");
       const summarySection = screen.getByText("Voting Summary").closest("div")?.parentElement;

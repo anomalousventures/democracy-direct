@@ -84,11 +84,15 @@ export function SenderInfoForm({
   const handleSaveToggle = useCallback(
     (checked: boolean) => {
       setSaveEnabled(checked);
-      savePrefStorage.set(checked);
+      void savePrefStorage
+        .set(checked)
+        .catch((err) => console.error("Failed to save preference:", err));
       if (!checked) {
         senderInfoStorage.remove();
       } else {
-        senderInfoStorage.set(senderInfo);
+        void senderInfoStorage
+          .set(senderInfo)
+          .catch((err) => console.error("Failed to save sender info:", err));
       }
     },
     [senderInfo, savePrefStorage, senderInfoStorage]

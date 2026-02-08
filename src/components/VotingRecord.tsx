@@ -14,7 +14,6 @@ import { useScrollShadow } from "@/hooks/useScrollShadow";
 export interface VotingRecordProps {
   votes: VoteWithPosition[];
   stats: VoteStats;
-  bioguideId: string;
   chamber?: Chamber;
   className?: string;
 }

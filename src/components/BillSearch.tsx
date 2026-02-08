@@ -43,7 +43,7 @@ const DEFAULT_CONGRESS = 119;
 
 interface SearchState {
   q: string;
-  congress: number | null;
+  congress: number | null | undefined;
   types: BillType[];
   statuses: BillStatus[];
   subjects: string[];
@@ -55,8 +55,10 @@ export function parseSearchParams(search: string): SearchState {
   const q = params.get("q")?.trim() ?? "";
 
   const congressStr = params.get("congress");
-  let congress: number | null = null;
-  if (congressStr) {
+  let congress: number | null | undefined = undefined;
+  if (congressStr === "all") {
+    congress = null;
+  } else if (congressStr) {
     const parsed = parseInt(congressStr, 10);
     if (!isNaN(parsed) && parsed > 0) congress = parsed;
   }
@@ -80,8 +82,11 @@ export function serializeSearchParams(state: SearchState): string {
   const params = new URLSearchParams();
 
   if (state.q.trim()) params.set("q", state.q.trim());
-  if (state.congress !== null && state.congress !== DEFAULT_CONGRESS)
+  if (state.congress === null) {
+    params.set("congress", "all");
+  } else if (state.congress !== undefined && state.congress !== DEFAULT_CONGRESS) {
     params.set("congress", String(state.congress));
+  }
   if (state.types.length > 0) params.set("type", state.types.join(","));
   if (state.statuses.length > 0) params.set("status", state.statuses.join(","));
   if (state.subjects.length > 0) params.set("subject", state.subjects.join(","));
@@ -148,7 +153,7 @@ export function BillSearch() {
     const parsed = parseSearchParams(window.location.search);
     return {
       ...parsed,
-      congress: parsed.congress ?? DEFAULT_CONGRESS,
+      congress: parsed.congress !== undefined ? parsed.congress : DEFAULT_CONGRESS,
     };
   }).current;
 

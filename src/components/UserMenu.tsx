@@ -48,8 +48,12 @@ export function UserMenu() {
     if (isLoading || !isLoggedIn || !user) return;
 
     const migrate = async () => {
-      if (hasLegacyData() || hasAnonData()) {
-        await migrateAnonymousData(user.id, user.emailHash);
+      try {
+        if (hasLegacyData() || hasAnonData()) {
+          await migrateAnonymousData(user.id, user.emailHash);
+        }
+      } catch (err) {
+        console.error("Data migration failed:", err);
       }
     };
 

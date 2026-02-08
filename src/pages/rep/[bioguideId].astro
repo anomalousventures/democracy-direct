@@ -204,7 +204,6 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                 <div class="pt-6">
                   <RepTabs
                     client:load
-                    bioguideId={bioguideId!}
                     chamber={rep.chamber as "house" | "senate"}
                     contactInfo={{
                       phone: rep.phoneCapitol || undefined,

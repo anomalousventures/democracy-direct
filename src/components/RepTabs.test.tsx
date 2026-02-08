@@ -87,7 +87,6 @@ describe("RepTabs", () => {
     it("renders all three tabs", () => {
       render(
         <RepTabs
-          bioguideId="A000001"
           chamber="house"
           contactInfo={mockContactInfo}
           votes={mockVotes}
@@ -105,7 +104,6 @@ describe("RepTabs", () => {
     it("hides count badges when zero", () => {
       render(
         <RepTabs
-          bioguideId="A000001"
           chamber="house"
           contactInfo={mockContactInfo}
           votes={[]}
@@ -129,7 +127,6 @@ describe("RepTabs", () => {
     it("shows contact info by default", () => {
       render(
         <RepTabs
-          bioguideId="A000001"
           chamber="house"
           contactInfo={mockContactInfo}
           votes={mockVotes}
@@ -147,7 +144,6 @@ describe("RepTabs", () => {
     it("renders voting record tab trigger with count badge", () => {
       render(
         <RepTabs
-          bioguideId="A000001"
           chamber="house"
           contactInfo={mockContactInfo}
           votes={mockVotes}
@@ -165,7 +161,6 @@ describe("RepTabs", () => {
     it("renders sponsored bills tab trigger with count badge", () => {
       render(
         <RepTabs
-          bioguideId="A000001"
           chamber="house"
           contactInfo={mockContactInfo}
           votes={mockVotes}

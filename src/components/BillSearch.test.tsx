@@ -6,7 +6,7 @@ describe("parseSearchParams", () => {
     const result = parseSearchParams("");
     expect(result).toEqual({
       q: "",
-      congress: null,
+      congress: undefined,
       types: [],
       statuses: [],
       subjects: [],
@@ -25,6 +25,11 @@ describe("parseSearchParams", () => {
 
   it("ignores invalid congress param", () => {
     const result = parseSearchParams("?congress=abc");
+    expect(result.congress).toBeUndefined();
+  });
+
+  it("parses congress=all as null", () => {
+    const result = parseSearchParams("?congress=all");
     expect(result.congress).toBeNull();
   });
 
@@ -66,7 +71,7 @@ describe("serializeSearchParams", () => {
   it("returns empty string for default state", () => {
     const result = serializeSearchParams({
       q: "",
-      congress: null,
+      congress: undefined,
       types: [],
       statuses: [],
       subjects: [],
@@ -74,10 +79,21 @@ describe("serializeSearchParams", () => {
     expect(result).toBe("");
   });
 
+  it("serializes congress=null as congress=all", () => {
+    const result = serializeSearchParams({
+      q: "",
+      congress: null,
+      types: [],
+      statuses: [],
+      subjects: [],
+    });
+    expect(result).toBe("congress=all");
+  });
+
   it("serializes query", () => {
     const result = serializeSearchParams({
       q: "education",
-      congress: null,
+      congress: undefined,
       types: [],
       statuses: [],
       subjects: [],
@@ -110,7 +126,7 @@ describe("serializeSearchParams", () => {
   it("serializes types as comma-separated", () => {
     const result = serializeSearchParams({
       q: "",
-      congress: null,
+      congress: undefined,
       types: ["hr", "s"],
       statuses: [],
       subjects: [],
@@ -147,15 +163,29 @@ describe("serializeSearchParams", () => {
     expect(params.get("congress")).toBeNull();
   });
 
-  it("round-trips through parse", () => {
+  it("round-trips through parse with specific congress", () => {
     const original = {
       q: "climate",
-      congress: 118 as number | null,
+      congress: 118 as number | null | undefined,
       types: ["hr", "s"] as ("hr" | "s")[],
       statuses: ["passed_house"] as "passed_house"[],
       subjects: ["Environment"],
     };
     const serialized = serializeSearchParams(original);
+    const parsed = parseSearchParams(`?${serialized}`);
+    expect(parsed).toEqual(original);
+  });
+
+  it("round-trips through parse with congress=null (all)", () => {
+    const original = {
+      q: "climate",
+      congress: null as number | null | undefined,
+      types: ["hr"] as "hr"[],
+      statuses: [] as never[],
+      subjects: [],
+    };
+    const serialized = serializeSearchParams(original);
+    expect(serialized).toContain("congress=all");
     const parsed = parseSearchParams(`?${serialized}`);
     expect(parsed).toEqual(original);
   });

@@ -176,7 +176,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
     setSelectedTags([]);
   }, []);
 
-  const hasActiveFilters = searchQuery.trim() || selectedTags.length > 0;
+  const hasActiveFilters = !!searchQuery.trim() || selectedTags.length > 0 || !!billFilter;
 
   return (
     <div className="space-y-8">

@@ -34,7 +34,8 @@ function MemberList({
       const matchesSearch =
         !search ||
         m.name.toLowerCase().includes(search.toLowerCase()) ||
-        m.state.toLowerCase().includes(search.toLowerCase());
+        m.state.toLowerCase().includes(search.toLowerCase()) ||
+        m.party.toLowerCase().includes(search.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [members, filter, search]);

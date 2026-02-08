@@ -9,7 +9,6 @@ import type { Bill } from "@/db/schema";
 import type { Chamber } from "@/lib/types/legislation";
 
 export interface RepTabsProps {
-  bioguideId: string;
   chamber: Chamber;
   contactInfo: ContactInfoProps;
   votes: VoteWithPosition[];
@@ -28,7 +27,6 @@ const TAB_HASH_MAP: Record<string, TabValue> = {
 };
 
 export function RepTabs({
-  bioguideId,
   chamber,
   contactInfo,
   votes,
@@ -74,7 +72,7 @@ export function RepTabs({
       </TabsContent>
 
       <TabsContent value="votes" className="mt-0 pt-6">
-        <VotingRecord votes={votes} stats={voteStats} bioguideId={bioguideId} chamber={chamber} />
+        <VotingRecord votes={votes} stats={voteStats} chamber={chamber} />
       </TabsContent>
 
       <TabsContent value="bills" className="mt-0 pt-6">
