@@ -88,6 +88,7 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
       <div
         className="p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-md"
         data-testid="save-district-success"
+        role="status"
         aria-live="polite"
       >
         <div className="flex items-center gap-3">

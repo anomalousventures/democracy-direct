@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
 import { getAmendmentPageUrl } from "@/lib/amendment-utils";
 import type { AmendmentWithRelations } from "@/db/queries/amendments";
 import type { AmendmentType } from "@/lib/types/legislation";
@@ -22,6 +23,7 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
     amendment.amendmentNumber,
     amendment.congress
   );
+  const safeAmendmentUrl = sanitizeExternalUrl(amendment.congressGovUrl);
   const hasDescription = amendment.description && amendment.description.length > 0;
   const hasPurpose = amendment.purpose && amendment.purpose.length > 0;
 
@@ -107,9 +109,9 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
               View details
               <Icon name="chevron-right" className="w-3.5 h-3.5" />
             </a>
-            {amendment.congressGovUrl && (
+            {safeAmendmentUrl && (
               <a
-                href={amendment.congressGovUrl}
+                href={safeAmendmentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-accent transition-colors"

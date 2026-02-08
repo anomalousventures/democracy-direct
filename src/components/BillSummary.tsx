@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { getPhotoUrl } from "@/lib/legislator-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
 import type { BillWithSponsor } from "@/db/queries/bills";
 import { formatDateMedium as formatDate } from "@/lib/date-utils";
 
@@ -15,6 +16,7 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
   const hasSummary = bill.summary && bill.summary.length > 0;
+  const safeCongressUrl = sanitizeExternalUrl(bill.congressGovUrl);
   const isLongSummary = hasSummary && bill.summary!.length > 500;
   const truncatedSummary = isLongSummary ? bill.summary!.slice(0, 500) + "..." : bill.summary;
 
@@ -127,10 +129,10 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
         </div>
       )}
 
-      {bill.congressGovUrl && (
+      {safeCongressUrl && (
         <div className="pt-4 border-t border-border">
           <a
-            href={bill.congressGovUrl}
+            href={safeCongressUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm text-primary hover:text-accent transition-colors font-medium"

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useId } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const pickerId = useId();
 
   const debouncedQuery = useDebounce(query, 300);
 
@@ -184,8 +185,8 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
           autoComplete="off"
           role="combobox"
           aria-expanded={isOpen}
-          aria-controls={results.length > 0 ? "bill-picker-listbox" : undefined}
-          aria-activedescendant={activeIndex >= 0 ? `bill-option-${activeIndex}` : undefined}
+          aria-controls={results.length > 0 ? `${pickerId}-listbox` : undefined}
+          aria-activedescendant={activeIndex >= 0 ? `${pickerId}-option-${activeIndex}` : undefined}
         />
 
         {isLoading && query && (
@@ -214,7 +215,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
 
         {isOpen && results.length > 0 && (
           <ul
-            id="bill-picker-listbox"
+            id={`${pickerId}-listbox`}
             className="absolute z-50 mt-1 w-full bg-white border border-border rounded-sm shadow-lg max-h-60 overflow-auto"
             data-testid="bill-picker-dropdown"
             role="listbox"
@@ -226,7 +227,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
               return (
                 <li
                   key={bill.id}
-                  id={`bill-option-${index}`}
+                  id={`${pickerId}-option-${index}`}
                   role="option"
                   aria-selected={index === activeIndex}
                   aria-disabled={alreadySelected}

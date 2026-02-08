@@ -82,7 +82,7 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
-        aria-controls={panelId}
+        aria-controls={expanded ? panelId : undefined}
         className="w-full p-3 bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-between"
       >
         <span className="text-sm font-medium text-primary">Amendment Votes ({votes.length})</span>

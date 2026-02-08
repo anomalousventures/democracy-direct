@@ -33,6 +33,7 @@ function recordTemplateUse(templateSlug: string, repBioguideId: string, contactT
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ repBioguideId, contactType }),
+    keepalive: true,
   }).catch(() => {});
 }
 

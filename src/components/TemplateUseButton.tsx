@@ -28,16 +28,20 @@ export function TemplateUseButton({
       return;
     }
 
+    let cancelled = false;
+
     const resolveHref = async () => {
       if (isLoggedIn && user?.savedState && user?.savedDistrict) {
-        setResolvedHref(
-          `/reps/${user.savedState.toLowerCase()}/${user.savedDistrict.toLowerCase()}?template=${templateSlug}`
-        );
+        if (!cancelled) {
+          setResolvedHref(
+            `/reps/${user.savedState.toLowerCase()}/${user.savedDistrict.toLowerCase()}?template=${templateSlug}`
+          );
+        }
         return;
       }
 
       const localDistrict = await districtStorage.get();
-      if (localDistrict) {
+      if (localDistrict && !cancelled) {
         setResolvedHref(
           `/reps/${localDistrict.state.toLowerCase()}/${localDistrict.district.toLowerCase()}?template=${templateSlug}`
         );
@@ -45,6 +49,10 @@ export function TemplateUseButton({
     };
 
     resolveHref();
+
+    return () => {
+      cancelled = true;
+    };
   }, [repBioguideId, templateSlug, isLoading, isLoggedIn, user, districtStorage]);
 
   const handleClick = useCallback(() => {

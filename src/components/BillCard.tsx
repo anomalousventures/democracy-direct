@@ -3,6 +3,7 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { BillStatus } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { Bill, Legislator } from "@/db/schema";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
@@ -97,6 +98,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
   const [expanded, setExpanded] = useState(false);
   const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType] ?? bill.billType}${bill.billNumber}`;
   const billPageUrl = getBillPageUrl(bill.billType, bill.billNumber, bill.congress);
+  const safeCongressUrl = sanitizeExternalUrl(bill.congressGovUrl);
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
 
@@ -177,10 +179,10 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
             </div>
           )}
 
-          {bill.congressGovUrl && (
+          {safeCongressUrl && (
             <div className="mt-3">
               <a
-                href={bill.congressGovUrl}
+                href={safeCongressUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative z-10 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
