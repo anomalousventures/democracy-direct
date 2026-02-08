@@ -6,21 +6,11 @@ import { getAmendmentPageUrl } from "@/lib/amendment-utils";
 import type { AmendmentWithRelations } from "@/db/queries/amendments";
 import type { AmendmentType } from "@/lib/types/legislation";
 import type { BillAmendmentsResponse } from "@/pages/api/legislation/[billId]/amendments";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
 
 interface BillAmendmentsProps {
   billId: string;
   className?: string;
-}
-
-function formatDate(date: Date | string | null): string {
-  if (!date) return "N/A";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {

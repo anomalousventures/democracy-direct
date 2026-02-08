@@ -8,22 +8,13 @@ import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillType } from "@/lib/types/legislation";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
 import { StatusBadge } from "@/components/BillCard";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
 
 export interface SponsoredBillsProps {
   bills: Bill[];
   totalCount: number;
   bioguideId: string;
   className?: string;
-}
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 interface BillStatsBarProps {

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
 import { PositionBadge } from "@/components/vote/PositionBadge";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
 
@@ -13,16 +14,6 @@ export interface VotingRecordProps {
   bioguideId: string;
   chamber?: Chamber;
   className?: string;
-}
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 function getVoteDisplayTitle(vote: VoteWithPosition): string {

@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { enrichVoteQuestion } from "@/lib/vote-question-utils";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
 import type { Chamber } from "@/lib/types/legislation";
 
 export interface VoteSummaryCardProps {
@@ -22,16 +23,6 @@ export interface VoteSummaryCardProps {
     amendmentNumber?: string | null;
     amendmentPurpose?: string | null;
   };
-}
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 function getResultStyle(result: string) {

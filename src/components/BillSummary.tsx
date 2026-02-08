@@ -3,20 +3,11 @@ import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { getPhotoUrl } from "@/lib/legislator-utils";
 import type { BillWithSponsor } from "@/db/queries/bills";
+import { formatDateMedium as formatDate } from "@/lib/date-utils";
 
 interface BillSummaryProps {
   bill: BillWithSponsor;
   className?: string;
-}
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 export function BillSummary({ bill, className }: BillSummaryProps) {

@@ -5,6 +5,7 @@ import type { BillStatus, BillType } from "@/lib/types/legislation";
 import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import type { BillWithSponsor } from "@/db/queries/bills";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
 
 export interface BillCardProps {
   bill: BillWithSponsor;
@@ -75,16 +76,6 @@ export const STATUS_STYLES: Record<BillStatus, StatusStyle> = {
     border: "border-green-200",
   },
 };
-
-function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function StatusBadge({ status }: { status: BillStatus }) {
   const style = STATUS_STYLES[status];

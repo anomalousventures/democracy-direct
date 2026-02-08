@@ -7,6 +7,7 @@ import { PartyBreakdown } from "@/components/vote/PartyBreakdown";
 import { MemberVoteList } from "@/components/vote/MemberVoteList";
 import { YourRepsBanner } from "@/components/vote/YourRepsBanner";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import { formatDateLong as formatDate } from "@/lib/date-utils";
 
 interface VoteData {
   id: string;
@@ -37,17 +38,6 @@ interface VoteDetailProps {
   members: VoteMember[];
   billLink: { url: string; label: string } | null;
   amendment?: AmendmentContext | null;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }
 
 export function VoteDetail({ vote, members, billLink, amendment }: VoteDetailProps) {
