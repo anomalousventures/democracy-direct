@@ -308,7 +308,7 @@ export async function getVotesByMemberWithRelations(
     createdAt: row.createdAt,
     position: row.position,
     bill: row.billDbId
-      ? { id: row.billDbId, title: row.billDbTitle!, summary: row.billDbSummary }
+      ? { id: row.billDbId, title: row.billDbTitle ?? "", summary: row.billDbSummary }
       : null,
     amendment: row.amendmentDbId
       ? {

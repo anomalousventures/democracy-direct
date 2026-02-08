@@ -95,7 +95,7 @@ export function StatusBadge({ status }: { status: BillStatus }) {
 
 export function BillCard({ bill, showSponsor = false, className }: BillCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType]}${bill.billNumber}`;
+  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType as BillType] ?? bill.billType}${bill.billNumber}`;
   const billPageUrl = getBillPageUrl(bill.billType as BillType, bill.billNumber, bill.congress);
 
   const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
