@@ -30,14 +30,16 @@ export function TemplateUseButton({
 
     const resolveHref = async () => {
       if (isLoggedIn && user?.savedState && user?.savedDistrict) {
-        setResolvedHref(`/reps/${user.savedState}/${user.savedDistrict}?template=${templateSlug}`);
+        setResolvedHref(
+          `/reps/${user.savedState.toLowerCase()}/${user.savedDistrict.toLowerCase()}?template=${templateSlug}`
+        );
         return;
       }
 
       const localDistrict = await districtStorage.get();
       if (localDistrict) {
         setResolvedHref(
-          `/reps/${localDistrict.state}/${localDistrict.district}?template=${templateSlug}`
+          `/reps/${localDistrict.state.toLowerCase()}/${localDistrict.district.toLowerCase()}?template=${templateSlug}`
         );
       }
     };

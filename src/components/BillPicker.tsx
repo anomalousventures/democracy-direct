@@ -46,6 +46,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const debouncedQuery = useDebounce(query, 300);
 
@@ -67,6 +68,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
       .then((data: SearchResponse) => {
         if (!cancelled) {
           setResults(data.bills ?? []);
+          setActiveIndex(-1);
           setIsOpen(true);
         }
       })
@@ -103,9 +105,31 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
       onBillsChange([...selectedBills, normalized]);
       setQuery("");
       setIsOpen(false);
+      setActiveIndex(-1);
       inputRef.current?.focus();
     },
     [selectedBills, onBillsChange]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!isOpen || results.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+      } else if (e.key === "Enter" && activeIndex >= 0) {
+        e.preventDefault();
+        addBill(results[activeIndex]);
+      } else if (e.key === "Escape") {
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+    },
+    [isOpen, results, activeIndex, addBill]
   );
 
   const removeBill = useCallback(
@@ -153,10 +177,15 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
+          onKeyDown={handleKeyDown}
           placeholder="Search bills by number or title..."
           variant="civic"
           data-testid="bill-picker-input"
           autoComplete="off"
+          role="combobox"
+          aria-expanded={isOpen && results.length > 0}
+          aria-controls="bill-picker-listbox"
+          aria-activedescendant={activeIndex >= 0 ? `bill-option-${activeIndex}` : undefined}
         />
 
         {isLoading && query && (
@@ -185,23 +214,27 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
 
         {isOpen && results.length > 0 && (
           <ul
+            id="bill-picker-listbox"
             className="absolute z-50 mt-1 w-full bg-white border border-border rounded-sm shadow-lg max-h-60 overflow-auto"
             data-testid="bill-picker-dropdown"
             role="listbox"
           >
-            {results.map((bill) => {
+            {results.map((bill, index) => {
               const normalized = billToNormalized(bill);
               const alreadySelected = normalized ? selectedBills.includes(normalized) : false;
 
               return (
                 <li
                   key={bill.id}
+                  id={`bill-option-${index}`}
                   role="option"
                   aria-selected={alreadySelected}
                   className={`px-3 py-2 cursor-pointer transition-colors ${
                     alreadySelected
                       ? "opacity-50 cursor-not-allowed bg-secondary/50"
-                      : "hover:bg-secondary"
+                      : index === activeIndex
+                        ? "bg-secondary"
+                        : "hover:bg-secondary"
                   }`}
                   onClick={() => {
                     if (!alreadySelected) addBill(bill);
