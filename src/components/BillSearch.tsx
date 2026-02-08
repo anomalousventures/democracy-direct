@@ -210,7 +210,7 @@ export function BillSearch() {
 
       if (congress === null) {
         params.set("congress", "all");
-      } else if (congress) {
+      } else if (congress && congress !== DEFAULT_CONGRESS) {
         params.set("congress", String(congress));
       }
 

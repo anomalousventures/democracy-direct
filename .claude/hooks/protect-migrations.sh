@@ -6,6 +6,10 @@ INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
 if [[ "$FILE_PATH" == */drizzle/*.sql ]] || [[ "$FILE_PATH" == */drizzle/meta/*.json ]]; then
+  # Allow editing existing files (e.g. custom migration SQL); only block creating new ones
+  if [ -e "$FILE_PATH" ]; then
+    exit 0
+  fi
   jq -n '{
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",

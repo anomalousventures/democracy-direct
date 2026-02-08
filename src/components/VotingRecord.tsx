@@ -78,9 +78,9 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
           {vote.billSubjects && vote.billSubjects.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
               <Icon name="tag" className="w-3.5 h-3.5 text-muted-foreground" />
-              {vote.billSubjects.slice(0, 3).map((subject, i) => (
+              {vote.billSubjects.slice(0, 3).map((subject) => (
                 <span
-                  key={i}
+                  key={subject}
                   className="px-2 py-0.5 text-xs bg-secondary text-muted-foreground rounded-sm"
                 >
                   {subject}

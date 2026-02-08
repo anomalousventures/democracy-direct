@@ -55,6 +55,8 @@ export function SenderInfoForm({
             onChangeRef.current(saved);
           }
         }
+      } catch (err) {
+        console.error("Failed to load saved sender info:", err);
       } finally {
         setHasLoaded(true);
       }
