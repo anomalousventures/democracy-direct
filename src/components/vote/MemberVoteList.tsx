@@ -100,6 +100,7 @@ export function MemberVoteList({ members, defaultFilter = "all" }: MemberVoteLis
             {(["all", "yea", "nay", "not_voting", "present"] as const).map((pos) => (
               <button
                 key={pos}
+                type="button"
                 onClick={() => setFilter(pos)}
                 className={cn(
                   "px-3 py-1.5 text-xs font-medium border rounded-sm transition-colors",

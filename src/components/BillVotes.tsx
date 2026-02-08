@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { BillVotesResponse, BillVoteSummary } from "@/pages/api/legislation/[billId]/votes";
@@ -71,6 +71,7 @@ function VoteListSection({ votes, label }: { votes: BillVoteSummary[]; label: st
 }
 
 function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
+  const panelId = useId();
   const [expanded, setExpanded] = useState(false);
 
   if (votes.length === 0) return null;
@@ -81,7 +82,7 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
-        aria-controls="amendment-votes"
+        aria-controls={panelId}
         className="w-full p-3 bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-between"
       >
         <span className="text-sm font-medium text-primary">Amendment Votes ({votes.length})</span>
@@ -95,7 +96,7 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
       </button>
 
       {expanded && (
-        <div id="amendment-votes" className="p-4">
+        <div id={panelId} className="p-4">
           <VoteListSection votes={votes} label="Amendment Roll Call Votes" />
         </div>
       )}

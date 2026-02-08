@@ -33,11 +33,15 @@ jobs:
         env:
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
         run: |
+          set +e
           OUTPUT=$(pnpm tsx src/scripts/validate-api-schemas.ts 2>&1)
+          EXIT_CODE=$?
+          set -e
           echo "$OUTPUT"
           echo "output<<EOF" >> $GITHUB_OUTPUT
           echo "$OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
 
       - name: Create issue on failure
         if: failure()

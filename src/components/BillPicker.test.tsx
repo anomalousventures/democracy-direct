@@ -128,7 +128,7 @@ describe("BillPicker", () => {
     });
 
     const options = screen.getAllByRole("option");
-    const duplicateOption = options.find((opt) => opt.getAttribute("aria-selected") === "true");
+    const duplicateOption = options.find((opt) => opt.getAttribute("aria-disabled") === "true");
     expect(duplicateOption).toBeDefined();
 
     fireEvent.click(duplicateOption!);

@@ -88,7 +88,7 @@ export function SenderInfoForm({
         .set(checked)
         .catch((err) => console.error("Failed to save preference:", err));
       if (!checked) {
-        senderInfoStorage.remove();
+        void senderInfoStorage.remove();
       } else {
         void senderInfoStorage
           .set(senderInfo)
@@ -101,7 +101,7 @@ export function SenderInfoForm({
   const handleClear = useCallback(() => {
     const empty = createEmptySenderInfo();
     setSenderInfo(empty);
-    senderInfoStorage.remove();
+    void senderInfoStorage.remove();
     onChange(empty);
   }, [onChange, senderInfoStorage]);
 

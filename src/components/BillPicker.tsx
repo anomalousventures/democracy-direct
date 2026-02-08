@@ -228,7 +228,8 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
                   key={bill.id}
                   id={`bill-option-${index}`}
                   role="option"
-                  aria-selected={alreadySelected}
+                  aria-selected={index === activeIndex}
+                  aria-disabled={alreadySelected}
                   className={`px-3 py-2 cursor-pointer transition-colors ${
                     alreadySelected
                       ? "opacity-50 cursor-not-allowed bg-secondary/50"
