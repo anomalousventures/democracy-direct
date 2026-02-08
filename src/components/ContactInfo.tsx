@@ -30,7 +30,7 @@ export function ContactInfo({
   const safeContactFormUrl = sanitizeExternalUrl(contactFormUrl ?? null);
 
   const hasSocial = twitterHandle || facebookId;
-  const hasAnyInfo = phone || contactFormUrl || address || website || hasSocial;
+  const hasAnyInfo = phone || safeContactFormUrl || address || safeWebsite || hasSocial;
 
   if (!hasAnyInfo) {
     return (

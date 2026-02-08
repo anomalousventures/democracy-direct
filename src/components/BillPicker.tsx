@@ -233,12 +233,12 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
                   role="option"
                   aria-selected={index === activeIndex}
                   aria-disabled={alreadySelected}
-                  className={`px-3 py-2 cursor-pointer transition-colors ${
+                  className={`px-3 py-2 transition-colors ${
                     alreadySelected
                       ? "opacity-50 cursor-not-allowed bg-secondary/50"
                       : index === activeIndex
-                        ? "bg-secondary"
-                        : "hover:bg-secondary"
+                        ? "bg-secondary cursor-pointer"
+                        : "hover:bg-secondary cursor-pointer"
                   }`}
                   onClick={() => {
                     if (!alreadySelected) addBill(bill);

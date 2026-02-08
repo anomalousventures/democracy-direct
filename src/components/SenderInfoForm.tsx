@@ -42,7 +42,7 @@ export function SenderInfoForm({
   const debouncedSenderInfo = useDebounce(senderInfo, 400);
 
   useEffect(() => {
-    if (!senderInfoStorage.isReady || hasLoaded) return;
+    if (!senderInfoStorage.isReady || !savePrefStorage.isReady || hasLoaded) return;
 
     const loadSavedData = async () => {
       try {
@@ -61,7 +61,13 @@ export function SenderInfoForm({
     };
 
     loadSavedData();
-  }, [senderInfoStorage.isReady, hasLoaded, senderInfoStorage, savePrefStorage]);
+  }, [
+    senderInfoStorage.isReady,
+    savePrefStorage.isReady,
+    hasLoaded,
+    senderInfoStorage,
+    savePrefStorage,
+  ]);
 
   useEffect(() => {
     if (!hasLoaded || !saveEnabled) return;
