@@ -1,7 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import type { Chamber } from "@/lib/types/legislation";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
@@ -14,7 +13,6 @@ import { useScrollShadow } from "@/hooks/useScrollShadow";
 export interface VotingRecordProps {
   votes: VoteWithPosition[];
   stats: VoteStats;
-  chamber?: Chamber;
   className?: string;
 }
 

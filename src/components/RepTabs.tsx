@@ -6,10 +6,8 @@ import { cn } from "@/lib/utils";
 import { useHashTabs, TAB_TRIGGER_CLASS } from "@/hooks/useHashTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";
-import type { Chamber } from "@/lib/types/legislation";
 
 export interface RepTabsProps {
-  chamber: Chamber;
   contactInfo: ContactInfoProps;
   votes: VoteWithPosition[];
   voteStats: VoteStats;
@@ -27,7 +25,6 @@ const TAB_HASH_MAP: Record<string, TabValue> = {
 };
 
 export function RepTabs({
-  chamber,
   contactInfo,
   votes,
   voteStats,
@@ -72,7 +69,7 @@ export function RepTabs({
       </TabsContent>
 
       <TabsContent value="votes" className="mt-0 pt-6">
-        <VotingRecord votes={votes} stats={voteStats} chamber={chamber} />
+        <VotingRecord votes={votes} stats={voteStats} />
       </TabsContent>
 
       <TabsContent value="bills" className="mt-0 pt-6">

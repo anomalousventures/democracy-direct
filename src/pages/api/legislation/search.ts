@@ -60,7 +60,7 @@ export async function GET(context: APIContext): Promise<Response> {
   const offset = Math.max(parseInt(offsetParam || "0", 10) || 0, 0);
 
   let congress: number | undefined;
-  if (congressParam) {
+  if (congressParam && congressParam !== "all") {
     congress = parseInt(congressParam, 10);
     if (isNaN(congress) || congress < 1) {
       return badRequest("Invalid congress parameter");

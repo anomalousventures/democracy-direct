@@ -183,8 +183,8 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
           data-testid="bill-picker-input"
           autoComplete="off"
           role="combobox"
-          aria-expanded={isOpen && results.length > 0}
-          aria-controls="bill-picker-listbox"
+          aria-expanded={isOpen}
+          aria-controls={results.length > 0 ? "bill-picker-listbox" : undefined}
           aria-activedescendant={activeIndex >= 0 ? `bill-option-${activeIndex}` : undefined}
         />
 
