@@ -206,7 +206,12 @@ export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div
+      className={cn(
+        "scroll-container-civic max-h-[350px] md:max-h-[500px] relative space-y-4",
+        className
+      )}
+    >
       {amendments.map((amendment) => (
         <AmendmentCard key={amendment.id} amendment={amendment} />
       ))}

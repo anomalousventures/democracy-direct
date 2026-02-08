@@ -5,7 +5,6 @@ import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
 import { formatDateShort as formatDate } from "@/lib/date-utils";
 import { getVoteResultStyle } from "@/lib/vote-result-style";
-import { sanitizeExternalUrl } from "@/lib/url";
 import { PositionBadge } from "@/components/vote/PositionBadge";
 import { VoteStatsBar } from "@/components/vote/VoteStatsBar";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
@@ -65,22 +64,12 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
               ))}
           </div>
 
-          {(() => {
-            const safeSourceUrl = sanitizeExternalUrl(vote.sourceUrl);
-            return safeSourceUrl ? (
-              <a
-                href={safeSourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
-              >
-                {displayTitle}
-                <Icon name="external-link" className="inline-block w-3.5 h-3.5 ml-1.5 opacity-60" />
-              </a>
-            ) : (
-              <p className="block font-medium text-primary line-clamp-2 mb-2">{displayTitle}</p>
-            );
-          })()}
+          <a
+            href={voteDetailUrl}
+            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2"
+          >
+            {displayTitle}
+          </a>
 
           {vote.question !== displayTitle && (
             <p className="text-sm text-muted-foreground mb-2">{vote.question}</p>

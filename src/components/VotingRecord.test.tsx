@@ -96,14 +96,18 @@ describe("VotingRecord", () => {
       expect(screen.getByText(/H\.R\.1234/)).toBeInTheDocument();
     });
 
-    it("renders vote links to source URL", () => {
+    it("renders vote title as link to internal vote detail page", () => {
       render(<VotingRecord votes={mockVotes} stats={mockStats} />);
 
-      const links = screen.getAllByRole("link");
-      const sourceLink = links.find(
-        (link) => link.getAttribute("href") === "https://congress.gov/vote/119/house/123"
-      );
-      expect(sourceLink).toHaveAttribute("href", "https://congress.gov/vote/119/house/123");
+      const titleLink = screen.getByRole("link", { name: /Test Bill Title/ });
+      expect(titleLink).toHaveAttribute("href", "/vote/house/119/1/123");
+    });
+
+    it("renders vote question as link when no bill title", () => {
+      render(<VotingRecord votes={mockVotes} stats={mockStats} />);
+
+      const questionLink = screen.getByRole("link", { name: /On the Motion to Recommit/ });
+      expect(questionLink).toHaveAttribute("href", "/vote/house/119/1/124");
     });
 
     it("shows result badge with correct styling", () => {
