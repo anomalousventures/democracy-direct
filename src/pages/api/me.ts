@@ -12,6 +12,8 @@ export interface MeResponse {
   isAdmin: boolean;
 }
 
+export type MeApiResponse = MeResponse | null;
+
 function isAdmin(user: SessionUser): boolean {
   const ADMIN_TRUST_LEVEL = 100;
   return user.trustLevel >= ADMIN_TRUST_LEVEL;

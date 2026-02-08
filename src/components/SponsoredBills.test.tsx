@@ -43,7 +43,7 @@ const mockBills: Bill[] = [
 describe("SponsoredBills", () => {
   describe("empty state", () => {
     it("renders empty state when no bills", () => {
-      render(<SponsoredBills bills={[]} totalCount={0} bioguideId="A000001" />);
+      render(<SponsoredBills bills={[]} totalCount={0} />);
 
       expect(screen.getByText("No Sponsored Bills")).toBeInTheDocument();
     });
@@ -51,28 +51,28 @@ describe("SponsoredBills", () => {
 
   describe("with bills", () => {
     it("renders bill cards", () => {
-      render(<SponsoredBills bills={mockBills} totalCount={2} bioguideId="A000001" />);
+      render(<SponsoredBills bills={mockBills} totalCount={2} />);
 
       expect(screen.getByText("A bill to improve things")).toBeInTheDocument();
       expect(screen.getByText("A bill that became law")).toBeInTheDocument();
     });
 
     it("renders status badges", () => {
-      render(<SponsoredBills bills={mockBills} totalCount={2} bioguideId="A000001" />);
+      render(<SponsoredBills bills={mockBills} totalCount={2} />);
 
       expect(screen.getByText("Introduced")).toBeInTheDocument();
       expect(screen.getByText("Became Law")).toBeInTheDocument();
     });
 
     it("displays bill numbers correctly", () => {
-      render(<SponsoredBills bills={mockBills} totalCount={2} bioguideId="A000001" />);
+      render(<SponsoredBills bills={mockBills} totalCount={2} />);
 
       expect(screen.getByText("H.R.1234")).toBeInTheDocument();
       expect(screen.getByText("S.5678")).toBeInTheDocument();
     });
 
     it("shows summary when available", () => {
-      render(<SponsoredBills bills={mockBills} totalCount={2} bioguideId="A000001" />);
+      render(<SponsoredBills bills={mockBills} totalCount={2} />);
 
       expect(screen.getByText(/significant improvements/)).toBeInTheDocument();
     });
@@ -86,7 +86,7 @@ describe("SponsoredBills", () => {
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
       };
 
-      render(<SponsoredBills bills={[billWithLongSummary]} totalCount={1} bioguideId="A000001" />);
+      render(<SponsoredBills bills={[billWithLongSummary]} totalCount={1} />);
 
       expect(screen.getByText(/Read more/)).toBeInTheDocument();
     });
@@ -98,7 +98,7 @@ describe("SponsoredBills", () => {
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. END_MARKER",
       };
 
-      render(<SponsoredBills bills={[billWithLongSummary]} totalCount={1} bioguideId="A000001" />);
+      render(<SponsoredBills bills={[billWithLongSummary]} totalCount={1} />);
 
       expect(screen.queryByText(/END_MARKER/)).not.toBeInTheDocument();
 
@@ -117,13 +117,13 @@ describe("SponsoredBills", () => {
         billNumber: String(1000 + i),
       }));
 
-      render(<SponsoredBills bills={manyBills} totalCount={15} bioguideId="A000001" />);
+      render(<SponsoredBills bills={manyBills} totalCount={15} />);
 
       expect(screen.getByText(/Load More Bills/)).toBeInTheDocument();
     });
 
     it("hides load more button when all bills displayed", () => {
-      render(<SponsoredBills bills={mockBills} totalCount={2} bioguideId="A000001" />);
+      render(<SponsoredBills bills={mockBills} totalCount={2} />);
 
       expect(screen.queryByText(/Load More Bills/)).not.toBeInTheDocument();
     });

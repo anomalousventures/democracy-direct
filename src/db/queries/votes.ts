@@ -251,6 +251,8 @@ export async function getVotesByMemberWithRelations(
     conditions.push(eq(votes.chamber, chamber));
   }
 
+  // SQL API: cross-table WHERE on votes.congress/chamber while querying from memberVotes
+  // is not supported by Drizzle's relational API
   const results = await db
     .select({
       id: votes.id,

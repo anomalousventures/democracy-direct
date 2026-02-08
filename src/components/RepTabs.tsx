@@ -78,7 +78,7 @@ export function RepTabs({
       </TabsContent>
 
       <TabsContent value="bills" className="mt-0 pt-6">
-        <SponsoredBills bills={bills} totalCount={billCount} bioguideId={bioguideId} />
+        <SponsoredBills bills={bills} totalCount={billCount} />
       </TabsContent>
     </Tabs>
   );

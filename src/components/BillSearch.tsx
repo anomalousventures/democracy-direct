@@ -283,6 +283,7 @@ export function BillSearch() {
 
   const clearFilters = useCallback(() => {
     setSearchQuery("");
+    setCongress(119);
     setSelectedTypes([]);
     setSelectedStatuses([]);
     setSelectedSubjects([]);
@@ -290,6 +291,7 @@ export function BillSearch() {
 
   const hasActiveFilters =
     searchQuery.trim() ||
+    congress !== 119 ||
     selectedTypes.length > 0 ||
     selectedStatuses.length > 0 ||
     selectedSubjects.length > 0;

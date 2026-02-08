@@ -1,7 +1,7 @@
 import { atom, computed } from "nanostores";
-import type { MeResponse } from "@/pages/api/me";
+import type { MeApiResponse } from "@/pages/api/me";
 
-export const $user = atom<MeResponse | null>(null);
+export const $user = atom<MeApiResponse>(null);
 export const $isLoading = atom(true);
 export const $isLoggedIn = computed($user, (user) => !!user);
 
@@ -17,7 +17,7 @@ export async function fetchUser(): Promise<void> {
     try {
       const res = await fetch("/api/me");
       if (res.ok) {
-        const data = (await res.json()) as MeResponse | null;
+        const data = (await res.json()) as MeApiResponse;
         $user.set(data);
       } else {
         $user.set(null);

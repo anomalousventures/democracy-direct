@@ -8,7 +8,6 @@ import { BillCard } from "@/components/BillCard";
 export interface SponsoredBillsProps {
   bills: Bill[];
   totalCount: number;
-  bioguideId: string;
   className?: string;
 }
 

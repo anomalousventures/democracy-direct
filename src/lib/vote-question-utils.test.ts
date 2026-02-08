@@ -72,6 +72,6 @@ describe("enrichVoteQuestion", () => {
         question: " On the Amendment ",
         amendmentPurpose: "To strike section 5",
       })
-    ).toBe(" On the Amendment : To strike section 5");
+    ).toBe("On the Amendment: To strike section 5");
   });
 });

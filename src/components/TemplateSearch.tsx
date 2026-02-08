@@ -319,7 +319,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
                       {template.title}
                     </h2>
                     <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-                      {template.description ?? getPreviewLines(template.body, 3)}
+                      {template.description || getPreviewLines(template.body, 3)}
                     </p>
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex flex-wrap gap-2 min-w-0">

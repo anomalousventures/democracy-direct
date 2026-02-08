@@ -15,5 +15,5 @@ export function enrichVoteQuestion(ctx: VoteQuestionContext): string {
 
   if (!isAmbiguous) return ctx.question;
 
-  return `${ctx.question}: ${ctx.amendmentPurpose}`;
+  return `${ctx.question.trim()}: ${ctx.amendmentPurpose}`;
 }
