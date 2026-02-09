@@ -58,7 +58,7 @@ PAYLOAD=$(jq -n \
   } else {} end')
 
 if [ -n "$FILE" ] && [ -f "$FILE" ]; then
-  curl -s -F "payload_json=$PAYLOAD" -F "file1=@$FILE" "$WEBHOOK_URL"
+  curl -fsS -F "payload_json=$PAYLOAD" -F "file1=@$FILE" "$WEBHOOK_URL"
 else
-  curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+  curl -fsS -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
 fi
