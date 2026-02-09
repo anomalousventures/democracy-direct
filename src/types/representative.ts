@@ -35,11 +35,3 @@ export function getRepresentativeTitle(rep: Representative): string {
   }
   return rep.chamber === "senate" ? "Senator" : "Representative";
 }
-
-export function formatLetterDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}

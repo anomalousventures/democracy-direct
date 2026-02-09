@@ -5,10 +5,9 @@ import { users } from "@/db/schema";
 import { getConfig } from "@/lib/config";
 import { badRequest, unauthorized, jsonResponse, serverError } from "@/lib/api-response";
 import { isValidState } from "@/lib/states";
+import { DISTRICT_PATTERN } from "@/lib/saved-district";
 
 export const prerender = false;
-
-const DISTRICT_PATTERN = /^(\d{1,2}|AL)$/;
 
 function isValidDistrict(district: string): boolean {
   return DISTRICT_PATTERN.test(district);

@@ -50,17 +50,20 @@ const PRIVATE_FIELDS = [
   "moderationScores",
   "isPublic",
   "flagCount",
-] as const;
+  "contentHash",
+] satisfies readonly (keyof typeof baseTemplate)[];
 
 const baseTemplate = {
   id: "template-1",
   slug: "public-template",
   title: "Public Template",
+  description: null,
   body: "This is a public template body that is long enough to pass validation.",
   isPublic: true,
   moderationStatus: "approved",
   userId: OWNER_ID,
   issueTags: [],
+  linkedBillNumbers: [],
   viewCount: 10,
   useCount: 5,
   forkedFrom: null,
@@ -68,6 +71,7 @@ const baseTemplate = {
   updatedAt: new Date(),
   moderationScores: null,
   flagCount: 0,
+  contentHash: null,
 };
 
 function createTemplate(overrides: Partial<typeof baseTemplate> = {}) {

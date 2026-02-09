@@ -2,10 +2,15 @@ name: Backfill Bills
 
 on:
   schedule:
-    # Hourly, 8am-10pm Pacific (UTC-8/UTC-7 depending on DST)
-    # 15:00-06:00 UTC covers both PST and PDT windows
-    - cron: "0 0-6,15-23 * * *"
+    # Every 2 hours, avoiding 6:00 UTC (when refresh-data runs)
+    # Rate limit optimization: reduces overlap with other Congress API jobs
+    - cron: "0 0,2,4,8,10,12,14,16,18,20,22 * * *"
   workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max bills to sync (default: 1500)"
+        required: false
+        type: number
 
 permissions:
   contents: read
@@ -33,7 +38,11 @@ jobs:
         id: bills
         run: |
           set +e
-          pnpm sync:bills -- --direction backward
+          LIMIT_ARG=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            LIMIT_ARG="--limit ${{ inputs.limit }}"
+          fi
+          pnpm sync:bills -- --direction backward $LIMIT_ARG
           EXIT_CODE=$?
           set -e
 
@@ -70,6 +79,14 @@ jobs:
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
           CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
           OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
+
+          # Parse new cursor state fields
+          CURRENT_SYNC=$(echo "$BILLS_RESULT" | jq -r '.cursorState.currentSyncCongress // "null"')
+          CURRENT_OFFSET=$(echo "$BILLS_RESULT" | jq -r '.cursorState.currentOffset // "null"')
+          FIRST_BILL_TYPE=$(echo "$BILLS_RESULT" | jq -r '.firstBill.type // ""')
+          FIRST_BILL_NUM=$(echo "$BILLS_RESULT" | jq -r '.firstBill.number // ""')
+          LAST_BILL_TYPE=$(echo "$BILLS_RESULT" | jq -r '.lastBill.type // ""')
+          LAST_BILL_NUM=$(echo "$BILLS_RESULT" | jq -r '.lastBill.number // ""')
 
           # Parse errors (fatal issues that prevented bill processing)
           ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
@@ -126,11 +143,26 @@ jobs:
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
             COLOR=65280
-            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
-              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}"
-            else
-              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest synced: ${OLDEST})"
+
+            # Build bill range info
+            BILL_RANGE=""
+            if [ -n "$FIRST_BILL_TYPE" ] && [ -n "$LAST_BILL_TYPE" ]; then
+              FIRST_BILL=$(echo "${FIRST_BILL_TYPE}${FIRST_BILL_NUM}" | tr '[:lower:]' '[:upper:]')
+              LAST_BILL=$(echo "${LAST_BILL_TYPE}${LAST_BILL_NUM}" | tr '[:lower:]' '[:upper:]')
+              BILL_RANGE=" (${FIRST_BILL} → ${LAST_BILL})"
             fi
+
+            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}${BILL_RANGE}"
+            else
+              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}${BILL_RANGE}\n📌 **Oldest synced**: Congress ${OLDEST}"
+            fi
+
+            # Show partial sync progress
+            if [ "$CURRENT_SYNC" != "null" ] && [ "$CURRENT_OFFSET" != "null" ]; then
+              STATUS="${STATUS}\n⏳ **In progress**: Congress ${CURRENT_SYNC} at offset ${CURRENT_OFFSET}"
+            fi
+
             if [ "$ERROR_COUNT" -gt 0 ]; then
               STATUS="${STATUS}\n⚠️ **Errors**: ${ERROR_COUNT} bills could not be processed"
             fi

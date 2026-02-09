@@ -1,3 +1,5 @@
+import { escapeXml } from "@/lib/escape";
+
 /**
  * Markdown utilities for template storage and clipboard conversion.
  *
@@ -93,7 +95,7 @@ export function renderMarkdownToHtml(md: string): string {
         result.push("<ul>");
         inList = "ul";
       }
-      result.push(`<li>${formatInlineMarkdown(escapeHtml(bulletMatch[1]))}</li>`);
+      result.push(`<li>${formatInlineMarkdown(escapeXml(bulletMatch[1]))}</li>`);
       continue;
     }
 
@@ -105,7 +107,7 @@ export function renderMarkdownToHtml(md: string): string {
         result.push("<ol>");
         inList = "ol";
       }
-      result.push(`<li>${formatInlineMarkdown(escapeHtml(orderedMatch[2]))}</li>`);
+      result.push(`<li>${formatInlineMarkdown(escapeXml(orderedMatch[2]))}</li>`);
       continue;
     }
 
@@ -121,7 +123,7 @@ export function renderMarkdownToHtml(md: string): string {
     }
 
     // Regular paragraph
-    result.push(`<p>${formatInlineMarkdown(escapeHtml(trimmedLine))}</p>`);
+    result.push(`<p>${formatInlineMarkdown(escapeXml(trimmedLine))}</p>`);
   }
 
   // Close any open list at the end
@@ -130,15 +132,6 @@ export function renderMarkdownToHtml(md: string): string {
   }
 
   return result.join("");
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 function formatInlineMarkdown(text: string): string {

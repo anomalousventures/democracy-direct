@@ -1,0 +1,35 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import PageHeader from "@/components/PageHeader.astro";
+import PageSection from "@/components/PageSection.astro";
+import { BillSearch } from "@/components/BillSearch";
+
+const user = Astro.locals.user;
+---
+
+<Layout
+  title="Search Legislation"
+  description="Search and browse bills before Congress. View summaries, voting records, and amendments for House and Senate legislation."
+>
+  <Header currentPath="/legislation" user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <PageSection width="wide">
+      <PageHeader
+        title="Search Legislation"
+        gradientWord="Legislation"
+        description="Browse bills before Congress. View summaries, voting records, and amendments for House and Senate legislation."
+      />
+
+      <div data-testid="bill-search">
+        <BillSearch client:load />
+      </div>
+    </PageSection>
+  </main>
+
+  <Footer currentPath="/legislation" />
+</Layout>

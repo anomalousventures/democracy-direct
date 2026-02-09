@@ -12,6 +12,8 @@ import {
   type BillListResponse,
   type BillDetailResponse,
   type BillSummariesResponse,
+  type AmendmentDetailResponse,
+  type SponsoredLegislationResponse,
   type BillType,
   HouseVoteResponseSchema,
   HouseVoteListResponseSchema,
@@ -19,6 +21,8 @@ import {
   BillListResponseSchema,
   BillDetailResponseSchema,
   BillSummariesResponseSchema,
+  AmendmentDetailResponseSchema,
+  SponsoredLegislationResponseSchema,
   parseResponse,
 } from "@/lib/types/legislation";
 
@@ -80,6 +84,17 @@ export interface CongressClient {
     billType: BillType | string,
     billNumber: number
   ): Promise<BillSummariesResponse>;
+
+  getAmendment(
+    congress: number,
+    amendmentType: string,
+    amendmentNumber: string
+  ): Promise<AmendmentDetailResponse>;
+
+  getSponsoredBills(
+    bioguideId: string,
+    options?: PaginationOptions
+  ): Promise<SponsoredLegislationResponse>;
 }
 
 export function createCongressClient(options: CongressClientOptions): CongressClient {
@@ -227,6 +242,41 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
         `getBillSummaries(${congress}/${billType}/${billNumber})`
       );
     },
+
+    async getAmendment(
+      congress: number,
+      amendmentType: string,
+      amendmentNumber: string
+    ): Promise<AmendmentDetailResponse> {
+      const url = buildUrl(
+        `/amendment/${congress}/${amendmentType.toLowerCase()}/${amendmentNumber}`
+      );
+      const response = await rateLimitedFetch(url);
+      const data = await response.json();
+      return parseResponse(
+        AmendmentDetailResponseSchema,
+        data,
+        `getAmendment(${congress}/${amendmentType}/${amendmentNumber})`
+      );
+    },
+
+    async getSponsoredBills(
+      bioguideId: string,
+      options: PaginationOptions = {}
+    ): Promise<SponsoredLegislationResponse> {
+      const params: Record<string, string> = {};
+      if (options.limit !== undefined) params.limit = options.limit.toString();
+      if (options.offset !== undefined) params.offset = options.offset.toString();
+
+      const url = buildUrl(`/member/${bioguideId}/sponsored-legislation`, params);
+      const response = await rateLimitedFetch(url);
+      const data = await response.json();
+      return parseResponse(
+        SponsoredLegislationResponseSchema,
+        data,
+        `getSponsoredBills(${bioguideId})`
+      );
+    },
   };
 }
 
@@ -256,4 +306,6 @@ export type {
   BillListResponse,
   BillDetailResponse,
   BillSummariesResponse,
+  AmendmentDetailResponse,
+  SponsoredLegislationResponse,
 };

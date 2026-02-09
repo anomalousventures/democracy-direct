@@ -5,21 +5,49 @@ vi.mock("@/db/client", () => ({
   createDb: vi.fn(() => mockDb),
 }));
 
-const mockDb = {
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  returning: vi.fn(),
-};
+let queryCallIndex = 0;
+let queryResults: unknown[][] = [];
+
+function createChainableQuery() {
+  const chain = {
+    select: vi.fn(() => chain),
+    from: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    limit: vi.fn(() => {
+      const result = queryResults[queryCallIndex] ?? [];
+      queryCallIndex++;
+      return result;
+    }),
+    insert: vi.fn(() => chain),
+    values: vi.fn(() => chain),
+    returning: vi.fn(),
+    then: undefined as
+      | ((resolve: (v: unknown) => void, reject: (e: unknown) => void) => void)
+      | undefined,
+  };
+
+  const originalWhere = chain.where as (...args: unknown[]) => typeof chain;
+  chain.where = vi.fn((...args: unknown[]) => {
+    const result = originalWhere(...args);
+    const idx = queryCallIndex;
+    result.then = (resolve: (v: unknown) => void) => {
+      resolve(queryResults[idx] ?? []);
+      queryCallIndex++;
+      result.then = undefined;
+    };
+    return result;
+  }) as typeof chain.where;
+
+  return chain;
+}
+
+const mockDb = createChainableQuery();
 
 function resetMockDb() {
-  Object.values(mockDb).forEach((fn) => fn.mockReset());
-  mockDb.select.mockReturnThis();
-  mockDb.from.mockReturnThis();
-  mockDb.insert.mockReturnThis();
-  mockDb.values.mockReturnThis();
+  queryCallIndex = 0;
+  queryResults = [];
+  const fresh = createChainableQuery();
+  Object.assign(mockDb, fresh);
 }
 
 const createLocals = (userId: string | null) => ({
@@ -40,7 +68,9 @@ describe("Tag Suggestion API", () => {
 
   describe("POST /api/tags/suggest", () => {
     it("creates tag suggestion for authenticated user", async () => {
-      mockDb.where.mockResolvedValue([]);
+      // First where: rate limit check (no recent suggestions)
+      // Second limit: existence check (no existing tag)
+      queryResults = [[], []];
       mockDb.returning.mockResolvedValue([
         { id: "1", name: "healthcare", status: "pending", suggestedBy: "user-123" },
       ]);
@@ -86,9 +116,9 @@ describe("Tag Suggestion API", () => {
     });
 
     it("returns 409 if tag already exists", async () => {
-      mockDb.where
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: "existing", name: "healthcare" }]);
+      // First where: rate limit check (no recent suggestions)
+      // Second limit: existence check (tag exists)
+      queryResults = [[], [{ id: "existing" }]];
 
       const response = await POST({
         locals: createLocals("user-123"),
@@ -104,13 +134,8 @@ describe("Tag Suggestion API", () => {
     });
 
     it("returns 429 when rate limit exceeded", async () => {
-      mockDb.where.mockResolvedValueOnce([
-        { id: "1" },
-        { id: "2" },
-        { id: "3" },
-        { id: "4" },
-        { id: "5" },
-      ]);
+      // First where: rate limit check (5 recent suggestions = at limit)
+      queryResults = [[{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }, { id: "5" }]];
 
       const response = await POST({
         locals: createLocals("user-123"),

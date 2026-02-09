@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -7,6 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TiptapEditor } from "./TiptapEditor";
 import { MarkdownContent } from "./MarkdownContent";
+import { BillPicker } from "./BillPicker";
+import { detectBillNumbers } from "@/lib/bill-detection";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
@@ -16,6 +20,7 @@ import {
   validateTemplateVariables,
   getSupportedVariablesList,
 } from "@/lib/template-validation";
+import { formatDateMedium } from "@/lib/date-utils";
 
 const SAMPLE_PREVIEW_DATA = {
   REP_NAME: "Jane Smith",
@@ -27,11 +32,7 @@ const SAMPLE_PREVIEW_DATA = {
   DISTRICT: "12",
   USER_NAME: "John Doe",
   USER_CITY: "San Francisco",
-  TODAY_DATE: new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
+  TODAY_DATE: formatDateMedium(new Date()),
 };
 
 declare global {
@@ -53,6 +54,7 @@ interface TemplateFormProps {
     description?: string;
     body: string;
     issueTags: string[];
+    linkedBillNumbers?: string[];
     isPublic?: boolean;
   };
   availableTags: string[];
@@ -61,6 +63,7 @@ interface TemplateFormProps {
     description?: string;
     body: string;
     issueTags: string[];
+    linkedBillNumbers: string[];
     turnstileToken?: string;
     isPublic?: boolean;
   }) => Promise<void>;
@@ -85,11 +88,15 @@ export function TemplateForm({
   const [selectedTags, setSelectedTags] = useState<string[]>(
     (initialData?.issueTags || []).map((t) => t.toLowerCase())
   );
+  const [linkedBillNumbers, setLinkedBillNumbers] = useState<string[]>(
+    initialData?.linkedBillNumbers ?? []
+  );
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const suggestedBillsRef = useRef<Set<string>>(new Set(initialData?.linkedBillNumbers ?? []));
 
   useEffect(() => {
     const renderTurnstile = () => {
@@ -113,6 +120,45 @@ export function TemplateForm({
       }
     };
   }, [turnstileSiteKey]);
+
+  const debouncedBody = useDebounce(body, 1000);
+
+  const prevLinkedRef = useRef<Set<string>>(new Set(linkedBillNumbers));
+
+  useEffect(() => {
+    const current = new Set(linkedBillNumbers);
+    const previous = prevLinkedRef.current;
+    for (const bill of previous) {
+      if (!current.has(bill)) {
+        suggestedBillsRef.current.delete(bill);
+      }
+    }
+    prevLinkedRef.current = current;
+  }, [linkedBillNumbers]);
+
+  useEffect(() => {
+    if (!debouncedBody.trim()) return;
+    const detected = detectBillNumbers(debouncedBody);
+    const unlinked = detected.filter(
+      (b) => !linkedBillNumbers.includes(b) && !suggestedBillsRef.current.has(b)
+    );
+    if (unlinked.length === 0) return;
+
+    for (const b of unlinked) {
+      suggestedBillsRef.current.add(b);
+    }
+
+    const billList = unlinked.join(", ");
+    toast(`Found ${billList} in your letter`, {
+      action: {
+        label: "Link",
+        onClick: () => {
+          setLinkedBillNumbers((prev) => [...new Set([...prev, ...unlinked])]);
+        },
+      },
+      duration: 8000,
+    });
+  }, [debouncedBody, linkedBillNumbers]);
 
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -174,6 +220,7 @@ export function TemplateForm({
         description: description.trim() || undefined,
         body: body.trim(),
         issueTags: selectedTags,
+        linkedBillNumbers,
         turnstileToken: turnstileToken ?? undefined,
         isPublic: isAuthenticated ? isPublic : true,
       });
@@ -183,6 +230,7 @@ export function TemplateForm({
       description,
       body,
       selectedTags,
+      linkedBillNumbers,
       onSubmit,
       validate,
       turnstileSiteKey,
@@ -321,6 +369,8 @@ export function TemplateForm({
           ))}
         </div>
       </fieldset>
+
+      <BillPicker selectedBills={linkedBillNumbers} onBillsChange={setLinkedBillNumbers} />
 
       {isAuthenticated && (
         <div className="flex items-start space-x-3">

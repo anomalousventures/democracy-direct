@@ -4,6 +4,7 @@ import { getConfig } from "@/lib/config";
 import { jsonResponse, badRequest, serverError } from "@/lib/api-response";
 import { createLogger } from "@/lib/logger";
 import { searchTemplatesWithCursor, getApprovedTagNames } from "@/db/queries/templates";
+import { normalizeBillNumber } from "@/lib/bill-utils";
 
 export const prerender = false;
 
@@ -17,6 +18,12 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
   const cursor = url.searchParams.get("cursor") || undefined;
   const search = url.searchParams.get("search") || undefined;
   const tagsParam = url.searchParams.get("tags");
+  const billParam = url.searchParams.get("bill");
+  let bill: string | undefined;
+  if (billParam) {
+    const normalized = normalizeBillNumber(billParam);
+    bill = normalized ?? undefined;
+  }
 
   let limit = DEFAULT_LIMIT;
   if (limitParam) {
@@ -39,7 +46,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
     const db = createDb(config.database.url);
 
     const [result, availableTags] = await Promise.all([
-      searchTemplatesWithCursor(db, { limit, cursor, search, tags }),
+      searchTemplatesWithCursor(db, { limit, cursor, search, tags, bill }),
       getApprovedTagNames(db),
     ]);
 

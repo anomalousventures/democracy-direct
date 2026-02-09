@@ -29,6 +29,9 @@ export const BillTypeSchema = z.enum([
 ]);
 export type BillType = z.infer<typeof BillTypeSchema>;
 
+export const AmendmentTypeSchema = z.enum(["hamdt", "samdt"]);
+export type AmendmentType = z.infer<typeof AmendmentTypeSchema>;
+
 export const BillStatusSchema = z.enum([
   "introduced",
   "passed_house",
@@ -141,6 +144,9 @@ export const HouseVoteResponseSchema = z.object({
     updateDate: z.string().optional(),
     votePartyTotal: z.array(HouseVotePartyTotalSchema).optional(),
     sourceDataURL: z.string().optional(),
+    legislationNumber: z.string().optional(),
+    legislationType: z.string().optional(),
+    legislationUrl: z.string().optional(),
   }),
 });
 export type HouseVoteResponse = z.infer<typeof HouseVoteResponseSchema>;
@@ -251,6 +257,53 @@ export const BillListResponseSchema = z.object({
 });
 export type BillListResponse = z.infer<typeof BillListResponseSchema>;
 
+const coerceNumberOrNull = z.preprocess((val) => {
+  if (val === null || val === undefined || val === "") return null;
+  const num = Number(val);
+  return Number.isNaN(num) ? null : num;
+}, z.number().nullable());
+
+export const SponsoredLegislationItemSchema = z.object({
+  congress: z.number(),
+  type: z.string().nullable(),
+  number: coerceNumberOrNull,
+  title: z.string().nullish(),
+  introducedDate: z.string().nullish(),
+  latestAction: z
+    .object({
+      actionDate: z.string(),
+      text: z.string(),
+    })
+    .partial()
+    .nullish(),
+  policyArea: z
+    .object({
+      name: z.string().nullable(),
+    })
+    .nullish(),
+  sponsors: z.array(BillSponsorSchema).nullish(),
+  url: z.string().nullish(),
+});
+export type SponsoredLegislationItem = z.infer<typeof SponsoredLegislationItemSchema>;
+
+const RawSponsoredLegislationResponseSchema = z.object({
+  sponsoredLegislation: z.array(SponsoredLegislationItemSchema).optional(),
+  pagination: z
+    .object({
+      count: z.number(),
+      next: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const SponsoredLegislationResponseSchema = RawSponsoredLegislationResponseSchema.transform(
+  (raw) => ({
+    bills: raw.sponsoredLegislation ?? [],
+    pagination: raw.pagination,
+  })
+);
+export type SponsoredLegislationResponse = z.infer<typeof SponsoredLegislationResponseSchema>;
+
 export const BillDetailResponseSchema = z.object({
   bill: z.object({
     congress: z.number(),
@@ -299,6 +352,40 @@ export const BillSummariesResponseSchema = z.object({
 });
 export type BillSummariesResponse = z.infer<typeof BillSummariesResponseSchema>;
 
+export const AmendmentDetailResponseSchema = z.object({
+  amendment: z.object({
+    congress: z.number(),
+    number: z.string(),
+    type: z.string(),
+    chamber: z.string(),
+    description: z.string().optional(),
+    purpose: z.string().optional(),
+    latestAction: z
+      .object({
+        actionDate: z.string(),
+        text: z.string(),
+      })
+      .optional(),
+    amendedBill: z
+      .object({
+        congress: z.number(),
+        number: z.coerce.number(),
+        type: z.string(),
+        title: z.string().optional(),
+      })
+      .optional(),
+    sponsors: z
+      .array(
+        z.object({
+          bioguideId: z.string(),
+          fullName: z.string(),
+        })
+      )
+      .optional(),
+  }),
+});
+export type AmendmentDetailResponse = z.infer<typeof AmendmentDetailResponseSchema>;
+
 // =============================================================================
 // Senate.gov XML Parsed Schemas (after XML parsing)
 // =============================================================================
@@ -328,6 +415,9 @@ export const ParsedSenateVoteSchema = z.object({
   members: z.array(SenateVoteMemberSchema),
   documentName: z.string().optional(),
   documentTitle: z.string().optional(),
+  amendmentNumber: z.string().optional(),
+  amendmentToBillNumber: z.string().optional(),
+  amendmentPurpose: z.string().optional(),
 });
 export type ParsedSenateVote = z.infer<typeof ParsedSenateVoteSchema>;
 

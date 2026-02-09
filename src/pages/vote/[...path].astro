@@ -1,0 +1,199 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import PageSection from "@/components/PageSection.astro";
+import { createDb } from "@/db/client";
+import { getVoteByRollCall, getMemberVotesForVote } from "@/db/queries/votes";
+import { getAmendmentById } from "@/db/queries/amendments";
+import { VoteDetail } from "@/components/VoteDetail";
+import BillTemplateCtas from "@/components/BillTemplateCtas.astro";
+import { getBillPageUrl, parseBillNumber } from "@/lib/bill-utils";
+import { getAmendmentPageUrl } from "@/lib/amendment-utils";
+import type { Chamber, VotePosition, AmendmentType } from "@/lib/types/legislation";
+import type { Vote } from "@/db/schema";
+import type { VoteMember } from "@/lib/types/vote";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+
+const { path } = Astro.params;
+
+let vote: Vote | null = null;
+let members: VoteMember[] = [];
+let billLink: { url: string; label: string } | null = null;
+let amendmentContext: { url: string; displayNumber: string; purpose: string | null } | null = null;
+let error: string | null = null;
+
+const segments = path?.split("/") ?? [];
+
+if (segments.length !== 4) {
+  Astro.response.status = 404;
+  error = "Invalid vote URL format.";
+} else {
+  const [chamberStr, congressStr, sessionStr, rollCallStr] = segments;
+
+  const chamber = chamberStr as Chamber;
+  const congress = parseInt(congressStr, 10);
+  const session = parseInt(sessionStr, 10);
+  const rollCall = parseInt(rollCallStr, 10);
+
+  if (
+    (chamber !== "house" && chamber !== "senate") ||
+    isNaN(congress) ||
+    congress < 1 ||
+    isNaN(session) ||
+    session < 1 ||
+    isNaN(rollCall) ||
+    rollCall < 1
+  ) {
+    Astro.response.status = 404;
+    error = "Invalid vote URL parameters.";
+  } else {
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
+
+    try {
+      vote = await getVoteByRollCall(db, chamber, congress, session, rollCall);
+
+      if (!vote) {
+        Astro.response.status = 404;
+        error = "Vote not found.";
+      } else {
+        const rawMembers = await getMemberVotesForVote(db, vote.id);
+        members = rawMembers.map((mv) => ({
+          bioguideId: mv.bioguideId,
+          name: mv.legislator.fullName,
+          party: mv.legislator.party,
+          state: mv.legislator.state,
+          position: mv.position as VotePosition,
+        }));
+
+        if (vote.billNumber) {
+          const parsedBillNumber = parseBillNumber(vote.billNumber);
+          if (parsedBillNumber) {
+            billLink = {
+              url: getBillPageUrl(
+                parsedBillNumber.type,
+                String(parsedBillNumber.number),
+                vote.congress
+              ),
+              label: vote.billNumber,
+            };
+          }
+        }
+
+        if (vote.amendmentId) {
+          const amdt = await getAmendmentById(db, vote.amendmentId);
+          if (amdt) {
+            amendmentContext = {
+              url: getAmendmentPageUrl(
+                amdt.amendmentType as AmendmentType,
+                amdt.amendmentNumber,
+                amdt.congress
+              ),
+              displayNumber: `${amdt.amendmentType.toUpperCase()}.Amdt.${amdt.amendmentNumber}`,
+              purpose: amdt.purpose ?? amdt.description,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Database error:", e);
+      error = "Failed to load vote details.";
+    }
+  }
+}
+
+const chamberLabel = vote?.chamber === "house" ? "House" : "Senate";
+const pageTitle = vote
+  ? `${chamberLabel} Roll Call #${vote.rollCall} — ${vote.congress}th Congress`
+  : "Vote Not Found";
+---
+
+<Layout
+  title={pageTitle}
+  description={vote
+    ? `${chamberLabel} Roll Call #${vote.rollCall}: ${vote.question}. View full vote breakdown by party and member.`
+    : "Vote not found"}
+>
+  <Header currentPath="/legislation" user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
+                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
+              </div>
+              <h1 class="heading-card-lg">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The vote you're looking for couldn't be found.
+              </p>
+              <AstroButton href="/legislation" variant="civic">
+                Search Legislation
+              </AstroButton>
+            </AstroCard>
+          </div>
+        ) : (
+          vote && (
+            <PageSection width="wide">
+              <div class="mb-6">
+                {billLink ? (
+                  <a href={billLink.url} class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to {billLink.label}</span>
+                  </a>
+                ) : (
+                  <a href="/legislation" class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to Legislation</span>
+                  </a>
+                )}
+              </div>
+
+              <VoteDetail
+                client:load
+                vote={{
+                  id: vote.id,
+                  rollCall: vote.rollCall,
+                  chamber: vote.chamber as Chamber,
+                  congress: vote.congress,
+                  session: vote.session,
+                  date: vote.date.toISOString(),
+                  question: vote.question,
+                  result: vote.result,
+                  yeas: vote.yeas,
+                  nays: vote.nays,
+                  notVoting: vote.notVoting,
+                  present: vote.present,
+                  sourceUrl: vote.sourceUrl,
+                  billNumber: vote.billNumber,
+                  billTitle: vote.billTitle,
+                }}
+                members={members}
+                billLink={billLink}
+                amendment={amendmentContext}
+              />
+
+              {vote.billNumber && (
+                <div class="mt-6">
+                  <BillTemplateCtas billNumber={vote.billNumber} />
+                </div>
+              )}
+            </PageSection>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath="/legislation" />
+</Layout>

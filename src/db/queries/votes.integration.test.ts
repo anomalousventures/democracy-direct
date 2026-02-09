@@ -149,7 +149,7 @@ describe("votes queries (integration)", () => {
       const testMember = members.find((m) => m.bioguideId === testBioguideId);
       expect(testMember).toBeDefined();
       expect(testMember?.position).toBe("yea");
-      expect(testMember?.fullName).toBe("Test Legislator");
+      expect(testMember?.legislator.fullName).toBe("Test Legislator");
     });
   });
 

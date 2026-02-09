@@ -39,6 +39,7 @@ describe("Template Search API Endpoint", () => {
           useCount: 50,
           createdAt: new Date("2025-01-15"),
           tags: ["healthcare"],
+          linkedBillNumbers: [],
         },
       ],
       nextCursor: null,
@@ -225,6 +226,7 @@ describe("Template Search API Endpoint", () => {
           useCount: 50,
           createdAt: new Date("2025-01-15"),
           tags: ["healthcare"],
+          linkedBillNumbers: [],
         },
       ],
       nextCursor: "next-cursor-token",
@@ -262,9 +264,25 @@ describe("Template Search API Endpoint", () => {
     expect(data.error).toBe("Failed to search templates");
   });
 
+  it("passes bill parameter to query", async () => {
+    const url = new URL("http://localhost/api/templates/search?bill=H.R.1234");
+    const mockRequest = new Request(url.toString());
+
+    await GET({
+      url,
+      request: mockRequest,
+      locals: mockLocals,
+    } as never);
+
+    expect(mockSearchTemplatesWithCursor).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ bill: "H.R.1234" })
+    );
+  });
+
   it("combines all query parameters", async () => {
     const url = new URL(
-      "http://localhost/api/templates/search?limit=5&cursor=abc&search=test&tags=healthcare"
+      "http://localhost/api/templates/search?limit=5&cursor=abc&search=test&tags=healthcare&bill=S.100"
     );
     const mockRequest = new Request(url.toString());
 
@@ -279,6 +297,7 @@ describe("Template Search API Endpoint", () => {
       cursor: "abc",
       search: "test",
       tags: ["healthcare"],
+      bill: "S.100",
     });
   });
 });

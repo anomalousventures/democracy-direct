@@ -12,6 +12,7 @@ export interface TemplateWithTags {
   useCount: number;
   createdAt: Date;
   tags: string[];
+  linkedBillNumbers: string[];
 }
 
 export interface SearchTemplatesOptions {
@@ -19,6 +20,7 @@ export interface SearchTemplatesOptions {
   cursor?: string;
   search?: string;
   tags?: string[];
+  bill?: string;
 }
 
 export interface PaginatedTemplatesResult {
@@ -76,7 +78,7 @@ export async function searchTemplatesWithCursor(
   db: Database,
   options: SearchTemplatesOptions = {}
 ): Promise<PaginatedTemplatesResult> {
-  const { limit = 20, cursor, search, tags } = options;
+  const { limit = 20, cursor, search, tags, bill } = options;
   const safeLimit = Math.min(Math.max(1, limit), 100);
 
   const cursorData = cursor ? decodeCursor(cursor) : null;
@@ -98,6 +100,12 @@ export async function searchTemplatesWithCursor(
     const searchTerm = `%${search.trim()}%`;
     baseConditions.push(
       or(ilike(templates.title, searchTerm), ilike(templates.description, searchTerm))!
+    );
+  }
+
+  if (bill?.trim()) {
+    baseConditions.push(
+      sql`${templates.linkedBillNumbers}::jsonb @> ${JSON.stringify([bill.trim()])}::jsonb`
     );
   }
 
@@ -126,6 +134,7 @@ export async function searchTemplatesWithCursor(
       title: templates.title,
       description: templates.description,
       body: templates.body,
+      linkedBillNumbers: templates.linkedBillNumbers,
       viewCount: templates.viewCount,
       useCount: templates.useCount,
       createdAt: templates.createdAt,
@@ -159,7 +168,7 @@ export async function searchTemplatesWithCursor(
 
   const tagsByTemplateId = new Map<string, string[]>();
   for (const row of tagsForTemplates) {
-    const existing = tagsByTemplateId.get(row.templateId) || [];
+    const existing = tagsByTemplateId.get(row.templateId) ?? [];
     existing.push(row.tagName);
     tagsByTemplateId.set(row.templateId, existing);
   }
@@ -173,7 +182,8 @@ export async function searchTemplatesWithCursor(
     viewCount: t.viewCount,
     useCount: t.useCount,
     createdAt: t.createdAt,
-    tags: tagsByTemplateId.get(t.id) || [],
+    tags: tagsByTemplateId.get(t.id) ?? [],
+    linkedBillNumbers: t.linkedBillNumbers ?? [],
   }));
 
   let nextCursor: string | null = null;

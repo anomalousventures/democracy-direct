@@ -1,95 +1,7 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import {
-  getSavedDistrict,
-  setSavedDistrict,
-  clearSavedDistrict,
-  formatDistrictDisplay,
-} from "./saved-district";
+import { describe, it, expect } from "vitest";
+import { formatDistrictDisplay, isValidSavedDistrict } from "./saved-district";
 
-describe("saved-district localStorage helpers", () => {
-  const mockStorage: Record<string, string> = {};
-
-  beforeEach(() => {
-    Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
-    vi.stubGlobal("localStorage", {
-      getItem: vi.fn((key: string) => mockStorage[key] ?? null),
-      setItem: vi.fn((key: string, value: string) => {
-        mockStorage[key] = value;
-      }),
-      removeItem: vi.fn((key: string) => {
-        delete mockStorage[key];
-      }),
-    });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  describe("getSavedDistrict", () => {
-    it("returns null when nothing is stored", () => {
-      expect(getSavedDistrict()).toBeNull();
-    });
-
-    it("returns stored district data", () => {
-      mockStorage["democracy-direct-district"] = JSON.stringify({
-        state: "CA",
-        district: "12",
-      });
-      expect(getSavedDistrict()).toEqual({ state: "CA", district: "12" });
-    });
-
-    it("returns null for invalid JSON", () => {
-      mockStorage["democracy-direct-district"] = "not-json";
-      expect(getSavedDistrict()).toBeNull();
-    });
-
-    it("returns null for incomplete data", () => {
-      mockStorage["democracy-direct-district"] = JSON.stringify({ state: "CA" });
-      expect(getSavedDistrict()).toBeNull();
-    });
-
-    it("returns null for wrong types", () => {
-      mockStorage["democracy-direct-district"] = JSON.stringify({
-        state: 123,
-        district: "12",
-      });
-      expect(getSavedDistrict()).toBeNull();
-    });
-  });
-
-  describe("setSavedDistrict", () => {
-    it("stores district data", () => {
-      setSavedDistrict("CA", "12");
-      expect(mockStorage["democracy-direct-district"]).toBe(
-        JSON.stringify({ state: "CA", district: "12" })
-      );
-    });
-
-    it("uppercases state and district", () => {
-      setSavedDistrict("ca", "al");
-      expect(mockStorage["democracy-direct-district"]).toBe(
-        JSON.stringify({ state: "CA", district: "AL" })
-      );
-    });
-  });
-
-  describe("clearSavedDistrict", () => {
-    it("removes stored district data", () => {
-      mockStorage["democracy-direct-district"] = JSON.stringify({
-        state: "CA",
-        district: "12",
-      });
-      clearSavedDistrict();
-      expect(mockStorage["democracy-direct-district"]).toBeUndefined();
-    });
-
-    it("does nothing if nothing is stored", () => {
-      clearSavedDistrict();
-      expect(mockStorage["democracy-direct-district"]).toBeUndefined();
-    });
-  });
-
+describe("saved-district helpers", () => {
   describe("formatDistrictDisplay", () => {
     it("formats regular districts", () => {
       expect(formatDistrictDisplay("CA", "12")).toBe("CA-12");
@@ -100,6 +12,39 @@ describe("saved-district localStorage helpers", () => {
       expect(formatDistrictDisplay("WY", "AL")).toBe("WY At-Large");
       expect(formatDistrictDisplay("VT", "0")).toBe("VT At-Large");
       expect(formatDistrictDisplay("AK", "00")).toBe("AK At-Large");
+    });
+  });
+
+  describe("isValidSavedDistrict", () => {
+    it("returns true for valid district objects", () => {
+      expect(isValidSavedDistrict({ state: "CA", district: "12" })).toBe(true);
+      expect(isValidSavedDistrict({ state: "WY", district: "AL" })).toBe(true);
+    });
+
+    it("returns false for null", () => {
+      expect(isValidSavedDistrict(null)).toBe(false);
+    });
+
+    it("returns false for non-objects", () => {
+      expect(isValidSavedDistrict("string")).toBe(false);
+      expect(isValidSavedDistrict(123)).toBe(false);
+      expect(isValidSavedDistrict(undefined)).toBe(false);
+    });
+
+    it("returns false for objects missing state", () => {
+      expect(isValidSavedDistrict({ district: "12" })).toBe(false);
+    });
+
+    it("returns false for objects missing district", () => {
+      expect(isValidSavedDistrict({ state: "CA" })).toBe(false);
+    });
+
+    it("returns false for objects with non-string state", () => {
+      expect(isValidSavedDistrict({ state: 123, district: "12" })).toBe(false);
+    });
+
+    it("returns false for objects with non-string district", () => {
+      expect(isValidSavedDistrict({ state: "CA", district: 12 })).toBe(false);
     });
   });
 });

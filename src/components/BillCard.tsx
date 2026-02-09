@@ -1,0 +1,200 @@
+import { useState, useCallback } from "react";
+import { Icon } from "@/components/icons";
+import { cn } from "@/lib/utils";
+import type { BillStatus } from "@/lib/types/legislation";
+import { BILL_TYPE_DISPLAY_NAMES, getBillPageUrl } from "@/lib/bill-utils";
+import { sanitizeExternalUrl } from "@/lib/url";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import type { Bill, Legislator } from "@/db/schema";
+import { formatDateShort as formatDate } from "@/lib/date-utils";
+
+export interface BillCardProps {
+  bill: Bill & { sponsor?: Legislator | null };
+  showSponsor?: boolean;
+  className?: string;
+}
+
+type StatusStyle = {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+};
+
+export const STATUS_STYLES: Record<BillStatus, StatusStyle> = {
+  introduced: {
+    label: "Introduced",
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    border: "border-gray-200",
+  },
+  passed_house: {
+    label: "Passed House",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-200",
+  },
+  passed_senate: {
+    label: "Passed Senate",
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-200",
+  },
+  resolving_differences: {
+    label: "In Conference",
+    bg: "bg-amber-100",
+    text: "text-amber-800",
+    border: "border-amber-200",
+  },
+  to_president: {
+    label: "To President",
+    bg: "bg-purple-100",
+    text: "text-purple-800",
+    border: "border-purple-200",
+  },
+  signed: {
+    label: "Signed",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+  vetoed: {
+    label: "Vetoed",
+    bg: "bg-red-100",
+    text: "text-red-800",
+    border: "border-red-200",
+  },
+  veto_overridden: {
+    label: "Veto Overridden",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+  became_law: {
+    label: "Became Law",
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+  },
+};
+
+export function StatusBadge({ status }: { status: BillStatus }) {
+  const style = STATUS_STYLES[status];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-2.5 py-1 text-xs font-semibold border rounded-sm",
+        style.bg,
+        style.text,
+        style.border
+      )}
+    >
+      {style.label}
+    </span>
+  );
+}
+
+export function BillCard({ bill, showSponsor = false, className }: BillCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const displayNumber = `${BILL_TYPE_DISPLAY_NAMES[bill.billType] ?? bill.billType}${bill.billNumber}`;
+  const billPageUrl = getBillPageUrl(bill.billType, bill.billNumber, bill.congress);
+  const safeCongressUrl = sanitizeExternalUrl(bill.congressGovUrl);
+
+  const toggleExpand = useCallback(() => setExpanded((prev) => !prev), []);
+
+  const hasSummary = bill.summary && bill.summary.length > 0;
+  const truncatedSummary =
+    hasSummary && bill.summary!.length > 200 ? bill.summary!.slice(0, 200) + "..." : bill.summary;
+
+  return (
+    <article
+      data-testid="bill-card"
+      className={cn(
+        "group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200",
+        className
+      )}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-sm font-semibold text-accent">{displayNumber}</span>
+            <StatusBadge status={bill.status} />
+            <span className="text-xs text-muted-foreground">
+              {`${bill.congress}${getOrdinalSuffix(bill.congress)} Congress`}
+            </span>
+          </div>
+
+          <a
+            href={billPageUrl}
+            className="block font-medium text-primary hover:text-accent transition-colors line-clamp-2 mb-2 after:absolute after:inset-0 after:content-['']"
+          >
+            {bill.title}
+          </a>
+
+          {hasSummary && (
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {expanded ? bill.summary : truncatedSummary}
+              </p>
+              {bill.summary!.length > 200 && (
+                <button
+                  type="button"
+                  onClick={toggleExpand}
+                  className="relative z-10 inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
+                >
+                  <Icon
+                    name="chevron-down"
+                    className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-180")}
+                  />
+                  {expanded ? "Show less" : "Read more"}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Icon name="calendar" className="w-3.5 h-3.5" />
+              Introduced {formatDate(bill.introducedDate)}
+            </span>
+            {bill.latestActionText && (
+              <span className="hidden sm:inline text-muted-foreground/80 truncate max-w-[250px]">
+                Latest: {bill.latestActionText}
+              </span>
+            )}
+          </div>
+
+          {showSponsor && bill.sponsor && (
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+              <a
+                href={`/rep/${bill.sponsor.bioguideId}`}
+                className="relative z-10 text-sm text-primary hover:text-accent transition-colors"
+              >
+                {bill.sponsor.fullName}
+                {bill.sponsor.party && bill.sponsor.state && (
+                  <span className="text-muted-foreground ml-1">
+                    ({bill.sponsor.party}-{bill.sponsor.state})
+                  </span>
+                )}
+              </a>
+            </div>
+          )}
+
+          {safeCongressUrl && (
+            <div className="mt-3">
+              <a
+                href={safeCongressUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Congress.gov
+                <Icon name="external-link" className="w-3 h-3 opacity-60" />
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}

@@ -1,8 +1,14 @@
 import { test, expect } from "./fixtures/auth";
 
 test.describe("Saved District - Authenticated User", () => {
-  test("shows save district prompt after ZIP lookup", async ({ userPage }) => {
-    await userPage.goto("/zip/10001");
+  test.beforeEach(async ({ userPage }) => {
+    await userPage.goto("/");
+    await userPage.evaluate(() => localStorage.clear());
+    await userPage.evaluate(() => fetch("/api/user/district", { method: "DELETE" }));
+  });
+
+  test("shows save district prompt on reps page", async ({ userPage }) => {
+    await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
 
     const saveButton = userPage.getByTestId("save-district-button");
@@ -11,7 +17,7 @@ test.describe("Saved District - Authenticated User", () => {
   });
 
   test("saves district to server when logged in", async ({ userPage }) => {
-    await userPage.goto("/zip/10001");
+    await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
 
     const saveButton = userPage.getByTestId("save-district-button");
@@ -22,7 +28,7 @@ test.describe("Saved District - Authenticated User", () => {
   });
 
   test("shows saved district in user menu after saving", async ({ userPage }) => {
-    await userPage.goto("/zip/10001");
+    await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
 
     const saveButton = userPage.getByTestId("save-district-button");
@@ -37,12 +43,12 @@ test.describe("Saved District - Authenticated User", () => {
     await expect(districtBadge).toBeVisible();
     await expect(districtBadge).toContainText("NY-12");
 
-    await districtBadge.click();
+    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
     await expect(userPage.getByRole("menuitem", { name: "View My Reps" })).toBeVisible();
   });
 
   test("can clear saved district from user menu", async ({ userPage }) => {
-    await userPage.goto("/zip/10001");
+    await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
     await userPage.getByTestId("save-district-button").click();
     await expect(userPage.getByTestId("save-district-success")).toBeVisible();
@@ -52,19 +58,19 @@ test.describe("Saved District - Authenticated User", () => {
 
     // On desktop, district is shown in a separate badge dropdown
     const districtBadge = userPage.getByTestId("district-badge");
-    await districtBadge.click();
+    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
 
-    const changeButton = userPage.getByRole("menuitem", { name: "Change District" });
-    await changeButton.click();
+    const clearButton = userPage.getByRole("menuitem", { name: "Clear Saved District" });
+    await clearButton.click();
 
-    await userPage.waitForLoadState("networkidle");
+    await userPage.waitForURL("/");
 
     // After clearing, district badge should no longer be visible
     await expect(districtBadge).not.toBeVisible();
   });
 
   test("prompt indicates server storage for logged in users", async ({ userPage }) => {
-    await userPage.goto("/zip/10001");
+    await userPage.goto("/reps/ny/12");
     await userPage.waitForLoadState("networkidle");
 
     await expect(

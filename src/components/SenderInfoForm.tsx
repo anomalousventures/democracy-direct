@@ -4,10 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { type Address, createEmptyAddress } from "@/types/representative";
-import { getItem, setItem, removeItem, getJSON, setJSON } from "@/lib/local-storage";
-
-const STORAGE_KEY = "democracy-direct-sender-info";
-const SAVE_PREF_KEY = "democracy-direct-save-sender-info";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export interface SenderInfo extends Address {
   name: string;
@@ -35,26 +33,51 @@ export function SenderInfoForm({
 }: SenderInfoFormProps) {
   const [senderInfo, setSenderInfo] = useState<SenderInfo>(createEmptySenderInfo);
   const [saveEnabled, setSaveEnabled] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  useEffect(() => {
-    const savedPref = getItem(SAVE_PREF_KEY);
-    if (savedPref === "true") {
-      setSaveEnabled(true);
-      const saved = getJSON<SenderInfo>(STORAGE_KEY);
-      if (saved) {
-        setSenderInfo(saved);
-        onChangeRef.current(saved);
-      }
-    }
-  }, []);
+  const senderInfoStorage = useLocalStorage<SenderInfo>("SENDER_INFO");
+  const savePrefStorage = useLocalStorage<boolean>("SAVE_SENDER_PREF");
+  const debouncedSenderInfo = useDebounce(senderInfo, 400);
 
   useEffect(() => {
-    if (saveEnabled) {
-      setJSON(STORAGE_KEY, senderInfo);
-    }
-  }, [senderInfo, saveEnabled]);
+    if (!senderInfoStorage.isReady || !savePrefStorage.isReady || hasLoaded) return;
+
+    const loadSavedData = async () => {
+      try {
+        const savedPref = await savePrefStorage.get();
+        if (savedPref === true) {
+          setSaveEnabled(true);
+          const saved = await senderInfoStorage.get();
+          if (saved) {
+            setSenderInfo(saved);
+            onChangeRef.current(saved);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load saved sender info:", err);
+      } finally {
+        setHasLoaded(true);
+      }
+    };
+
+    loadSavedData();
+  }, [
+    senderInfoStorage.isReady,
+    savePrefStorage.isReady,
+    hasLoaded,
+    senderInfoStorage,
+    savePrefStorage,
+  ]);
+
+  useEffect(() => {
+    if (!hasLoaded || !saveEnabled) return;
+
+    void senderInfoStorage
+      .set(debouncedSenderInfo)
+      .catch((err) => console.error("Failed to save sender info:", err));
+  }, [debouncedSenderInfo, saveEnabled, hasLoaded, senderInfoStorage]);
 
   const handleChange = useCallback(
     (field: keyof SenderInfo) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,22 +94,26 @@ export function SenderInfoForm({
   const handleSaveToggle = useCallback(
     (checked: boolean) => {
       setSaveEnabled(checked);
-      setItem(SAVE_PREF_KEY, String(checked));
+      void savePrefStorage
+        .set(checked)
+        .catch((err) => console.error("Failed to save preference:", err));
       if (!checked) {
-        removeItem(STORAGE_KEY);
+        void senderInfoStorage.remove();
       } else {
-        setJSON(STORAGE_KEY, senderInfo);
+        void senderInfoStorage
+          .set(senderInfo)
+          .catch((err) => console.error("Failed to save sender info:", err));
       }
     },
-    [senderInfo]
+    [senderInfo, savePrefStorage, senderInfoStorage]
   );
 
   const handleClear = useCallback(() => {
     const empty = createEmptySenderInfo();
     setSenderInfo(empty);
-    removeItem(STORAGE_KEY);
+    void senderInfoStorage.remove();
     onChange(empty);
-  }, [onChange]);
+  }, [onChange, senderInfoStorage]);
 
   const requiredHint = (field: "name" | "city") =>
     requiredForTemplate[field] ? <span className="text-destructive ml-0.5">*</span> : null;

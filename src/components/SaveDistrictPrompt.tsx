@@ -1,23 +1,50 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Icon } from "@/components/icons";
-import { setSavedDistrict, formatDistrictDisplay } from "@/lib/saved-district";
+import { formatDistrictDisplay, type SavedDistrict } from "@/lib/saved-district";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { getStateName } from "@/lib/states";
+import { useMe } from "@/hooks/useMe";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface SaveDistrictPromptProps {
   state: string;
   district: string;
-  isLoggedIn: boolean;
 }
 
-export function SaveDistrictPrompt({ state, district, isLoggedIn }: SaveDistrictPromptProps) {
+export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps) {
+  const { user, isLoggedIn, isLoading } = useMe();
+  const districtStorage = useLocalStorage<SavedDistrict>("DISTRICT");
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { capture } = useAnalytics();
 
   const displayText = formatDistrictDisplay(state, district);
-  const stateName = getStateName(state);
+
+  useEffect(() => {
+    if (isLoading || !districtStorage.isReady) return;
+
+    const checkIfSaved = async () => {
+      if (
+        isLoggedIn &&
+        user?.savedState === state.toUpperCase() &&
+        user?.savedDistrict === district.toUpperCase()
+      ) {
+        setIsSaved(true);
+        return;
+      }
+
+      try {
+        const saved = await districtStorage.get();
+        if (saved?.state === state.toUpperCase() && saved?.district === district.toUpperCase()) {
+          setIsSaved(true);
+        }
+      } catch {
+        // Storage unavailable (e.g. Safari private mode) — not critical
+      }
+    };
+
+    checkIfSaved();
+  }, [isLoading, isLoggedIn, user, state, district, districtStorage]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -32,45 +59,56 @@ export function SaveDistrictPrompt({ state, district, isLoggedIn }: SaveDistrict
         });
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Failed to save district");
+          let message = "Failed to save district";
+          try {
+            const data = (await response.json()) as { error?: string };
+            if (data.error) message = data.error;
+          } catch {
+            // non-JSON error response
+          }
+          throw new Error(message);
         }
-      } else {
-        setSavedDistrict(state, district);
       }
+
+      await districtStorage.set({
+        state: state.toUpperCase(),
+        district: district.toUpperCase(),
+      });
 
       setIsSaved(true);
       capture("district_saved", {
         state,
         district,
         isLoggedIn,
-        source: "zip_lookup",
+        source: "reps_page",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save district");
     } finally {
       setIsSaving(false);
     }
-  }, [state, district, isLoggedIn, capture]);
+  }, [state, district, isLoggedIn, capture, districtStorage]);
+
+  if (isLoading) {
+    return null;
+  }
 
   if (isSaved) {
     return (
       <div
-        className="p-5 bg-green-50 border-l-4 border-green-500 rounded-r-lg shadow-sm"
+        className="p-5 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-md"
+        data-testid="save-district-success"
         role="status"
         aria-live="polite"
-        data-testid="save-district-success"
       >
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-            <Icon name="check" className="w-5 h-5 text-green-600" />
-          </div>
+          <Icon name="check-circle" className="w-5 h-5 text-emerald-600" />
           <div>
-            <p className="font-semibold text-green-800">District saved!</p>
-            <p className="text-sm text-green-700">
+            <p className="font-semibold text-emerald-800">District saved!</p>
+            <p className="text-sm text-emerald-700 mt-0.5">
               {isLoggedIn
-                ? `${displayText} (${stateName}) has been saved to your account.`
-                : `${displayText} (${stateName}) has been saved to this device.`}
+                ? `${displayText} has been saved to your account.`
+                : `${displayText} has been saved for your next visit.`}
             </p>
           </div>
         </div>

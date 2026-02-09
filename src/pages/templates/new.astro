@@ -10,8 +10,12 @@ import { getConfig } from "@/lib/config";
 import { createDb } from "@/db/client";
 import { issueTags } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { normalizeBillNumber } from "@/lib/bill-utils";
 
 const user = Astro.locals.user;
+
+const billParam = Astro.url.searchParams.get("bill");
+const preLinkedBill = billParam ? normalizeBillNumber(billParam) : null;
 
 const config = getConfig(Astro.locals);
 const turnstileSiteKey = config.turnstile.siteKey;
@@ -60,6 +64,7 @@ try {
             turnstileSiteKey={turnstileSiteKey}
             availableTags={availableTags}
             isAuthenticated={!!user}
+            initialLinkedBills={preLinkedBill ? [preLinkedBill] : []}
           />
         </AstroCard>
       </div>

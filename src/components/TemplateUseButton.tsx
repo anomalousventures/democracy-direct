@@ -1,15 +1,15 @@
 import { useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { getSavedDistrict } from "@/lib/saved-district";
+import { useMe } from "@/hooks/useMe";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import type { SavedDistrict } from "@/lib/saved-district";
 
 interface TemplateUseButtonProps {
   href: string;
   templateSlug: string;
   templateTitle: string;
   repBioguideId?: string | null;
-  savedState?: string | null;
-  savedDistrict?: string | null;
 }
 
 export function TemplateUseButton({
@@ -17,27 +17,51 @@ export function TemplateUseButton({
   templateSlug,
   templateTitle,
   repBioguideId,
-  savedState,
-  savedDistrict,
 }: TemplateUseButtonProps) {
   const { capture } = useAnalytics();
+  const { user, isLoggedIn, isLoading } = useMe();
+  const districtStorage = useLocalStorage<SavedDistrict>("DISTRICT");
   const [resolvedHref, setResolvedHref] = useState(href);
 
   useEffect(() => {
-    if (repBioguideId) {
+    if (repBioguideId || isLoading || !districtStorage.isReady) {
       return;
     }
-    if (savedState && savedDistrict) {
-      setResolvedHref(`/reps/${savedState}/${savedDistrict}?template=${templateSlug}`);
-      return;
-    }
-    const localDistrict = getSavedDistrict();
-    if (localDistrict) {
-      setResolvedHref(
-        `/reps/${localDistrict.state}/${localDistrict.district}?template=${templateSlug}`
-      );
-    }
-  }, [repBioguideId, templateSlug, savedState, savedDistrict]);
+
+    let cancelled = false;
+
+    const resolveHref = async () => {
+      if (isLoggedIn && user?.savedState && user?.savedDistrict) {
+        if (!cancelled) {
+          setResolvedHref(
+            `/reps/${user.savedState.toLowerCase()}/${user.savedDistrict.toLowerCase()}?template=${templateSlug}`
+          );
+        }
+        return;
+      }
+
+      const localDistrict = await districtStorage.get();
+      if (localDistrict && !cancelled) {
+        setResolvedHref(
+          `/reps/${localDistrict.state.toLowerCase()}/${localDistrict.district.toLowerCase()}?template=${templateSlug}`
+        );
+      }
+    };
+
+    resolveHref();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    repBioguideId,
+    templateSlug,
+    isLoading,
+    isLoggedIn,
+    user,
+    districtStorage,
+    districtStorage.isReady,
+  ]);
 
   const handleClick = useCallback(() => {
     capture("template_used", {

@@ -26,6 +26,7 @@ let template: {
   description: string | null;
   body: string;
   issueTags: string[] | null;
+  linkedBillNumbers: string[] | null;
   userId: string | null;
   isPublic: boolean;
 } | null = null;
@@ -49,6 +50,7 @@ if (!slug) {
         description: templates.description,
         body: templates.body,
         issueTags: templates.issueTags,
+        linkedBillNumbers: templates.linkedBillNumbers,
         userId: templates.userId,
         isPublic: templates.isPublic,
       })
@@ -141,9 +143,10 @@ if (!slug) {
                     availableTags={availableTags}
                     initialData={{
                       title: template.title,
-                      description: template.description || undefined,
+                      description: template.description ?? undefined,
                       body: template.body,
-                      issueTags: template.issueTags || [],
+                      issueTags: template.issueTags ?? [],
+                      linkedBillNumbers: template.linkedBillNumbers ?? [],
                       isPublic: template.isPublic,
                     }}
                   />

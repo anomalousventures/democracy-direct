@@ -24,6 +24,7 @@ export interface Env {
   CONGRESS_API_KEY?: string;
   POSTHOG_API_KEY?: string;
   POSTHOG_HOST?: string;
+  VISITOR_COOKIE_SECRET?: string;
 }
 
 interface PostHogInstance {
@@ -40,6 +41,7 @@ declare global {
   namespace App {
     interface Locals extends Runtime {
       user: SessionUser | null;
+      visitorId: string;
     }
   }
 
@@ -61,6 +63,7 @@ declare global {
     readonly CONGRESS_API_KEY?: string;
     readonly POSTHOG_API_KEY?: string;
     readonly POSTHOG_HOST?: string;
+    readonly VISITOR_COOKIE_SECRET?: string;
     readonly DEV: boolean;
   }
 

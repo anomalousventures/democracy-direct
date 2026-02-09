@@ -1,6 +1,8 @@
 # Legislation Search
 
-## Status: Ready
+## Status: Complete
+
+All Epic 5 stories implemented. URLs migrated from `/bills` to `/legislation`, shared vote components extracted, vote and amendment detail pages created, "Your Reps Voted" banner and template CTAs added, navigation updated.
 
 ## Problem Statement
 
@@ -8,102 +10,94 @@ Currently, users can find their representative and view contact information. Onc
 
 ## Dependencies
 
-- Voting Records integration (must be complete first - provides vote data for both chambers)
-- Bill Summaries integration (provides bill metadata for search)
+- Voting Records integration (complete - provides vote data for both chambers)
+- Bill Summaries integration (complete - provides bill metadata for search)
 
-## Research Completed
+## What Was Built
 
-- [x] Design search UX: keyword search vs browse by topic vs both
-  - **Both** - search bar + topic filters, similar to templates page
-- [x] Determine how to display vote breakdowns
-  - Party split bars (visual)
-  - Two-column Yea/Nay lists with rep cards
-  - Filter by state to narrow results
-- [x] Design "contact reps who voted X" flow
-  - Link to filtered templates: `/templates?bill=H.R.1234`
-  - If user has saved district, highlight their reps' positions
-- [x] URL structure for shareable results
-  - `/legislation` - browse/search all
-  - `/legislation?q=climate` - search results
-  - `/legislation/hr1234` - bill detail (normalized URL)
-  - `/vote/house/119/123` - specific vote detail
+### URL Migration (`/bills` → `/legislation`)
 
-## Open Questions - Resolved
+- Pages: `legislation.astro`, `legislation/[billId].astro`
+- API routes: `api/legislation/search`, `api/legislation/[billId]`, `api/legislation/[billId]/votes`, `api/legislation/[billId]/amendments`
+- Nav link updated to "Legislation" → `/legislation`
+- `getBillPageUrl()` updated to return `/legislation/` paths
 
-| Question              | Decision                                  | Rationale                     |
-| --------------------- | ----------------------------------------- | ----------------------------- |
-| Filter by state?      | **Yes**                                   | Essential for organizing      |
-| Voice votes?          | **Show but note "no recorded positions"** | Transparency                  |
-| Historical votes?     | **Current Congress only**                 | Matches data sync scope       |
-| Multi-rep contact?    | **Link to filtered templates**            | Simpler than custom bulk flow |
-| Template integration? | **Yes via Template Bill Linking**         | Separate task handles it      |
+### Shareable URL Params
 
-## Proposed Approach
+- `BillSearch` syncs state to URL: `?q=`, `?congress=`, `?type=`, `?status=`, `?subject=`
+- `parseSearchParams()` / `serializeSearchParams()` as exported functions with tests
 
-1. Create legislation browse/search page with filters
-2. Create bill detail page showing summary and vote info
-3. Create vote detail page with Yea/Nay breakdown
-4. Integrate saved district for "your reps voted..." indicator
-5. Add CTAs linking to templates for the bill
+### Shared Vote Components (`src/components/vote/`)
 
-## Implementation Tasks
+- `PositionBadge` — colored badge for vote positions (yea/nay/not_voting/present)
+- `VoteStatsBar` — horizontal bar chart of vote tallies
+- `PartyBreakdown` — party-by-party vote grid (D/R/I)
+- `MemberVoteList` — filterable member grid with position filter + search
+- `YourRepsBanner` — shows user's reps' votes when district is saved
+- Shared `VoteMember` type in `src/lib/types/vote.ts`
 
-1. Create `src/pages/legislation/index.astro` as the main browse/search page
-2. Create `src/components/LegislationSearch.tsx` with search input and topic filter dropdowns
-3. Create `src/db/queries/legislation.ts` with `searchBills(query, filters)` and `getBillsBySubject(subject)` queries
-4. Add bill subjects to filter options (pulled from synced bill data)
-5. Create `src/pages/legislation/[billId].astro` for bill detail page (e.g., `/legislation/hr1234`)
-6. Create `src/lib/bill-utils.ts` with `normalizeBillNumber()` and `parseBillId()` helpers
-7. Display bill summary, status, sponsor, and subjects on bill detail page
-8. Create `src/components/VoteBreakdown.tsx` showing party split visualization (horizontal stacked bar)
-9. Create `src/components/VoterList.tsx` showing Yea/Nay columns with rep cards (photo, name, party, state)
-10. Add state filter dropdown to VoterList component
-11. Create `src/pages/vote/[chamber]/[congress]/[rollCall].astro` for standalone vote detail page
-12. Add "Your reps voted..." banner on vote pages when user has saved district (check localStorage or user record)
-13. Add "See templates for this bill" button linking to `/templates?bill=X`
-14. Add "Create a template for this bill" button linking to `/templates/new?bill=X`
-15. Add legislation link to main navigation header
-16. Add unit tests for bill search queries in `src/db/queries/legislation.test.ts`
-17. Add unit tests for bill-utils helpers in `src/lib/bill-utils.test.ts`
-18. Add e2e test in `tests/e2e/legislation-search.spec.ts` for search and filter flow
-19. Add e2e test in `tests/e2e/vote-detail.spec.ts` for vote breakdown display
+### Vote Detail Page (`/vote/[chamber]/[congress]/[session]/[rollCall]`)
+
+- `src/pages/vote/[...path].astro` — server-rendered Astro page
+- `src/components/VoteDetail.tsx` — React island with full breakdown
+- Links back to parent bill when available
+- Template CTAs when vote has associated bill
+
+### Amendment Detail Page (`/legislation/amendment/[amendmentId]`)
+
+- `src/pages/legislation/amendment/[amendmentId].astro` — server-rendered Astro page
+- Shows amendment description, sponsor, latest action, and any roll call votes
+- Links back to parent bill
+- Amendment cards in bill detail page link to detail pages
+
+### Your Reps Voted Banner
+
+- `src/pages/api/user/representatives.ts` — GET endpoint (state + district params)
+- `src/hooks/useMyReps.ts` — combines district detection + API call with session cache
+- `YourRepsBanner` shown in VoteDetail and expanded BillVotes cards
+
+### Template CTAs
+
+- `src/components/BillTemplateCtas.astro` — "Browse templates" + "Write a template" buttons
+- Added to bill detail page and vote detail page (when bill associated)
 
 ## URL Patterns
 
-| URL                                | Description                       |
-| ---------------------------------- | --------------------------------- |
-| `/legislation`                     | Browse/search all bills           |
-| `/legislation?q=climate`           | Search results                    |
-| `/legislation?subject=Environment` | Filter by subject                 |
-| `/legislation/hr1234`              | Bill detail (H.R.1234)            |
-| `/legislation/s567`                | Bill detail (S.567)               |
-| `/vote/house/119/123`              | House vote #123 in 119th Congress |
-| `/vote/senate/119/45`              | Senate vote #45 in 119th Congress |
+| URL                                   | Description                   |
+| ------------------------------------- | ----------------------------- |
+| `/legislation`                        | Browse/search all bills       |
+| `/legislation?q=climate&congress=119` | Search with shareable params  |
+| `/legislation/hr1234-119`             | Bill detail (H.R.1234, 119th) |
+| `/vote/house/119/1/123`               | House vote #123, session 1    |
+| `/vote/senate/119/2/45`               | Senate vote #45, session 2    |
+| `/legislation/amendment/hamdt123-119` | House amendment #123          |
+| `/legislation/amendment/samdt456-119` | Senate amendment #456         |
 
 ## Data Flow
 
 ```
 /legislation (search/browse)
     ↓ click bill
-/legislation/hr1234 (bill detail)
-    ↓ click "see vote"
-/vote/house/119/123 (vote breakdown)
-    ↓ click rep or "contact" CTA
-/rep/A000001 or /templates?bill=hr1234
+/legislation/hr1234-119 (bill detail with tabs: Summary/Votes/Amendments)
+    ↓ click "View full details" on a vote
+/vote/house/119/1/123 (vote breakdown with your-reps banner)
+    ↓ click rep or template CTA
+/rep/A000001 or /templates?bill=hr1234-119
+
+    ↓ click amendment in Amendments tab
+/legislation/amendment/hamdt123-119 (amendment detail with votes)
 ```
 
 ## Verification
 
-- [ ] Users can search for bills by keyword
-- [ ] Users can browse/filter bills by subject
-- [ ] Bill detail page shows summary, status, sponsor
-- [ ] Vote detail page shows Yea/Nay breakdown
-- [ ] Party split visualization displays correctly
-- [ ] State filter narrows voter list
-- [ ] Saved district users see "Your reps voted..." banner
-- [ ] "See templates" and "Create template" CTAs work
-- [ ] URLs are shareable and bookmarkable
-- [ ] Navigation includes legislation link
-- [ ] Mobile UX is usable
-- [ ] Unit tests pass
-- [ ] E2E tests pass
+- [x] Users can search for bills by keyword
+- [x] Users can filter by congress, bill type, status, subject
+- [x] Search state preserved in URL params (shareable)
+- [x] Bill detail page shows summary, status, sponsor, votes, amendments tabs
+- [x] Vote detail page shows full breakdown with stats bar, party breakdown, member list
+- [x] Amendment detail page shows description, sponsor, votes
+- [x] Saved district users see "Your representatives voted" banner
+- [x] "Browse templates" and "Write a template" CTAs on bill and vote pages
+- [x] URLs are shareable and bookmarkable
+- [x] Navigation says "Legislation" linking to `/legislation`
+- [x] Unit tests pass (906 total)

@@ -11,6 +11,7 @@ interface SampleTemplate {
   title: string;
   body: string;
   issueTags: string[];
+  linkedBillNumbers?: string[];
 }
 
 export const SAMPLE_TEMPLATES: SampleTemplate[] = [
@@ -28,6 +29,7 @@ Thank you for your service.
 Sincerely,
 {{USER_NAME}}`,
     issueTags: ["infrastructure", "economy"],
+    linkedBillNumbers: ["H.R.3684"],
   },
   {
     slug: "e2e-test-climate",
@@ -93,8 +95,17 @@ async function seedE2E() {
     let templateId: string;
 
     if (existing.length > 0) {
-      console.log(`  Template "${template.slug}" exists, updating tags`);
       templateId = existing[0].id;
+      await db
+        .update(templates)
+        .set({
+          title: template.title,
+          body: template.body,
+          issueTags: template.issueTags,
+          linkedBillNumbers: template.linkedBillNumbers ?? [],
+        })
+        .where(eq(templates.id, templateId));
+      console.log(`  Template "${template.slug}" updated`);
     } else {
       const [inserted] = await db
         .insert(templates)
@@ -103,6 +114,7 @@ async function seedE2E() {
           title: template.title,
           body: template.body,
           issueTags: template.issueTags,
+          linkedBillNumbers: template.linkedBillNumbers ?? [],
           userId: adminUser.id,
           isPublic: true,
           moderationStatus: "approved",
