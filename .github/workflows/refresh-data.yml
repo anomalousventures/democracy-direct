@@ -173,14 +173,6 @@ jobs:
           BILLS_RESULT: ${{ steps.bills.outputs.result }}
           BILLS_FAILED: ${{ steps.bills.outputs.failed }}
         run: |
-          if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
-            exit 0
-          fi
-
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
           # Parse results
           LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
           LEG_COUNT=$(echo "$LEGISLATORS_RESULT" | jq -r '.recordsUpserted // 0')
@@ -199,13 +191,13 @@ jobs:
           # Determine overall status
           if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ] || [ "$VOTES_FAILED" = "true" ] || [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Data Refresh Failed"
-            COLOR=16711680
+            COLOR=15158332
           elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ] || [ "$VOTES_CHANGED" = "true" ] || [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Data Refresh Complete"
-            COLOR=65280
+            COLOR=3066993
           else
             TITLE="✅ Data Refresh - No Changes"
-            COLOR=8421504
+            COLOR=9807270
           fi
 
           # Build status lines
@@ -247,29 +239,15 @@ jobs:
             BILLS_STATUS="⏭️ **Bills**: Unchanged"
           fi
 
-          PAYLOAD=$(jq -n \
-            --arg title "$TITLE" \
-            --argjson color "$COLOR" \
-            --arg leg_status "$LEG_STATUS" \
-            --arg zips_status "$ZIPS_STATUS" \
-            --arg templates_status "$TEMPLATES_STATUS" \
-            --arg votes_status "$VOTES_STATUS" \
-            --arg bills_status "$BILLS_STATUS" \
-            --arg gh_run "$GH_RUN" \
-            --arg timestamp "$TIMESTAMP" \
-            '{
-              embeds: [{
-                title: $title,
-                color: $color,
-                fields: [
-                  { name: "Results", value: ($leg_status + "\n" + $zips_status + "\n" + $templates_status + "\n" + $votes_status + "\n" + $bills_status), inline: false },
-                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
-                ],
-                timestamp: $timestamp
-              }]
-            }')
+          DESC="${LEG_STATUS}"$'\n'"${ZIPS_STATUS}"$'\n'"${TEMPLATES_STATUS}"$'\n'"${VOTES_STATUS}"$'\n'"${BILLS_STATUS}"
 
-          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          .github/scripts/discord-notify.sh \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
 
       - name: Fail workflow if imports failed
         if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true' || steps.votes.outputs.failed == 'true' || steps.bills.outputs.failed == 'true'

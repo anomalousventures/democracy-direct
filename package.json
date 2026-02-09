@@ -39,6 +39,7 @@
     "sync:summaries": "npx tsx src/scripts/sync-summaries.ts",
     "sync:sponsored-bills": "npx tsx src/scripts/sync-sponsored-bills.ts",
     "moderate:pending": "npx tsx src/scripts/moderate-pending.ts",
+    "generate:api-schema": "pnpm tsx src/scripts/generate-api-schema.ts api-schema.json",
     "prepare": "husky"
   },
   "dependencies": {
