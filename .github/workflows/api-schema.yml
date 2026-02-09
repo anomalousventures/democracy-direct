@@ -44,14 +44,23 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ROUTE_COUNT=$(jq '.paths | length' api-schema.json)
-          METHOD_COUNT=$(jq '[.paths[] | keys[]] | length' api-schema.json)
 
-          DESC=$(printf 'API schema regenerated from source.\n\n**%s routes, %s operations**\n\nThe schema JSON is attached below. Upload to Cloudflare API Shield.' "$ROUTE_COUNT" "$METHOD_COUNT")
+          if [ -f api-schema.json ]; then
+            ROUTE_COUNT=$(jq '.paths | length' api-schema.json)
+            METHOD_COUNT=$(jq '[.paths[] | keys[]] | length' api-schema.json)
 
-          .github/scripts/discord-notify.sh \
-            --title "🟦 API Schema Updated" \
-            --color 3447003 \
-            --description "$DESC" \
-            --button "View Run|$GH_RUN" \
-            --file api-schema.json
+            DESC=$(printf 'API schema regenerated from source.\n\n**%s routes, %s operations**\n\nThe schema JSON is attached below. Upload to Cloudflare API Shield.' "$ROUTE_COUNT" "$METHOD_COUNT")
+
+            .github/scripts/discord-notify.sh \
+              --title "🟦 API Schema Updated" \
+              --color 3447003 \
+              --description "$DESC" \
+              --button "View Run|$GH_RUN" \
+              --file api-schema.json
+          else
+            .github/scripts/discord-notify.sh \
+              --title "🚨 API Schema Generation Failed" \
+              --color 15158332 \
+              --description "Schema generation did not produce api-schema.json. Check the build logs." \
+              --button "View Run|$GH_RUN"
+          fi
