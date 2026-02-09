@@ -255,13 +255,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Download unit test coverage
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: coverage-unit
           path: coverage-unit
 
       - name: Download integration test coverage
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         continue-on-error: true
         with:
           name: coverage-integration
