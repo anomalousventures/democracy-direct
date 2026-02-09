@@ -831,7 +831,7 @@
           "dependencies": ["leg-2", "leg-3"],
           "acceptanceCriteria": [
             "Bill detail page has 'Browse templates' and 'Write a template' buttons",
-            "Browse links to /templates?q=billNumber (text search)",
+            "Browse links to /templates?bill=billNumber",
             "Create links to /templates/new?bill=billNumber",
             "Vote detail page shows CTA when vote has associated bill",
             "Buttons styled consistently with existing CTAs"

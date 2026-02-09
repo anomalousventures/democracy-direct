@@ -82,7 +82,7 @@ Currently, users can find their representative and view contact information. Onc
     ↓ click "View full details" on a vote
 /vote/house/119/1/123 (vote breakdown with your-reps banner)
     ↓ click rep or template CTA
-/rep/A000001 or /templates?q=H.R.1234
+/rep/A000001 or /templates?bill=hr1234-119
 
     ↓ click amendment in Amendments tab
 /legislation/amendment/hamdt123-119 (amendment detail with votes)
