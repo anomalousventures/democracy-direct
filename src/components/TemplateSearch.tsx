@@ -191,7 +191,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
             {billTitle && <span className="text-muted-foreground"> — {billTitle}</span>}
           </p>
           <a
-            href="/templates"
+            href={repBioguideId ? `/templates?rep=${repBioguideId}` : "/templates"}
             className="text-sm font-medium text-primary hover:text-accent transition-colors"
           >
             Show all templates
