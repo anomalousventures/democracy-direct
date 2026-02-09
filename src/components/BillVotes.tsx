@@ -82,7 +82,7 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
-        aria-controls={expanded ? panelId : undefined}
+        aria-controls={panelId}
         className="w-full p-3 bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-between"
       >
         <span className="text-sm font-medium text-primary">Amendment Votes ({votes.length})</span>
@@ -95,11 +95,9 @@ function AmendmentVotesSection({ votes }: { votes: BillVoteSummary[] }) {
         />
       </button>
 
-      {expanded && (
-        <div id={panelId} className="p-4">
-          <VoteListSection votes={votes} label="Amendment Roll Call Votes" />
-        </div>
-      )}
+      <div id={panelId} className="p-4" hidden={!expanded}>
+        <VoteListSection votes={votes} label="Amendment Roll Call Votes" />
+      </div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ describe("ContactInfo", () => {
 
       expect(screen.getByText("DC Office Phone")).toBeInTheDocument();
       expect(screen.getByText("202-555-1234")).toBeInTheDocument();
-      expect(screen.getByRole("link")).toHaveAttribute("href", "tel:202-555-1234");
+      expect(screen.getByRole("link")).toHaveAttribute("href", "tel:2025551234");
     });
 
     it("renders contact form link", () => {

@@ -55,6 +55,7 @@ export function BillPicker({ selectedBills, onBillsChange }: BillPickerProps) {
     if (!debouncedQuery.trim()) {
       setResults([]);
       setIsOpen(false);
+      setIsLoading(false);
       return;
     }
 

@@ -65,10 +65,16 @@ export function parseSearchParams(search: string): SearchState {
   }
 
   const typeStr = params.get("type") ?? "";
-  const types = typeStr.split(",").filter((t) => t && isValidBillType(t)) as BillType[];
+  const types = typeStr
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(isValidBillType);
 
   const statusStr = params.get("status") ?? "";
-  const statuses = statusStr.split(",").filter((s) => s && VALID_STATUSES.has(s)) as BillStatus[];
+  const statuses = statusStr
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s): s is BillStatus => s !== "" && VALID_STATUSES.has(s));
 
   const subjectStr = params.get("subject") ?? "";
   const subjects = subjectStr
@@ -301,7 +307,7 @@ export function BillSearch() {
   }, []);
 
   const hasActiveFilters =
-    searchQuery.trim() ||
+    !!searchQuery.trim() ||
     congress !== DEFAULT_CONGRESS ||
     selectedTypes.length > 0 ||
     selectedStatuses.length > 0 ||
@@ -331,6 +337,16 @@ export function BillSearch() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <Toggle
+          key="all"
+          variant="outline"
+          size="sm"
+          pressed={congress === null}
+          onPressedChange={() => setCongress(congress === null ? DEFAULT_CONGRESS : null)}
+          className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
+        >
+          All
+        </Toggle>
         {Array.from({ length: 3 }, (_, i) => DEFAULT_CONGRESS - i).map((c) => (
           <Toggle
             key={c}

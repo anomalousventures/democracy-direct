@@ -45,7 +45,7 @@ export function ContactInfo({
       <h3 className="text-lg font-semibold text-primary mb-4">Contact Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {phone && (
-          <a href={`tel:${phone}`} className="info-item-link">
+          <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="info-item-link">
             <div className="icon-box-sm self-center">
               <Icon name="phone" className="w-5 h-5 text-accent" />
             </div>
