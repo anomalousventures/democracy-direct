@@ -25,10 +25,17 @@ test.describe("Production Smoke Tests", () => {
     await expect(searchInput).toBeVisible();
     await expect(searchInput).toBeEnabled();
 
-    // Type in the search box
+    // Set up response listener before typing (debounce fires after 300ms)
+    const searchResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/templates/search") &&
+        resp.url().includes("search=test") &&
+        resp.status() === 200
+    );
     await searchInput.fill("test");
+    await searchResponse;
 
-    // Wait for debounce + re-render (results or no-results appears)
+    // Search results have rendered
     const templateCards = page.locator("[data-testid='template-card']");
     const noResults = page.locator("[data-testid='no-results']");
     await expect(templateCards.first().or(noResults)).toBeVisible();
