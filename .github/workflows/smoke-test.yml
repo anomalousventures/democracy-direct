@@ -59,27 +59,12 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
-            exit 0
-          fi
-
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          PAYLOAD=$(jq -n \
-            --arg timestamp "$TIMESTAMP" \
-            --arg gh_run "$GH_RUN" \
-            '{
-              embeds: [{
-                title: "🚨 Production Smoke Test Failed",
-                color: 16711680,
-                fields: [
-                  { name: "Details", value: "One or more smoke tests failed against production." },
-                  { name: "Links", value: "[GitHub Action](\($gh_run)) | [Production](https://democracy-direct.com) | [Cloudflare](https://dash.cloudflare.com)" }
-                ],
-                timestamp: $timestamp
-              }]
-            }')
-
-          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+          .github/scripts/discord-notify.sh \
+            --title "🚨 Smoke Test Failed" \
+            --color 15158332 \
+            --description "One or more smoke tests failed against production." \
+            --button "View Run|$GH_RUN" \
+            --button "Production|https://democracy-direct.com" \
+            --button "Cloudflare|https://dash.cloudflare.com"

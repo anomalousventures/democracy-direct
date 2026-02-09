@@ -1,0 +1,57 @@
+name: API Schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/pages/api/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: Generate API Schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate API schema
+        run: pnpm generate:api-schema
+
+      - name: Upload schema artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: api-schema
+          path: api-schema.json
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ROUTE_COUNT=$(jq '.paths | length' api-schema.json)
+          METHOD_COUNT=$(jq '[.paths[] | keys[]] | length' api-schema.json)
+
+          DESC=$(printf 'API schema regenerated from source.\n\n**%s routes, %s operations**\n\nThe schema JSON is attached below. Upload to Cloudflare API Shield.' "$ROUTE_COUNT" "$METHOD_COUNT")
+
+          .github/scripts/discord-notify.sh \
+            --title "🟦 API Schema Updated" \
+            --color 3447003 \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN" \
+            --file api-schema.json
