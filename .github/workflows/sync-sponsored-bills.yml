@@ -55,12 +55,6 @@ jobs:
           SYNC_RESULT: ${{ steps.sync.outputs.result }}
           SYNC_FAILED: ${{ steps.sync.outputs.failed }}
         run: |
-          if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
-            exit 0
-          fi
-
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           CHANGED=$(echo "$SYNC_RESULT" | jq -r '.changed // false')
@@ -70,41 +64,27 @@ jobs:
           ERROR_COUNT=$(echo "$SYNC_RESULT" | jq -r '.errors | length // 0')
 
           if [ "$SYNC_FAILED" = "true" ]; then
-            TITLE="Sponsored Bills Sync Failed"
-            COLOR=16711680
-            STATUS="**Sync**: Failed"
+            TITLE="🚨 Sponsored Bills Sync Failed"
+            COLOR=15158332
+            DESC="❌ **Sync**: Failed"
           elif [ "$CHANGED" = "true" ]; then
-            TITLE="Sponsored Bills Sync Complete"
-            COLOR=65280
-            STATUS="**Bills**: ${BILLS} upserted from ${LEGISLATORS} legislators in ${DURATION}"
+            TITLE="📊 Sponsored Bills Sync Complete"
+            COLOR=3066993
+            DESC="✅ **Bills**: ${BILLS} upserted from ${LEGISLATORS} legislators in ${DURATION}"
             if [ "$ERROR_COUNT" -gt 0 ]; then
-              STATUS="${STATUS}\n**Errors**: ${ERROR_COUNT} legislators had issues"
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT} legislators had issues"
             fi
           else
-            TITLE="Sponsored Bills Sync - No Changes"
-            COLOR=8421504
-            STATUS="**Bills**: No new bills found (${LEGISLATORS} legislators checked)"
+            TITLE="✅ Sponsored Bills Sync - No Changes"
+            COLOR=9807270
+            DESC="⏭️ **Bills**: No new bills found (${LEGISLATORS} legislators checked)"
           fi
 
-          PAYLOAD=$(jq -n \
-            --arg title "$TITLE" \
-            --argjson color "$COLOR" \
-            --arg status "$STATUS" \
-            --arg gh_run "$GH_RUN" \
-            --arg timestamp "$TIMESTAMP" \
-            '{
-              embeds: [{
-                title: $title,
-                color: $color,
-                fields: [
-                  { name: "Results", value: $status, inline: false },
-                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
-                ],
-                timestamp: $timestamp
-              }]
-            }')
-
-          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+          .github/scripts/discord-notify.sh \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
 
       - name: Fail workflow if sync failed
         if: steps.sync.outputs.failed == 'true'
