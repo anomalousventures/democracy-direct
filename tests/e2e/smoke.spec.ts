@@ -12,21 +12,14 @@ test.describe("Production Smoke Tests", () => {
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    // Wait for the search API to complete (component fetches on mount)
-    await page.waitForLoadState("networkidle");
-
-    // Either we have template cards or the no-results message
+    // Wait for search results to render (component fetches on mount)
     const templateCards = page.locator("[data-testid='template-card']");
     const noResults = page.locator("[data-testid='no-results']");
-    const hasCards = (await templateCards.count()) > 0;
-    const hasNoResults = await noResults.isVisible().catch(() => false);
-
-    expect(hasCards || hasNoResults).toBe(true);
+    await expect(templateCards.first().or(noResults)).toBeVisible();
   });
 
   test("template search input is functional", async ({ page }) => {
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
 
     const searchInput = page.locator("[data-testid='template-search-input']");
     await expect(searchInput).toBeVisible();
@@ -35,9 +28,10 @@ test.describe("Production Smoke Tests", () => {
     // Type in the search box
     await searchInput.fill("test");
 
-    // Wait for debounce and API call
-    await page.waitForTimeout(400);
-    await page.waitForLoadState("networkidle");
+    // Wait for debounce + re-render (results or no-results appears)
+    const templateCards = page.locator("[data-testid='template-card']");
+    const noResults = page.locator("[data-testid='no-results']");
+    await expect(templateCards.first().or(noResults)).toBeVisible();
 
     // Page should still be functional (no errors)
     await expect(searchInput).toHaveValue("test");
