@@ -42,6 +42,7 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
           </p>
           {isLongSummary && (
             <button
+              type="button"
               onClick={toggleExpand}
               className="inline-flex items-center gap-1.5 mt-2 text-sm text-primary hover:text-accent transition-colors font-medium"
             >

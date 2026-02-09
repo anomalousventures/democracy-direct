@@ -184,6 +184,7 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
       {hasMore && (
         <div className="text-center py-4">
           <button
+            type="button"
             onClick={handleLoadMore}
             className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-primary border-2 border-primary rounded-sm hover:bg-primary hover:text-primary-foreground transition-colors"
           >

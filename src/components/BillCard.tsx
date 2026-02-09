@@ -138,6 +138,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
               </p>
               {bill.summary!.length > 200 && (
                 <button
+                  type="button"
                   onClick={toggleExpand}
                   className="relative z-10 inline-flex items-center gap-1 mt-1 text-xs text-primary hover:text-accent transition-colors"
                 >

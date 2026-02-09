@@ -33,9 +33,13 @@ export function SaveDistrictPrompt({ state, district }: SaveDistrictPromptProps)
         return;
       }
 
-      const saved = await districtStorage.get();
-      if (saved?.state === state.toUpperCase() && saved?.district === district.toUpperCase()) {
-        setIsSaved(true);
+      try {
+        const saved = await districtStorage.get();
+        if (saved?.state === state.toUpperCase() && saved?.district === district.toUpperCase()) {
+          setIsSaved(true);
+        }
+      } catch {
+        // Storage unavailable (e.g. Safari private mode) — not critical
       }
     };
 
