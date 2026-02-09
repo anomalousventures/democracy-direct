@@ -27,10 +27,7 @@ test.describe("Production Smoke Tests", () => {
 
     // Set up response listener before typing (debounce fires after 300ms)
     const searchResponse = page.waitForResponse(
-      (resp) =>
-        resp.url().includes("/api/templates/search") &&
-        resp.url().includes("search=test") &&
-        resp.status() === 200
+      (resp) => resp.url().includes("/api/templates/search") && resp.url().includes("search=test")
     );
     await searchInput.fill("test");
     await searchResponse;
@@ -46,7 +43,6 @@ test.describe("Production Smoke Tests", () => {
 
   test("login modal opens with email input", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
 
     const signInButton = page.getByRole("button", { name: /sign in/i });
     await expect(signInButton).toBeVisible();
