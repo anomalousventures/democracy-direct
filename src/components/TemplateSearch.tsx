@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { Icon } from "@/components/icons";
 import { Spinner } from "./ui/Spinner";
+import { InlineError } from "./ui/InlineError";
 import { getPreviewLines } from "@/lib/markdown";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -238,19 +239,11 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
       )}
 
       {error && (
-        <div
-          className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm"
-          role="alert"
-        >
-          <p className="font-medium">Unable to load templates</p>
-          <p className="mt-1 text-destructive/80">{error}</p>
-          <button
-            onClick={() => fetchTemplates()}
-            className="mt-3 text-sm font-medium underline hover:no-underline"
-          >
-            Try again
-          </button>
-        </div>
+        <InlineError
+          title="Unable to load templates"
+          message={error}
+          onRetry={() => fetchTemplates()}
+        />
       )}
 
       <div data-testid="template-search-results" className="space-y-6">

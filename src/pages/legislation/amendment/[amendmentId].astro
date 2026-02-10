@@ -228,7 +228,7 @@ const DATA_PENDING_TEXT = "Check back as legislative data is updated regularly."
                         const voteDetailUrl = `/vote/${vote.chamber}/${vote.congress}/${vote.session}/${vote.rollCall}`;
                         const vChamberLabel = vote.chamber === "house" ? "House" : "Senate";
                         return (
-                          <article class="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
+                          <article class="card-hover">
                             <div class="flex flex-col gap-2">
                               <div class="flex flex-wrap items-center gap-2">
                                 <a

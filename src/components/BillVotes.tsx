@@ -1,5 +1,6 @@
 import { useState, useEffect, useId } from "react";
 import { Icon } from "@/components/icons";
+import { InlineError } from "./ui/InlineError";
 import { cn } from "@/lib/utils";
 import type { BillVotesResponse, BillVoteSummary } from "@/pages/api/legislation/[billId]/votes";
 import { VoteSummaryCard } from "@/components/vote/VoteSummaryCard";
@@ -138,12 +139,7 @@ export function BillVotes({ billId, className }: BillVotesProps) {
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm">
-        <p className="font-medium">Unable to load votes</p>
-        <p className="mt-1 text-destructive/80">{error}</p>
-      </div>
-    );
+    return <InlineError title="Unable to load votes" message={error} />;
   }
 
   if (billVotes.length === 0 && amendmentVotes.length === 0) {

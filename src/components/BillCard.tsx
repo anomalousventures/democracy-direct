@@ -107,13 +107,7 @@ export function BillCard({ bill, showSponsor = false, className }: BillCardProps
     hasSummary && bill.summary!.length > 200 ? bill.summary!.slice(0, 200) + "..." : bill.summary;
 
   return (
-    <article
-      data-testid="bill-card"
-      className={cn(
-        "group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200",
-        className
-      )}
-    >
+    <article data-testid="bill-card" className={cn("card-hover group relative", className)}>
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">

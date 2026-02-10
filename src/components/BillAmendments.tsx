@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
+import { InlineError } from "./ui/InlineError";
 import { cn } from "@/lib/utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
@@ -36,7 +37,7 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
     description && description.length > 200 ? description.slice(0, 200) + "..." : description;
 
   return (
-    <article className="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow">
+    <article className="card-hover">
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -193,12 +194,7 @@ export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm">
-        <p className="font-medium">Unable to load amendments</p>
-        <p className="mt-1 text-destructive/80">{error}</p>
-      </div>
-    );
+    return <InlineError title="Unable to load amendments" message={error} />;
   }
 
   if (amendments.length === 0) {

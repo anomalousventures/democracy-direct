@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { Icon } from "@/components/icons";
 import { Spinner } from "./ui/Spinner";
+import { InlineError } from "./ui/InlineError";
 import { BillCard } from "./BillCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
@@ -401,19 +402,7 @@ export function BillSearch() {
       )}
 
       {error && (
-        <div
-          className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm"
-          role="alert"
-        >
-          <p className="font-medium">Unable to load bills</p>
-          <p className="mt-1 text-destructive/80">{error}</p>
-          <button
-            onClick={() => fetchBills()}
-            className="mt-3 text-sm font-medium underline hover:no-underline"
-          >
-            Try again
-          </button>
-        </div>
+        <InlineError title="Unable to load bills" message={error} onRetry={() => fetchBills()} />
       )}
 
       <div data-testid="bill-search-results" className="space-y-4">

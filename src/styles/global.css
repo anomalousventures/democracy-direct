@@ -341,6 +341,14 @@
     @apply absolute inset-0 flex items-center justify-center font-bold text-muted-foreground/30 text-6xl;
   }
 
+  /* Card Hover */
+  .card-hover {
+    @apply border border-border bg-white rounded-sm p-4 transition-shadow duration-200;
+    &:hover {
+      box-shadow: var(--shadow-civic);
+    }
+  }
+
   /* Scroll Container - Civic Theme */
   .scroll-container-civic {
     @apply overflow-y-auto;

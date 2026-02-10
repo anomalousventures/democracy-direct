@@ -43,7 +43,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
   const voteDetailUrl = getVoteDetailUrl(vote);
 
   return (
-    <article className="group relative border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
+    <article className="card-hover group relative">
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
