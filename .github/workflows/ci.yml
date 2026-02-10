@@ -139,41 +139,36 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Verify DATABASE_URL
+      - name: Set DATABASE_URL
         run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "ERROR: DATABASE_URL is not set!"
+          DB_URL="${BRANCH_DB_URL_POOLED:-${BRANCH_DB_URL:-${FALLBACK_DB_URL}}}"
+          if [ -z "$DB_URL" ]; then
+            echo "ERROR: DATABASE_URL could not be resolved"
             exit 1
           fi
-          echo "DATABASE_URL is set (length: ${#DATABASE_URL})"
+          echo "DATABASE_URL is set (length: ${#DB_URL})"
+          echo "DATABASE_URL=${DB_URL}" >> "$GITHUB_ENV"
         env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
+          BRANCH_DB_URL_POOLED: ${{ steps.create_branch.outputs.db_url_pooled }}
+          BRANCH_DB_URL: ${{ steps.create_branch.outputs.db_url }}
+          FALLBACK_DB_URL: ${{ secrets.DEV_DATABASE_URL }}
 
       - name: Run database migrations
         run: pnpm db:migrate
-        env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Ensure admin users
         run: pnpm ensure:admins
         env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
           ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
 
       - name: Seed E2E test data
         run: pnpm seed:e2e
-        env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Import legislators
         run: pnpm tsx src/scripts/import-legislators.ts
-        env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Run integration tests with coverage
         run: pnpm test:integration --coverage
-        env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - name: Upload integration test coverage
         uses: actions/upload-artifact@v6
@@ -194,7 +189,6 @@ jobs:
           echo "CONGRESS_API_KEY=$CONGRESS_API_KEY" >> .dev.vars
           echo "ADMIN_USERS=$ADMIN_USERS" >> .dev.vars
         env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
           ADMIN_USERS: ${{ secrets.ADMIN_USERS }}
@@ -202,8 +196,6 @@ jobs:
       - name: Run Playwright tests
         run: pnpm test:e2e
         timeout-minutes: 10
-        env:
-          DATABASE_URL: ${{ steps.create_branch.outputs.db_url_pooled || steps.create_branch.outputs.db_url || secrets.DEV_DATABASE_URL }}
 
       - uses: actions/upload-artifact@v6
         if: failure()
