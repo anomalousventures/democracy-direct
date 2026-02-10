@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.BASE_URL || "https://democracy-direct.com";
+const baseURL = process.env.BASE_URL || "https://democracy-direct.pages.dev/";
 
 export default defineConfig({
   testDir: "./tests/e2e",
