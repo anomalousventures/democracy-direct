@@ -1,125 +1,8 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback, useEffect, useMemo } from "react";
-
-function textToHtml(text: string): string {
-  if (!text) return "";
-
-  const lines = text.split("\n");
-  const result: string[] = [];
-  let inBulletList = false;
-  let inOrderedList = false;
-
-  for (const line of lines) {
-    const escaped = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const bulletMatch = escaped.match(/^[•\-*]\s+(.*)$/);
-    const orderedMatch = escaped.match(/^(\d+)\.\s+(.*)$/);
-
-    if (bulletMatch) {
-      if (!inBulletList) {
-        if (inOrderedList) {
-          result.push("</ol>");
-          inOrderedList = false;
-        }
-        result.push("<ul>");
-        inBulletList = true;
-      }
-      result.push(`<li>${bulletMatch[1]}</li>`);
-    } else if (orderedMatch) {
-      if (!inOrderedList) {
-        if (inBulletList) {
-          result.push("</ul>");
-          inBulletList = false;
-        }
-        result.push("<ol>");
-        inOrderedList = true;
-      }
-      result.push(`<li>${orderedMatch[2]}</li>`);
-    } else {
-      if (inBulletList) {
-        result.push("</ul>");
-        inBulletList = false;
-      }
-      if (inOrderedList) {
-        result.push("</ol>");
-        inOrderedList = false;
-      }
-      if (escaped.trim()) {
-        result.push(`<p>${escaped}</p>`);
-      }
-    }
-  }
-
-  if (inBulletList) result.push("</ul>");
-  if (inOrderedList) result.push("</ol>");
-
-  return result.join("");
-}
-
-function htmlToText(html: string): string {
-  const div = document.createElement("div");
-  div.innerHTML = html;
-
-  let result = "";
-  let listCounter = 0;
-
-  function processNode(node: Node): void {
-    if (node.nodeType === Node.TEXT_NODE) {
-      result += node.textContent;
-      return;
-    }
-
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-    const el = node as Element;
-    const tagName = el.tagName.toLowerCase();
-
-    if (tagName === "br") {
-      result += "\n";
-      return;
-    }
-
-    if (tagName === "ul") {
-      for (const child of el.childNodes) {
-        if ((child as Element).tagName?.toLowerCase() === "li") {
-          result += "• ";
-          for (const liChild of child.childNodes) {
-            processNode(liChild);
-          }
-          result += "\n";
-        }
-      }
-      return;
-    }
-
-    if (tagName === "ol") {
-      listCounter = 0;
-      for (const child of el.childNodes) {
-        if ((child as Element).tagName?.toLowerCase() === "li") {
-          listCounter++;
-          result += `${listCounter}. `;
-          for (const liChild of child.childNodes) {
-            processNode(liChild);
-          }
-          result += "\n";
-        }
-      }
-      return;
-    }
-
-    for (const child of el.childNodes) {
-      processNode(child);
-    }
-
-    if (tagName === "p") {
-      result += "\n";
-    }
-  }
-
-  processNode(div);
-  return result.replace(/\n+$/, "").replace(/\n{3,}/g, "\n\n");
-}
+import { Markdown } from "@tiptap/markdown";
+import { useCallback, useEffect, useRef } from "react";
 
 const TEMPLATE_VARIABLES = [
   { name: "REP_NAME", label: "Rep Name", description: "Full name (e.g., John Smith)" },
@@ -161,7 +44,7 @@ export function TiptapEditor({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: TiptapEditorProps) {
-  const initialHtml = useMemo(() => textToHtml(content), [content]);
+  const lastUserContent = useRef(content);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -177,12 +60,14 @@ export function TiptapEditor({
         placeholder,
         emptyEditorClass: "is-editor-empty",
       }),
+      Markdown,
     ],
-    content: initialHtml,
+    content,
+    contentType: "markdown",
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      const text = htmlToText(html);
-      onChange(text);
+      const markdown = editor.getMarkdown();
+      lastUserContent.current = markdown;
+      onChange(markdown);
     },
     editorProps: {
       attributes: {
@@ -197,10 +82,11 @@ export function TiptapEditor({
   });
 
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
-      editor.commands.setContent(textToHtml(content));
+    if (editor && content !== lastUserContent.current) {
+      editor.commands.setContent(content, { emitUpdate: false, contentType: "markdown" });
+      lastUserContent.current = content;
     }
-  }, [content, editor]);
+  }, [editor, content]);
 
   const toggleBold = useCallback(() => {
     editor?.chain().focus().toggleBold().run();

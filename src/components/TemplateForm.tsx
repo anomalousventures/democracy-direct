@@ -1,17 +1,39 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Toggle } from "@/components/ui/toggle";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TiptapEditor } from "./TiptapEditor";
+import { MarkdownContent } from "./MarkdownContent";
+import { BillPicker } from "./BillPicker";
+import { detectBillNumbers } from "@/lib/bill-detection";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   TITLE_MIN_LENGTH,
   TITLE_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   BODY_MIN_LENGTH,
   BODY_MAX_LENGTH,
+  validateTemplateVariables,
+  getSupportedVariablesList,
 } from "@/lib/template-validation";
+import { formatDateMedium } from "@/lib/date-utils";
+
+const SAMPLE_PREVIEW_DATA = {
+  REP_NAME: "Jane Smith",
+  REP_TITLE: "Senator",
+  REP_FIRST: "Jane",
+  REP_LAST: "Smith",
+  REP_PARTY: "Independent",
+  STATE: "CA",
+  DISTRICT: "12",
+  USER_NAME: "John Doe",
+  USER_CITY: "San Francisco",
+  TODAY_DATE: formatDateMedium(new Date()),
+};
 
 declare global {
   interface Window {
@@ -32,6 +54,7 @@ interface TemplateFormProps {
     description?: string;
     body: string;
     issueTags: string[];
+    linkedBillNumbers?: string[];
     isPublic?: boolean;
   };
   availableTags: string[];
@@ -40,6 +63,7 @@ interface TemplateFormProps {
     description?: string;
     body: string;
     issueTags: string[];
+    linkedBillNumbers: string[];
     turnstileToken?: string;
     isPublic?: boolean;
   }) => Promise<void>;
@@ -64,11 +88,15 @@ export function TemplateForm({
   const [selectedTags, setSelectedTags] = useState<string[]>(
     (initialData?.issueTags || []).map((t) => t.toLowerCase())
   );
+  const [linkedBillNumbers, setLinkedBillNumbers] = useState<string[]>(
+    initialData?.linkedBillNumbers ?? []
+  );
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const suggestedBillsRef = useRef<Set<string>>(new Set(initialData?.linkedBillNumbers ?? []));
 
   useEffect(() => {
     const renderTurnstile = () => {
@@ -93,11 +121,58 @@ export function TemplateForm({
     };
   }, [turnstileSiteKey]);
 
+  const debouncedBody = useDebounce(body, 1000);
+
+  const prevLinkedRef = useRef<Set<string>>(new Set(linkedBillNumbers));
+
+  useEffect(() => {
+    const current = new Set(linkedBillNumbers);
+    const previous = prevLinkedRef.current;
+    for (const bill of previous) {
+      if (!current.has(bill)) {
+        suggestedBillsRef.current.delete(bill);
+      }
+    }
+    prevLinkedRef.current = current;
+  }, [linkedBillNumbers]);
+
+  useEffect(() => {
+    if (!debouncedBody.trim()) return;
+    const detected = detectBillNumbers(debouncedBody);
+    const unlinked = detected.filter(
+      (b) => !linkedBillNumbers.includes(b) && !suggestedBillsRef.current.has(b)
+    );
+    if (unlinked.length === 0) return;
+
+    for (const b of unlinked) {
+      suggestedBillsRef.current.add(b);
+    }
+
+    const billList = unlinked.join(", ");
+    toast(`Found ${billList} in your letter`, {
+      action: {
+        label: "Link",
+        onClick: () => {
+          setLinkedBillNumbers((prev) => [...new Set([...prev, ...unlinked])]);
+        },
+      },
+      duration: 8000,
+    });
+  }, [debouncedBody, linkedBillNumbers]);
+
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   }, []);
+
+  const previewContent = useMemo(() => {
+    let preview = body;
+    for (const [key, value] of Object.entries(SAMPLE_PREVIEW_DATA)) {
+      preview = preview.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+    }
+    return preview;
+  }, [body]);
 
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
@@ -120,6 +195,13 @@ export function TemplateForm({
       newErrors.body = `Body must be at least ${BODY_MIN_LENGTH} characters`;
     } else if (body.trim().length > BODY_MAX_LENGTH) {
       newErrors.body = `Body must be at most ${BODY_MAX_LENGTH} characters`;
+    } else {
+      const variableValidation = validateTemplateVariables(body);
+      if (!variableValidation.valid) {
+        const unknownList = variableValidation.unknownVariables.join(", ");
+        const supportedList = getSupportedVariablesList().join(", ");
+        newErrors.body = `Unknown variable(s): ${unknownList}. Supported variables: ${supportedList}`;
+      }
     }
 
     setErrors(newErrors);
@@ -138,6 +220,7 @@ export function TemplateForm({
         description: description.trim() || undefined,
         body: body.trim(),
         issueTags: selectedTags,
+        linkedBillNumbers,
         turnstileToken: turnstileToken ?? undefined,
         isPublic: isAuthenticated ? isPublic : true,
       });
@@ -147,6 +230,7 @@ export function TemplateForm({
       description,
       body,
       selectedTags,
+      linkedBillNumbers,
       onSubmit,
       validate,
       turnstileSiteKey,
@@ -218,17 +302,40 @@ export function TemplateForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="body" className="text-primary">
+        <Label htmlFor="template-body" className="text-primary">
           Letter Body
         </Label>
-        <TiptapEditor
-          content={body}
-          onChange={setBody}
-          placeholder="Write your letter template here..."
-          maxLength={BODY_MAX_LENGTH}
-          aria-invalid={errors.body ? "true" : undefined}
-          aria-describedby={errors.body ? "body-error" : "body-hint"}
-        />
+        <Tabs defaultValue="edit" className="w-full">
+          <TabsList className="mb-2">
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+          <TabsContent value="edit">
+            <TiptapEditor
+              id="template-body"
+              content={body}
+              onChange={setBody}
+              placeholder="Write your letter template here..."
+              maxLength={BODY_MAX_LENGTH}
+              aria-invalid={errors.body ? "true" : undefined}
+              aria-describedby={errors.body ? "body-error" : "body-hint"}
+            />
+          </TabsContent>
+          <TabsContent value="preview">
+            <div className="min-h-[200px] p-4 bg-white border-2 border-border rounded-md">
+              {body ? (
+                <MarkdownContent content={previewContent} className="text-sm" />
+              ) : (
+                <p className="text-muted-foreground italic">
+                  Start writing your letter to see a preview...
+                </p>
+              )}
+              <p className="mt-4 text-xs text-muted-foreground border-t pt-3">
+                Sample data: Senator Jane Smith (Independent, CA-12)
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>
             {errors.body ? (
@@ -262,6 +369,8 @@ export function TemplateForm({
           ))}
         </div>
       </fieldset>
+
+      <BillPicker selectedBills={linkedBillNumbers} onBillsChange={setLinkedBillNumbers} />
 
       {isAuthenticated && (
         <div className="flex items-start space-x-3">

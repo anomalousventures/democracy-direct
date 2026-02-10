@@ -2,8 +2,10 @@
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import PageSection from "../components/PageSection.astro";
 import AstroCard from "../components/ui/AstroCard.astro";
 import { ZipLookup } from "../components/ZipLookup";
+import Icon from "../components/icons/Icon.astro";
 
 export const prerender = false;
 
@@ -27,24 +29,19 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
 
       <div class="container-page relative">
         <div class="container-medium text-center">
-          <div class="hero-badge mb-8 animate-fade-up">
-            <span class="accent-dot"></span>
-            <span>Free • Private • Non-partisan</span>
-          </div>
-
-          <h1 class="heading-page lg:text-7xl animate-fade-up-delay-1">
+          <h1 class="heading-page lg:text-7xl animate-fade-up">
             Your Voice,<br />
             <span class="text-gradient">Your Representatives</span>
           </h1>
 
           <p
-            class="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto mb-12 animate-fade-up-delay-2"
+            class="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto mb-12 animate-fade-up-delay-1"
           >
             Connect directly with your senators and representative. Enter your ZIP code to find who
             represents you in Congress.
           </p>
 
-          <div class="animate-fade-up-delay-3">
+          <div class="animate-fade-up-delay-2">
             <ZipLookup client:load templateSlug={templateSlug} initialZip={ambiguousZip} />
           </div>
         </div>
@@ -53,134 +50,70 @@ const ambiguousZip = Astro.url.searchParams.get("ambiguous") || undefined;
 
     <div class="divider-civic"></div>
 
-    <section class="section-default">
-      <div class="container-page">
-        <div class="text-center mb-16">
-          <h2 class="heading-section">How It Works</h2>
-          <p class="text-body container-narrow">
-            Democracy shouldn't require a civics degree. We make it simple to find and contact your
-            elected officials.
-          </p>
-        </div>
-
-        <div class="grid-features container-xl">
-          <AstroCard variant="civic">
-            <div class="icon-box mb-6">
-              <svg
-                class="w-7 h-7 text-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                ></path>
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-            <h3 class="heading-card">Enter Your ZIP</h3>
-            <p class="text-body">
-              Your ZIP code determines your congressional district. We instantly match you with your
-              two senators and one representative.
-            </p>
-          </AstroCard>
-
-          <AstroCard variant="civic">
-            <div class="icon-box mb-6">
-              <svg
-                class="w-7 h-7 text-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                ></path>
-              </svg>
-            </div>
-            <h3 class="heading-card">Choose a Template</h3>
-            <p class="text-body">
-              Browse community-contributed letter templates for common issues, or write your own
-              personalized message from scratch.
-            </p>
-          </AstroCard>
-
-          <AstroCard variant="civic">
-            <div class="icon-box mb-6">
-              <svg
-                class="w-7 h-7 text-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                ></path>
-              </svg>
-            </div>
-            <h3 class="heading-card">Make Contact</h3>
-            <p class="text-body">
-              Copy your message directly to their contact form, call their office, or print a letter
-              to mail. Your choice.
-            </p>
-          </AstroCard>
-        </div>
-      </div>
-    </section>
-
-    <section class="section-cta">
-      <div class="cta-grid-pattern" aria-hidden="true">
-        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"></path>
-          </pattern>
-          <rect width="100" height="100" fill="url(#grid)"></rect>
-        </svg>
+    <PageSection variant="default" width="xl">
+      <div class="text-center mb-16">
+        <h2 class="heading-section">How It Works</h2>
+        <p class="text-body container-narrow mx-auto">
+          Democracy shouldn't require a civics degree. We make it simple to find and contact your
+          elected officials.
+        </p>
       </div>
 
-      <div class="container-page relative">
-        <div class="container-medium text-center">
-          <div class="icon-box-accent mb-8">
-            <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              ></path>
-            </svg>
+      <div class="grid-features">
+        <AstroCard variant="civic">
+          <div class="icon-box mb-6">
+            <Icon name="map-pin" class="w-7 h-7 text-accent" />
           </div>
-
-          <h2 class="heading-section text-primary-foreground mb-6">Privacy by Design</h2>
-          <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
-            We believe civic participation shouldn't require surveillance. Your ZIP code lookups,
-            letters, and personal information are never stored on our servers. Everything happens in
-            your browser.
+          <h3 class="heading-card">Enter Your ZIP</h3>
+          <p class="text-body">
+            Your ZIP code determines your congressional district. We instantly match you with your
+            two senators and one representative.
           </p>
+        </AstroCard>
 
-          <a href="/privacy" class="link-accent">
-            <span>Read our privacy policy</span>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
-              ></path>
-            </svg>
-          </a>
-        </div>
+        <AstroCard variant="civic">
+          <div class="icon-box mb-6">
+            <Icon name="file-text" class="w-7 h-7 text-accent" />
+          </div>
+          <h3 class="heading-card">Choose a Template</h3>
+          <p class="text-body">
+            Browse community-contributed letter templates for common issues, or write your own
+            personalized message from scratch.
+          </p>
+        </AstroCard>
+
+        <AstroCard variant="civic">
+          <div class="icon-box mb-6">
+            <Icon name="mail" class="w-7 h-7 text-accent" />
+          </div>
+          <h3 class="heading-card">Make Contact</h3>
+          <p class="text-body">
+            Copy your message directly to their contact form, call their office, or print a letter
+            to mail. Your choice.
+          </p>
+        </AstroCard>
       </div>
-    </section>
+    </PageSection>
+
+    <PageSection variant="cta" width="medium">
+      <div class="text-center">
+        <div class="icon-box-accent mb-8">
+          <Icon name="lock" class="w-8 h-8 text-accent" />
+        </div>
+
+        <h2 class="heading-section text-primary-foreground mb-6">Privacy by Design</h2>
+        <p class="text-primary-foreground/80 text-lg leading-relaxed mb-8">
+          We believe civic participation shouldn't require surveillance. Your ZIP code lookups,
+          letters, and personal information are never stored on our servers. Everything happens in
+          your browser.
+        </p>
+
+        <a href="/privacy" class="link-accent">
+          <span>Read our privacy policy</span>
+          <Icon name="chevron-right" class="w-4 h-4" />
+        </a>
+      </div>
+    </PageSection>
   </main>
 
   <Footer currentPath="/" />

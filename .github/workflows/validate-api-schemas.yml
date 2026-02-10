@@ -1,0 +1,58 @@
+name: Validate Congress API Schemas
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # Daily at 2 AM UTC (moved from 6 AM to avoid refresh-data overlap)
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        with:
+          version: 10
+
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate schemas against live API
+        id: validate
+        env:
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+        run: |
+          set +e
+          OUTPUT=$(pnpm tsx src/scripts/validate-api-schemas.ts 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const output = ${{ toJson(steps.validate.outputs.output) }};
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Congress API Schema Validation Failed',
+              body: `The daily schema validation detected breaking changes in the Congress.gov API.\n\n## Validation Output\n\`\`\`\n${output}\n\`\`\`\n\n## Action Required\nReview the errors above and update the affected schemas in \`src/lib/types/legislation.ts\`.`,
+              labels: ['bug', 'api', 'automated']
+            });

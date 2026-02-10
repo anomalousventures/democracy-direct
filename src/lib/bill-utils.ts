@@ -1,8 +1,3 @@
-/**
- * Utilities for parsing and normalizing bill numbers.
- * Handles various input formats and converts to standard format.
- */
-
 import type { BillType, ParsedBillNumber } from "@/lib/types/legislation";
 
 export const BILL_TYPE_DISPLAY_NAMES: Record<BillType, string> = {
@@ -158,4 +153,12 @@ export function buildCongressGovUrl(
     sres: "senate-resolution",
   };
   return `https://www.congress.gov/bill/${congress}th-congress/${typeMap[billType]}/${billNumber}`;
+}
+
+/**
+ * Builds an internal bill detail page URL.
+ * @example getBillPageUrl("hr", "1234", 119) => "/legislation/hr1234-119"
+ */
+export function getBillPageUrl(billType: BillType, billNumber: string, congress: number): string {
+  return `/legislation/${billType}${billNumber}-${congress}`;
 }

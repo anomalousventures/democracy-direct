@@ -29,11 +29,15 @@ pnpm-debug.log*
 .wrangler/
 .mf/
 
+# Generated
+api-schema.json
+
 # Testing
 coverage/
 playwright-report/
 test-results/
 blob-report/
+.playwright-mcp/
 
 # Editor
 *.swp

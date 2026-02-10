@@ -229,6 +229,37 @@ describe("CongressClient", () => {
     expect(result.summaries).toHaveLength(1);
   });
 
+  it("getSponsoredBills fetches bills sponsored by a member", async () => {
+    const mockResponse = {
+      sponsoredLegislation: [
+        {
+          congress: 119,
+          type: "HR",
+          number: "1234",
+          title: "Test Sponsored Bill",
+          introducedDate: "2025-01-10",
+          url: "https://api.congress.gov/v3/bill/119/hr/1234",
+        },
+      ],
+      pagination: { count: 5 },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const result = await client.getSponsoredBills("W000779", { limit: 20 });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/v3/member/W000779/sponsored-legislation"),
+      expect.any(Object)
+    );
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("limit=20"), expect.any(Object));
+    expect(result.bills).toHaveLength(1);
+    expect(result.bills[0].title).toBe("Test Sponsored Bill");
+  });
+
   it("throws CongressApiError on non-OK response with status code", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,

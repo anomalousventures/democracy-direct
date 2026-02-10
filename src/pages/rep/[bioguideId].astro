@@ -6,13 +6,19 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import { getVotesByMember, getVoteStats } from "@/db/queries/votes";
+import { getBillsByMember, getBillCount } from "@/db/queries/bills";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
+import { RepTabs } from "@/components/RepTabs";
 import type { Legislator } from "@/db/schema";
+import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
+import type { Bill } from "@/db/schema";
 import {
   getPhotoUrl,
   getPartyColor,
@@ -21,6 +27,7 @@ import {
   formatDate,
 } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
 import { getConfig } from "@/lib/config";
 
 const user = Astro.locals.user;
@@ -34,8 +41,12 @@ let rep: Legislator | null = null;
 let error: string | null = null;
 let templateContent: string | null = null;
 let templateTitle: string | null = null;
+let votes: VoteWithPosition[] = [];
+let voteStats: VoteStats = { totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, present: 0 };
+let bills: Bill[] = [];
+let billCount = 0;
 
-const isInvalidId = !bioguideId || !/^[A-Z]{1,2}\d{5,6}$/.test(bioguideId);
+const isInvalidId = !bioguideId || !BIOGUIDE_RE.test(bioguideId);
 if (isInvalidId) {
   error = "Invalid representative ID.";
 }
@@ -80,7 +91,26 @@ if (!error) {
       console.error("Failed to load template:", e);
     }
   }
+
+  if (rep && !error) {
+    try {
+      const [loadedVotes, loadedStats, loadedBills, loadedBillCount] = await Promise.all([
+        getVotesByMember(db, bioguideId!, { limit: 50 }),
+        getVoteStats(db, bioguideId!),
+        getBillsByMember(db, bioguideId!, { limit: 50 }),
+        getBillCount(db, { bioguideId: bioguideId! }),
+      ]);
+      votes = loadedVotes;
+      voteStats = loadedStats;
+      bills = loadedBills;
+      billCount = loadedBillCount;
+    } catch (e) {
+      console.error("Failed to load voting/bill data:", e);
+    }
+  }
 }
+
+const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null;
 ---
 
 <Layout
@@ -103,19 +133,7 @@ if (!error) {
           <div class="container-narrow text-center">
             <AstroCard variant="civicLg">
               <div class="icon-box-lg mx-auto mb-6">
-                <svg
-                  class="w-8 h-8 text-destructive"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
               </div>
               <h1 class="heading-card-lg">{error}</h1>
               <p class="text-muted-foreground mb-8">
@@ -130,13 +148,13 @@ if (!error) {
           rep && (
             <div class="container-wide">
               <AstroCard variant="civicLg" class="animate-fade-up no-print block">
-                <div class="flex flex-col md:flex-row gap-8">
+                <div class="flex flex-col sm:flex-row gap-6">
                   <div class="flex-shrink-0">
                     <div class="rep-photo-lg">
                       <img
                         src={getPhotoUrl(rep.bioguideId)}
                         alt={`${rep.firstName} ${rep.lastName}`}
-                        class="w-full h-full object-cover object-top"
+                        class="w-full h-full object-cover object-top relative z-10"
                         onerror="this.style.display='none'"
                       />
                       <div class="rep-photo-fallback-lg" style="font-family: var(--font-display)">
@@ -146,27 +164,32 @@ if (!error) {
                     </div>
                   </div>
 
-                  <div class="flex-1">
-                    <div class="flex items-start justify-between gap-4 mb-4">
-                      <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold mb-2">
-                          {rep.firstName} {rep.lastName}
-                        </h1>
-                        <p class="text-lg text-muted-foreground">
-                          {getRepTitle(rep.chamber, rep.state, rep.district)}
-                        </p>
-                      </div>
+                  <div class="flex-1 flex flex-col justify-center">
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <h1 class="text-3xl sm:text-4xl font-bold">
+                        {rep.firstName} {rep.lastName}
+                      </h1>
                       <span class={`${getPartyColor(rep.party)} party-badge-lg`}>
                         {getPartyLabel(rep.party)}
                       </span>
                     </div>
+                    <p class="text-lg text-muted-foreground mb-4">
+                      {getRepTitle(rep.chamber, rep.state, rep.district)}
+                    </p>
 
-                    <div class="mb-4">
+                    {rep.termStart && (
+                      <p class="text-sm text-muted-foreground mb-4">
+                        <span class="font-medium">Current Term:</span> {formatDate(rep.termStart)}
+                        {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
+                      </p>
+                    )}
+
+                    <div>
                       <ShareButtons
                         client:load
                         url={Astro.url.href}
                         title={`${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}`}
-                        description={`Contact information for ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}, representing ${rep.state}${rep.chamber === "house" && rep.district !== "0" ? `-${rep.district}` : ""}`}
+                        description={`Contact ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName} (${rep.party}-${rep.state}) about issues that matter to you.`}
                         pageType="rep"
                         repInfo={{
                           name: `${rep.firstName} ${rep.lastName}`,
@@ -175,176 +198,27 @@ if (!error) {
                         }}
                       />
                     </div>
-
-                    {rep.termStart && (
-                      <div class="mb-6 p-4 bg-secondary border border-border">
-                        <p class="text-sm text-muted-foreground">
-                          <span class="font-medium">Current Term:</span> {formatDate(rep.termStart)}
-                          {rep.termEnd && ` — ${formatDate(rep.termEnd)}`}
-                        </p>
-                      </div>
-                    )}
-
-                    <div class="space-y-4">
-                      <h2 class="text-xl font-semibold">Contact Information</h2>
-
-                      {rep.phoneCapitol && (
-                        <div class="info-item">
-                          <div class="icon-box-sm">
-                            <svg
-                              class="w-5 h-5 text-accent"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="font-medium">DC Office Phone</p>
-                            <a
-                              href={`tel:${rep.phoneCapitol}`}
-                              class="text-primary hover:underline text-lg"
-                            >
-                              {rep.phoneCapitol}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {sanitizeExternalUrl(rep.contactFormUrl) && (
-                        <div class="info-item">
-                          <div class="icon-box-sm">
-                            <svg
-                              class="w-5 h-5 text-accent"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="font-medium">Online Contact Form</p>
-                            <a
-                              href={sanitizeExternalUrl(rep.contactFormUrl)!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="inline-flex items-center gap-1 text-primary hover:underline"
-                            >
-                              <span>Send a message</span>
-                              <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {rep.addressCapitol && (
-                        <div class="info-item">
-                          <div class="icon-box-sm">
-                            <svg
-                              class="w-5 h-5 text-accent"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                              />
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="font-medium">DC Office Address</p>
-                            <p class="text-muted-foreground whitespace-pre-line">
-                              {rep.addressCapitol}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {(rep.twitterHandle || rep.facebookId) && (
-                        <div class="info-item">
-                          <div class="icon-box-sm">
-                            <svg
-                              class="w-5 h-5 text-accent"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p class="font-medium">Social Media</p>
-                            <div class="flex gap-4 mt-2">
-                              {rep.twitterHandle && (
-                                <a
-                                  href={`https://twitter.com/${rep.twitterHandle}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  class="inline-flex items-center gap-2 text-primary hover:underline"
-                                >
-                                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                  </svg>
-                                  <span>@{rep.twitterHandle}</span>
-                                </a>
-                              )}
-                              {rep.facebookId && (
-                                <a
-                                  href={`https://facebook.com/${rep.facebookId}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  class="inline-flex items-center gap-2 text-primary hover:underline"
-                                >
-                                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                  </svg>
-                                  <span>Facebook</span>
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
+                </div>
+
+                <div class="pt-6">
+                  <RepTabs
+                    client:load
+                    contactInfo={{
+                      phone: rep.phoneCapitol || undefined,
+                      contactFormUrl: sanitizedContactUrl || undefined,
+                      address: rep.addressCapitol || undefined,
+                      website: rep.website
+                        ? (sanitizeExternalUrl(rep.website) ?? undefined)
+                        : undefined,
+                      twitterHandle: rep.twitterHandle || undefined,
+                      facebookId: rep.facebookId || undefined,
+                    }}
+                    votes={votes}
+                    voteStats={voteStats}
+                    bills={bills}
+                    billCount={billCount}
+                  />
                 </div>
               </AstroCard>
 
@@ -358,7 +232,7 @@ if (!error) {
                     state: rep.state,
                     district: rep.district,
                     chamber: rep.chamber as "senate" | "house",
-                    contact_form: sanitizeExternalUrl(rep.contactFormUrl) || undefined,
+                    contact_form: sanitizedContactUrl || undefined,
                     phone: rep.phoneCapitol || undefined,
                     office_address: rep.addressCapitol || undefined,
                   }}
@@ -371,14 +245,7 @@ if (!error) {
 
               <div class="text-center mt-12 no-print">
                 <a href="/" class="link-back">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
+                  <Icon name="chevron-left" class="w-4 h-4" />
                   <span>Look up a different ZIP code</span>
                 </a>
               </div>

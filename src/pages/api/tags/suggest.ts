@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { eq, or, and, gte } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 import { createDb } from "@/db/client";
 import { issueTags } from "@/db/schema";
 import {
@@ -44,12 +44,12 @@ export const POST: APIRoute = async ({ locals, request }) => {
       return tooManyRequests("Too many suggestions. Please try again later.");
     }
 
-    const existing = await db
-      .select()
+    const [existingWithName] = await db
+      .select({ id: issueTags.id })
       .from(issueTags)
-      .where(or(eq(issueTags.name, name), eq(issueTags.status, "approved")));
+      .where(eq(issueTags.name, name))
+      .limit(1);
 
-    const existingWithName = existing.find((t) => t.name === name);
     if (existingWithName) {
       return conflict("Tag already exists or is pending review");
     }

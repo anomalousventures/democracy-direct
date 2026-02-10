@@ -1,13 +1,5 @@
 import { useState, useCallback } from "react";
-import {
-  ClipboardList,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-  Flag,
-  ChevronDown,
-  Check,
-} from "lucide-react";
+import { Icon, type IconName } from "@/components/icons";
 
 type ModerationDecision = "approve" | "review" | "reject";
 
@@ -53,23 +45,23 @@ const decisionConfig: Record<
   ModerationDecision,
   {
     badgeClass: string;
-    icon: React.ReactNode;
+    iconName: IconName;
     label: string;
   }
 > = {
   approve: {
     badgeClass: "bg-green-100 text-green-800 border-green-200",
-    icon: <CheckCircle className="w-3.5 h-3.5" />,
+    iconName: "check-circle",
     label: "Approved",
   },
   review: {
     badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: <AlertCircle className="w-3.5 h-3.5" />,
+    iconName: "alert-circle",
     label: "Needs Review",
   },
   reject: {
     badgeClass: "bg-red-100 text-red-800 border-red-200",
-    icon: <XCircle className="w-3.5 h-3.5" />,
+    iconName: "x-circle",
     label: "Rejected",
   },
 };
@@ -150,7 +142,7 @@ export function ModerationScoresPanel({ templateId, initialScores }: ModerationS
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-primary text-primary-foreground flex items-center justify-center rounded-sm">
-            <ClipboardList className="w-4 h-4" />
+            <Icon name="clipboard-list" className="w-4 h-4" />
           </div>
           <span className="text-xs font-semibold text-primary/70 uppercase tracking-widest">
             AI Analysis
@@ -164,7 +156,8 @@ export function ModerationScoresPanel({ templateId, initialScores }: ModerationS
             className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-primary bg-secondary border border-border px-3 py-1.5 rounded-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer"
           >
             <span>{isExpanded ? "Hide breakdown" : "View breakdown"}</span>
-            <ChevronDown
+            <Icon
+              name="chevron-down"
               className={`w-3.5 h-3.5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
             />
           </button>
@@ -177,12 +170,12 @@ export function ModerationScoresPanel({ templateId, initialScores }: ModerationS
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide border rounded-sm ${decisionConfig[reviewData.decision].badgeClass}`}
             >
-              {decisionConfig[reviewData.decision].icon}
+              <Icon name={decisionConfig[reviewData.decision].iconName} className="w-3.5 h-3.5" />
               <span>{decisionConfig[reviewData.decision].label}</span>
             </span>
             {reviewData.flagged && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-destructive bg-destructive/10 border border-destructive/20 rounded-sm animate-pulse">
-                <Flag className="w-3 h-3" />
+                <Icon name="flag" className="w-3 h-3" />
                 Flagged
               </span>
             )}
@@ -202,7 +195,7 @@ export function ModerationScoresPanel({ templateId, initialScores }: ModerationS
                 })
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                  <Check className="w-3.5 h-3.5" />
+                  <Icon name="check" className="w-3.5 h-3.5" />
                   All categories clear
                 </span>
               )}

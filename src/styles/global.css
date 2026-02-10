@@ -187,7 +187,11 @@
 
   /* Info/Contact Items */
   .info-item {
-    @apply flex items-start gap-4 p-4 bg-secondary border border-border rounded-sm;
+    @apply flex items-center gap-4 p-4 bg-secondary border border-border rounded-sm;
+  }
+
+  .info-item-link {
+    @apply flex items-center gap-4 p-4 bg-secondary border border-border rounded-sm transition-all duration-200 hover:bg-muted hover:border-primary/30 hover:shadow-civic-sm;
   }
 
   .feature-item {
@@ -336,6 +340,51 @@
   .rep-photo-fallback-lg {
     @apply absolute inset-0 flex items-center justify-center font-bold text-muted-foreground/30 text-6xl;
   }
+
+  /* Scroll Container - Civic Theme */
+  .scroll-container-civic {
+    @apply overflow-y-auto;
+    scrollbar-width: thin;
+    scrollbar-color: theme(colors.accent) theme(colors.secondary);
+  }
+
+  .scroll-container-civic::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-track {
+    @apply bg-secondary rounded-sm;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-thumb {
+    @apply bg-accent/50 rounded-sm;
+  }
+
+  .scroll-container-civic::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent;
+  }
+
+  /* Civic Cards - base styles with gradient accent bar */
+  .card-civic,
+  .card-civic-lg {
+    @apply relative rounded-sm bg-white border border-border;
+    box-shadow: var(--shadow-civic-lg);
+  }
+
+  .card-civic::before,
+  .card-civic-lg::before {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-1 rounded-t-sm;
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  .card-civic {
+    @apply p-6;
+  }
+
+  .card-civic-lg {
+    @apply p-8;
+  }
 }
 
 @layer utilities {
@@ -450,11 +499,25 @@
 .tiptap-editor ul,
 .tiptap-editor ol {
   margin: 0.5em 0;
-  padding-left: 1.5em;
+  padding: 0 0 0 1.5em;
+  list-style-position: outside;
+  line-height: 1.5;
+}
+
+.tiptap-editor ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor ol {
+  list-style-type: decimal;
 }
 
 .tiptap-editor li {
   margin: 0.25em 0;
+  padding: 0;
+  padding-left: 0.25em;
+  display: list-item;
+  line-height: 1.5;
 }
 
 .tiptap-editor strong {
@@ -462,6 +525,47 @@
 }
 
 .tiptap-editor em {
+  font-style: italic;
+}
+
+/* Markdown preview styles (for rendered markdown in previews) */
+.markdown-preview ul,
+.markdown-preview ol {
+  margin: 0.5em 0;
+  padding: 0 0 0 1.5em;
+  list-style-position: outside;
+  line-height: 1.5;
+}
+
+.markdown-preview ul {
+  list-style-type: disc;
+}
+
+.markdown-preview ol {
+  list-style-type: decimal;
+}
+
+.markdown-preview li {
+  margin: 0.25em 0;
+  padding: 0;
+  padding-left: 0.25em;
+  display: list-item;
+  line-height: 1.5;
+}
+
+.markdown-preview p {
+  margin: 0 0 0.5em 0;
+}
+
+.markdown-preview p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-preview strong {
+  font-weight: 600;
+}
+
+.markdown-preview em {
   font-style: italic;
 }
 

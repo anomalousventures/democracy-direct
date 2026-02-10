@@ -1,0 +1,317 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import PageSection from "@/components/PageSection.astro";
+import { createDb } from "@/db/client";
+import { getAmendmentByNumber, type AmendmentWithRelations } from "@/db/queries/amendments";
+import { getVotesByAmendmentId } from "@/db/queries/votes";
+import { parseAmendmentId, buildAmendmentCongressGovUrl } from "@/lib/amendment-utils";
+import { getBillPageUrl, BILL_TYPE_DISPLAY_NAMES } from "@/lib/bill-utils";
+import type { BillType } from "@/lib/types/legislation";
+import type { Vote } from "@/db/schema";
+import { getOrdinalSuffix } from "@/lib/legislator-utils";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+const { amendmentId } = Astro.params;
+
+let amendment: AmendmentWithRelations | null = null;
+let votes: Vote[] = [];
+let parentBillLink: { url: string; label: string; title: string } | null = null;
+let error: string | null = null;
+
+if (!amendmentId) {
+  error = "Amendment ID is required.";
+} else {
+  const parsed = parseAmendmentId(amendmentId);
+  if (!parsed) {
+    Astro.response.status = 404;
+    error = "Invalid amendment ID format.";
+  } else {
+    const config = getConfig(Astro.locals);
+    const db = createDb(config.database.url);
+
+    try {
+      amendment = await getAmendmentByNumber(db, parsed.congress, parsed.type, parsed.number);
+
+      if (!amendment) {
+        Astro.response.status = 404;
+        error = "Amendment not found.";
+      } else {
+        votes = await getVotesByAmendmentId(db, amendment.id);
+
+        if (amendment.amendedBill) {
+          const displayName = BILL_TYPE_DISPLAY_NAMES[amendment.amendedBill.billType as BillType];
+          parentBillLink = {
+            url: getBillPageUrl(
+              amendment.amendedBill.billType as BillType,
+              amendment.amendedBill.billNumber,
+              amendment.congress
+            ),
+            label: displayName
+              ? `${displayName}${amendment.amendedBill.billNumber}`
+              : amendment.amendedBill.billNumber,
+            title: amendment.amendedBill.title,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Database error:", e);
+      error = "Failed to load amendment details.";
+    }
+  }
+}
+
+const displayNumber = amendment
+  ? `${amendment.amendmentType.toUpperCase()}.Amdt.${amendment.amendmentNumber}`
+  : "";
+const chamberLabel = amendment?.chamber === "house" ? "House" : "Senate";
+const congressGovUrl = amendment
+  ? (amendment.congressGovUrl ??
+    buildAmendmentCongressGovUrl(
+      amendment.congress,
+      amendment.amendmentType as "hamdt" | "samdt",
+      parseInt(amendment.amendmentNumber, 10)
+    ))
+  : null;
+
+function formatDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function getResultStyle(result: string): string {
+  const lower = result.toLowerCase();
+  if (lower.includes("passed") || lower.includes("agreed")) {
+    return "bg-green-50 text-green-700";
+  }
+  if (lower.includes("failed") || lower.includes("rejected")) {
+    return "bg-red-50 text-red-700";
+  }
+  return "bg-gray-50 text-gray-600";
+}
+
+const DATA_PENDING_TEXT = "Check back as legislative data is updated regularly.";
+---
+
+<Layout
+  title={amendment ? `${displayNumber} — ${chamberLabel} Amendment` : "Amendment Not Found"}
+  description={amendment
+    ? `${displayNumber}: ${amendment.description || amendment.purpose || chamberLabel + " amendment"}. View details and vote breakdown.`
+    : "Amendment not found"}
+>
+  <Header currentPath="/legislation" user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <div class="container-narrow text-center">
+            <AstroCard variant="civicLg">
+              <div class="icon-box-lg mx-auto mb-6">
+                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
+              </div>
+              <h1 class="heading-card-lg">{error}</h1>
+              <p class="text-muted-foreground mb-8">
+                The amendment you're looking for couldn't be found.
+              </p>
+              <AstroButton href="/legislation" variant="civic">
+                Search Legislation
+              </AstroButton>
+            </AstroCard>
+          </div>
+        ) : (
+          amendment && (
+            <PageSection width="wide">
+              <div class="mb-6">
+                {parentBillLink ? (
+                  <a href={parentBillLink.url} class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to {parentBillLink.label}</span>
+                  </a>
+                ) : (
+                  <a href="/legislation" class="link-back">
+                    <Icon name="chevron-left" class="w-4 h-4" />
+                    <span>Back to Legislation</span>
+                  </a>
+                )}
+              </div>
+
+              <div class="text-center mb-8 animate-fade-up">
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
+                  <span class="inline-flex items-center px-4 py-2 text-lg font-bold bg-primary text-primary-foreground rounded-sm">
+                    {displayNumber}
+                  </span>
+                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-semibold border rounded-sm bg-gray-100 text-gray-700 border-gray-200 capitalize">
+                    {chamberLabel}
+                  </span>
+                </div>
+                <p class="text-sm text-muted-foreground mb-4">
+                  {`${amendment.congress}${getOrdinalSuffix(amendment.congress)} Congress`}
+                  {parentBillLink && (
+                    <>
+                      {" "}
+                      &middot;{" "}
+                      <a href={parentBillLink.url} class="text-accent hover:underline">
+                        {parentBillLink.label}: {parentBillLink.title}
+                      </a>
+                    </>
+                  )}
+                </p>
+
+                {amendment.description || amendment.purpose ? (
+                  <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-primary max-w-4xl mx-auto leading-tight">
+                    {amendment.description || amendment.purpose}
+                  </h1>
+                ) : (
+                  <p class="text-sm text-muted-foreground italic max-w-lg mx-auto">
+                    Amendment details are not available yet. {DATA_PENDING_TEXT}
+                  </p>
+                )}
+              </div>
+
+              <AstroCard variant="civicLg" class="animate-fade-up-delay-1">
+                <div class="space-y-6">
+                  {amendment.sponsor ? (
+                    <div class="flex items-center gap-3">
+                      <span class="text-sm text-muted-foreground">Sponsored by</span>
+                      <a
+                        href={`/rep/${amendment.sponsor.bioguideId}`}
+                        class="text-sm font-medium text-primary hover:text-accent transition-colors"
+                      >
+                        {amendment.sponsor.fullName}
+                        {amendment.sponsor.party && amendment.sponsor.state && (
+                          <span class="text-muted-foreground ml-1">
+                            ({amendment.sponsor.party}-{amendment.sponsor.state})
+                          </span>
+                        )}
+                      </a>
+                    </div>
+                  ) : (
+                    <p class="text-sm text-muted-foreground italic">
+                      Sponsor information is not available yet. {DATA_PENDING_TEXT}
+                    </p>
+                  )}
+
+                  {amendment.latestActionText && (
+                    <div class="p-4 bg-secondary/50 border border-border rounded-sm">
+                      <p class="text-xs text-muted-foreground mb-1">Latest Action</p>
+                      <p class="text-sm text-primary">{amendment.latestActionText}</p>
+                      {amendment.latestActionDate && (
+                        <p class="text-xs text-muted-foreground mt-1">
+                          {new Date(amendment.latestActionDate).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {votes.length > 0 && (
+                    <div class="space-y-4">
+                      <h2 class="text-lg font-semibold text-primary">Roll Call Votes</h2>
+                      {votes.map((vote) => {
+                        const voteDetailUrl = `/vote/${vote.chamber}/${vote.congress}/${vote.session}/${vote.rollCall}`;
+                        const vChamberLabel = vote.chamber === "house" ? "House" : "Senate";
+                        return (
+                          <article class="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
+                            <div class="flex flex-col gap-2">
+                              <div class="flex flex-wrap items-center gap-2">
+                                <a
+                                  href={voteDetailUrl}
+                                  class="text-xs text-muted-foreground uppercase tracking-wide hover:text-primary transition-colors"
+                                >
+                                  {vChamberLabel} Roll Call #{vote.rollCall}
+                                </a>
+                                <span
+                                  class:list={[
+                                    "px-2 py-0.5 text-xs rounded-sm font-medium",
+                                    getResultStyle(vote.result),
+                                  ]}
+                                >
+                                  {vote.result}
+                                </span>
+                              </div>
+
+                              <a
+                                href={voteDetailUrl}
+                                class="font-medium text-primary hover:text-accent transition-colors line-clamp-2"
+                              >
+                                {vote.question}
+                              </a>
+
+                              <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span class="text-green-600 font-medium">{vote.yeas} Yea</span>
+                                <span class="text-red-600 font-medium">{vote.nays} Nay</span>
+                                {vote.notVoting > 0 && <span>{vote.notVoting} Not Voting</span>}
+                                {vote.present > 0 && <span>{vote.present} Present</span>}
+                              </div>
+
+                              <div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                                <span class="flex items-center gap-1.5">
+                                  <Icon name="calendar" class="w-3.5 h-3.5" />
+                                  {formatDate(vote.date)}
+                                </span>
+                                {vote.sourceUrl && (
+                                  <a
+                                    href={vote.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                                  >
+                                    Official record
+                                    <Icon name="external-link" class="w-3 h-3 opacity-60" />
+                                  </a>
+                                )}
+                                <a
+                                  href={voteDetailUrl}
+                                  class="text-primary hover:text-accent font-medium transition-colors"
+                                >
+                                  View full details
+                                </a>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {congressGovUrl && (
+                    <div class="pt-4 border-t border-border">
+                      <a
+                        href={congressGovUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 text-sm text-primary hover:text-accent transition-colors"
+                      >
+                        View on Congress.gov
+                        <Icon name="external-link" class="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </AstroCard>
+            </PageSection>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath="/legislation" />
+</Layout>

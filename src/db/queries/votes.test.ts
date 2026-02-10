@@ -11,6 +11,11 @@ describe("votes query module", () => {
       "getMemberVotesForVote",
       "getVoteWithMembers",
       "getVotesByChamber",
+      "getVotesByMemberWithRelations",
+      "getVotesForBill",
+      "getVoteCountForBill",
+      "getVotesByBillId",
+      "getVotesByAmendmentId",
     ];
 
     for (const name of expectedExports) {

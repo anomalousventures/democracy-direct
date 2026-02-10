@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PrintLetter } from "./PrintLetter";
+import { formatDateMedium } from "@/lib/date-utils";
 
 const mockRep = {
   first_name: "John",
@@ -57,11 +58,7 @@ describe("PrintLetter", () => {
     it("displays current date", () => {
       render(<PrintLetter letterContent="Hello" representative={mockRep} />);
 
-      const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      const today = formatDateMedium(new Date());
 
       expect(screen.getByText(today)).toBeInTheDocument();
     });

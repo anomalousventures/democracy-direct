@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { SEED_TEMPLATES, hashContent, type SeedTemplate } from "./seed-templates";
+import { SEED_TEMPLATES, type SeedTemplate } from "./seed-templates";
+import { sha256 } from "@/lib/auth/hash-email";
 import { getSupportedVariables } from "@/lib/template-variables";
 
 describe("seed-templates", () => {
@@ -66,32 +67,32 @@ describe("seed-templates", () => {
     });
   });
 
-  describe("hashContent", () => {
+  describe("sha256 (used for content hashing)", () => {
     it("returns a 64-character hex string", () => {
-      const hash = hashContent("test content");
+      const hash = sha256("test content");
       expect(hash).toHaveLength(64);
       expect(hash).toMatch(/^[a-f0-9]+$/);
     });
 
     it("returns consistent hash for same input", () => {
-      const hash1 = hashContent("hello world");
-      const hash2 = hashContent("hello world");
+      const hash1 = sha256("hello world");
+      const hash2 = sha256("hello world");
       expect(hash1).toBe(hash2);
     });
 
     it("returns different hash for different input", () => {
-      const hash1 = hashContent("hello world");
-      const hash2 = hashContent("hello world!");
+      const hash1 = sha256("hello world");
+      const hash2 = sha256("hello world!");
       expect(hash1).not.toBe(hash2);
     });
 
     it("handles empty string", () => {
-      const hash = hashContent("");
+      const hash = sha256("");
       expect(hash).toHaveLength(64);
     });
 
     it("handles unicode content", () => {
-      const hash = hashContent("Hello 世界 🌍");
+      const hash = sha256("Hello 世界 🌍");
       expect(hash).toHaveLength(64);
     });
   });

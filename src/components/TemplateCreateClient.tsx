@@ -7,12 +7,14 @@ interface TemplateCreateClientProps {
   turnstileSiteKey: string;
   availableTags: string[];
   isAuthenticated?: boolean;
+  initialLinkedBills?: string[];
 }
 
 export function TemplateCreateClient({
   turnstileSiteKey,
   availableTags,
   isAuthenticated = false,
+  initialLinkedBills = [],
 }: TemplateCreateClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export function TemplateCreateClient({
       description?: string;
       body: string;
       issueTags: string[];
+      linkedBillNumbers: string[];
       turnstileToken?: string;
       isPublic?: boolean;
     }) => {
@@ -104,6 +107,11 @@ export function TemplateCreateClient({
       <TemplateForm
         onSubmit={handleSubmit}
         availableTags={availableTags}
+        initialData={
+          initialLinkedBills.length > 0
+            ? { title: "", body: "", issueTags: [], linkedBillNumbers: initialLinkedBills }
+            : undefined
+        }
         submitLabel="Create Template"
         isSubmitting={isSubmitting}
         turnstileSiteKey={turnstileSiteKey}

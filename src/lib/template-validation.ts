@@ -1,3 +1,5 @@
+import { isKnownVariable, getSupportedVariables } from "./template-variables";
+
 export interface TemplateValidationError {
   field: string;
   message: string;
@@ -154,4 +156,33 @@ export function generateSlug(title: string): string {
   const timestamp = Date.now().toString(36);
   const randomSuffix = Math.random().toString(36).slice(2, 6);
   return `${slug}-${timestamp}${randomSuffix}`;
+}
+
+export interface TemplateVariableValidation {
+  valid: boolean;
+  unknownVariables: string[];
+}
+
+export function validateTemplateVariables(body: string): TemplateVariableValidation {
+  const variablePattern = /\{\{(\w+)\}\}/g;
+  const unknownVariables: string[] = [];
+
+  let match;
+  while ((match = variablePattern.exec(body)) !== null) {
+    const varName = match[1];
+    if (!isKnownVariable(varName)) {
+      if (!unknownVariables.includes(varName)) {
+        unknownVariables.push(varName);
+      }
+    }
+  }
+
+  return {
+    valid: unknownVariables.length === 0,
+    unknownVariables,
+  };
+}
+
+export function getSupportedVariablesList(): readonly string[] {
+  return getSupportedVariables();
 }

@@ -9,6 +9,7 @@ interface TemplateEditClientProps {
     description?: string;
     body: string;
     issueTags: string[];
+    linkedBillNumbers?: string[];
     isPublic: boolean;
   };
   availableTags: string[];
@@ -25,6 +26,7 @@ export function TemplateEditClient({ slug, initialData, availableTags }: Templat
       description?: string;
       body: string;
       issueTags: string[];
+      linkedBillNumbers: string[];
       isPublic?: boolean;
     }) => {
       setIsSubmitting(true);

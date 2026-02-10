@@ -143,6 +143,81 @@ describe("POST /api/templates/fork", () => {
     expect(data.error).toBe("Source template ID is required");
   });
 
+  it("accepts linkedBillNumbers in fork request", async () => {
+    const response = await POST({
+      request: new Request("http://localhost/api/templates/fork", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Forked Template With Bills",
+          body: "This is a forked template body that is long enough to pass validation requirements.",
+          forkedFromId: "original-template-id",
+          linkedBillNumbers: ["H.R.1234", "S.567"],
+        }),
+      }),
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+    } as never);
+
+    expect(response.status).toBe(403);
+    const data = await response.json();
+    expect(data.error).toBe("Turnstile verification required");
+  });
+
+  it("passes linkedBillNumbers through to insert", async () => {
+    mockDb.limit.mockResolvedValue([{ id: "source-template-id" }]);
+    mockDb.returning.mockResolvedValue([
+      {
+        id: "new-template-id",
+        slug: "forked-template-with-bills",
+        title: "Forked Template With Bills",
+        description: null,
+        body: "This is a forked template body that is long enough to pass validation requirements.",
+        issueTags: [],
+        forkedFrom: "source-template-id",
+        moderationStatus: "pending",
+        createdAt: new Date(),
+      },
+    ]);
+
+    const response = await POST({
+      request: new Request("http://localhost/api/templates/fork", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Forked Template With Bills",
+          body: "This is a forked template body that is long enough to pass validation requirements.",
+          forkedFromId: "source-template-id",
+          linkedBillNumbers: ["H.R.1234", "S.567"],
+          turnstileToken: "test-token",
+        }),
+      }),
+      locals: {
+        user: { id: "user-123" },
+        runtime: {
+          env: {
+            DATABASE_URL: "postgres://test",
+            TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+            TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          },
+        },
+      },
+    } as never);
+
+    expect(response.status).toBe(201);
+    expect(mockDb.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        linkedBillNumbers: ["H.R.1234", "S.567"],
+      })
+    );
+  });
+
   it("returns 400 for validation errors", async () => {
     const response = await POST({
       request: new Request("http://localhost/api/templates/fork", {

@@ -1,0 +1,1 @@
+ALTER TABLE "template_uses" ALTER COLUMN "rep_bioguide_id" SET DATA TYPE varchar(10);

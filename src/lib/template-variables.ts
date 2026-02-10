@@ -1,4 +1,5 @@
 import { type Representative, getRepresentativeTitle } from "@/types/representative";
+import { formatDateMedium } from "@/lib/date-utils";
 
 export type { Representative };
 export { getRepresentativeTitle };
@@ -35,14 +36,6 @@ const SUPPORTED_VARIABLES = [
 
 export type TemplateVariable = (typeof SUPPORTED_VARIABLES)[number];
 
-export function getTodayDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export function substituteTemplateVariables(content: string, context: TemplateContext): string {
   const variables: Record<string, string> = {
     REP_TITLE: context.repTitle ?? "{{REP_TITLE}}",
@@ -54,7 +47,7 @@ export function substituteTemplateVariables(content: string, context: TemplateCo
     DISTRICT: context.district ?? "{{DISTRICT}}",
     USER_NAME: context.userName ?? "{{USER_NAME}}",
     USER_CITY: context.userCity ?? "{{USER_CITY}}",
-    TODAY_DATE: getTodayDate(),
+    TODAY_DATE: formatDateMedium(new Date()),
   };
 
   return content.replace(/\{\{(\w+)\}\}/g, (match, varName) => {

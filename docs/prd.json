@@ -536,6 +536,7 @@
       "description": "Add voting records and sponsored bills sections to representative profile pages",
       "totalPoints": 13,
       "prNumber": 4,
+      "status": "complete",
       "dependencies": ["epic-2", "epic-3"],
       "stories": [
         {
@@ -544,6 +545,7 @@
           "description": "As a user, I want to see how my representative voted so that I can understand their positions on issues.",
           "points": 3,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["votes-6"],
           "acceptanceCriteria": [
             "Displays list of recent votes for the representative",
@@ -569,6 +571,7 @@
           "description": "As a user, I want to see bills my representative has sponsored so that I can understand their legislative priorities.",
           "points": 3,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["bills-8"],
           "acceptanceCriteria": [
             "Displays list of bills sponsored by the representative",
@@ -595,6 +598,7 @@
           "description": "As a user, I want tabbed navigation on rep pages so that I can easily switch between contact info, votes, and bills.",
           "points": 5,
           "prNumber": 4,
+          "status": "complete",
           "dependencies": ["rep-1", "rep-2"],
           "acceptanceCriteria": [
             "Rep page has three tabs: Contact, Voting Record, Sponsored Bills",
@@ -621,6 +625,7 @@
           "description": "As a user, I want to filter votes and bills so that I can find specific topics or types.",
           "points": 2,
           "prNumber": 4,
+          "status": "deferred",
           "dependencies": ["rep-3"],
           "acceptanceCriteria": [
             "VotingRecord has filter dropdown for topic/subject",
@@ -647,6 +652,7 @@
       "description": "Create browse/search pages for legislation with vote breakdowns and rep position displays",
       "totalPoints": 26,
       "prNumber": 5,
+      "status": "complete",
       "dependencies": ["epic-2", "epic-3"],
       "stories": [
         {
@@ -655,24 +661,26 @@
           "description": "As a user, I want to browse and search legislation so that I can find bills I care about.",
           "points": 5,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["bills-8"],
           "acceptanceCriteria": [
             "Page at /legislation displays searchable list of bills",
             "Search input filters by bill number and title",
             "Topic/subject dropdown filters results",
             "Congress dropdown filters by Congress (default: current)",
+            "Bill type and status filter dropdowns",
             "Results show: bill number, title, status, latest action date",
             "Pagination or infinite scroll for large result sets",
             "Empty state with helpful message",
-            "URL params for search/filters (?q=, ?subject=, ?congress=)",
+            "URL params for search/filters (?q=, ?congress=, ?type=, ?status=, ?subject=)",
             "Shareable URLs preserve filter state"
           ],
           "files": {
-            "create": ["src/pages/legislation/index.astro", "src/components/LegislationSearch.tsx"],
+            "create": ["src/pages/legislation.astro", "src/components/BillSearch.tsx"],
             "modify": []
           },
           "tests": {
-            "unit": ["src/components/LegislationSearch.test.tsx"],
+            "unit": ["src/components/BillSearch.test.tsx"],
             "e2e": ["tests/e2e/legislation-search.spec.ts"]
           }
         },
@@ -682,6 +690,7 @@
           "description": "As a user, I want to see full details about a bill so that I can understand what it does.",
           "points": 3,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["bills-8", "infra-4"],
           "acceptanceCriteria": [
             "Page at /legislation/[billId] (e.g., /legislation/hr1234)",
@@ -709,18 +718,19 @@
           "description": "As a user, I want to see detailed vote results so that I know who voted which way.",
           "points": 3,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["votes-6"],
           "acceptanceCriteria": [
-            "Page at /vote/[...path] handles /vote/house/119/123 format",
+            "Page at /vote/[...path] handles /vote/house/119/1/123 format (chamber/congress/session/rollCall)",
             "Displays: vote question, date, result, tally",
             "Links to related bill when available",
             "Links to official source (Congress.gov or Senate.gov)",
-            "Includes VoteBreakdown component (party split)",
-            "Includes VoterList component (Yea/Nay columns)",
+            "Includes VoteStatsBar, PartyBreakdown, and MemberVoteList components",
+            "Includes YourRepsBanner for users with saved district",
             "Handles invalid vote path with 404 page"
           ],
           "files": {
-            "create": ["src/pages/vote/[...path].astro"],
+            "create": ["src/pages/vote/[...path].astro", "src/components/VoteDetail.tsx"],
             "modify": []
           },
           "tests": {
@@ -734,21 +744,24 @@
           "description": "As a user, I want to see a visual party breakdown of a vote so that I quickly understand the partisan split.",
           "points": 3,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["votes-6"],
           "acceptanceCriteria": [
-            "Horizontal stacked bar showing Yea/Nay proportions",
-            "Color-coded by party (D=blue, R=red, I=purple or gray)",
+            "Horizontal stacked bar showing Yea/Nay proportions (VoteStatsBar)",
+            "Color-coded by party (D=blue, R=red, I=purple or gray) (PartyBreakdown)",
             "Shows counts: 'Democrats: 200 Yea, 10 Nay'",
-            "Shows percentages on hover",
-            "Accessible: screen reader text describes breakdown",
             "Responsive: works on mobile widths"
           ],
           "files": {
-            "create": ["src/components/VoteBreakdown.tsx"],
-            "modify": []
+            "create": [
+              "src/components/vote/VoteStatsBar.tsx",
+              "src/components/vote/PartyBreakdown.tsx",
+              "src/components/vote/PositionBadge.tsx"
+            ],
+            "modify": ["src/components/BillVotes.tsx"]
           },
           "tests": {
-            "unit": ["src/components/VoteBreakdown.test.tsx"],
+            "unit": [],
             "e2e": []
           }
         },
@@ -758,23 +771,23 @@
           "description": "As a user, I want to see lists of who voted Yea and Nay so that I can find specific representatives.",
           "points": 5,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["votes-6"],
           "acceptanceCriteria": [
-            "Two-column layout: Yea on left, Nay on right",
-            "Each rep shows: photo (or placeholder), name, party, state",
+            "Grid of member cards with position badges",
+            "Each rep shows: name, party, state, position badge",
             "Clicking rep links to their profile page",
-            "State filter dropdown narrows displayed reps",
-            "Party filter dropdown narrows displayed reps",
-            "Not Voting and Present shown in separate collapsed section",
-            "Count headers: 'Yea (230)', 'Nay (198)'",
-            "Responsive: stacks columns on mobile"
+            "Position filter buttons narrow displayed reps",
+            "Search box filters by name, party, or state",
+            "Count headers per position",
+            "Responsive grid layout"
           ],
           "files": {
-            "create": ["src/components/VoterList.tsx"],
+            "create": ["src/components/vote/MemberVoteList.tsx"],
             "modify": []
           },
           "tests": {
-            "unit": ["src/components/VoterList.test.tsx"],
+            "unit": [],
             "e2e": []
           }
         },
@@ -784,22 +797,27 @@
           "description": "As a user with a saved district, I want to see how my reps voted on a bill so that I can quickly understand their positions.",
           "points": 3,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["leg-3"],
           "acceptanceCriteria": [
-            "Banner appears on vote detail page when user has saved district",
+            "Banner appears on vote detail page and bill votes when user has saved district",
             "Shows each of user's reps with their vote position",
-            "Example: 'Your representatives: Rep. Smith (D) voted Yea, Sen. Jones (R) voted Nay'",
             "Links to each rep's profile page",
             "Reads saved district from localStorage or user session",
-            "Banner hidden when no district saved",
-            "Prominent placement at top of vote breakdown"
+            "Banner hidden when no district saved or no matching reps",
+            "Prominent placement at top of vote breakdown",
+            "API endpoint fetches representatives by state and district"
           ],
           "files": {
-            "create": ["src/components/YourRepsVoted.tsx"],
-            "modify": ["src/pages/vote/[...path].astro"]
+            "create": [
+              "src/components/vote/YourRepsBanner.tsx",
+              "src/hooks/useMyReps.ts",
+              "src/pages/api/user/representatives.ts"
+            ],
+            "modify": ["src/components/VoteDetail.tsx", "src/components/BillVotes.tsx"]
           },
           "tests": {
-            "unit": ["src/components/YourRepsVoted.test.tsx"],
+            "unit": [],
             "e2e": []
           }
         },
@@ -809,17 +827,17 @@
           "description": "As a user, I want to find or create templates about a bill so that I can easily contact my representatives.",
           "points": 2,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["leg-2", "leg-3"],
           "acceptanceCriteria": [
-            "Bill detail page has 'See templates for this bill' button",
-            "Button links to /templates?bill=billNumber",
-            "Bill detail page has 'Create a template for this bill' button",
-            "Button links to /templates/new?bill=billNumber",
-            "Vote detail page has same buttons linking via bill number",
+            "Bill detail page has 'Browse templates' and 'Write a template' buttons",
+            "Browse links to /templates?bill=billNumber",
+            "Create links to /templates/new?bill=billNumber",
+            "Vote detail page shows CTA when vote has associated bill",
             "Buttons styled consistently with existing CTAs"
           ],
           "files": {
-            "create": [],
+            "create": ["src/components/BillTemplateCtas.astro"],
             "modify": ["src/pages/legislation/[billId].astro", "src/pages/vote/[...path].astro"]
           },
           "tests": {
@@ -833,6 +851,7 @@
           "description": "As a user, I want legislation in the main navigation so that I can discover and access legislative data.",
           "points": 2,
           "prNumber": 5,
+          "status": "complete",
           "dependencies": ["leg-1"],
           "acceptanceCriteria": [
             "Header navigation includes 'Legislation' link",
@@ -858,6 +877,7 @@
       "description": "Enable linking templates to bills with autocomplete picker, auto-detection, and filtering",
       "totalPoints": 18,
       "prNumber": 6,
+      "status": "complete",
       "dependencies": ["epic-3"],
       "stories": [
         {
@@ -866,6 +886,7 @@
           "description": "As a developer, I want a linkedBillNumbers field on templates so that I can associate templates with legislation.",
           "points": 2,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": [],
           "acceptanceCriteria": [
             "templates table has linkedBillNumbers column (json, string array, nullable)",
@@ -889,6 +910,7 @@
           "description": "As a template author, I want to search and select bills so that I can link my template to relevant legislation.",
           "points": 5,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["bills-8", "tpl-1"],
           "acceptanceCriteria": [
             "Text input with autocomplete dropdown",
@@ -916,6 +938,7 @@
           "description": "As a template author, I want the bill picker in create/edit forms so that I can link bills when writing templates.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-2"],
           "acceptanceCriteria": [
             "BillPicker appears on template create form (/templates/new)",
@@ -944,6 +967,7 @@
           "description": "As a template author, I want the system to detect bill numbers in my text so that I don't forget to link mentioned bills.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["infra-4", "tpl-3"],
           "acceptanceCriteria": [
             "detectBillNumbers(text) function returns array of found bill numbers",
@@ -969,6 +993,7 @@
           "description": "As a user, I want to find templates about a specific bill so that I can use or adapt them for my letter.",
           "points": 3,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-1"],
           "acceptanceCriteria": [
             "/templates?bill=H.R.1234 filters to templates linked to that bill",
@@ -997,6 +1022,7 @@
           "description": "As a user coming from a bill page, I want the bill pre-selected when creating a template so that I don't have to search for it again.",
           "points": 2,
           "prNumber": 6,
+          "status": "complete",
           "dependencies": ["tpl-3"],
           "acceptanceCriteria": [
             "/templates/new?bill=H.R.1234 pre-selects the bill in BillPicker",
@@ -1072,12 +1098,18 @@
     "src/components/VotingRecord.tsx",
     "src/components/SponsoredBills.tsx",
     "src/components/RepTabs.tsx",
-    "src/components/VoteBreakdown.tsx",
-    "src/components/VoterList.tsx",
-    "src/components/YourRepsVoted.tsx",
+    "src/components/vote/VoteStatsBar.tsx",
+    "src/components/vote/PartyBreakdown.tsx",
+    "src/components/vote/MemberVoteList.tsx",
+    "src/components/vote/PositionBadge.tsx",
+    "src/components/vote/YourRepsBanner.tsx",
+    "src/components/VoteDetail.tsx",
+    "src/components/BillTemplateCtas.astro",
+    "src/hooks/useMyReps.ts",
+    "src/pages/api/user/representatives.ts",
+    "src/pages/legislation/amendment/[amendmentId].astro",
     "src/components/BillPicker.tsx",
-    "src/components/LegislationSearch.tsx",
-    "src/pages/legislation/index.astro",
+    "src/pages/legislation.astro",
     "src/pages/legislation/[billId].astro",
     "src/pages/vote/[...path].astro",
     ".github/workflows/backfill-bills.yml"
@@ -1103,9 +1135,10 @@
     "pnpm sync:bills --direction backward runs without errors",
     "Rep pages show voting history tab",
     "Rep pages show sponsored bills tab",
-    "/legislation search returns results",
-    "/legislation/hr1234 shows bill detail",
-    "/vote/house/119/1 shows vote breakdown",
+    "/legislation search returns results with shareable URL params",
+    "/legislation/hr1234-119 shows bill detail with template CTAs",
+    "/vote/house/119/1/123 shows vote breakdown with your-reps banner",
+    "/legislation/amendment/hamdt123-119 shows amendment detail",
     "Templates can be linked to bills",
     "/templates?bill=hr1234 filters correctly",
     "All unit tests pass",

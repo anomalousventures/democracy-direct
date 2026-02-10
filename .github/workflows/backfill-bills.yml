@@ -2,10 +2,15 @@ name: Backfill Bills
 
 on:
   schedule:
-    # Hourly, 8am-10pm Pacific (UTC-8/UTC-7 depending on DST)
-    # 15:00-06:00 UTC covers both PST and PDT windows
-    - cron: "0 0-6,15-23 * * *"
+    # Every 2 hours, avoiding 6:00 UTC (when refresh-data runs)
+    # Rate limit optimization: reduces overlap with other Congress API jobs
+    - cron: "0 0,2,4,8,10,12,14,16,18,20,22 * * *"
   workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max bills to sync (default: 1500)"
+        required: false
+        type: number
 
 permissions:
   contents: read
@@ -33,7 +38,11 @@ jobs:
         id: bills
         run: |
           set +e
-          pnpm sync:bills -- --direction backward
+          LIMIT_ARG=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            LIMIT_ARG="--limit ${{ inputs.limit }}"
+          fi
+          pnpm sync:bills -- --direction backward $LIMIT_ARG
           EXIT_CODE=$?
           set -e
 
@@ -53,23 +62,25 @@ jobs:
           BILLS_RESULT: ${{ steps.bills.outputs.result }}
           BILLS_FAILED: ${{ steps.bills.outputs.failed }}
         run: |
-          if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "DISCORD_WEBHOOK_URL secret not configured, skipping notification"
-            exit 0
-          fi
-
           if [ -z "$BILLS_RESULT" ]; then
             echo "Warning: BILLS_RESULT is empty, using default values"
             BILLS_RESULT='{"changed":false,"billsUpserted":0,"congressNumber":"unknown","oldestCongress":"unknown","errors":[],"warnings":[]}'
           fi
 
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           BILLS_CHANGED=$(echo "$BILLS_RESULT" | jq -r '.changed // false')
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
           CONGRESS=$(echo "$BILLS_RESULT" | jq -r '.congressNumber // "unknown"')
           OLDEST=$(echo "$BILLS_RESULT" | jq -r '.oldestCongress // "unknown"')
+
+          # Parse new cursor state fields
+          CURRENT_SYNC=$(echo "$BILLS_RESULT" | jq -r '.cursorState.currentSyncCongress // "null"')
+          CURRENT_OFFSET=$(echo "$BILLS_RESULT" | jq -r '.cursorState.currentOffset // "null"')
+          FIRST_BILL_TYPE=$(echo "$BILLS_RESULT" | jq -r '.firstBill.type // ""')
+          FIRST_BILL_NUM=$(echo "$BILLS_RESULT" | jq -r '.firstBill.number // ""')
+          LAST_BILL_TYPE=$(echo "$BILLS_RESULT" | jq -r '.lastBill.type // ""')
+          LAST_BILL_NUM=$(echo "$BILLS_RESULT" | jq -r '.lastBill.number // ""')
 
           # Parse errors (fatal issues that prevented bill processing)
           ERROR_COUNT=$(echo "$BILLS_RESULT" | jq -r '.errors | length // 0')
@@ -109,59 +120,54 @@ jobs:
           # Determine notification title, color, and status
           if [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Bill Backfill Failed"
-            COLOR=16711680
-            STATUS="❌ **Bills**: Backfill failed"
+            COLOR=15158332
+            DESC="❌ **Bills**: Backfill failed"
           elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ] && [ "$BILLS_COUNT" -eq 0 ]; then
             TITLE="⚠️ Bill Backfill - Schema Issue Detected"
-            COLOR=16744192
-            STATUS="⚠️ **Bills**: All $ERROR_COUNT bills failed with same error"
-            STATUS="${STATUS}\n\`\`\`"
-            STATUS="${STATUS}\n${ERROR_SUMMARY}"
-            STATUS="${STATUS}\n\`\`\`"
-            STATUS="${STATUS}\n**This suggests a schema or code issue, not data problems.**"
+            COLOR=16039746
+            DESC=$(printf '⚠️ **Bills**: All %s bills failed with same error\n```\n%s\n```\n**This suggests a schema or code issue, not data problems.**' "$ERROR_COUNT" "$ERROR_SUMMARY")
           elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
             TITLE="🚨 Bill Backfill - All Bills Failed"
-            COLOR=16711680
-            STATUS="❌ **Bills**: All bills failed ($ERROR_COUNT errors across $UNIQUE_ERRORS types)\nCheck logs for error breakdown."
+            COLOR=15158332
+            DESC="❌ **Bills**: All bills failed ($ERROR_COUNT errors across $UNIQUE_ERRORS types)"$'\n'"Check logs for error breakdown."
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
-            COLOR=65280
-            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
-              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}"
-            else
-              STATUS="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS} (oldest synced: ${OLDEST})"
+            COLOR=3066993
+
+            BILL_RANGE=""
+            if [ -n "$FIRST_BILL_TYPE" ] && [ -n "$LAST_BILL_TYPE" ]; then
+              FIRST_BILL=$(echo "${FIRST_BILL_TYPE}${FIRST_BILL_NUM}" | tr '[:lower:]' '[:upper:]')
+              LAST_BILL=$(echo "${LAST_BILL_TYPE}${LAST_BILL_NUM}" | tr '[:lower:]' '[:upper:]')
+              BILL_RANGE=" (${FIRST_BILL} → ${LAST_BILL})"
             fi
+
+            if [ "$OLDEST" = "null" ] || [ "$OLDEST" = "unknown" ]; then
+              DESC="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}${BILL_RANGE}"
+            else
+              DESC="✅ **Bills**: ${BILLS_COUNT} from Congress ${CONGRESS}${BILL_RANGE}"$'\n'"📌 **Oldest synced**: Congress ${OLDEST}"
+            fi
+
+            if [ "$CURRENT_SYNC" != "null" ] && [ "$CURRENT_OFFSET" != "null" ]; then
+              DESC="${DESC}"$'\n'"⏳ **In progress**: Congress ${CURRENT_SYNC} at offset ${CURRENT_OFFSET}"
+            fi
+
             if [ "$ERROR_COUNT" -gt 0 ]; then
-              STATUS="${STATUS}\n⚠️ **Errors**: ${ERROR_COUNT} bills could not be processed"
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT} bills could not be processed"
             fi
             if [ "$WARNING_COUNT" -gt 0 ]; then
-              STATUS="${STATUS}\nℹ️ **Warnings**: ${WARNING_COUNT} bills used date fallbacks"
+              DESC="${DESC}"$'\n'"ℹ️ **Warnings**: ${WARNING_COUNT} bills used date fallbacks"
             fi
           else
             TITLE="✅ Bill Backfill - Complete"
-            COLOR=8421504
-            STATUS="⏭️ **Bills**: Backfill complete to target Congress"
+            COLOR=9807270
+            DESC="⏭️ **Bills**: Backfill complete to target Congress"
           fi
 
-          PAYLOAD=$(jq -n \
-            --arg title "$TITLE" \
-            --argjson color "$COLOR" \
-            --arg status "$STATUS" \
-            --arg gh_run "$GH_RUN" \
-            --arg timestamp "$TIMESTAMP" \
-            '{
-              embeds: [{
-                title: $title,
-                color: $color,
-                fields: [
-                  { name: "Results", value: $status, inline: false },
-                  { name: "Links", value: "[View Run](\($gh_run))", inline: false }
-                ],
-                timestamp: $timestamp
-              }]
-            }')
-
-          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+          .github/scripts/discord-notify.sh \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
 
       - name: Fail workflow if backfill failed
         if: steps.bills.outputs.failed == 'true'

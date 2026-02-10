@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { createHash } from "crypto";
 import { createDb } from "@/db/client";
+import { sha256 } from "@/lib/auth/hash-email";
 import { templates, issueTags, templateIssueTags } from "@/db/schema";
 import { generateSlug } from "@/lib/template-validation";
 import { eq, inArray, sql } from "drizzle-orm";
@@ -267,10 +267,6 @@ Sincerely,
   },
 ];
 
-export function hashContent(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
-}
-
 export async function seedTemplates(): Promise<{
   total: number;
   upserted: number;
@@ -287,7 +283,7 @@ export async function seedTemplates(): Promise<{
   let upserted = 0;
 
   for (const tpl of SEED_TEMPLATES) {
-    const contentHash = hashContent(tpl.title + tpl.body);
+    const contentHash = sha256(tpl.title + tpl.body);
     const slug = generateSlug(tpl.title);
 
     const [insertedTemplate] = await db

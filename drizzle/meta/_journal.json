@@ -50,6 +50,48 @@
       "when": 1770156000000,
       "tag": "0006_template_issue_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1770166537371,
+      "tag": "0007_add_amendments_and_vote_relations",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1770315462825,
+      "tag": "0008_early_hammerhead",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770316678672,
+      "tag": "0009_standardize-bill-numbers",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770436711603,
+      "tag": "0010_yielding_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770501719739,
+      "tag": "0011_massive_master_mold",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770505247154,
+      "tag": "0012_special_black_bolt",
+      "breakpoints": true
     }
   ]
 }

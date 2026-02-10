@@ -21,7 +21,7 @@ export function getPartyLabel(party: string, short = false): string {
   return short ? config.short : config.full;
 }
 
-function getOrdinalSuffix(n: number): string {
+export function getOrdinalSuffix(n: number): string {
   const tensDigit = Math.floor((n % 100) / 10);
   if (tensDigit === 1) {
     return "th";
