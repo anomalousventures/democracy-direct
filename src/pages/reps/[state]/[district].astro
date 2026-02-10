@@ -7,7 +7,7 @@ import Footer from "@/components/Footer.astro";
 import PageHeader from "@/components/PageHeader.astro";
 import PageSection from "@/components/PageSection.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
-import AstroButton from "@/components/ui/AstroButton.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
 import { createDb } from "@/db/client";
 import { getLegislatorsByStateAndDistrict } from "@/db/queries/legislators";
 import type { Legislator } from "@/db/schema";
@@ -91,30 +91,12 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
     {
       error ? (
         <div class="container-page">
-          <div class="container-narrow text-center">
-            <AstroCard variant="civicLg">
-              <div class="icon-box-lg mx-auto mb-6">
-                <svg
-                  class="w-8 h-8 text-destructive"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-              <h1 class="heading-card-lg">{error}</h1>
-              <p class="text-muted-foreground mb-8">Please check the district and try again.</p>
-              <AstroButton href="/" variant="civic">
-                Look Up By ZIP Code
-              </AstroButton>
-            </AstroCard>
-          </div>
+          <ErrorCard
+            title={error}
+            description="Please check the district and try again."
+            actionHref="/"
+            actionLabel="Look Up By ZIP Code"
+          />
         </div>
       ) : (
         <PageSection width="wide">

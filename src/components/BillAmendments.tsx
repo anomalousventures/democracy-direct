@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
+import { EmptyState } from "./ui/EmptyState";
+import { InlineError } from "./ui/InlineError";
 import { cn } from "@/lib/utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
@@ -36,7 +38,7 @@ function AmendmentCard({ amendment }: { amendment: AmendmentWithRelations }) {
     description && description.length > 200 ? description.slice(0, 200) + "..." : description;
 
   return (
-    <article className="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow">
+    <article className="card-hover">
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -144,21 +146,6 @@ function LoadingState() {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="icon-box-accent mx-auto mb-4">
-        <Icon name="file-text" className="w-8 h-8 text-accent" />
-      </div>
-      <h3 className="text-lg font-semibold text-primary mb-2">No Amendments</h3>
-      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-        There are no amendments to this bill yet. Amendments may be proposed as the bill moves
-        through committees and floor debates.
-      </p>
-    </div>
-  );
-}
-
 export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   const [amendments, setAmendments] = useState<AmendmentWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,16 +180,17 @@ export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm">
-        <p className="font-medium">Unable to load amendments</p>
-        <p className="mt-1 text-destructive/80">{error}</p>
-      </div>
-    );
+    return <InlineError title="Unable to load amendments" message={error} />;
   }
 
   if (amendments.length === 0) {
-    return <EmptyState />;
+    return (
+      <EmptyState
+        icon="file-text"
+        title="No Amendments"
+        description="There are no amendments to this bill yet. Amendments may be proposed as the bill moves through committees and floor debates."
+      />
+    );
   }
 
   return (

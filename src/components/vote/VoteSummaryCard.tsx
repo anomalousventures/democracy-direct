@@ -38,7 +38,7 @@ export function VoteSummaryCard({ vote }: VoteSummaryCardProps) {
   });
 
   return (
-    <article className="border border-border bg-white rounded-sm p-4 hover:shadow-[var(--shadow-civic)] transition-shadow duration-200">
+    <article className="card-hover">
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <a

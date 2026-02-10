@@ -3,8 +3,12 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Toggle } from "./ui/toggle";
 import { Card } from "./ui/card";
-import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
+import { Icon } from "@/components/icons";
+import { Spinner } from "./ui/Spinner";
+import { InlineError } from "./ui/InlineError";
+import { EmptyState } from "./ui/EmptyState";
+import { LoadMoreButton } from "./ui/LoadMoreButton";
 import { getPreviewLines } from "@/lib/markdown";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -48,37 +52,6 @@ function TemplateCardSkeleton() {
         <Skeleton className="h-4 w-20" />
       </div>
     </Card>
-  );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  );
-}
-
-function LoadingSpinner({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
   );
 }
 
@@ -201,7 +174,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
 
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-          <SearchIcon className="h-5 w-5 text-muted-foreground" />
+          <Icon name="search" className="h-5 w-5 text-muted-foreground" />
         </div>
         <Input
           type="search"
@@ -215,7 +188,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
         />
         {isLoading && searchQuery && (
           <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-            <LoadingSpinner className="h-5 w-5 text-primary animate-spin" />
+            <Spinner className="h-5 w-5 text-primary animate-spin" />
           </div>
         )}
       </div>
@@ -229,18 +202,10 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
             {availableTags.map((tag) => (
               <Toggle
                 key={tag}
-                variant="outline"
-                size="sm"
+                variant="filter"
                 pressed={selectedTags.includes(tag)}
                 onPressedChange={() => toggleTag(tag)}
-                className="
-                  capitalize px-4 py-2 text-sm font-medium rounded-sm
-                  border-2 border-border bg-white
-                  transition-all duration-200
-                  hover:border-primary/50 hover:bg-secondary
-                  data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
-                  data-[state=on]:border-primary data-[state=on]:shadow-md
-                "
+                className="capitalize px-4 py-2 border-2 data-[state=on]:shadow-md"
                 data-testid="tag-filter-button"
               >
                 {tag}
@@ -275,19 +240,11 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
       )}
 
       {error && (
-        <div
-          className="p-4 bg-destructive/10 border border-destructive/30 rounded-sm text-destructive text-sm"
-          role="alert"
-        >
-          <p className="font-medium">Unable to load templates</p>
-          <p className="mt-1 text-destructive/80">{error}</p>
-          <button
-            onClick={() => fetchTemplates()}
-            className="mt-3 text-sm font-medium underline hover:no-underline"
-          >
-            Try again
-          </button>
-        </div>
+        <InlineError
+          title="Unable to load templates"
+          message={error}
+          onRetry={() => fetchTemplates()}
+        />
       )}
 
       <div data-testid="template-search-results" className="space-y-6">
@@ -336,42 +293,12 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
                         <span className="flex items-center gap-1.5" title="Views">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
+                          <Icon name="eye" className="w-4 h-4" />
                           {template.viewCount.toLocaleString()}
                         </span>
                         {template.useCount > 0 && (
                           <span className="flex items-center gap-1.5 text-accent" title="Uses">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.5}
-                                d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                              />
-                            </svg>
+                            <Icon name="star" className="w-4 h-4" />
                             {template.useCount.toLocaleString()}
                           </span>
                         )}
@@ -383,65 +310,44 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
             })}
 
             {hasMore && (
-              <div className="pt-4 text-center">
-                <Button
-                  variant="civicSecondary"
-                  onClick={handleLoadMore}
-                  disabled={isLoadingMore}
-                  className="min-w-[200px]"
-                  data-testid="load-more-button"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <LoadingSpinner className="h-4 w-4 animate-spin mr-2" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More Templates"
-                  )}
-                </Button>
-              </div>
+              <LoadMoreButton
+                onClick={handleLoadMore}
+                isLoading={isLoadingMore}
+                label="Load More Templates"
+              />
             )}
           </>
         ) : !error ? (
-          <div
-            className="text-center py-16 px-8 bg-secondary/30 border border-border rounded-sm"
-            data-testid="no-results"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-                />
-              </svg>
-            </div>
+          <div data-testid="no-results">
             {billFilter ? (
-              <>
-                <p className="text-muted-foreground text-lg">
-                  No templates linked to <span className="font-semibold">{billFilter}</span> yet.
-                </p>
+              <EmptyState
+                icon="search"
+                title={`No templates linked to ${billFilter} yet.`}
+                description="Be the first to write a template for this bill."
+                bordered
+              >
                 <a
                   href={`/templates/new?bill=${encodeURIComponent(billFilter)}`}
                   className="mt-4 inline-block text-primary hover:text-accent font-medium transition-colors"
                 >
                   Be the first to write one
                 </a>
-              </>
+              </EmptyState>
             ) : (
-              <>
-                <p className="text-muted-foreground text-lg">
-                  {hasActiveFilters
+              <EmptyState
+                icon="search"
+                title={
+                  hasActiveFilters
                     ? "No templates match your search."
-                    : "No templates available yet."}
-                </p>
+                    : "No templates available yet."
+                }
+                description={
+                  hasActiveFilters
+                    ? "Try adjusting your filters or search terms."
+                    : "Templates will appear here once they are created."
+                }
+                bordered
+              >
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
@@ -450,7 +356,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
                     Clear filters and show all
                   </button>
                 )}
-              </>
+              </EmptyState>
             )}
           </div>
         ) : null}

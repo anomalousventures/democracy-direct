@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { Icon } from "@/components/icons";
+import { EmptyState } from "./ui/EmptyState";
 import { cn } from "@/lib/utils";
 import type { Bill } from "@/db/schema";
 import { useScrollShadow } from "@/hooks/useScrollShadow";
@@ -75,21 +75,6 @@ function BillStatsBar({
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="icon-box-accent mx-auto mb-4">
-        <Icon name="file-text" className="w-8 h-8 text-accent" />
-      </div>
-      <h3 className="text-lg font-semibold text-primary mb-2">No Sponsored Bills</h3>
-      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-        This representative hasn't sponsored any bills yet. Check back later as legislative data is
-        updated regularly.
-      </p>
-    </div>
-  );
-}
-
 export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsProps) {
   const [displayCount, setDisplayCount] = useState(10);
   const { ref: scrollContainerRef, isScrolled } = useScrollShadow();
@@ -105,7 +90,11 @@ export function SponsoredBills({ bills, totalCount, className }: SponsoredBillsP
   if (bills.length === 0) {
     return (
       <div className={cn("animate-fade-up", className)}>
-        <EmptyState />
+        <EmptyState
+          icon="file-text"
+          title="No Sponsored Bills"
+          description="This representative hasn't sponsored any bills yet. Check back later as legislative data is updated regularly."
+        />
       </div>
     );
   }

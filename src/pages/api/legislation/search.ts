@@ -50,9 +50,6 @@ export async function GET(context: APIContext): Promise<Response> {
   const typeParam = url.searchParams.get("type");
   const statusParam = url.searchParams.get("status");
   const subjectParam = url.searchParams.get("subject");
-  const typesParam = url.searchParams.get("types");
-  const statusesParam = url.searchParams.get("statuses");
-  const subjectsParam = url.searchParams.get("subjects");
   const limitParam = url.searchParams.get("limit");
   const offsetParam = url.searchParams.get("offset");
 
@@ -67,32 +64,28 @@ export async function GET(context: APIContext): Promise<Response> {
     }
   }
 
-  let billType: BillType | undefined;
-  if (typeParam) {
-    if (!isValidBillType(typeParam)) {
-      return badRequest("Invalid type parameter");
-    }
-    billType = typeParam;
+  const billTypes = typeParam
+    ? typeParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : undefined;
+  if (billTypes?.length && !billTypes.every(isValidBillType)) {
+    return badRequest("Invalid type parameter");
   }
 
-  let status: BillStatus | undefined;
-  if (statusParam) {
-    if (!isValidStatus(statusParam)) {
-      return badRequest("Invalid status parameter");
-    }
-    status = statusParam;
+  const statuses = statusParam
+    ? statusParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : undefined;
+  if (statuses?.length && !statuses.every(isValidStatus)) {
+    return badRequest("Invalid status parameter");
   }
 
-  const subject = subjectParam?.trim() || undefined;
-
-  const billTypes = typesParam
-    ? (typesParam.split(",").filter(isValidBillType) as BillType[])
-    : undefined;
-  const statuses = statusesParam
-    ? (statusesParam.split(",").filter(isValidStatus) as BillStatus[])
-    : undefined;
-  const subjects = subjectsParam
-    ? subjectsParam
+  const subjects = subjectParam
+    ? subjectParam
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
@@ -105,7 +98,12 @@ export async function GET(context: APIContext): Promise<Response> {
     let bills: BillWithSponsor[];
     let total: number;
 
-    const filterOptions = { congress, status, subject, billType, billTypes, statuses, subjects };
+    const filterOptions = {
+      congress,
+      statuses: statuses as BillStatus[] | undefined,
+      billTypes: billTypes as BillType[] | undefined,
+      subjects,
+    };
     const queryOptions = { ...filterOptions, limit: limit + 1, offset };
 
     if (q) {
