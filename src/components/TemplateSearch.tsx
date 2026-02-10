@@ -3,12 +3,12 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Toggle } from "./ui/toggle";
 import { Card } from "./ui/card";
-import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { Icon } from "@/components/icons";
 import { Spinner } from "./ui/Spinner";
 import { InlineError } from "./ui/InlineError";
 import { EmptyState } from "./ui/EmptyState";
+import { LoadMoreButton } from "./ui/LoadMoreButton";
 import { getPreviewLines } from "@/lib/markdown";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -310,24 +310,11 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
             })}
 
             {hasMore && (
-              <div className="pt-4 text-center">
-                <Button
-                  variant="civicSecondary"
-                  onClick={handleLoadMore}
-                  disabled={isLoadingMore}
-                  className="min-w-[200px]"
-                  data-testid="load-more-button"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Spinner className="h-4 w-4 animate-spin mr-2" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More Templates"
-                  )}
-                </Button>
-              </div>
+              <LoadMoreButton
+                onClick={handleLoadMore}
+                isLoading={isLoadingMore}
+                label="Load More Templates"
+              />
             )}
           </>
         ) : !error ? (
