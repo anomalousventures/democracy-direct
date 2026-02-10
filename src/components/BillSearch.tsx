@@ -3,6 +3,8 @@ import { Input } from "./ui/input";
 import { Toggle } from "./ui/toggle";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
+import { Icon } from "@/components/icons";
+import { Spinner } from "./ui/Spinner";
 import { BillCard } from "./BillCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
@@ -112,37 +114,6 @@ function BillCardSkeleton() {
       <Skeleton className="h-4 w-full mb-2" />
       <Skeleton className="h-4 w-2/3" />
     </div>
-  );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  );
-}
-
-function LoadingSpinner({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
   );
 }
 
@@ -319,7 +290,7 @@ export function BillSearch() {
     <div className="space-y-4">
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-          <SearchIcon className="h-5 w-5 text-muted-foreground" />
+          <Icon name="search" className="h-5 w-5 text-muted-foreground" />
         </div>
         <Input
           type="search"
@@ -333,7 +304,7 @@ export function BillSearch() {
         />
         {isLoading && searchQuery && (
           <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-            <LoadingSpinner className="h-5 w-5 text-primary animate-spin" />
+            <Spinner className="h-5 w-5 text-primary animate-spin" />
           </div>
         )}
       </div>
@@ -341,22 +312,18 @@ export function BillSearch() {
       <div className="flex flex-wrap items-center gap-2">
         <Toggle
           key="all"
-          variant="outline"
-          size="sm"
+          variant="filter"
           pressed={congress === null}
           onPressedChange={() => setCongress(congress === null ? DEFAULT_CONGRESS : null)}
-          className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
         >
           All
         </Toggle>
         {Array.from({ length: 3 }, (_, i) => DEFAULT_CONGRESS - i).map((c) => (
           <Toggle
             key={c}
-            variant="outline"
-            size="sm"
+            variant="filter"
             pressed={congress === c}
             onPressedChange={() => setCongress(congress === c ? null : c)}
-            className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
           >
             {c}
             {getOrdinalSuffix(c)}
@@ -369,11 +336,9 @@ export function BillSearch() {
           {BILL_TYPES.map(({ value, label }) => (
             <Toggle
               key={value}
-              variant="outline"
-              size="sm"
+              variant="filter"
               pressed={selectedTypes.includes(value)}
               onPressedChange={() => toggleType(value)}
-              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
             >
               {label}
             </Toggle>
@@ -386,11 +351,9 @@ export function BillSearch() {
           {BILL_STATUSES.map(({ value, label }) => (
             <Toggle
               key={value}
-              variant="outline"
-              size="sm"
+              variant="filter"
               pressed={selectedStatuses.includes(value)}
               onPressedChange={() => toggleStatus(value)}
-              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
             >
               {label}
             </Toggle>
@@ -403,11 +366,9 @@ export function BillSearch() {
           {availableSubjects.slice(0, 12).map((subject) => (
             <Toggle
               key={subject}
-              variant="outline"
-              size="sm"
+              variant="filter"
               pressed={selectedSubjects.includes(subject)}
               onPressedChange={() => toggleSubject(subject)}
-              className="px-3 py-1.5 text-sm font-medium rounded-sm border border-border bg-white transition-all duration-200 hover:border-primary/50 hover:bg-secondary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary data-[state=on]:shadow-sm"
             >
               {subject}
             </Toggle>
@@ -485,7 +446,7 @@ export function BillSearch() {
                 >
                   {isLoadingMore ? (
                     <>
-                      <LoadingSpinner className="h-4 w-4 animate-spin mr-2" />
+                      <Spinner className="h-4 w-4 animate-spin mr-2" />
                       Loading...
                     </>
                   ) : (
