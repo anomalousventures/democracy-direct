@@ -139,7 +139,10 @@ async function relinkOrphanedAmendments(db: Database, client: CongressClient): P
           .where(eq(amendments.id, orphan.id));
         relinked++;
       }
-    } catch {
+    } catch (err) {
+      console.warn(
+        `  Relink failed for amendment ${orphan.amendmentType}${orphan.amendmentNumber}: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
       continue;
     }
   }
@@ -219,6 +222,15 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
           const amdtType = toAmendmentType(amdt.type);
           if (!amdtType) continue;
 
+          const parsedAmendmentNumber = parseInt(amdt.number, 10);
+          if (isNaN(parsedAmendmentNumber)) {
+            errors.push({
+              bill: billLabel,
+              message: `Amendment ${amdtType}${amdt.number}: non-numeric amendment number`,
+            });
+            continue;
+          }
+
           try {
             const detail = await client.getAmendment(bill.congress, amdtType, amdt.number);
             const amendment = detail.amendment;
@@ -261,7 +273,7 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
                 congressGovUrl: buildAmendmentCongressGovUrl(
                   bill.congress,
                   amdtType,
-                  parseInt(amdt.number, 10)
+                  parsedAmendmentNumber
                 ),
               })
               .onConflictDoUpdate({

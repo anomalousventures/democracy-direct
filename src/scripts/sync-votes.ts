@@ -788,7 +788,7 @@ export async function backfillVotes(limit?: number): Promise<BackfillVotesResult
       const metaId = `votes-${congress}-${session}`;
       const [meta] = await db.select().from(dataSourceMeta).where(eq(dataSourceMeta.id, metaId));
 
-      if (!meta?.lastChecked) {
+      if (!meta?.lastChecked || (meta.recordCount ?? 0) === 0) {
         missingSessions.push(session);
       }
     }
