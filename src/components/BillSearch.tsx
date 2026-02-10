@@ -147,32 +147,13 @@ function LoadingSpinner({ className }: { className?: string }) {
 }
 
 export function BillSearch() {
-  const initial = useRef(() => {
-    if (typeof window === "undefined") {
-      return {
-        q: "",
-        congress: DEFAULT_CONGRESS as number | null,
-        types: [] as BillType[],
-        statuses: [] as BillStatus[],
-        subjects: [] as string[],
-      };
-    }
-    const parsed = parseSearchParams(window.location.search);
-    return {
-      ...parsed,
-      congress: parsed.congress !== undefined ? parsed.congress : DEFAULT_CONGRESS,
-    };
-  }).current;
-
-  const initialState = useRef(initial()).current;
-
   const [bills, setBills] = useState<BillWithSponsor[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState(initialState.q);
-  const [congress, setCongress] = useState<number | null>(initialState.congress);
-  const [selectedTypes, setSelectedTypes] = useState<BillType[]>(initialState.types);
-  const [selectedStatuses, setSelectedStatuses] = useState<BillStatus[]>(initialState.statuses);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(initialState.subjects);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [congress, setCongress] = useState<number | null>(DEFAULT_CONGRESS);
+  const [selectedTypes, setSelectedTypes] = useState<BillType[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<BillStatus[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -184,6 +165,31 @@ export function BillSearch() {
   const isInitialMount = useRef(true);
 
   useEffect(() => {
+    const parsed = parseSearchParams(window.location.search);
+    const hasUrlParams =
+      parsed.q ||
+      parsed.congress !== undefined ||
+      parsed.types.length > 0 ||
+      parsed.statuses.length > 0 ||
+      parsed.subjects.length > 0;
+
+    if (hasUrlParams) {
+      setSearchQuery(parsed.q);
+      setCongress(parsed.congress !== undefined ? parsed.congress : DEFAULT_CONGRESS);
+      setSelectedTypes(parsed.types);
+      setSelectedStatuses(parsed.statuses);
+      setSelectedSubjects(parsed.subjects);
+    }
+
+    isInitialMount.current = false;
+
+    if (!hasUrlParams) {
+      fetchBills();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isInitialMount.current) return;
     const serialized = serializeSearchParams({
       q: debouncedSearch,
       congress,
@@ -262,11 +268,7 @@ export function BillSearch() {
   );
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      fetchBills();
-      return;
-    }
+    if (isInitialMount.current) return;
     fetchBills();
   }, [debouncedSearch, congress, selectedTypes, selectedStatuses, selectedSubjects, fetchBills]);
 

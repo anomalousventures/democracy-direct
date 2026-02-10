@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icons";
 import { SenderInfoForm, type SenderInfo, createEmptySenderInfo } from "./SenderInfoForm";
 import { LetterPreview, type PrintOptions } from "./LetterPreview";
 import { type Representative } from "../types/representative";
+import { formatDateMedium } from "@/lib/date-utils";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 const printLetterOptions: PrintOptions = {
@@ -23,8 +24,13 @@ interface PrintLetterProps {
 
 export function PrintLetter({ letterContent, representative, bioguideId }: PrintLetterProps) {
   const [senderInfo, setSenderInfo] = useState<SenderInfo>(createEmptySenderInfo);
+  const [currentDate, setCurrentDate] = useState("");
   const { capture } = useAnalytics();
   const repName = `${representative.first_name} ${representative.last_name}`;
+
+  useEffect(() => {
+    setCurrentDate(formatDateMedium(new Date()));
+  }, []);
 
   const handlePrint = useCallback(() => {
     capture("letter_printed", { repBioguideId: bioguideId, repName });
@@ -49,6 +55,7 @@ export function PrintLetter({ letterContent, representative, bioguideId }: Print
         representative={representative}
         returnAddress={senderInfo}
         printOptions={printLetterOptions}
+        currentDate={currentDate}
         className="min-h-[500px]"
       />
     </div>

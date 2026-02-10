@@ -1,5 +1,4 @@
 import { type Representative, type Address, getRepresentativeTitle } from "../types/representative";
-import { formatDateMedium } from "@/lib/date-utils";
 import { MarkdownContent } from "./MarkdownContent";
 import { Icon } from "@/components/icons";
 
@@ -27,6 +26,7 @@ interface LetterPreviewProps {
   className?: string;
   printOptions?: PrintOptions;
   printReadiness?: PrintReadiness;
+  currentDate?: string;
 }
 
 export const defaultPrintOptions: PrintOptions = {
@@ -45,6 +45,7 @@ export function LetterPreview({
   className = "",
   printOptions = defaultPrintOptions,
   printReadiness,
+  currentDate,
 }: LetterPreviewProps) {
   const repTitle = getRepresentativeTitle(representative);
   const addressLines = representative.office_address?.split("\n") ?? [];
@@ -92,9 +93,7 @@ export function LetterPreview({
             </div>
           )}
 
-          {printOptions.includeDate && (
-            <div className="text-sm">{formatDateMedium(new Date())}</div>
-          )}
+          {printOptions.includeDate && currentDate && <div className="text-sm">{currentDate}</div>}
 
           {printOptions.includeRecipientAddress && (
             <div className="text-sm">
