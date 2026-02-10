@@ -29,6 +29,9 @@ pnpm-debug.log*
 .wrangler/
 .mf/
 
+# Generated
+api-schema.json
+
 # Testing
 coverage/
 playwright-report/
