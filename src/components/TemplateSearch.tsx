@@ -8,6 +8,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Icon } from "@/components/icons";
 import { Spinner } from "./ui/Spinner";
 import { InlineError } from "./ui/InlineError";
+import { EmptyState } from "./ui/EmptyState";
 import { getPreviewLines } from "@/lib/markdown";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -330,44 +331,36 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
             )}
           </>
         ) : !error ? (
-          <div
-            className="text-center py-16 px-8 bg-secondary/30 border border-border rounded-sm"
-            data-testid="no-results"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-                />
-              </svg>
-            </div>
+          <div data-testid="no-results">
             {billFilter ? (
-              <>
-                <p className="text-muted-foreground text-lg">
-                  No templates linked to <span className="font-semibold">{billFilter}</span> yet.
-                </p>
+              <EmptyState
+                icon="search"
+                title={`No templates linked to ${billFilter} yet.`}
+                description="Be the first to write a template for this bill."
+                bordered
+              >
                 <a
                   href={`/templates/new?bill=${encodeURIComponent(billFilter)}`}
                   className="mt-4 inline-block text-primary hover:text-accent font-medium transition-colors"
                 >
                   Be the first to write one
                 </a>
-              </>
+              </EmptyState>
             ) : (
-              <>
-                <p className="text-muted-foreground text-lg">
-                  {hasActiveFilters
+              <EmptyState
+                icon="search"
+                title={
+                  hasActiveFilters
                     ? "No templates match your search."
-                    : "No templates available yet."}
-                </p>
+                    : "No templates available yet."
+                }
+                description={
+                  hasActiveFilters
+                    ? "Try adjusting your filters or search terms."
+                    : "Templates will appear here once they are created."
+                }
+                bordered
+              >
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
@@ -376,7 +369,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
                     Clear filters and show all
                   </button>
                 )}
-              </>
+              </EmptyState>
             )}
           </div>
         ) : null}

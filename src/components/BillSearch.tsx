@@ -6,6 +6,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Icon } from "@/components/icons";
 import { Spinner } from "./ui/Spinner";
 import { InlineError } from "./ui/InlineError";
+import { EmptyState } from "./ui/EmptyState";
 import { BillCard } from "./BillCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { BillWithSponsor } from "@/db/queries/bills";
@@ -446,36 +447,26 @@ export function BillSearch() {
             )}
           </>
         ) : !error ? (
-          <div
-            className="text-center py-16 px-8 bg-secondary/30 border border-border rounded-sm"
-            data-testid="no-results"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-                />
-              </svg>
-            </div>
-            <p className="text-muted-foreground text-lg">
-              {hasActiveFilters ? "No bills match your search." : "No bills available yet."}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 text-primary hover:text-accent font-medium transition-colors"
-              >
-                Clear filters and show all
-              </button>
-            )}
+          <div data-testid="no-results">
+            <EmptyState
+              icon="search"
+              title={hasActiveFilters ? "No bills match your search." : "No bills available yet."}
+              description={
+                hasActiveFilters
+                  ? "Try adjusting your filters or search terms."
+                  : "Bills will appear here once data is available."
+              }
+              bordered
+            >
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-primary hover:text-accent font-medium transition-colors"
+                >
+                  Clear filters and show all
+                </button>
+              )}
+            </EmptyState>
           </div>
         ) : null}
       </div>

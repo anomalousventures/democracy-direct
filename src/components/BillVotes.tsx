@@ -1,5 +1,6 @@
 import { useState, useEffect, useId } from "react";
 import { Icon } from "@/components/icons";
+import { EmptyState } from "./ui/EmptyState";
 import { InlineError } from "./ui/InlineError";
 import { cn } from "@/lib/utils";
 import type { BillVotesResponse, BillVoteSummary } from "@/pages/api/legislation/[billId]/votes";
@@ -21,21 +22,6 @@ function LoadingState() {
           <div className="h-4 bg-gray-200 rounded w-1/6" />
         </div>
       ))}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="icon-box-accent mx-auto mb-4">
-        <Icon name="gavel" className="w-8 h-8 text-accent" />
-      </div>
-      <h3 className="text-lg font-semibold text-primary mb-2">No Roll Call Votes</h3>
-      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-        There are no recorded roll call votes for this bill yet. Votes will appear here once the
-        bill advances through the legislative process.
-      </p>
     </div>
   );
 }
@@ -143,7 +129,13 @@ export function BillVotes({ billId, className }: BillVotesProps) {
   }
 
   if (billVotes.length === 0 && amendmentVotes.length === 0) {
-    return <EmptyState />;
+    return (
+      <EmptyState
+        icon="gavel"
+        title="No Roll Call Votes"
+        description="There are no recorded roll call votes for this bill yet. Votes will appear here once the bill advances through the legislative process."
+      />
+    );
   }
 
   return (

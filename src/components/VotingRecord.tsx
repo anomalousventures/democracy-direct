@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
+import { EmptyState } from "./ui/EmptyState";
 import { cn } from "@/lib/utils";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import { parseBillNumber, getBillPageUrl } from "@/lib/bill-utils";
@@ -117,21 +118,6 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="icon-box-accent mx-auto mb-4">
-        <Icon name="gavel" className="w-8 h-8 text-accent" />
-      </div>
-      <h3 className="text-lg font-semibold text-primary mb-2">No Recorded Votes</h3>
-      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-        This representative doesn't have any recorded votes yet. Check back later as voting records
-        are updated regularly.
-      </p>
-    </div>
-  );
-}
-
 export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
   const [displayCount, setDisplayCount] = useState(10);
   const { ref: scrollContainerRef, isScrolled } = useScrollShadow();
@@ -147,7 +133,11 @@ export function VotingRecord({ votes, stats, className }: VotingRecordProps) {
   if (votes.length === 0) {
     return (
       <div className={cn("animate-fade-up", className)}>
-        <EmptyState />
+        <EmptyState
+          icon="gavel"
+          title="No Recorded Votes"
+          description="This representative doesn't have any recorded votes yet. Check back later as voting records are updated regularly."
+        />
       </div>
     );
   }

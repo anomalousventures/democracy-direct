@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
+import { EmptyState } from "./ui/EmptyState";
 import { InlineError } from "./ui/InlineError";
 import { cn } from "@/lib/utils";
 import { getOrdinalSuffix } from "@/lib/legislator-utils";
@@ -145,21 +146,6 @@ function LoadingState() {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="icon-box-accent mx-auto mb-4">
-        <Icon name="file-text" className="w-8 h-8 text-accent" />
-      </div>
-      <h3 className="text-lg font-semibold text-primary mb-2">No Amendments</h3>
-      <p className="text-muted-foreground text-sm max-w-md mx-auto">
-        There are no amendments to this bill yet. Amendments may be proposed as the bill moves
-        through committees and floor debates.
-      </p>
-    </div>
-  );
-}
-
 export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   const [amendments, setAmendments] = useState<AmendmentWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,7 +184,13 @@ export function BillAmendments({ billId, className }: BillAmendmentsProps) {
   }
 
   if (amendments.length === 0) {
-    return <EmptyState />;
+    return (
+      <EmptyState
+        icon="file-text"
+        title="No Amendments"
+        description="There are no amendments to this bill yet. Amendments may be proposed as the bill moves through committees and floor debates."
+      />
+    );
   }
 
   return (
