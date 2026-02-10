@@ -12,6 +12,7 @@ import {
   type BillListResponse,
   type BillDetailResponse,
   type BillSummariesResponse,
+  type BillAmendmentsResponse,
   type AmendmentDetailResponse,
   type SponsoredLegislationResponse,
   type BillType,
@@ -21,6 +22,7 @@ import {
   BillListResponseSchema,
   BillDetailResponseSchema,
   BillSummariesResponseSchema,
+  BillAmendmentsResponseSchema,
   AmendmentDetailResponseSchema,
   SponsoredLegislationResponseSchema,
   parseResponse,
@@ -84,6 +86,13 @@ export interface CongressClient {
     billType: BillType | string,
     billNumber: number
   ): Promise<BillSummariesResponse>;
+
+  listBillAmendments(
+    congress: number,
+    billType: BillType | string,
+    billNumber: number,
+    options?: PaginationOptions
+  ): Promise<BillAmendmentsResponse>;
 
   getAmendment(
     congress: number,
@@ -243,6 +252,29 @@ export function createCongressClient(options: CongressClientOptions): CongressCl
       );
     },
 
+    async listBillAmendments(
+      congress: number,
+      billType: BillType | string,
+      billNumber: number,
+      options: PaginationOptions = {}
+    ): Promise<BillAmendmentsResponse> {
+      const params: Record<string, string> = {};
+      if (options.limit !== undefined) params.limit = options.limit.toString();
+      if (options.offset !== undefined) params.offset = options.offset.toString();
+
+      const url = buildUrl(
+        `/bill/${congress}/${billType.toLowerCase()}/${billNumber}/amendments`,
+        params
+      );
+      const response = await rateLimitedFetch(url);
+      const data = await response.json();
+      return parseResponse(
+        BillAmendmentsResponseSchema,
+        data,
+        `listBillAmendments(${congress}/${billType}/${billNumber})`
+      );
+    },
+
     async getAmendment(
       congress: number,
       amendmentType: string,
@@ -306,6 +338,7 @@ export type {
   BillListResponse,
   BillDetailResponse,
   BillSummariesResponse,
+  BillAmendmentsResponse,
   AmendmentDetailResponse,
   SponsoredLegislationResponse,
 };

@@ -218,7 +218,10 @@ export async function getBillsWithoutSummary(
     })
     .from(bills)
     .where(isNull(bills.summary))
-    .orderBy(desc(bills.latestActionDate))
+    .orderBy(
+      sql`CASE WHEN ${bills.status} != 'introduced' THEN 0 ELSE 1 END`,
+      desc(bills.latestActionDate)
+    )
     .limit(limit);
 }
 

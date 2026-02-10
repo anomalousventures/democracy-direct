@@ -2,9 +2,8 @@ name: Backfill Bills
 
 on:
   schedule:
-    # Every 2 hours, avoiding 6:00 UTC (when refresh-data runs)
-    # Rate limit optimization: reduces overlap with other Congress API jobs
-    - cron: "0 0,2,4,8,10,12,14,16,18,20,22 * * *"
+    # Every 12 hours — slowed down now that 119th Congress is mostly synced
+    - cron: "0 0,12 * * *"
   workflow_dispatch:
     inputs:
       limit:

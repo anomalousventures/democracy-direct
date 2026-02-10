@@ -600,7 +600,8 @@ async function syncSenateVotes(
 export async function syncVotes(
   congressNumber?: number,
   force: boolean = false,
-  limit?: number
+  limit?: number,
+  sessionNumber?: 1 | 2
 ): Promise<SyncVotesResult> {
   const startTime = Date.now();
 
@@ -620,7 +621,7 @@ export async function syncVotes(
   const db = createDb(databaseUrl);
 
   const congress = congressNumber ?? getCurrentCongress();
-  const session = getCurrentSession();
+  const session = sessionNumber ?? getCurrentSession();
   const metaId = `votes-${congress}-${session}`;
 
   console.log(`Syncing votes for Congress ${congress}, Session ${session}...`);
@@ -726,8 +727,137 @@ export async function syncVotes(
   };
 }
 
+function getSessionsForCongress(congress: number): [1] | [1, 2] {
+  const currentCongress = getCurrentCongress();
+  if (congress === currentCongress) {
+    const currentSession = getCurrentSession();
+    return currentSession === 1 ? [1] : [1, 2];
+  }
+  return [1, 2];
+}
+
+export interface BackfillVotesResult {
+  source: "congress.gov + senate.gov";
+  congress: number | null;
+  sessions: number[];
+  houseVotesUpserted: number;
+  senateVotesUpserted: number;
+  memberVotesUpserted: number;
+  unmappedSenateMembers: number;
+  duration: string;
+  errors: Array<{ chamber: string; rollCall: number; error: string }>;
+}
+
+export async function backfillVotes(limit?: number): Promise<BackfillVotesResult> {
+  const startTime = Date.now();
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
+
+  const congressApiKey = process.env.CONGRESS_API_KEY;
+  if (!congressApiKey) {
+    throw new Error("CONGRESS_API_KEY environment variable is required");
+  }
+
+  const { createDb } = await import("@/db/client");
+  const { bills, dataSourceMeta } = await import("@/db/schema");
+
+  const db = createDb(databaseUrl);
+
+  const congressRows = await db
+    .select({ congress: bills.congress })
+    .from(bills)
+    .groupBy(bills.congress)
+    .orderBy(sql`${bills.congress} DESC`);
+
+  const distinctCongresses = congressRows.map((r) => r.congress);
+  console.log(
+    `Found ${distinctCongresses.length} congresses in bills table: ${distinctCongresses.join(", ")}`
+  );
+
+  let targetCongress: number | null = null;
+  let targetSessions: number[] = [];
+
+  for (const congress of distinctCongresses) {
+    const sessions = getSessionsForCongress(congress);
+    const missingSessions: number[] = [];
+
+    for (const session of sessions) {
+      const metaId = `votes-${congress}-${session}`;
+      const [meta] = await db.select().from(dataSourceMeta).where(eq(dataSourceMeta.id, metaId));
+
+      if (!meta?.lastChecked) {
+        missingSessions.push(session);
+      }
+    }
+
+    if (missingSessions.length > 0) {
+      targetCongress = congress;
+      targetSessions = missingSessions;
+      break;
+    }
+  }
+
+  if (targetCongress === null) {
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+    console.log("All congresses with bills have complete vote data");
+    return {
+      source: "congress.gov + senate.gov",
+      congress: null,
+      sessions: [],
+      houseVotesUpserted: 0,
+      senateVotesUpserted: 0,
+      memberVotesUpserted: 0,
+      unmappedSenateMembers: 0,
+      duration,
+      errors: [],
+    };
+  }
+
+  console.log(
+    `Backfilling votes for Congress ${targetCongress}, sessions: ${targetSessions.join(", ")}`
+  );
+
+  let totalHouseVotes = 0;
+  let totalSenateVotes = 0;
+  let totalMemberVotes = 0;
+  let totalUnmappedSenate = 0;
+  const allErrors: BackfillVotesResult["errors"] = [];
+
+  for (const session of targetSessions) {
+    const result = await syncVotes(targetCongress, true, limit, session as 1 | 2);
+    totalHouseVotes += result.houseVotesUpserted;
+    totalSenateVotes += result.senateVotesUpserted;
+    totalMemberVotes += result.memberVotesUpserted;
+    totalUnmappedSenate += result.unmappedSenateMembers;
+    allErrors.push(...result.errors);
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1) + "s";
+
+  console.log(
+    `Backfill complete for Congress ${targetCongress}: ` +
+      `${totalHouseVotes} House votes, ${totalSenateVotes} Senate votes`
+  );
+
+  return {
+    source: "congress.gov + senate.gov",
+    congress: targetCongress,
+    sessions: targetSessions,
+    houseVotesUpserted: totalHouseVotes,
+    senateVotesUpserted: totalSenateVotes,
+    memberVotesUpserted: totalMemberVotes,
+    unmappedSenateMembers: totalUnmappedSenate,
+    duration,
+    errors: allErrors,
+  };
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const force = process.argv.includes("--force");
+  const backfill = process.argv.includes("--backfill");
   let congress: number | undefined;
   let limit: number | undefined;
 
@@ -755,8 +885,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log("Force mode: bypassing time-based change detection");
   }
 
-  syncVotes(congress, force, limit)
-    .then((result) => {
+  const task = backfill ? backfillVotes(limit) : syncVotes(congress, force, limit);
+
+  task
+    .then(async (result) => {
+      const githubOutput = process.env.GITHUB_OUTPUT;
+      if (githubOutput) {
+        const { appendFileSync } = await import("node:fs");
+        appendFileSync(githubOutput, `result=${JSON.stringify(result)}\n`);
+      }
       console.log(JSON.stringify(result));
       process.exit(0);
     })
