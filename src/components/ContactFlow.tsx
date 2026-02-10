@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,7 @@ import {
 import { type Representative, getRepresentativeTitle } from "../types/representative";
 import { substituteForRepresentative, parseTemplateVariables } from "@/lib/template-variables";
 import { markdownToPlainText } from "@/lib/markdown";
+import { formatDateMedium } from "@/lib/date-utils";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 type ViewMode = "edit" | "preview" | "print";
@@ -57,6 +58,11 @@ export function ContactFlow({
   const [printOptions, setPrintOptions] = useState<PrintOptions>(defaultPrintOptions);
   const [isRedirectDialogOpen, setIsRedirectDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
+  const [currentDate, setCurrentDate] = useState("");
+
+  useEffect(() => {
+    setCurrentDate(formatDateMedium(new Date()));
+  }, []);
 
   const { capture } = useAnalytics();
   const repName = `${representative.first_name} ${representative.last_name}`;
@@ -326,6 +332,7 @@ export function ContactFlow({
                   returnAddress={senderInfo}
                   printOptions={printOptions}
                   printReadiness={printReadiness}
+                  currentDate={currentDate}
                 />
               </div>
             )}
@@ -395,6 +402,7 @@ export function ContactFlow({
           representative={representative}
           returnAddress={senderInfo}
           printOptions={printOptions}
+          currentDate={currentDate}
         />
       </div>
 
