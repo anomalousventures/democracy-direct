@@ -1,0 +1,27 @@
+---
+import AstroButton from "@/components/ui/AstroButton.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  actionHref: string;
+  actionLabel: string;
+}
+
+const { title, description, actionHref, actionLabel } = Astro.props;
+---
+
+<div class="container-narrow text-center">
+  <AstroCard variant="civicLg">
+    <div class="icon-box-lg mx-auto mb-6">
+      <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
+    </div>
+    <h1 class="heading-card-lg">{title}</h1>
+    <p class="text-muted-foreground mb-8">{description}</p>
+    <AstroButton href={actionHref} variant="civic">
+      {actionLabel}
+    </AstroButton>
+  </AstroCard>
+</div>

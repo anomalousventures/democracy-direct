@@ -6,6 +6,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
 import { ShareButtons } from "@/components/ShareButtons";
 import { TemplateReportButton } from "@/components/TemplateReportButton";
 import { TemplateUseButton } from "@/components/TemplateUseButton";
@@ -119,32 +120,12 @@ const metaDescription = template
     <div class="container-page">
       {
         error ? (
-          <div class="container-narrow text-center">
-            <AstroCard variant="civicLg">
-              <div class="icon-box-lg mx-auto mb-6">
-                <svg
-                  class="w-8 h-8 text-destructive"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-              <h1 class="heading-card-lg">{error}</h1>
-              <p class="text-muted-foreground mb-8">
-                The template you're looking for couldn't be found or may have been removed.
-              </p>
-              <AstroButton href="/templates" variant="civic">
-                Browse Templates
-              </AstroButton>
-            </AstroCard>
-          </div>
+          <ErrorCard
+            title={error}
+            description="The template you're looking for couldn't be found or may have been removed."
+            actionHref="/templates"
+            actionLabel="Browse Templates"
+          />
         ) : (
           template && (
             <div class="container-wide">

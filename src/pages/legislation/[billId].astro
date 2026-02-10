@@ -4,9 +4,9 @@ export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import AstroButton from "@/components/ui/AstroButton.astro";
 import AstroCard from "@/components/ui/AstroCard.astro";
 import Icon from "@/components/icons/Icon.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
 import { createDb } from "@/db/client";
 import { getBillByNumber, type BillWithSponsor } from "@/db/queries/bills";
 import { getVoteCountForBill } from "@/db/queries/votes";
@@ -79,20 +79,12 @@ const chamberLabel = chamber === "house" ? "House Bill" : "Senate Bill";
     <div class="container-page">
       {
         error ? (
-          <div class="container-narrow text-center">
-            <AstroCard variant="civicLg">
-              <div class="icon-box-lg mx-auto mb-6">
-                <Icon name="triangle-alert" class="w-8 h-8 text-destructive" />
-              </div>
-              <h1 class="heading-card-lg">{error}</h1>
-              <p class="text-muted-foreground mb-8">
-                The bill you're looking for couldn't be found.
-              </p>
-              <AstroButton href="/legislation" variant="civic">
-                Search Legislation
-              </AstroButton>
-            </AstroCard>
-          </div>
+          <ErrorCard
+            title={error}
+            description="The bill you're looking for couldn't be found."
+            actionHref="/legislation"
+            actionLabel="Search Legislation"
+          />
         ) : (
           bill && (
             <div class="container-wide">
