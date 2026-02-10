@@ -1,29 +1,37 @@
 import { test, expect } from "@playwright/test";
 
+const SEARCH_API = "/api/templates/search";
+
+function waitForSearchResponse(page: import("@playwright/test").Page) {
+  return page.waitForResponse((resp) => resp.url().includes(SEARCH_API));
+}
+
 test.describe("Template List Page", () => {
   test("page loads at /templates", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     await expect(page).toHaveTitle(/Templates/i);
     await expect(page.getByRole("heading", { name: /letter templates/i })).toBeVisible();
   });
 
   test("shows template cards when templates exist", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const templateSection = page.locator("[data-testid='template-list']");
     await expect(templateSection).toBeVisible();
 
-    // E2E database should have seeded templates
     const templateCards = page.locator("[data-testid='template-card']");
     await expect(templateCards.first()).toBeVisible();
   });
 
   test("template cards link to detail pages", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const firstTemplate = page.locator("[data-testid='template-card']").first();
     await expect(firstTemplate).toBeVisible();
@@ -33,8 +41,9 @@ test.describe("Template List Page", () => {
   });
 
   test("shows issue tags on template cards", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const firstTemplate = page.locator("[data-testid='template-card']").first();
     await expect(firstTemplate).toBeVisible();
@@ -46,44 +55,41 @@ test.describe("Template List Page", () => {
 
 test.describe("Template Search and Filtering", () => {
   test("search input filters results based on text", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const searchInput = page.locator("[data-testid='template-search-input']");
     await expect(searchInput).toBeVisible();
 
-    // Get initial count
     const templateCards = page.locator("[data-testid='template-card']");
     const initialCount = await templateCards.count();
     expect(initialCount).toBeGreaterThan(0);
 
-    // Search for a term that exists in E2E seeded templates
+    const searchResponse = page.waitForResponse(
+      (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("search=Infrastructure")
+    );
     await searchInput.fill("Infrastructure");
+    await searchResponse;
 
-    // Wait for debounce (300ms) + network
-    await page.waitForTimeout(400);
-    await page.waitForLoadState("networkidle");
-
-    // Should find the infrastructure template
     const filteredCards = page.locator("[data-testid='template-card']");
-    const filteredCount = await filteredCards.count();
-    expect(filteredCount).toBeGreaterThanOrEqual(1);
+    await expect(filteredCards.first()).toBeVisible();
 
-    // Verify the result contains our search term
-    const firstResult = filteredCards.first();
-    const title = await firstResult.locator("h2").textContent();
-    expect(title?.toLowerCase()).toContain("infrastructure");
+    await expect(filteredCards.first().locator("h2")).toContainText(/infrastructure/i);
   });
 
   test("search shows no results message for non-matching query", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const searchInput = page.locator("[data-testid='template-search-input']");
-    await searchInput.fill("xyznonexistent12345");
 
-    await page.waitForTimeout(400);
-    await page.waitForLoadState("networkidle");
+    const searchResponse = page.waitForResponse(
+      (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("search=xyznonexistent12345")
+    );
+    await searchInput.fill("xyznonexistent12345");
+    await searchResponse;
 
     const noResults = page.locator("[data-testid='no-results']");
     await expect(noResults).toBeVisible();
@@ -91,36 +97,32 @@ test.describe("Template Search and Filtering", () => {
   });
 
   test("tag filter buttons filter results", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const tagFilter = page.locator("[data-testid='tag-filter']");
     const isVisible = await tagFilter.isVisible().catch(() => false);
 
     if (isVisible) {
-      // Get initial count
       const templateCards = page.locator("[data-testid='template-card']");
       const initialCount = await templateCards.count();
 
-      // Click first tag filter
       const firstTagButton = page.locator("[data-testid='tag-filter-button']").first();
       await expect(firstTagButton).toBeVisible();
       const tagName = await firstTagButton.textContent();
-      await firstTagButton.click();
 
-      // Verify it's selected
+      const tagResponse = page.waitForResponse(
+        (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("tags=")
+      );
+      await firstTagButton.click();
+      await tagResponse;
+
       await expect(firstTagButton).toHaveAttribute("data-state", "on");
 
-      // Wait for API response and results to update
-      await page.waitForLoadState("networkidle");
-      // Wait for loading to complete (no "Searching..." text)
-      await expect(page.locator("text=Searching...")).not.toBeVisible({ timeout: 10000 });
-
-      // Results should be filtered (equal or fewer cards)
       const filteredCount = await templateCards.count();
       expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
-      // All visible cards should have the selected tag
       if (filteredCount > 0) {
         const firstCard = templateCards.first();
         const cardTags = await firstCard.locator("[data-testid='issue-tag']").allTextContents();
@@ -131,8 +133,9 @@ test.describe("Template Search and Filtering", () => {
   });
 
   test("clicking tag filter again deselects it", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const tagFilter = page.locator("[data-testid='tag-filter']");
     const isVisible = await tagFilter.isVisible().catch(() => false);
@@ -140,73 +143,72 @@ test.describe("Template Search and Filtering", () => {
     if (isVisible) {
       const firstTagButton = page.locator("[data-testid='tag-filter-button']").first();
 
-      // Select
       await firstTagButton.click();
       await expect(firstTagButton).toHaveAttribute("data-state", "on");
 
-      // Deselect
       await firstTagButton.click();
       await expect(firstTagButton).toHaveAttribute("data-state", "off");
     }
   });
 
   test("clear filters button restores all results", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const searchInput = page.locator("[data-testid='template-search-input']");
     const templateCards = page.locator("[data-testid='template-card']");
 
-    // Get initial count
     const initialCount = await templateCards.count();
 
-    // Apply search filter
+    const searchResponse = page.waitForResponse(
+      (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("search=Infrastructure")
+    );
     await searchInput.fill("Infrastructure");
-    await page.waitForTimeout(400);
-    await page.waitForLoadState("networkidle");
+    await searchResponse;
 
-    // Should show fewer or same results
     const filteredCount = await templateCards.count();
     expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
-    // Click clear filters
     const clearButton = page.locator("[data-testid='clear-filters-button']");
     await expect(clearButton).toBeVisible();
+
+    const clearResponse = page.waitForResponse(
+      (resp) => resp.url().includes(SEARCH_API) && !resp.url().includes("search=")
+    );
     await clearButton.click();
+    await clearResponse;
 
-    // Wait for debounce (300ms) + API call to complete
-    await page.waitForTimeout(400);
-    await page.waitForLoadState("networkidle");
-
-    // Wait for results to be restored (check that we have more than filtered count)
     await expect(templateCards).toHaveCount(initialCount, { timeout: 10000 });
-
-    // Search input should be cleared
     await expect(searchInput).toHaveValue("");
   });
 
   test("combined search and tag filter works", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const searchInput = page.locator("[data-testid='template-search-input']");
     const tagFilter = page.locator("[data-testid='tag-filter']");
 
     if (await tagFilter.isVisible()) {
-      // Apply search
+      const searchResponse = page.waitForResponse(
+        (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("search=Investment")
+      );
       await searchInput.fill("Investment");
-      await page.waitForTimeout(400);
-      await page.waitForLoadState("networkidle");
+      await searchResponse;
 
       const afterSearchCount = await page.locator("[data-testid='template-card']").count();
 
-      // Also apply tag filter
       const infrastructureTag = page.locator("[data-testid='tag-filter-button']", {
         hasText: /infrastructure/i,
       });
       if (await infrastructureTag.isVisible()) {
+        const tagResponse = page.waitForResponse(
+          (resp) => resp.url().includes(SEARCH_API) && resp.url().includes("tags=")
+        );
         await infrastructureTag.click();
-        await page.waitForLoadState("networkidle");
+        await tagResponse;
 
         const afterBothCount = await page.locator("[data-testid='template-card']").count();
         expect(afterBothCount).toBeLessThanOrEqual(afterSearchCount);
@@ -217,22 +219,23 @@ test.describe("Template Search and Filtering", () => {
 
 test.describe("Template Pagination", () => {
   test("load more button appears when more results exist", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const loadMoreButton = page.locator("[data-testid='load-more-button']");
     const templateCards = page.locator("[data-testid='template-card']");
 
     const cardCount = await templateCards.count();
-    // If we have 20 cards (default page size), there should be a load more button
     if (cardCount >= 20) {
       await expect(loadMoreButton).toBeVisible();
     }
   });
 
   test("load more button loads additional results", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const loadMoreButton = page.locator("[data-testid='load-more-button']");
     const templateCards = page.locator("[data-testid='template-card']");
@@ -240,10 +243,9 @@ test.describe("Template Pagination", () => {
     const initialCount = await templateCards.count();
 
     if (await loadMoreButton.isVisible()) {
+      const loadMoreResponse = waitForSearchResponse(page);
       await loadMoreButton.click();
-
-      // Wait for loading to complete
-      await page.waitForLoadState("networkidle");
+      await loadMoreResponse;
 
       const newCount = await templateCards.count();
       expect(newCount).toBeGreaterThan(initialCount);
@@ -251,31 +253,27 @@ test.describe("Template Pagination", () => {
   });
 
   test("load more button shows loading state while fetching", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const loadMoreButton = page.locator("[data-testid='load-more-button']");
 
     if (await loadMoreButton.isVisible()) {
-      // Click and check for loading state
       await loadMoreButton.click();
 
-      // Button should show loading text or be disabled
       const buttonText = await loadMoreButton.textContent();
       const isDisabled = await loadMoreButton.isDisabled();
 
-      // Either shows "Loading..." or is disabled during fetch
       expect(buttonText?.includes("Loading") || isDisabled).toBe(true);
 
-      // Wait for it to finish
-      await page.waitForLoadState("networkidle");
+      await waitForSearchResponse(page);
     }
   });
 });
 
 test.describe("Template Loading States", () => {
   test("shows skeleton loaders on initial load", async ({ page }) => {
-    // Slow down the network to catch the loading state
     await page.route("**/api/templates/search**", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await route.continue();
@@ -283,17 +281,14 @@ test.describe("Template Loading States", () => {
 
     await page.goto("/templates");
 
-    // Should see skeleton cards while loading
     const skeletons = page.locator(".animate-pulse");
     const hasSkeletons = (await skeletons.count()) > 0;
 
-    // Either we catch skeletons or the page loaded too fast
     if (hasSkeletons) {
       await expect(skeletons.first()).toBeVisible();
     }
 
-    // After load completes, skeletons should be gone
-    await page.waitForLoadState("networkidle");
+    await waitForSearchResponse(page);
     const templateCards = page.locator("[data-testid='template-card']");
     const noResults = page.locator("[data-testid='no-results']");
     const hasContent = (await templateCards.count()) > 0 || (await noResults.isVisible());
@@ -301,7 +296,6 @@ test.describe("Template Loading States", () => {
   });
 
   test("shows error state when API fails", async ({ page }) => {
-    // Mock API to fail
     await page.route("**/api/templates/search**", (route) => {
       route.fulfill({
         status: 500,
@@ -312,7 +306,6 @@ test.describe("Template Loading States", () => {
     await page.goto("/templates");
     await page.waitForLoadState("networkidle");
 
-    // Should show error message with retry button
     const errorMessage = page.getByText(/unable to load templates/i);
     await expect(errorMessage).toBeVisible();
 
@@ -366,8 +359,9 @@ test.describe("Template Detail Page", () => {
   });
 
   test("template detail page shows use template button", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const firstTemplate = page.locator("[data-testid='template-card']").first();
     if (await firstTemplate.isVisible()) {
@@ -379,8 +373,9 @@ test.describe("Template Detail Page", () => {
   });
 
   test("template detail page shows template content", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const firstTemplate = page.locator("[data-testid='template-card']").first();
     if (await firstTemplate.isVisible()) {
@@ -393,8 +388,9 @@ test.describe("Template Detail Page", () => {
   });
 
   test("template detail page shows report button", async ({ page }) => {
+    const mountResponse = waitForSearchResponse(page);
     await page.goto("/templates");
-    await page.waitForLoadState("networkidle");
+    await mountResponse;
 
     const firstTemplate = page.locator("[data-testid='template-card']").first();
     if (await firstTemplate.isVisible()) {
