@@ -1,0 +1,112 @@
+name: Backfill Votes
+
+on:
+  schedule:
+    # Every 6 hours, offset from other jobs
+    - cron: "0 3,9,15,21 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max votes per chamber per session (default: unlimited)"
+        required: false
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    name: Backfill Historical Votes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Backfill votes
+        id: votes
+        run: |
+          set +e
+          LIMIT_ARG=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            LIMIT_ARG="--limit ${{ inputs.limit }}"
+          fi
+          pnpm sync:votes -- --backfill $LIMIT_ARG
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
+          VOTES_RESULT: ${{ steps.votes.outputs.result }}
+          VOTES_FAILED: ${{ steps.votes.outputs.failed }}
+        run: |
+          if [ -z "$VOTES_RESULT" ]; then
+            VOTES_RESULT='{"congress":null,"sessions":[],"houseVotesUpserted":0,"senateVotesUpserted":0,"memberVotesUpserted":0,"errors":[],"duration":"0s"}'
+          fi
+
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          CONGRESS=$(echo "$VOTES_RESULT" | jq -r '.congress // "null"')
+          SESSIONS=$(echo "$VOTES_RESULT" | jq -r '.sessions // [] | join(", ")')
+          HOUSE=$(echo "$VOTES_RESULT" | jq -r '.houseVotesUpserted // 0')
+          SENATE=$(echo "$VOTES_RESULT" | jq -r '.senateVotesUpserted // 0')
+          MEMBER=$(echo "$VOTES_RESULT" | jq -r '.memberVotesUpserted // 0')
+          ERROR_COUNT=$(echo "$VOTES_RESULT" | jq -r '.errors | length // 0')
+          DURATION=$(echo "$VOTES_RESULT" | jq -r '.duration // "unknown"')
+
+          if [ "$VOTES_FAILED" = "true" ]; then
+            TITLE="🚨 Vote Backfill Failed"
+            COLOR=15158332
+            LEVEL=alert
+            DESC="❌ **Votes**: Backfill failed"
+          elif [ "$CONGRESS" = "null" ]; then
+            TITLE="✅ Vote Backfill - Complete"
+            COLOR=9807270
+            LEVEL=success
+            DESC="⏭️ **Votes**: All congresses have vote data"
+          else
+            TITLE="📊 Vote Backfill Complete"
+            COLOR=3066993
+            LEVEL=success
+            DESC="✅ **Congress ${CONGRESS}** (sessions ${SESSIONS}): ${HOUSE} House, ${SENATE} Senate votes (${DURATION})"
+            DESC="${DESC}"$'\n'"👥 **Member votes**: ${MEMBER}"
+
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT}"
+            fi
+          fi
+
+          .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
+
+      - name: Fail workflow if backfill failed
+        if: steps.votes.outputs.failed == 'true'
+        run: |
+          echo "Vote backfill failed - check logs above for details"
+          exit 1

@@ -23,7 +23,7 @@ function parseBillNumberAsInt(billNumber: string): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-export async function syncSummaries(limit: number = 100): Promise<SyncSummariesResult> {
+export async function syncSummaries(limit: number = 200): Promise<SyncSummariesResult> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
@@ -133,7 +133,7 @@ export async function syncSummaries(limit: number = 100): Promise<SyncSummariesR
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const limitArgIndex = process.argv.findIndex((arg) => arg === "--limit");
-  let limit = 100;
+  let limit = 200;
 
   if (limitArgIndex !== -1) {
     const limitArg = process.argv[limitArgIndex + 1];

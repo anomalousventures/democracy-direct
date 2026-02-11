@@ -131,6 +131,9 @@ importers:
       tailwindcss:
         specifier: 4.1.18
         version: 4.1.18
+      uuidv7:
+        specifier: ^1.1.0
+        version: 1.1.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -6449,6 +6452,10 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+
+  uuidv7@1.1.0:
+    resolution: {integrity: sha512-2VNnOC0+XQlwogChUDzy6pe8GQEys9QFZBGOh54l6qVfwoCUwwRvk7rDTgaIsRgsF5GFa5oiNg8LqXE3jofBBg==}
     hasBin: true
 
   validate-npm-package-name@7.0.2:
@@ -13801,6 +13808,8 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   uuid@8.3.2: {}
+
+  uuidv7@1.1.0: {}
 
   validate-npm-package-name@7.0.2: {}
 

@@ -51,7 +51,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
           SYNC_RESULT: ${{ steps.sync.outputs.result }}
           SYNC_FAILED: ${{ steps.sync.outputs.failed }}
         run: |
@@ -66,10 +67,12 @@ jobs:
           if [ "$SYNC_FAILED" = "true" ]; then
             TITLE="🚨 Sponsored Bills Sync Failed"
             COLOR=15158332
+            LEVEL=alert
             DESC="❌ **Sync**: Failed"
           elif [ "$CHANGED" = "true" ]; then
             TITLE="📊 Sponsored Bills Sync Complete"
             COLOR=3066993
+            LEVEL=success
             DESC="✅ **Bills**: ${BILLS} upserted from ${LEGISLATORS} legislators in ${DURATION}"
             if [ "$ERROR_COUNT" -gt 0 ]; then
               DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT} legislators had issues"
@@ -77,10 +80,12 @@ jobs:
           else
             TITLE="✅ Sponsored Bills Sync - No Changes"
             COLOR=9807270
+            LEVEL=success
             DESC="⏭️ **Bills**: No new bills found (${LEGISLATORS} legislators checked)"
           fi
 
           .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
             --title "$TITLE" \
             --color "$COLOR" \
             --description "$DESC" \

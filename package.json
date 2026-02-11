@@ -37,6 +37,7 @@
     "sync:votes": "npx tsx src/scripts/sync-votes.ts",
     "sync:bills": "npx tsx src/scripts/sync-bills.ts",
     "sync:summaries": "npx tsx src/scripts/sync-summaries.ts",
+    "sync:amendments": "npx tsx src/scripts/sync-amendments.ts",
     "sync:sponsored-bills": "npx tsx src/scripts/sync-sponsored-bills.ts",
     "moderate:pending": "npx tsx src/scripts/moderate-pending.ts",
     "generate:api-schema": "pnpm tsx src/scripts/generate-api-schema.ts api-schema.json",
@@ -84,6 +85,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "3.4.0",
     "tailwindcss": "4.1.18",
+    "uuidv7": "^1.1.0",
     "zod": "^4.3.6"
   },
   "lint-staged": {

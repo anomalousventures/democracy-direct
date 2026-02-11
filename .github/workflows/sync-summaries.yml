@@ -1,0 +1,113 @@
+name: Sync Summaries
+
+on:
+  schedule:
+    # Every 4 hours, offset from other jobs
+    - cron: "0 1,5,9,13,17,21 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max bills to fetch summaries for (default: 200)"
+        required: false
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  sync-summaries:
+    name: Sync Bill Summaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync summaries
+        id: summaries
+        run: |
+          set +e
+          LIMIT_ARG=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            LIMIT_ARG="--limit ${{ inputs.limit }}"
+          fi
+          pnpm sync:summaries -- $LIMIT_ARG
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
+          SUMMARIES_RESULT: ${{ steps.summaries.outputs.result }}
+          SUMMARIES_FAILED: ${{ steps.summaries.outputs.failed }}
+        run: |
+          if [ -z "$SUMMARIES_RESULT" ]; then
+            SUMMARIES_RESULT='{"billsProcessed":0,"summariesAdded":0,"noSummaryAvailable":0,"errors":[],"duration":"0s"}'
+          fi
+
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          PROCESSED=$(echo "$SUMMARIES_RESULT" | jq -r '.billsProcessed // 0')
+          ADDED=$(echo "$SUMMARIES_RESULT" | jq -r '.summariesAdded // 0')
+          NO_SUMMARY=$(echo "$SUMMARIES_RESULT" | jq -r '.noSummaryAvailable // 0')
+          ERROR_COUNT=$(echo "$SUMMARIES_RESULT" | jq -r '.errors | length // 0')
+          DURATION=$(echo "$SUMMARIES_RESULT" | jq -r '.duration // "unknown"')
+
+          if [ "$SUMMARIES_FAILED" = "true" ]; then
+            TITLE="🚨 Summary Sync Failed"
+            COLOR=15158332
+            LEVEL=alert
+            DESC="❌ **Summaries**: Sync failed"
+          elif [ "$PROCESSED" -eq 0 ]; then
+            TITLE="✅ Summary Sync - All Done"
+            COLOR=9807270
+            LEVEL=success
+            DESC="⏭️ **Summaries**: All bills have summaries"
+          else
+            TITLE="📊 Summary Sync Complete"
+            COLOR=3066993
+            LEVEL=success
+            DESC="✅ **Summaries**: ${ADDED} added from ${PROCESSED} bills (${DURATION})"
+
+            if [ "$NO_SUMMARY" -gt 0 ]; then
+              DESC="${DESC}"$'\n'"ℹ️ **No summary available**: ${NO_SUMMARY} bills"
+            fi
+
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT}"
+            fi
+          fi
+
+          .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
+
+      - name: Fail workflow if sync failed
+        if: steps.summaries.outputs.failed == 'true'
+        run: |
+          echo "Summary sync failed - check logs above for details"
+          exit 1

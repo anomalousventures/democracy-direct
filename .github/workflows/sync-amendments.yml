@@ -1,0 +1,113 @@
+name: Sync Amendments
+
+on:
+  schedule:
+    # Every 6 hours, offset from other jobs
+    - cron: "0 2,8,14,20 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max bills to process for amendments (default: 50)"
+        required: false
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  sync-amendments:
+    name: Sync Bill Amendments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync amendments
+        id: amendments
+        run: |
+          set +e
+          LIMIT_ARG=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            LIMIT_ARG="--limit ${{ inputs.limit }}"
+          fi
+          pnpm sync:amendments -- $LIMIT_ARG
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
+          AMENDMENTS_RESULT: ${{ steps.amendments.outputs.result }}
+          AMENDMENTS_FAILED: ${{ steps.amendments.outputs.failed }}
+        run: |
+          if [ -z "$AMENDMENTS_RESULT" ]; then
+            AMENDMENTS_RESULT='{"billsProcessed":0,"amendmentsUpserted":0,"orphansRelinked":0,"errors":[],"duration":"0s"}'
+          fi
+
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          PROCESSED=$(echo "$AMENDMENTS_RESULT" | jq -r '.billsProcessed // 0')
+          UPSERTED=$(echo "$AMENDMENTS_RESULT" | jq -r '.amendmentsUpserted // 0')
+          RELINKED=$(echo "$AMENDMENTS_RESULT" | jq -r '.orphansRelinked // 0')
+          ERROR_COUNT=$(echo "$AMENDMENTS_RESULT" | jq -r '.errors | length // 0')
+          DURATION=$(echo "$AMENDMENTS_RESULT" | jq -r '.duration // "unknown"')
+
+          if [ "$AMENDMENTS_FAILED" = "true" ]; then
+            TITLE="🚨 Amendment Sync Failed"
+            COLOR=15158332
+            LEVEL=alert
+            DESC="❌ **Amendments**: Sync failed"
+          elif [ "$PROCESSED" -eq 0 ]; then
+            TITLE="✅ Amendment Sync - No Bills to Process"
+            COLOR=9807270
+            LEVEL=success
+            DESC="⏭️ **Amendments**: No bills to process"
+          else
+            TITLE="📊 Amendment Sync Complete"
+            COLOR=3066993
+            LEVEL=success
+            DESC="✅ **Amendments**: ${UPSERTED} upserted from ${PROCESSED} bills (${DURATION})"
+
+            if [ "$RELINKED" -gt 0 ]; then
+              DESC="${DESC}"$'\n'"🔗 **Orphans relinked**: ${RELINKED}"
+            fi
+
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERROR_COUNT}"
+            fi
+          fi
+
+          .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
+
+      - name: Fail workflow if sync failed
+        if: steps.amendments.outputs.failed == 'true'
+        run: |
+          echo "Amendment sync failed - check logs above for details"
+          exit 1

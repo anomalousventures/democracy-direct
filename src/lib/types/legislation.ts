@@ -352,6 +352,30 @@ export const BillSummariesResponseSchema = z.object({
 });
 export type BillSummariesResponse = z.infer<typeof BillSummariesResponseSchema>;
 
+export const BillAmendmentsResponseSchema = z.object({
+  amendments: z.array(
+    z.object({
+      congress: z.number(),
+      number: z.string(),
+      type: z.string(),
+      url: z.string().optional(),
+      latestAction: z
+        .object({
+          actionDate: z.string(),
+          text: z.string(),
+        })
+        .optional(),
+    })
+  ),
+  pagination: z
+    .object({
+      count: z.number(),
+      next: z.string().optional(),
+    })
+    .optional(),
+});
+export type BillAmendmentsResponse = z.infer<typeof BillAmendmentsResponseSchema>;
+
 export const AmendmentDetailResponseSchema = z.object({
   amendment: z.object({
     congress: z.number(),

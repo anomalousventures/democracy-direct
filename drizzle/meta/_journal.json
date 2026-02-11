@@ -92,6 +92,20 @@
       "when": 1770505247154,
       "tag": "0012_special_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1770774523249,
+      "tag": "0013_install-pg-uuidv7",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1770774545957,
+      "tag": "0014_add-v7-id-columns",
+      "breakpoints": true
     }
   ]
 }
