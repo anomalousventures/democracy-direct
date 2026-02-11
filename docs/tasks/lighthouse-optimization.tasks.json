@@ -1,0 +1,110 @@
+{
+  "feature": "Performance Optimization",
+  "branch": "feat/lighthouse-optimization",
+  "status": "not started",
+  "preconditions": [],
+  "tasks": [
+    {
+      "id": "perf-1",
+      "title": "Run baseline Lighthouse audits on key pages",
+      "description": "Run Lighthouse audits in Chrome DevTools on homepage (/), /templates, a template detail page, /rep/[bioguideId], and a ZIP results page. Record Performance, Accessibility, Best Practices, and SEO scores in the Baseline Scores table in docs/tasks/lighthouse-optimization.md.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": [],
+      "acceptance_criteria": [
+        "Baseline scores recorded for all 5 pages (homepage, templates index, template detail, rep profile, ZIP results)",
+        "Each page has scores for Performance, Accessibility, Best Practices, and SEO",
+        "Scores table in docs/tasks/lighthouse-optimization.md is filled in"
+      ],
+      "files": ["docs/tasks/lighthouse-optimization.md"]
+    },
+    {
+      "id": "perf-2",
+      "title": "Fix critical accessibility issues",
+      "description": "Review Lighthouse audit results and fix all accessibility issues causing scores below 90. Common issues include color contrast, missing alt text, missing form labels, and focus indicators. Also verify og-default.png is under 100KB and add lazy loading to rep photos if missing.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["perf-1"],
+      "acceptance_criteria": [
+        "All color contrast issues resolved (WCAG AA minimum)",
+        "All images have appropriate alt text",
+        "All form inputs have associated labels",
+        "Focus indicators visible on interactive elements",
+        "og-default.png is optimized (under 100KB)",
+        "Rep photos use lazy loading attribute"
+      ],
+      "files": [
+        "src/layouts/Layout.astro",
+        "src/pages/rep/[bioguideId].astro",
+        "src/components/ZipLookup.tsx",
+        "src/components/ContactFlow.tsx",
+        "public/og-default.png"
+      ]
+    },
+    {
+      "id": "perf-3",
+      "title": "Fix critical performance issues",
+      "description": "Address render-blocking resources, large bundle sizes, and other performance issues identified in the Lighthouse audit. Focus on eliminating render-blocking CSS/JS, ensuring proper font loading, and verifying that Tiptap editor only loads on pages that need it.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["perf-1"],
+      "acceptance_criteria": [
+        "No render-blocking resources flagged by Lighthouse",
+        "Font loading uses display=swap",
+        "Tiptap editor is not loaded on pages that don't use it",
+        "All key pages score 90+ on Performance"
+      ],
+      "files": [
+        "src/layouts/Layout.astro",
+        "src/components/TiptapEditor.tsx",
+        "src/components/TemplateForm.tsx"
+      ]
+    },
+    {
+      "id": "perf-4",
+      "title": "Verify all pages score 90+ after fixes",
+      "description": "Re-run Lighthouse audits on all 5 key pages after applying accessibility and performance fixes. Confirm all categories score 90+. Document final scores alongside baselines.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["perf-2", "perf-3"],
+      "acceptance_criteria": [
+        "All 5 pages score 90+ on Performance",
+        "All 5 pages score 90+ on Accessibility",
+        "All 5 pages score 90+ on Best Practices",
+        "All 5 pages score 90+ on SEO",
+        "Final scores documented in docs/tasks/lighthouse-optimization.md"
+      ],
+      "files": ["docs/tasks/lighthouse-optimization.md"]
+    },
+    {
+      "id": "perf-5",
+      "title": "Add Lighthouse CI to GitHub Actions",
+      "description": "Install @lhci/cli as a dev dependency. Create lighthouserc.js config with the URL list for all 5 key pages, score assertions at 90 threshold. Create .github/workflows/lighthouse.yml that runs on PR events, building the site and running Lighthouse CI against it.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["perf-4"],
+      "acceptance_criteria": [
+        "@lhci/cli installed as devDependency",
+        "lighthouserc.js config exists with URLs for all 5 key pages",
+        "Score assertions set to 90 for all categories",
+        ".github/workflows/lighthouse.yml runs on pull_request events",
+        "Workflow builds site before running Lighthouse"
+      ],
+      "files": ["package.json", "lighthouserc.js", ".github/workflows/lighthouse.yml"]
+    },
+    {
+      "id": "perf-6",
+      "title": "Configure Lighthouse CI PR comments and status checks",
+      "description": "Configure Lighthouse CI to post score results as PR comments so reviewers can see performance impact. Add Lighthouse CI as a required status check for merge to prevent regressions below the 90 threshold.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["perf-5"],
+      "acceptance_criteria": [
+        "Lighthouse CI posts score summary as PR comment",
+        "PRs are blocked from merging if any category drops below 90",
+        "Lighthouse status check appears in PR checks list"
+      ],
+      "files": ["lighthouserc.js", ".github/workflows/lighthouse.yml"]
+    }
+  ]
+}

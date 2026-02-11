@@ -1,0 +1,202 @@
+{
+  "feature": "District Map",
+  "branch": "feat/district-map",
+  "status": "not started",
+  "preconditions": ["Performance Optimization must be merged first"],
+  "tasks": [
+    {
+      "id": "map-1",
+      "title": "Install MapLibre GL JS",
+      "description": "Add maplibre-gl as a project dependency. Verify the package installs correctly and the TypeScript types are available.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": [],
+      "acceptance_criteria": [
+        "maplibre-gl added to package.json dependencies",
+        "Package installs without errors",
+        "TypeScript types available for maplibre-gl imports"
+      ],
+      "files": ["package.json"]
+    },
+    {
+      "id": "map-2",
+      "title": "Create TIGERweb API wrapper",
+      "description": "Create src/lib/tigerweb.ts with typed functions: queryDistrictAtPoint(lng, lat) returns district info for a coordinate, and getAllDistrictsGeoJSON() returns a GeoJSON FeatureCollection of all 119th congressional districts. Include a FIPS-to-state-abbreviation mapping for translating TIGERweb FIPS codes to state abbreviations used in the legislators table.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": [],
+      "acceptance_criteria": [
+        "queryDistrictAtPoint(lng, lat) exported and returns DistrictInfo or null",
+        "getAllDistrictsGeoJSON() exported and returns GeoJSON FeatureCollection",
+        "DistrictInfo type includes state (FIPS), district number, name, and geoid",
+        "FIPS-to-state-abbreviation mapping covers all 50 states + DC",
+        "Functions construct correct TIGERweb URLs with proper query parameters"
+      ],
+      "files": ["src/lib/tigerweb.ts"]
+    },
+    {
+      "id": "map-3",
+      "title": "Write unit tests for TIGERweb wrapper",
+      "description": "Add unit tests for the TIGERweb API wrapper. Mock fetch to test response parsing, error handling, and URL construction for both queryDistrictAtPoint and getAllDistrictsGeoJSON.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-2"],
+      "acceptance_criteria": [
+        "Tests cover successful point query with district result",
+        "Tests cover point query returning no results (ocean, outside US)",
+        "Tests cover TIGERweb error responses",
+        "Tests verify correct URL construction and query parameters",
+        "Tests cover FIPS-to-state mapping for known values",
+        "All tests pass with pnpm test"
+      ],
+      "files": ["src/lib/tigerweb.test.ts"]
+    },
+    {
+      "id": "map-4",
+      "title": "Create DistrictMap React component",
+      "description": "Create src/components/DistrictMap.tsx as a client-only React component. Initialize MapLibre GL JS with a free base tile provider (Stadia Maps). Fetch district GeoJSON from TIGERweb on map load and add as a fill layer with semi-transparent styling and visible borders. Add click handler that calls queryDistrictAtPoint for the clicked coordinates.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-1", "map-2"],
+      "acceptance_criteria": [
+        "MapLibre GL JS initializes with Stadia Maps base tiles",
+        "District boundaries load from TIGERweb and display as fill layer",
+        "Districts have semi-transparent fill and visible border styling",
+        "Click on map triggers queryDistrictAtPoint with clicked coordinates",
+        "Map centers on continental US by default",
+        "Component handles loading state while GeoJSON fetches"
+      ],
+      "files": ["src/components/DistrictMap.tsx"]
+    },
+    {
+      "id": "map-5",
+      "title": "Create DistrictTooltip component",
+      "description": "Create src/components/DistrictTooltip.tsx that displays district info (state, district number, representative name and party) in a tooltip/popup on the map. Include a 'View Representative' link that navigates to the rep profile page. Query the local database to get rep name/party by state abbreviation and district number.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-4"],
+      "acceptance_criteria": [
+        "Tooltip displays state name and district number",
+        "Tooltip shows representative name and party",
+        "Tooltip includes 'View Representative' link to /rep/[bioguideId]",
+        "Tooltip handles at-large districts (district '00')",
+        "Tooltip handles missing rep data gracefully"
+      ],
+      "files": ["src/components/DistrictTooltip.tsx"]
+    },
+    {
+      "id": "map-6",
+      "title": "Add rep lookup API endpoint for map tooltips",
+      "description": "Create an API endpoint that accepts state abbreviation and district number, returns the representative's bioguideId, name, and party. The DistrictTooltip component needs this to show rep info without a full page load. Use existing legislator query patterns.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-5"],
+      "acceptance_criteria": [
+        "API endpoint accepts state and district parameters",
+        "Returns bioguideId, name, and party for the matching representative",
+        "Returns 404 for unknown state/district combinations",
+        "Handles at-large districts correctly",
+        "Uses Drizzle relational API for the query",
+        "Has export const prerender = false"
+      ],
+      "files": ["src/pages/api/rep/by-district.ts"]
+    },
+    {
+      "id": "map-7",
+      "title": "Create map.astro page with lazy-loaded map",
+      "description": "Create src/pages/map.astro as the dedicated map page. Use dynamic import to lazy-load the DistrictMap component (client-only, no SSR). Add preconnect hints for the tile server and TIGERweb. Include a loading skeleton that displays while the map component loads.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-4", "map-5"],
+      "acceptance_criteria": [
+        "Page available at /map route",
+        "DistrictMap loaded via dynamic import (client:only='react')",
+        "Preconnect hints for tiles.stadiamaps.com and tigerweb.geo.census.gov",
+        "Loading skeleton displays while map loads",
+        "Page has appropriate meta tags (title, description)",
+        "Tile provider attribution displayed on the map"
+      ],
+      "files": ["src/pages/map.astro"]
+    },
+    {
+      "id": "map-8",
+      "title": "Add map link to main navigation",
+      "description": "Add a 'Map' link to the site's main navigation in the layout component, linking to /map.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-7"],
+      "acceptance_criteria": [
+        "Map link appears in main navigation",
+        "Link navigates to /map",
+        "Active state shown when on /map page",
+        "Navigation order is logical (Map near other discovery features)"
+      ],
+      "files": ["src/layouts/Layout.astro"]
+    },
+    {
+      "id": "map-9",
+      "title": "Add 'Find on map' link to ZIP lookup results",
+      "description": "Add a link on the ZIP lookup results that directs users to the map page, providing a visual alternative to the text-based district information.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-7"],
+      "acceptance_criteria": [
+        "Link to /map displayed on ZIP lookup results",
+        "Link text clearly indicates map-based district finding",
+        "Link does not appear if map page doesn't exist (defensive)"
+      ],
+      "files": ["src/components/ZipLookup.tsx"]
+    },
+    {
+      "id": "map-10",
+      "title": "Handle TIGERweb errors gracefully",
+      "description": "Add error handling for TIGERweb service failures in the DistrictMap component. Show a user-friendly error message suggesting ZIP code lookup as a fallback. Handle network errors, timeouts, and malformed responses.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-4"],
+      "acceptance_criteria": [
+        "TIGERweb fetch failure shows user-friendly error message",
+        "Error message suggests ZIP code lookup as alternative",
+        "Network timeouts handled (not infinite loading)",
+        "Map remains interactive even if district overlay fails to load",
+        "Error state is visually distinct from loading state"
+      ],
+      "files": ["src/components/DistrictMap.tsx"]
+    },
+    {
+      "id": "map-11",
+      "title": "Add E2E test for district map",
+      "description": "Create tests/e2e/district-map.spec.ts that verifies the map page loads, the map renders, and navigation from the map to a rep page works. Test that the map link appears in navigation.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-8", "map-9"],
+      "acceptance_criteria": [
+        "E2E test navigates to /map and verifies page loads",
+        "Test verifies map canvas element renders",
+        "Test verifies map link exists in navigation",
+        "Test verifies loading skeleton appears then resolves",
+        "Test passes with pnpm test:e2e"
+      ],
+      "files": ["tests/e2e/district-map.spec.ts"]
+    },
+    {
+      "id": "map-12",
+      "title": "Final verification and cleanup",
+      "description": "Run full lint, typecheck, and test suite. Verify bundle size impact is under 250KB additional. Check all items from the verification checklist in docs/tasks/district-map.md. Verify map works on mobile with touch interactions.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["map-10", "map-11"],
+      "acceptance_criteria": [
+        "pnpm lint passes",
+        "pnpm typecheck passes",
+        "pnpm test passes (all unit tests)",
+        "pnpm test:e2e passes",
+        "Bundle size impact under 250KB additional gzipped",
+        "Map works on mobile with touch interactions",
+        "Map is keyboard navigable",
+        "All items in docs/tasks/district-map.md verification checklist pass"
+      ],
+      "files": []
+    }
+  ]
+}
