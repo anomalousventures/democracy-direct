@@ -85,6 +85,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "3.4.0",
     "tailwindcss": "4.1.18",
+    "uuidv7": "^1.1.0",
     "zod": "^4.3.6"
   },
   "lint-staged": {

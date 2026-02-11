@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { eq, and, isNull, gt, lt, sql, desc } from "drizzle-orm";
+import { uuidv7 } from "uuidv7";
 import { createDb, type Database } from "@/db/client";
 import { emailOtps, users, sessions } from "@/db/schema";
 import { badRequest, unauthorized, serverError, jsonResponse } from "@/lib/api-response";
@@ -72,7 +73,7 @@ export async function verifyOTPRequest(
     userId = userRecords[0].id;
   }
 
-  const sessionId = crypto.randomUUID();
+  const sessionId = uuidv7();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await db.insert(sessions).values({
