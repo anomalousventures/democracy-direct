@@ -18,11 +18,10 @@ test.describe("Roadmap Page", () => {
     await expect(completedHeading).toContainText("Completed");
   });
 
-  test("contains Up Next section", async ({ page }) => {
+  test("does not contain Up Next section", async ({ page }) => {
     await page.goto("/roadmap");
     const upNextHeading = page.locator("#upnext-heading");
-    await expect(upNextHeading).toBeVisible();
-    await expect(upNextHeading).toContainText("Up Next");
+    await expect(upNextHeading).not.toBeAttached();
   });
 
   test("contains Planned section", async ({ page }) => {
@@ -49,9 +48,12 @@ test.describe("Roadmap Page", () => {
     await expect(completedSection.getByRole("heading", { name: "Letter Templates" })).toBeVisible();
   });
 
-  test("lists upcoming features", async ({ page }) => {
+  test("lists shipped features in completed section", async ({ page }) => {
     await page.goto("/roadmap");
-    const upNextSection = page.locator('section[aria-labelledby="upnext-heading"]');
-    await expect(upNextSection.getByText("Voting Records")).toBeVisible();
+    const completedSection = page.locator('section[aria-labelledby="completed-heading"]');
+    await expect(completedSection.getByRole("heading", { name: "Voting Records" })).toBeVisible();
+    await expect(
+      completedSection.getByRole("heading", { name: "Legislation Search" })
+    ).toBeVisible();
   });
 });
