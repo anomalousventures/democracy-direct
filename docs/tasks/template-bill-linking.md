@@ -1,6 +1,6 @@
 # Template Bill Linking
 
-## Status: Ready
+## Status: Complete
 
 ## Problem Statement
 
