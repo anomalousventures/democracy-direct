@@ -183,6 +183,10 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
   console.log(`Found ${billsToSync.length} bills to check for amendments`);
 
   if (billsToSync.length === 0) {
+    if (currentOffset > 0) {
+      console.log("No bills at current offset — resetting to 0 for next run");
+      await saveOffset(db, 0);
+    }
     const duration = formatElapsed(startTime);
     console.log("\n=== SYNC AMENDMENTS COMPLETE ===");
     console.log(`Duration: ${duration}`);
