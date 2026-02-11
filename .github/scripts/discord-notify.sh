@@ -21,8 +21,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$LEVEL" in
-  success) WEBHOOK_BASE="${DISCORD_SUCCESS_WEBHOOK:?DISCORD_SUCCESS_WEBHOOK not set}" ;;
-  alert)   WEBHOOK_BASE="${DISCORD_ALERT_WEBHOOK:?DISCORD_ALERT_WEBHOOK not set}" ;;
+  success) WEBHOOK_BASE="${DISCORD_NOTIFICATIONS_WEBHOOK:?DISCORD_NOTIFICATIONS_WEBHOOK not set}" ;;
+  alert)   WEBHOOK_BASE="${DISCORD_ALERTS_WEBHOOK:?DISCORD_ALERTS_WEBHOOK not set}" ;;
   *)       echo "Missing or invalid --level (success|alert)" >&2; exit 1 ;;
 esac
 

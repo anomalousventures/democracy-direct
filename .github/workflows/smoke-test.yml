@@ -57,8 +57,8 @@ jobs:
       - name: Send Discord notification on failure
         if: failure()
         env:
-          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
         run: |
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 

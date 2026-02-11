@@ -80,4 +80,4 @@ Technical documentation, setup instructions, and contribution guidelines are in 
 
 ---
 
-Questions or concerns? Reach out at hello@democracy-direct.com
+Questions or concerns? Join the [Discord community](https://discord.gg/WAjDaUvQyW) or reach out at hello@democracy-direct.com
