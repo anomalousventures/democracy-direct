@@ -39,20 +39,25 @@ interface BillForAmendmentSync {
   status: string;
 }
 
-async function getAmendmentSyncOffset(db: Database): Promise<number> {
+async function getLastProcessedBillId(db: Database): Promise<string | null> {
   const { syncCursors } = await import("@/db/schema");
 
-  const [cursor] = await db.select().from(syncCursors).where(eq(syncCursors.id, "amendments_sync"));
+  const [row] = await db
+    .select({ cursor: syncCursors.cursor })
+    .from(syncCursors)
+    .where(eq(syncCursors.id, "amendments_sync"));
 
-  return cursor?.currentOffset ?? 0;
+  return row?.cursor ?? null;
 }
 
 async function getBillsForAmendmentSync(
   db: Database,
   limit: number,
-  offset: number
+  lastBillId: string | null
 ): Promise<BillForAmendmentSync[]> {
   const { bills } = await import("@/db/schema");
+
+  const conditions = lastBillId ? sql`${bills.id} > ${lastBillId}` : undefined;
 
   return db
     .select({
@@ -63,29 +68,25 @@ async function getBillsForAmendmentSync(
       status: bills.status,
     })
     .from(bills)
-    .orderBy(
-      sql`CASE WHEN ${bills.status} != 'introduced' THEN 0 ELSE 1 END`,
-      sql`${bills.latestActionDate} DESC`,
-      bills.id
-    )
-    .limit(limit)
-    .offset(offset);
+    .where(conditions)
+    .orderBy(bills.id)
+    .limit(limit);
 }
 
-async function saveOffset(db: Database, offset: number): Promise<void> {
+async function saveCursor(db: Database, lastBillId: string | null): Promise<void> {
   const { syncCursors } = await import("@/db/schema");
 
   await db
     .insert(syncCursors)
     .values({
       id: "amendments_sync",
-      currentOffset: offset,
+      cursor: lastBillId,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: syncCursors.id,
       set: {
-        currentOffset: offset,
+        cursor: lastBillId,
         updatedAt: new Date(),
       },
     });
@@ -176,16 +177,16 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
   console.log("=== SYNC AMENDMENTS START ===");
   console.log(`Limit: ${limit} bills`);
 
-  const currentOffset = await getAmendmentSyncOffset(db);
-  console.log(`Resuming from offset ${currentOffset}`);
+  const lastBillId = await getLastProcessedBillId(db);
+  console.log(lastBillId ? `Resuming after bill ${lastBillId}` : "Starting from beginning");
 
-  const billsToSync = await getBillsForAmendmentSync(db, limit, currentOffset);
+  const billsToSync = await getBillsForAmendmentSync(db, limit, lastBillId);
   console.log(`Found ${billsToSync.length} bills to check for amendments`);
 
   if (billsToSync.length === 0) {
-    if (currentOffset > 0) {
-      console.log("No bills at current offset — resetting to 0 for next run");
-      await saveOffset(db, 0);
+    if (lastBillId) {
+      console.log("No more bills — resetting cursor for next cycle");
+      await saveCursor(db, null);
     }
     const duration = formatElapsed(startTime);
     console.log("\n=== SYNC AMENDMENTS COMPLETE ===");
@@ -320,7 +321,7 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
     }
 
     if ((i + 1) % LOG_INTERVAL === 0) {
-      await saveOffset(db, currentOffset + i + 1);
+      await saveCursor(db, bill.id);
       console.log(
         `[${formatElapsed(startTime)}] Processed ${i + 1}/${billsToSync.length} bills ` +
           `(${amendmentsUpserted} amendments upserted)`
@@ -328,12 +329,12 @@ export async function syncAmendments(limit: number = 50): Promise<SyncAmendments
     }
   }
 
-  const newOffset = currentOffset + billsToSync.length;
+  const lastProcessedId = billsToSync[billsToSync.length - 1].id;
   if (billsToSync.length < limit) {
-    console.log("Reached end of bills — resetting offset to 0 for next run");
-    await saveOffset(db, 0);
+    console.log("Reached end of bills — resetting cursor for next cycle");
+    await saveCursor(db, null);
   } else {
-    await saveOffset(db, newOffset);
+    await saveCursor(db, lastProcessedId);
   }
 
   console.log("\n--- Relinking orphaned amendments ---");
