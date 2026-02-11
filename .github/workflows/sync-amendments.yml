@@ -57,7 +57,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
           AMENDMENTS_RESULT: ${{ steps.amendments.outputs.result }}
           AMENDMENTS_FAILED: ${{ steps.amendments.outputs.failed }}
         run: |
@@ -76,14 +77,17 @@ jobs:
           if [ "$AMENDMENTS_FAILED" = "true" ]; then
             TITLE="🚨 Amendment Sync Failed"
             COLOR=15158332
+            LEVEL=alert
             DESC="❌ **Amendments**: Sync failed"
           elif [ "$PROCESSED" -eq 0 ]; then
             TITLE="✅ Amendment Sync - No Bills to Process"
             COLOR=9807270
+            LEVEL=success
             DESC="⏭️ **Amendments**: No bills to process"
           else
             TITLE="📊 Amendment Sync Complete"
             COLOR=3066993
+            LEVEL=success
             DESC="✅ **Amendments**: ${UPSERTED} upserted from ${PROCESSED} bills (${DURATION})"
 
             if [ "$RELINKED" -gt 0 ]; then
@@ -96,6 +100,7 @@ jobs:
           fi
 
           .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
             --title "$TITLE" \
             --color "$COLOR" \
             --description "$DESC" \

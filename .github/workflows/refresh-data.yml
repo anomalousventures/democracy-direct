@@ -162,7 +162,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
           LEGISLATORS_RESULT: ${{ steps.legislators.outputs.result }}
           LEGISLATORS_FAILED: ${{ steps.legislators.outputs.failed }}
           ZIPS_RESULT: ${{ steps.zips.outputs.result }}
@@ -192,12 +193,15 @@ jobs:
           if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ] || [ "$VOTES_FAILED" = "true" ] || [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Data Refresh Failed"
             COLOR=15158332
+            LEVEL=alert
           elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ] || [ "$VOTES_CHANGED" = "true" ] || [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Data Refresh Complete"
             COLOR=3066993
+            LEVEL=success
           else
             TITLE="✅ Data Refresh - No Changes"
             COLOR=9807270
+            LEVEL=success
           fi
 
           # Build status lines
@@ -244,6 +248,7 @@ jobs:
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
             --title "$TITLE" \
             --color "$COLOR" \
             --description "$DESC" \

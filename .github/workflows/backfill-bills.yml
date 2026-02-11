@@ -57,7 +57,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
           BILLS_RESULT: ${{ steps.bills.outputs.result }}
           BILLS_FAILED: ${{ steps.bills.outputs.failed }}
         run: |
@@ -120,18 +121,22 @@ jobs:
           if [ "$BILLS_FAILED" = "true" ]; then
             TITLE="🚨 Bill Backfill Failed"
             COLOR=15158332
+            LEVEL=alert
             DESC="❌ **Bills**: Backfill failed"
           elif [ "$SCHEMA_ISSUE_DETECTED" = "true" ] && [ "$BILLS_COUNT" -eq 0 ]; then
             TITLE="⚠️ Bill Backfill - Schema Issue Detected"
             COLOR=16039746
+            LEVEL=alert
             DESC=$(printf '⚠️ **Bills**: All %s bills failed with same error\n```\n%s\n```\n**This suggests a schema or code issue, not data problems.**' "$ERROR_COUNT" "$ERROR_SUMMARY")
           elif [ "$ERROR_COUNT" -gt 0 ] && [ "$BILLS_COUNT" -eq 0 ]; then
             TITLE="🚨 Bill Backfill - All Bills Failed"
             COLOR=15158332
+            LEVEL=alert
             DESC="❌ **Bills**: All bills failed ($ERROR_COUNT errors across $UNIQUE_ERRORS types)"$'\n'"Check logs for error breakdown."
           elif [ "$BILLS_CHANGED" = "true" ]; then
             TITLE="📊 Bill Backfill Complete"
             COLOR=3066993
+            LEVEL=success
 
             BILL_RANGE=""
             if [ -n "$FIRST_BILL_TYPE" ] && [ -n "$LAST_BILL_TYPE" ]; then
@@ -159,10 +164,12 @@ jobs:
           else
             TITLE="✅ Bill Backfill - Complete"
             COLOR=9807270
+            LEVEL=success
             DESC="⏭️ **Bills**: Backfill complete to target Congress"
           fi
 
           .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
             --title "$TITLE" \
             --color "$COLOR" \
             --description "$DESC" \

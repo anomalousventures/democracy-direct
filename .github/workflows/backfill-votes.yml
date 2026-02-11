@@ -57,7 +57,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
           VOTES_RESULT: ${{ steps.votes.outputs.result }}
           VOTES_FAILED: ${{ steps.votes.outputs.failed }}
         run: |
@@ -78,14 +79,17 @@ jobs:
           if [ "$VOTES_FAILED" = "true" ]; then
             TITLE="🚨 Vote Backfill Failed"
             COLOR=15158332
+            LEVEL=alert
             DESC="❌ **Votes**: Backfill failed"
           elif [ "$CONGRESS" = "null" ]; then
             TITLE="✅ Vote Backfill - Complete"
             COLOR=9807270
+            LEVEL=success
             DESC="⏭️ **Votes**: All congresses have vote data"
           else
             TITLE="📊 Vote Backfill Complete"
             COLOR=3066993
+            LEVEL=success
             DESC="✅ **Congress ${CONGRESS}** (sessions ${SESSIONS}): ${HOUSE} House, ${SENATE} Senate votes (${DURATION})"
             DESC="${DESC}"$'\n'"👥 **Member votes**: ${MEMBER}"
 
@@ -95,6 +99,7 @@ jobs:
           fi
 
           .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
             --title "$TITLE" \
             --color "$COLOR" \
             --description "$DESC" \

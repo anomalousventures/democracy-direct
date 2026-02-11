@@ -41,7 +41,8 @@ jobs:
       - name: Send Discord notification
         if: always()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -52,6 +53,7 @@ jobs:
             DESC=$(printf 'API schema regenerated from source.\n\n**%s routes, %s operations**\n\nThe schema JSON is attached below. Upload to Cloudflare API Shield.' "$ROUTE_COUNT" "$METHOD_COUNT")
 
             .github/scripts/discord-notify.sh \
+              --level success \
               --title "🟦 API Schema Updated" \
               --color 3447003 \
               --description "$DESC" \
@@ -59,6 +61,7 @@ jobs:
               --file api-schema.json
           else
             .github/scripts/discord-notify.sh \
+              --level alert \
               --title "🚨 API Schema Generation Failed" \
               --color 15158332 \
               --description "Schema generation did not produce api-schema.json. Check the build logs." \

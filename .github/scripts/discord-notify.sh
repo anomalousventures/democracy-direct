@@ -6,6 +6,7 @@ COLOR=""
 DESCRIPTION=""
 BUTTONS=()
 FILE=""
+LEVEL=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -14,14 +15,16 @@ while [[ $# -gt 0 ]]; do
     --description) DESCRIPTION="$2"; shift 2 ;;
     --button) BUTTONS+=("$2"); shift 2 ;;
     --file) FILE="$2"; shift 2 ;;
+    --level) LEVEL="$2"; shift 2 ;;
     *) echo "Unknown arg: $1" >&2; exit 1 ;;
   esac
 done
 
-if [ -z "${DISCORD_WEBHOOK:-}" ]; then
-  echo "DISCORD_WEBHOOK not set, skipping notification"
-  exit 0
-fi
+case "$LEVEL" in
+  success) WEBHOOK_BASE="${DISCORD_SUCCESS_WEBHOOK:?DISCORD_SUCCESS_WEBHOOK not set}" ;;
+  alert)   WEBHOOK_BASE="${DISCORD_ALERT_WEBHOOK:?DISCORD_ALERT_WEBHOOK not set}" ;;
+  *)       echo "Missing or invalid --level (success|alert)" >&2; exit 1 ;;
+esac
 
 if [ -z "$TITLE" ] || [ -z "$COLOR" ] || [ -z "$DESCRIPTION" ]; then
   echo "Missing required args: --title, --color, --description" >&2
@@ -29,7 +32,7 @@ if [ -z "$TITLE" ] || [ -z "$COLOR" ] || [ -z "$DESCRIPTION" ]; then
 fi
 
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-WEBHOOK_URL="$DISCORD_WEBHOOK"
+WEBHOOK_URL="$WEBHOOK_BASE"
 
 BUTTONS_JSON="[]"
 if [ ${#BUTTONS[@]} -gt 0 ]; then

@@ -123,7 +123,7 @@ export async function processPendingModeration(
 
   const result = { total: pending.length, processed, errors, needsReview };
 
-  const webhookUrl = discordWebhookUrl ?? process.env.DISCORD_WEBHOOK_URL;
+  const webhookUrl = discordWebhookUrl ?? process.env.DISCORD_ALERT_WEBHOOK;
   if (webhookUrl && (needsReview > 0 || errors > 0)) {
     try {
       await sendDiscordNotification(webhookUrl, result);

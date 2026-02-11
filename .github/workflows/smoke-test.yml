@@ -57,11 +57,13 @@ jobs:
       - name: Send Discord notification on failure
         if: failure()
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_SUCCESS_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ALERT_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           .github/scripts/discord-notify.sh \
+            --level alert \
             --title "🚨 Smoke Test Failed" \
             --color 15158332 \
             --description "One or more smoke tests failed against production." \
