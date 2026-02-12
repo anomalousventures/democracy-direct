@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/preact";
 import { RepTabs } from "./RepTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";

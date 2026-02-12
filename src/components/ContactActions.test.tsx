@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { toast } from "sonner";
+import { render, screen, fireEvent, waitFor } from "@testing-library/preact";
+import { toast } from "@/lib/toast";
 import { ContactActions } from "./ContactActions";
 
-vi.mock("sonner", () => ({
+vi.mock("@/lib/toast", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),

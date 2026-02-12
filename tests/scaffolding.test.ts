@@ -68,16 +68,16 @@ describe("Phase 0.1: Project Scaffolding", () => {
     const pkg = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf-8"));
     const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 
-    it("should have React", () => {
-      expect(deps.react).toBeDefined();
+    it("should have Preact", () => {
+      expect(deps.preact).toBeDefined();
     });
 
     it("should have Tailwind CSS", () => {
       expect(deps.tailwindcss).toBeDefined();
     });
 
-    it("should have Astro React integration", () => {
-      expect(deps["@astrojs/react"]).toBeDefined();
+    it("should have Astro Preact integration", () => {
+      expect(deps["@astrojs/preact"]).toBeDefined();
     });
 
     it("should have Cloudflare adapter", () => {

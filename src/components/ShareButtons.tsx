@@ -10,7 +10,7 @@ import {
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/icons";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface RepInfo {
   name: string;

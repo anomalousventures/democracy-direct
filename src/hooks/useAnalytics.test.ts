@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/preact";
 import { useAnalytics } from "./useAnalytics";
 
 describe("useAnalytics", () => {

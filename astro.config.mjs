@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 
-import react from "@astrojs/react";
+import preact from "@astrojs/preact";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
 
@@ -9,7 +9,7 @@ import cloudflare from "@astrojs/cloudflare";
 export default defineConfig({
   site: "https://democracy-direct.com",
   output: "server",
-  integrations: [react()],
+  integrations: [preact({ compat: true })],
 
   vite: {
     plugins: [tailwindcss()],
@@ -18,12 +18,6 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        // Fix React 19 MessageChannel error on Cloudflare Workers (prod only)
-        // https://github.com/withastro/astro/issues/12824
-        ...(process.env.NODE_ENV === "production" && {
-          "react-dom/server": "react-dom/server.edge",
-          crypto: "node:crypto",
-        }),
         events: "node:events",
         util: "node:util",
         url: "node:url",

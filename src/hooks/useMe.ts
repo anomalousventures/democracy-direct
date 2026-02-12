@@ -1,4 +1,4 @@
-import { useStore } from "@nanostores/react";
+import { useStore } from "@nanostores/preact";
 import { $user, $isLoading, fetchUser, clearUser } from "@/stores/user";
 
 export function useMe() {
