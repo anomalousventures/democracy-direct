@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -90,7 +91,137 @@ jobs:
           echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" >> .dev.vars
 
       - name: Run Lighthouse CI
-        run: pnpm exec lhci autorun
+        id: lhci
+        run: |
+          pnpm exec lhci autorun 2>&1 | tee lhci-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate score summary
+        if: always() && hashFiles('.lighthouseci/lhr-*.json') != ''
+        id: summary
+        run: |
+          node << 'SCRIPT'
+          const fs = require("fs");
+          const { execSync } = require("child_process");
+
+          const files = execSync("ls .lighthouseci/lhr-*.json")
+            .toString()
+            .trim()
+            .split("\n");
+
+          const results = files
+            .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
+            .filter((r) => r.categories?.performance?.score != null);
+
+          if (results.length === 0) {
+            fs.writeFileSync(
+              "lighthouse-summary.md",
+              "No valid Lighthouse results found.\n"
+            );
+            process.exit(0);
+          }
+
+          const grouped = {};
+          for (const r of results) {
+            const url = new URL(r.finalUrl);
+            const page = url.pathname === "/" ? "/" : url.pathname;
+            if (!grouped[page]) grouped[page] = [];
+            grouped[page].push(r);
+          }
+
+          const icon = (score) => {
+            if (score >= 90) return "\u{1F7E2}";
+            if (score >= 50) return "\u{1F7E0}";
+            return "\u{1F534}";
+          };
+
+          let md = "## Lighthouse CI Results\n\n";
+          md += "| Page | Performance | Accessibility | Best Practices | SEO |\n";
+          md += "|------|:-----------:|:------------:|:--------------:|:---:|\n";
+
+          const sortedPages = Object.keys(grouped).sort();
+          for (const page of sortedPages) {
+            const runs = grouped[page];
+            const avg = (cat) => {
+              const scores = runs
+                .map((r) => r.categories[cat]?.score)
+                .filter((s) => s != null);
+              if (scores.length === 0) return null;
+              return Math.round(
+                (scores.reduce((a, b) => a + b, 0) / scores.length) * 100
+              );
+            };
+
+            const perf = avg("performance");
+            const a11y = avg("accessibility");
+            const bp = avg("best-practices");
+            const seo = avg("seo");
+
+            const fmt = (v) => (v != null ? `${icon(v)} ${v}` : "N/A");
+            md += `| \`${page}\` | ${fmt(perf)} | ${fmt(a11y)} | ${fmt(bp)} | ${fmt(seo)} |\n`;
+          }
+
+          const lhciOutput = fs.existsSync("lhci-output.txt")
+            ? fs.readFileSync("lhci-output.txt", "utf8")
+            : "";
+          const storageMatch = lhciOutput.match(
+            /https:\/\/storage\.googleapis\.com\/lighthouse-infrastructure\.appspot\.com\/[^\s]+/
+          );
+          if (storageMatch) {
+            md += `\n[View full Lighthouse report](${storageMatch[0]})\n`;
+          }
+
+          fs.writeFileSync("lighthouse-summary.md", md);
+          SCRIPT
+
+      - name: Post results to PR
+        if: always() && hashFiles('lighthouse-summary.md') != ''
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('lighthouse-summary.md', 'utf8');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Lighthouse CI Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary,
+              });
+            }
+
+      - name: Upload Lighthouse artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lighthouse-results
+          path: |
+            .lighthouseci/
+            lhci-output.txt
+          retention-days: 14
+
+      - name: Fail if assertions failed
+        if: always() && steps.lhci.outputs.exit_code != '0'
+        run: exit 1
 
       - name: Delete Neon Branch
         if: always()

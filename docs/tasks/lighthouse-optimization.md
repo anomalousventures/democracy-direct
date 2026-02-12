@@ -137,6 +137,6 @@ These scores will improve on Cloudflare's edge (faster TTFB, better routing to e
 - [x] All key pages score 90+ on SEO (100 across all pages)
 - [ ] All key pages score 90+ on Best Practices (N/A in WSL2 — verify in CI)
 - [ ] All key pages score 90+ on Performance (3 pages below 90 due to external deps — see above)
-- [ ] Lighthouse CI runs on every PR
-- [ ] PR comments show Lighthouse scores
-- [ ] PRs blocked if scores drop below 90
+- [x] Lighthouse CI runs on every PR (lighthouse.yml triggers on pull_request to main)
+- [x] PR comments show Lighthouse scores (workflow posts formatted table with color-coded scores)
+- [ ] PRs blocked if scores drop below 90 (requires adding "Lighthouse Audit" as required status check in GitHub repo settings → Branches → main protection rules)
