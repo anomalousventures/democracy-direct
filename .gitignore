@@ -39,6 +39,9 @@ test-results/
 blob-report/
 .playwright-mcp/
 
+# Lighthouse
+lighthouse-reports/
+
 # Editor
 *.swp
 *.swo

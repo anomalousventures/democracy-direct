@@ -21,7 +21,7 @@ Site performance, accessibility, SEO, and best practices should be continuously 
   - Templates index (`/templates`)
   - Template detail (`/templates/[slug]`)
   - Rep profile (`/rep/[bioguideId]`)
-  - ZIP results (`/zip/[zip]`)
+  - ZIP/District results (`/reps/[state]/[district]`) — note: `/zip/[zip]` route does not exist
 
 ## Open Questions - Resolved
 
@@ -57,19 +57,51 @@ Site performance, accessibility, SEO, and best practices should be continuously 
 14. Configure Lighthouse CI to post results as PR comment
 15. Add Lighthouse CI status check as required for merge
 
-## Baseline Scores (to be filled during audit)
+## Baseline Scores (dev server, 2026-02-11)
+
+Audited with Lighthouse CLI 13.0.3 against local dev server. Note: dev server scores are lower than production due to unminified JS, Vite dev toolbar, and HMR client. Best Practices was N/A due to a WSL2 headless Chrome limitation (charset gatherer error). The ZIP Results page (`/zip/[zip]`) does not exist; `/reps/OR/3` (district results) was audited instead.
 
 | Page            | Performance | Accessibility | Best Practices | SEO |
 | --------------- | ----------- | ------------- | -------------- | --- |
-| Homepage        | TBD         | TBD           | TBD            | TBD |
-| Templates Index | TBD         | TBD           | TBD            | TBD |
-| Template Detail | TBD         | TBD           | TBD            | TBD |
-| Rep Profile     | TBD         | TBD           | TBD            | TBD |
-| ZIP Results     | TBD         | TBD           | TBD            | TBD |
+| Homepage        | 55          | 100           | N/A            | 100 |
+| Templates Index | 59          | 100           | N/A            | 100 |
+| Template Detail | 79          | 100           | N/A            | 92  |
+| Rep Profile     | 59          | 99            | N/A            | 92  |
+| ZIP Results     | 55          | 100           | N/A            | 92  |
+
+## Recommendations by Category
+
+### Performance (all pages < 90)
+
+Dev-only issues (will not affect production):
+
+- Unminified JS (Vite serves raw modules in dev)
+- @vite/client and dev toolbar (~560KB combined)
+- Unused CSS from full Tailwind dev stylesheet
+
+Production-relevant issues:
+
+- **Tiptap loaded on Rep Profile**: `@tiptap/starter-kit` (613KB chunk) loads on `/rep/S000033` which doesn't use the editor — needs code splitting fix
+- **Large external images**: Rep photos from `bioguide.congress.gov` are uncompressed (~1MB), need `loading="lazy"`
+- **CLS on ZIP Results**: 0.223 CLS — layout shifts likely from async content loading
+- **CLS on Templates Index**: 0.134 CLS
+- **Server response time**: Template Detail (740ms) and Rep Profile (890ms) are slow in dev
+
+### Accessibility (Rep Profile at 99)
+
+- **Heading order**: `h3` inside Radix tabs content without a preceding `h2` — heading elements not in sequentially-descending order
+
+### SEO (3 pages at 92)
+
+- **Non-descriptive link text** on Template Detail, Rep Profile, and ZIP Results — generic link text like "Read more" should be more descriptive
+
+### Best Practices
+
+Unable to measure due to WSL2 headless Chrome limitation. Will verify in CI.
 
 ## Verification
 
-- [ ] Baseline scores documented for all key pages
+- [x] Baseline scores documented for all key pages
 - [ ] All key pages score 90+ on Performance
 - [ ] All key pages score 90+ on Accessibility
 - [ ] All key pages score 90+ on Best Practices
