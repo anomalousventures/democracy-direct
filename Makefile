@@ -1,4 +1,4 @@
-.PHONY: dev start stop db-push db-seed logs help
+.PHONY: dev start stop db-push db-seed logs photos help
 
 help:
 	@echo "Democracy Direct - Development Commands"
@@ -34,6 +34,9 @@ db-seed: db-push
 
 logs:
 	docker-compose logs -f
+
+photos:
+	pnpm optimize:photos
 
 dev:
 	docker-compose down --remove-orphans && docker-compose up -d

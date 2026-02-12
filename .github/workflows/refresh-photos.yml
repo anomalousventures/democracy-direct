@@ -1,0 +1,65 @@
+name: Refresh Photos
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Refresh Data"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-photos:
+    name: Optimize Legislator Photos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Optimize photos
+        run: pnpm optimize:photos
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet public/photos/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR for photo updates
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="data/photos-$(date +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add public/photos/
+          git commit -m "data: Refresh optimized legislator photos"
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "data: Refresh legislator photos" \
+            --body "Automated update of optimized legislator photos from bioguide.congress.gov." \
+            --base main \
+            --head "$BRANCH"

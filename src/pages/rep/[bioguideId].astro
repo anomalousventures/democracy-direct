@@ -20,7 +20,8 @@ import type { Legislator } from "@/db/schema";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";
 import {
-  getPhotoUrl,
+  getPhotoSources,
+  getPhotoFallbackSrc,
   getPartyColor,
   getPartyLabel,
   getRepTitle,
@@ -120,9 +121,7 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
   description={rep
     ? `Contact information for ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}, representing ${rep.state}${rep.chamber === "house" && rep.district !== "0" ? `-${rep.district}` : ""}`
     : "Representative not found"}
-  ogImage={rep
-    ? `https://theunitedstates.io/images/congress/450x550/${rep.bioguideId}.jpg`
-    : undefined}
+  ogImage={rep ? `${Astro.url.origin}${getPhotoFallbackSrc(rep.bioguideId, "og")}` : undefined}
 >
   <Header currentPath={`/rep/${bioguideId}`} user={user} />
 
@@ -143,13 +142,21 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                 <div class="flex flex-col sm:flex-row gap-6">
                   <div class="flex-shrink-0">
                     <div class="rep-photo-lg">
-                      <img
-                        src={getPhotoUrl(rep.bioguideId)}
-                        alt={`${rep.firstName} ${rep.lastName}`}
-                        class="w-full h-full object-cover object-top relative z-10"
-                        fetchpriority="high"
+                      <picture
+                        class="w-full h-full relative z-10"
                         onerror="this.style.display='none'"
-                      />
+                      >
+                        {getPhotoSources(rep.bioguideId, "lg").map((source) => (
+                          <source srcset={source.srcset} type={source.type} />
+                        ))}
+                        <img
+                          src={getPhotoFallbackSrc(rep.bioguideId, "lg")}
+                          alt={`${rep.firstName} ${rep.lastName}`}
+                          class="w-full h-full object-cover object-top"
+                          fetchpriority="high"
+                          onerror="this.parentElement.style.display='none'"
+                        />
+                      </picture>
                       <div class="rep-photo-fallback-lg" style="font-family: var(--font-display)">
                         {rep.firstName[0]}
                         {rep.lastName[0]}

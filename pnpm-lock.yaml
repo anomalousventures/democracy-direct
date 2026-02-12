@@ -153,6 +153,9 @@ importers:
       shadcn:
         specifier: ^3.8.4
         version: 3.8.4(@types/node@25.2.2)(typescript@5.9.3)
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
       tsx:
         specifier: 4.21.0
         version: 4.21.0
@@ -11579,7 +11582,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.0.0
       detect-libc: 2.1.2
-      semver: 7.7.3
+      semver: 7.7.4
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.5
       '@img/sharp-darwin-x64': 0.34.5

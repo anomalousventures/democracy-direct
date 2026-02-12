@@ -47,6 +47,9 @@ lighthouse-reports/
 *.swo
 .vscode/
 
+# Photo optimization temp files
+.photos-tmp/
+
 # Ralph loop local state
 .claude/*.local.md
 .dev.vars

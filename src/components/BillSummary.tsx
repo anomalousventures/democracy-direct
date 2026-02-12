@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { getPhotoUrl } from "@/lib/legislator-utils";
+import { getPhotoSources, getPhotoFallbackSrc } from "@/lib/legislator-utils";
 import { sanitizeExternalUrl } from "@/lib/url";
 import type { BillWithSponsor } from "@/db/queries/bills";
 import { formatDateMedium as formatDate } from "@/lib/date-utils";
@@ -67,15 +67,21 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
         <div className="flex items-center gap-3 p-4 bg-secondary/50 border border-border rounded-sm">
           <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-muted flex-shrink-0">
             <div className="rep-photo-fallback-sm !text-2xl">{sponsorInitials}</div>
-            <img
-              src={getPhotoUrl(bill.sponsor.bioguideId)}
-              alt={bill.sponsor.fullName}
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
+            <picture className="absolute inset-0 w-full h-full">
+              {getPhotoSources(bill.sponsor.bioguideId, "sm").map((source) => (
+                <source key={source.type} srcSet={source.srcset} type={source.type} />
+              ))}
+              <img
+                src={getPhotoFallbackSrc(bill.sponsor.bioguideId, "sm")}
+                alt={bill.sponsor.fullName}
+                className="w-full h-full object-cover object-top"
+                loading="lazy"
+                onError={(e) => {
+                  const picture = e.currentTarget.parentElement;
+                  if (picture) picture.style.display = "none";
+                }}
+              />
+            </picture>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Sponsored by</p>

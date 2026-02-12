@@ -26,13 +26,14 @@ pnpm db:migrate             # Run migrations on Neon
 pnpm db:push                # Push schema directly (dev only, skips migrations)
 pnpm db:studio              # Drizzle Studio GUI
 make db-seed                # Import legislators + ZIP data
+make photos                 # Download + optimize legislator photos (public/photos/)
 ```
 
 ## Architecture
 
-### Astro + React Islands
+### Astro + Preact Islands
 
-Server-rendered Astro pages with React components hydrated via `client:load`. API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings. **Deployed on Cloudflare Pages** (not Workers) - Pages Functions lack persistent logging; use `wrangler pages deployment tail` for real-time logs.
+Server-rendered Astro pages with Preact components (compat mode — imports use `"react"` but runtime is Preact). Hydrated via `client:load` (interactive immediately) or `client:idle` (deferred, for below-fold). API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings. **Deployed on Cloudflare Pages** (not Workers) - Pages Functions lack persistent logging; use `wrangler pages deployment tail` for real-time logs.
 
 ### Database (Neon + Drizzle)
 
@@ -78,6 +79,10 @@ Client-side lookup against `public/data/zip-districts.json`. Server never sees u
 
 External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.gov` domains allowed.
 
+### Legislator Photos
+
+Self-hosted optimized photos in `public/photos/` (AVIF/WebP/JPG at sm/lg/og sizes). Use `getPhotoSources(bioguideId, size)` and `getPhotoFallbackSrc(bioguideId, size)` from `src/lib/legislator-utils.ts` with `<picture>` elements. `manifest.json` tracks content hashes for incremental updates. Refreshed weekly via GitHub Action.
+
 ## Key Patterns
 
 - **Imports**: Use `@/` alias for `src/` paths
@@ -89,6 +94,7 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **Tests**: Unit tests colocated as `*.test.ts`, E2E in `tests/e2e/`
 - **No `as` casts**: Use type guards and discriminated unions instead of type assertions
 - **Lookup objects over if/else chains**: Prefer `const handlers = { a: fn1, b: fn2 }` over `if (x === 'a') ... else if ...`
+- **Data scripts**: `src/scripts/*.ts` — export pure functions for testability + CLI entrypoint via ``if (import.meta.url === `file://${process.argv[1]}`)``
 
 ## Testing Notes
 
@@ -118,3 +124,8 @@ External URLs (e.g., `contactFormUrl`) sanitized via `src/lib/url.ts` - only `.g
 - **`/sync-data`**: Run data import scripts (legislators, zips, votes, templates)
 - **`/new-query`**: Scaffold new db query module with integration tests
 - **security-reviewer**: Agent for auditing auth/security code changes
+- **content-writer**: Agent for writing and reviewing content (product copy, blog posts, template descriptions, changelogs, error messages). Follows `docs/WRITING.md` as binding style guide.
+
+## Writing
+
+All content follows `docs/WRITING.md`. Key rules: no em-dashes, no AI slop words, non-partisan product voice, precise privacy claims, no guilt language. Read the full guide before writing any user-facing text.

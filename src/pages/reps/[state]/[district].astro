@@ -12,7 +12,8 @@ import { createDb } from "@/db/client";
 import { getLegislatorsByStateAndDistrict } from "@/db/queries/legislators";
 import type { Legislator } from "@/db/schema";
 import {
-  getPhotoUrl,
+  getPhotoSources,
+  getPhotoFallbackSrc,
   getPartyColor,
   getPartyLabel,
   getRepTitle,
@@ -124,14 +125,19 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
                   <div class="flex flex-col sm:flex-row gap-6">
                     <div class="flex-shrink-0">
                       <div class="rep-photo-sm">
-                        <img
-                          src={getPhotoUrl(rep.bioguideId)}
-                          alt={`${rep.firstName} ${rep.lastName}`}
-                          class="w-full h-full object-cover object-top relative z-10"
-                          loading={index === 0 ? "eager" : "lazy"}
-                          fetchpriority={index === 0 ? "high" : "auto"}
-                          onerror="this.style.display='none'"
-                        />
+                        <picture class="w-full h-full relative z-10">
+                          {getPhotoSources(rep.bioguideId, "sm").map((source) => (
+                            <source srcset={source.srcset} type={source.type} />
+                          ))}
+                          <img
+                            src={getPhotoFallbackSrc(rep.bioguideId, "sm")}
+                            alt={`${rep.firstName} ${rep.lastName}`}
+                            class="w-full h-full object-cover object-top"
+                            loading={index === 0 ? "eager" : "lazy"}
+                            fetchpriority={index === 0 ? "high" : "auto"}
+                            onerror="this.parentElement.style.display='none'"
+                          />
+                        </picture>
                         <div class="rep-photo-fallback-sm" style="font-family: var(--font-display)">
                           {rep.firstName[0]}
                           {rep.lastName[0]}
