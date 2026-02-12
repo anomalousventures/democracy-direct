@@ -59,7 +59,7 @@ describe("ContactInfo", () => {
       render(<ContactInfo facebookId="reptest" />);
 
       expect(screen.getByText("Facebook")).toBeInTheDocument();
-      expect(screen.getByText("View Profile")).toBeInTheDocument();
+      expect(screen.getByText("View on Facebook")).toBeInTheDocument();
       expect(screen.getByRole("link")).toHaveAttribute("href", "https://facebook.com/reptest");
     });
 

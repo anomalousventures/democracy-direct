@@ -42,7 +42,7 @@ export function ContactInfo({
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-primary mb-4">Contact Information</h3>
+      <h2 className="text-lg font-semibold text-primary mb-4">Contact Information</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {phone && (
           <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="info-item-link">
@@ -145,7 +145,7 @@ export function ContactInfo({
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <p className="font-medium">Facebook</p>
-              <p className="text-primary">View Profile</p>
+              <p className="text-primary">View on Facebook</p>
             </div>
           </a>
         )}

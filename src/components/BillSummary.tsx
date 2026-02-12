@@ -71,6 +71,7 @@ export function BillSummary({ bill, className }: BillSummaryProps) {
               src={getPhotoUrl(bill.sponsor.bioguideId)}
               alt={bill.sponsor.fullName}
               className="absolute inset-0 w-full h-full object-cover object-top"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}

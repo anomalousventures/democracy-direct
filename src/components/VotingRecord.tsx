@@ -109,7 +109,7 @@ function VoteCard({ vote }: { vote: VoteWithPosition }) {
               href={voteDetailUrl}
               className="text-primary hover:text-accent font-medium transition-colors"
             >
-              View vote details
+              View roll call #{vote.rollCall} details
             </a>
           </div>
         </div>
