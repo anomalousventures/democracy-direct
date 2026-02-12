@@ -29,17 +29,17 @@ interface ToastOptions {
   duration?: number;
 }
 
-function toast(message: string, options?: ToastOptions): string {
-  return addToast({ message, type: "default", ...options });
-}
-
-toast.success = (message: string, options?: ToastOptions): string =>
-  addToast({ message, type: "success", ...options });
-
-toast.error = (message: string, options?: ToastOptions): string =>
-  addToast({ message, type: "error", ...options });
-
-toast.info = (message: string, options?: ToastOptions): string =>
-  addToast({ message, type: "info", ...options });
+const toast = Object.assign(
+  (message: string, options?: ToastOptions): string =>
+    addToast({ message, type: "default", ...options }),
+  {
+    success: (message: string, options?: ToastOptions): string =>
+      addToast({ message, type: "success", ...options }),
+    error: (message: string, options?: ToastOptions): string =>
+      addToast({ message, type: "error", ...options }),
+    info: (message: string, options?: ToastOptions): string =>
+      addToast({ message, type: "info", ...options }),
+  }
+);
 
 export { toast };

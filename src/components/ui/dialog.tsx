@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useCallback, useId, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useCallback,
+  useId,
+  useRef,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -45,22 +53,26 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
 function DialogContent({ className, children, ...props }: DialogContentProps) {
   const { open, onOpenChange, titleId, descriptionId } = useDialogContext();
 
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+
   const dialogCallbackRef = useCallback((node: HTMLDialogElement | null) => {
+    dialogRef.current = node;
     if (node && !node.open) {
       node.showModal();
     }
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    const node = dialogRef.current;
+    if (!open || !node) return;
 
     const handleCancel = (e: Event) => {
       e.preventDefault();
       onOpenChange?.(false);
     };
 
-    document.addEventListener("cancel", handleCancel);
-    return () => document.removeEventListener("cancel", handleCancel);
+    node.addEventListener("cancel", handleCancel);
+    return () => node.removeEventListener("cancel", handleCancel);
   }, [open, onOpenChange]);
 
   const handleBackdropClick = useCallback(
