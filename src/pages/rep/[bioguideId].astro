@@ -147,7 +147,7 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                         src={getPhotoUrl(rep.bioguideId)}
                         alt={`${rep.firstName} ${rep.lastName}`}
                         class="w-full h-full object-cover object-top relative z-10"
-                        loading="lazy"
+                        fetchpriority="high"
                         onerror="this.style.display='none'"
                       />
                       <div class="rep-photo-fallback-lg" style="font-family: var(--font-display)">

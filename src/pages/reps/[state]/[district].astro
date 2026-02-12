@@ -128,7 +128,8 @@ const districtDisplay = district === "0" || district === "AL" ? "At-Large" : `Di
                           src={getPhotoUrl(rep.bioguideId)}
                           alt={`${rep.firstName} ${rep.lastName}`}
                           class="w-full h-full object-cover object-top relative z-10"
-                          loading="lazy"
+                          loading={index === 0 ? "eager" : "lazy"}
+                          fetchpriority={index === 0 ? "high" : "auto"}
                           onerror="this.style.display='none'"
                         />
                         <div class="rep-photo-fallback-sm" style="font-family: var(--font-display)">
