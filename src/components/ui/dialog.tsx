@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useCallback, useId, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -6,9 +6,15 @@ import { cn } from "@/lib/utils";
 interface DialogContextValue {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
+  titleId: string;
+  descriptionId: string;
 }
 
-const DialogContext = createContext<DialogContextValue>({ open: false });
+const DialogContext = createContext<DialogContextValue>({
+  open: false,
+  titleId: "",
+  descriptionId: "",
+});
 
 function useDialogContext() {
   return useContext(DialogContext);
@@ -21,7 +27,15 @@ interface DialogProps {
 }
 
 function Dialog({ open = false, onOpenChange, children }: DialogProps) {
-  return <DialogContext.Provider value={{ open, onOpenChange }}>{children}</DialogContext.Provider>;
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
+
+  return (
+    <DialogContext.Provider value={{ open, onOpenChange, titleId, descriptionId }}>
+      {children}
+    </DialogContext.Provider>
+  );
 }
 
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,7 +43,7 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function DialogContent({ className, children, ...props }: DialogContentProps) {
-  const { open, onOpenChange } = useDialogContext();
+  const { open, onOpenChange, titleId, descriptionId } = useDialogContext();
 
   const dialogCallbackRef = useCallback((node: HTMLDialogElement | null) => {
     if (node && !node.open) {
@@ -65,6 +79,8 @@ function DialogContent({ className, children, ...props }: DialogContentProps) {
       ref={dialogCallbackRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
       onClick={handleBackdropClick}
       className="backdrop:bg-black/80 backdrop:backdrop-blur-sm m-auto p-0 bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
     >
@@ -109,13 +125,21 @@ function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 }
 
 function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  const { titleId } = useDialogContext();
   return (
-    <h2 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />
+    <h2
+      id={titleId}
+      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
   );
 }
 
 function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  const { descriptionId } = useDialogContext();
+  return (
+    <p id={descriptionId} className={cn("text-sm text-muted-foreground", className)} {...props} />
+  );
 }
 
 export { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription };

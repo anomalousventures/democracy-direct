@@ -103,12 +103,10 @@ function DropdownMenuContent({
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
-  useEffect(() => {
-    if (!open || !triggerRef.current) return;
+  const recalcPosition = useCallback(() => {
+    if (!triggerRef.current) return;
 
-    const trigger = triggerRef.current;
-    const rect = trigger.getBoundingClientRect();
-
+    const rect = triggerRef.current.getBoundingClientRect();
     const top = rect.bottom + sideOffset + window.scrollY;
     let left: number;
 
@@ -121,7 +119,20 @@ function DropdownMenuContent({
     }
 
     setPosition({ top, left });
-  }, [open, align, sideOffset, triggerRef]);
+  }, [align, sideOffset, triggerRef]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    recalcPosition();
+
+    window.addEventListener("scroll", recalcPosition, true);
+    window.addEventListener("resize", recalcPosition);
+    return () => {
+      window.removeEventListener("scroll", recalcPosition, true);
+      window.removeEventListener("resize", recalcPosition);
+    };
+  }, [open, recalcPosition]);
 
   useEffect(() => {
     if (!open) return;
