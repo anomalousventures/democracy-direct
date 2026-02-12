@@ -1,8 +1,8 @@
 ---
-status: pending
+status: completed
 created: 2026-02-11
-started: null
-completed: null
+started: 2026-02-11
+completed: 2026-02-12
 ---
 
 # Task: Add Lighthouse CI to GitHub Actions

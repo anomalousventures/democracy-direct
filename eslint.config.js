@@ -49,6 +49,7 @@ export default tseslint.config(
       "playwright-report/**",
       "test-results/**",
       "src/components/posthog.astro",
+      "lighthouserc.cjs",
       "pnpm-lock.yaml",
       "package-lock.json",
       "yarn.lock",

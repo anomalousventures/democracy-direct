@@ -1,0 +1,101 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup-branch-name:
+    name: Setup Branch Name
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch_name.outputs.current_branch }}
+    steps:
+      - name: Get branch name
+        id: branch_name
+        uses: tj-actions/branch-names@5250492686b253f06fa55861556d1027b067aeb5 # v8
+
+  lighthouse:
+    name: Lighthouse Audit
+    needs: [setup-branch-name]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create Neon preview branch
+        id: create_branch
+        uses: neondatabase/create-branch-action@72ed4f69a12b6be9c16aebfad893f6a21e9aba8b # v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: lighthouse/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set DATABASE_URL
+        run: |
+          DB_URL="${BRANCH_DB_URL_POOLED:-${BRANCH_DB_URL:-${FALLBACK_DB_URL}}}"
+          if [ -z "$DB_URL" ]; then
+            echo "ERROR: DATABASE_URL could not be resolved"
+            exit 1
+          fi
+          echo "DATABASE_URL=${DB_URL}" >> "$GITHUB_ENV"
+        env:
+          BRANCH_DB_URL_POOLED: ${{ steps.create_branch.outputs.db_url_pooled }}
+          BRANCH_DB_URL: ${{ steps.create_branch.outputs.db_url }}
+          FALLBACK_DB_URL: ${{ secrets.DEV_DATABASE_URL }}
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+
+      - name: Import legislators
+        run: pnpm tsx src/scripts/import-legislators.ts
+
+      - name: Seed test data
+        run: pnpm seed:e2e
+
+      - name: Build
+        run: pnpm build
+        env:
+          TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+          TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+
+      - name: Create .dev.vars for wrangler
+        run: |
+          echo "DATABASE_URL=$DATABASE_URL" > .dev.vars
+          echo "EMAIL_PROVIDER=smtp" >> .dev.vars
+          echo "EMAIL_FROM=no-reply@democracy-direct.com" >> .dev.vars
+          echo "SMTP_HOST=localhost" >> .dev.vars
+          echo "SMTP_PORT=1025" >> .dev.vars
+          echo "TURNSTILE_SITE_KEY=1x00000000000000000000AA" >> .dev.vars
+          echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" >> .dev.vars
+
+      - name: Run Lighthouse CI
+        run: pnpm exec lhci autorun
+
+      - name: Delete Neon Branch
+        if: always()
+        uses: neondatabase/delete-branch-action@c2005bb7d7caeba12ba3ec63857e9c9f9a4d695a # v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: lighthouse/pr-${{ github.event.number }}-${{ needs.setup-branch-name.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
