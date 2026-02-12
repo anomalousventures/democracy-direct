@@ -126,7 +126,7 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
 
   useEffect(() => {
     fetchTemplates();
-  }, [debouncedSearch, selectedTags, fetchTemplates]);
+  }, [debouncedSearch, selectedTags, billFilter]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

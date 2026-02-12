@@ -179,7 +179,7 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
 
                     <div>
                       <ShareButtons
-                        client:load
+                        client:idle
                         url={Astro.url.href}
                         title={`${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName}`}
                         description={`Contact ${rep.chamber === "senate" ? "Sen." : "Rep."} ${rep.firstName} ${rep.lastName} (${rep.party}-${rep.state}) about issues that matter to you.`}
@@ -217,7 +217,7 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
 
               <div class="mt-8 animate-fade-up-delay-1">
                 <ContactFlow
-                  client:load
+                  client:idle
                   representative={{
                     first_name: rep.firstName,
                     last_name: rep.lastName,

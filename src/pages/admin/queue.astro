@@ -86,7 +86,7 @@ function getStatusBadge(status: string): { label: string; variant: BadgeVariant 
 ---
 
 <Layout title="Moderation Queue">
-  <ModerationToast client:load />
+  <ModerationToast client:idle />
   <Header currentPath="/admin" user={user} />
 
   <main id="main-content" class="flex-1 py-12">
