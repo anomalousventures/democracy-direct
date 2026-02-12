@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -30,23 +30,28 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
 
 function DialogContent({ className, children, ...props }: DialogContentProps) {
   const { open, onOpenChange } = useDialogContext();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const dialogCallbackRef = useCallback((node: HTMLDialogElement | null) => {
+    if (node && !node.open) {
+      node.showModal();
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onOpenChange?.(false);
-      }
+    const handleCancel = (e: Event) => {
+      e.preventDefault();
+      onOpenChange?.(false);
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+
+    document.addEventListener("cancel", handleCancel);
+    return () => document.removeEventListener("cancel", handleCancel);
   }, [open, onOpenChange]);
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent<HTMLDialogElement>) => {
-      if (e.target === dialogRef.current) {
+      if (e.target === e.currentTarget) {
         onOpenChange?.(false);
       }
     },
@@ -57,12 +62,11 @@ function DialogContent({ className, children, ...props }: DialogContentProps) {
 
   return createPortal(
     <dialog
-      ref={dialogRef}
-      open
+      ref={dialogCallbackRef}
       role="dialog"
       aria-modal="true"
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 m-auto p-0 bg-transparent backdrop:bg-black/80 backdrop:animate-in backdrop:fade-in-0 open:animate-in open:fade-in-0 open:zoom-in-95"
+      className="backdrop:bg-black/80 backdrop:backdrop-blur-sm m-auto p-0 bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
     >
       <div
         className={cn(
