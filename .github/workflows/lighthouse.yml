@@ -131,7 +131,7 @@ jobs:
 
           const icon = (score) => {
             if (score >= 90) return "\u{1F7E2}";
-            if (score >= 50) return "\u{1F7E0}";
+            if (score >= 60) return "\u{1F7E0}";
             return "\u{1F534}";
           };
 
