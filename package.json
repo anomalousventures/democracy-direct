@@ -100,7 +100,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260207.0",
     "@eslint/js": "9.39.2",
-    "@lhci/cli": "^0.15.1",
     "@playwright/test": "1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

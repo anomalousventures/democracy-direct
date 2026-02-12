@@ -180,6 +180,9 @@ jobs:
             --url="${DEPLOY_URL}/privacy" \
             --url="${DEPLOY_URL}/templates" \
             --url="${DEPLOY_URL}/roadmap" \
+            --url="${DEPLOY_URL}/templates/e2e-test-infrastructure" \
+            --url="${DEPLOY_URL}/rep/S000033" \
+            --url="${DEPLOY_URL}/reps/OR/3" \
             --settings.chromeFlags="--no-sandbox --headless" \
             || true
 
@@ -210,6 +213,9 @@ jobs:
           pa11y "${DEPLOY_URL}/privacy" --config pa11y-config.json --reporter json > pa11y-results/privacy.json || true
           pa11y "${DEPLOY_URL}/templates" --config pa11y-config.json --reporter json > pa11y-results/templates.json || true
           pa11y "${DEPLOY_URL}/roadmap" --config pa11y-config.json --reporter json > pa11y-results/roadmap.json || true
+          pa11y "${DEPLOY_URL}/templates/e2e-test-infrastructure" --config pa11y-config.json --reporter json > pa11y-results/template-detail.json || true
+          pa11y "${DEPLOY_URL}/rep/S000033" --config pa11y-config.json --reporter json > pa11y-results/rep-detail.json || true
+          pa11y "${DEPLOY_URL}/reps/OR/3" --config pa11y-config.json --reporter json > pa11y-results/reps-state-district.json || true
 
       - name: Generate audit summary
         if: steps.deployment.outputs.url != ''
