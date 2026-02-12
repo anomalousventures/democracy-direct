@@ -1,0 +1,346 @@
+{
+  "feature": "Campaign Finance",
+  "branch": "feat/campaign-finance",
+  "status": "not started",
+  "preconditions": ["Performance Optimization must be merged first"],
+  "tasks": [
+    {
+      "id": "finance-1",
+      "title": "Add fecIds column to legislators table",
+      "description": "Add a text array column `fecIds` to the legislators table in the Drizzle schema. This stores FEC candidate IDs from congress-legislators data (legislators may have multiple FEC IDs across campaigns).",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": [],
+      "acceptance_criteria": [
+        "fecIds column added as text[] to legislators table in schema.ts",
+        "Column is nullable (not all legislators have FEC IDs)",
+        "Migration generated with pnpm db:generate"
+      ],
+      "files": ["src/db/schema.ts"]
+    },
+    {
+      "id": "finance-2",
+      "title": "Update legislator import script to store FEC IDs",
+      "description": "Modify import-legislators.ts to extract FEC IDs from the congress-legislators YAML data (raw.id.fec field) and store them in the new fecIds column.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-1"],
+      "acceptance_criteria": [
+        "Import script reads raw.id.fec from congress-legislators data",
+        "FEC IDs stored as text array in fecIds column",
+        "Legislators without FEC IDs get null (not empty array)",
+        "Existing import-legislators tests updated to cover FEC IDs"
+      ],
+      "files": ["src/scripts/import-legislators.ts", "src/scripts/import-legislators.test.ts"]
+    },
+    {
+      "id": "finance-3",
+      "title": "Run migration and backfill FEC IDs",
+      "description": "Apply the schema migration to the dev branch, then run the updated import-legislators script to backfill FEC IDs for all existing legislators.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-2"],
+      "acceptance_criteria": [
+        "Migration applied successfully to dev branch",
+        "FEC IDs populated for legislators that have them in congress-legislators data",
+        "Verified at least a sample of legislators have correct FEC IDs"
+      ],
+      "files": []
+    },
+    {
+      "id": "finance-4",
+      "title": "Create campaignFinance table in schema",
+      "description": "Add the campaignFinance table to src/db/schema.ts with columns: id (uuid), bioguideId (FK to legislators), fecId, cycle, totalReceipts, totalDisbursements, cashOnHand, totalFromPACs, totalFromIndividuals, debtsOwed, sourceUrl, lastUpdated, createdAt. Add relations in src/db/relations.ts for the FK to legislators.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-1"],
+      "acceptance_criteria": [
+        "campaignFinance table defined in src/db/schema.ts",
+        "All columns from the data schema are present with correct types",
+        "bioguideId FK references legislators table",
+        "Relations defined in src/db/relations.ts for both directions",
+        "Migration generated with pnpm db:generate"
+      ],
+      "files": ["src/db/schema.ts", "src/db/relations.ts"]
+    },
+    {
+      "id": "finance-5",
+      "title": "Apply campaignFinance table migration",
+      "description": "Run pnpm db:migrate (or db:push for dev) to create the campaignFinance table on the dev branch.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-4"],
+      "acceptance_criteria": [
+        "campaignFinance table exists on the dev branch",
+        "FK constraint to legislators table is in place",
+        "Table can be queried via Drizzle Studio"
+      ],
+      "files": []
+    },
+    {
+      "id": "finance-6",
+      "title": "Request ProPublica Campaign Finance API key",
+      "description": "Email apihelp@propublica.org to request a Campaign Finance API key. This is a manual step that may take 1-2 business days.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": [],
+      "acceptance_criteria": [
+        "API key request email sent to apihelp@propublica.org",
+        "API key received and verified working against the endpoint"
+      ],
+      "files": []
+    },
+    {
+      "id": "finance-7",
+      "title": "Add ProPublica API key to environment config",
+      "description": "Add PROPUBLICA_CAMPAIGN_FINANCE_KEY to .dev.vars for local development and as a GitHub repository secret for CI/workflows.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-6"],
+      "acceptance_criteria": [
+        "PROPUBLICA_CAMPAIGN_FINANCE_KEY set in .dev.vars",
+        "Secret added to GitHub repository settings",
+        "Key is accessible in GitHub Actions workflows"
+      ],
+      "files": [".dev.vars"]
+    },
+    {
+      "id": "finance-8",
+      "title": "Create ProPublica Campaign Finance API wrapper",
+      "description": "Create src/lib/propublica-finance.ts with typed fetch functions for the ProPublica Campaign Finance API. Include getCandidateByFecId(cycle, fecId) that returns typed candidate finance data. Handle errors and rate limiting (100ms delay between requests).",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-7"],
+      "acceptance_criteria": [
+        "src/lib/propublica-finance.ts exports getCandidateByFecId(cycle, fecId)",
+        "Response types are fully defined (totalReceipts, totalDisbursements, cashOnHand, etc.)",
+        "HTTP errors return null instead of throwing",
+        "API key read from environment variable",
+        "100ms throttle between requests"
+      ],
+      "files": ["src/lib/propublica-finance.ts"]
+    },
+    {
+      "id": "finance-9",
+      "title": "Write unit tests for ProPublica API wrapper",
+      "description": "Add unit tests for the ProPublica finance wrapper. Mock fetch to test successful responses, error handling, and response parsing.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-8"],
+      "acceptance_criteria": [
+        "Tests cover successful API response parsing",
+        "Tests cover HTTP error responses (404, 429, 500)",
+        "Tests verify correct URL construction with cycle and FEC ID",
+        "Tests verify API key header is set",
+        "All tests pass with pnpm test"
+      ],
+      "files": ["src/lib/propublica-finance.test.ts"]
+    },
+    {
+      "id": "finance-10",
+      "title": "Create campaign finance sync script",
+      "description": "Create src/scripts/sync-campaign-finance.ts that queries all legislators with FEC IDs, fetches their campaign finance data from ProPublica for the current cycle, and upserts results to the campaignFinance table. Handle legislators with multiple FEC IDs by using the most recent one. Add 100ms throttle between API calls.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-5", "finance-8"],
+      "acceptance_criteria": [
+        "Script queries legislators with non-null fecIds",
+        "Fetches ProPublica data for each legislator using most recent FEC ID",
+        "Upserts to campaignFinance table (unique on bioguideId + cycle)",
+        "100ms throttle between API requests",
+        "Logs progress and any errors",
+        "Handles legislators with multiple FEC IDs correctly",
+        "Skips legislators without FEC IDs gracefully"
+      ],
+      "files": ["src/scripts/sync-campaign-finance.ts"]
+    },
+    {
+      "id": "finance-11",
+      "title": "Write unit tests for sync script",
+      "description": "Add unit tests for the campaign finance sync script. Mock database queries and API calls to test the sync logic, including handling of multiple FEC IDs, upsert behavior, and error handling.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-10"],
+      "acceptance_criteria": [
+        "Tests cover sync of legislator with single FEC ID",
+        "Tests cover sync of legislator with multiple FEC IDs (picks most recent)",
+        "Tests cover legislators without FEC IDs being skipped",
+        "Tests cover API error handling during sync",
+        "All tests pass with pnpm test"
+      ],
+      "files": ["src/scripts/sync-campaign-finance.test.ts"]
+    },
+    {
+      "id": "finance-12",
+      "title": "Add sync:finance npm script",
+      "description": "Add \"sync:finance\": \"tsx src/scripts/sync-campaign-finance.ts\" to package.json scripts.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-10"],
+      "acceptance_criteria": [
+        "pnpm sync:finance runs the sync script successfully",
+        "Script exits with code 0 on success, non-zero on failure"
+      ],
+      "files": ["package.json"]
+    },
+    {
+      "id": "finance-13",
+      "title": "Run initial data sync on dev branch",
+      "description": "Run the sync script against the dev database to populate campaign finance data. Verify data looks correct by spot-checking a few legislators in Drizzle Studio.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-12"],
+      "acceptance_criteria": [
+        "Campaign finance data populated for legislators with FEC IDs",
+        "At least 400+ legislators have finance records (of 535 total)",
+        "Spot-check: data matches ProPublica for 3-5 known legislators",
+        "No errors in sync script output"
+      ],
+      "files": []
+    },
+    {
+      "id": "finance-14",
+      "title": "Add campaign finance sync to refresh-data workflow",
+      "description": "Add pnpm sync:finance as a step in the .github/workflows/refresh-data.yml GitHub Action so campaign finance data syncs daily alongside other data refreshes.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-12"],
+      "acceptance_criteria": [
+        "sync:finance step added to refresh-data.yml workflow",
+        "PROPUBLICA_CAMPAIGN_FINANCE_KEY secret passed to the step",
+        "Step runs after legislator import (since it depends on FEC IDs)"
+      ],
+      "files": [".github/workflows/refresh-data.yml"]
+    },
+    {
+      "id": "finance-15",
+      "title": "Create campaign finance database query module",
+      "description": "Create src/db/queries/campaign-finance.ts with getFinanceByMember(db, bioguideId) using the Drizzle relational API. Should return the most recent cycle's data for a given legislator. Export the return type.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-5"],
+      "acceptance_criteria": [
+        "getFinanceByMember(db, bioguideId) exported from module",
+        "Uses db.query.campaignFinance relational API (not manual joins)",
+        "Returns most recent cycle data or null if none exists",
+        "Return type exported as CampaignFinanceData type alias"
+      ],
+      "files": ["src/db/queries/campaign-finance.ts"]
+    },
+    {
+      "id": "finance-16",
+      "title": "Write unit tests for campaign finance query module",
+      "description": "Add unit tests for the campaign finance query function. Mock the database to test query construction, handling of missing data, and correct cycle ordering.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-15"],
+      "acceptance_criteria": [
+        "Tests cover legislator with finance data",
+        "Tests cover legislator without finance data (returns null)",
+        "Tests cover multiple cycles (returns most recent)",
+        "All tests pass with pnpm test"
+      ],
+      "files": ["src/db/queries/campaign-finance.test.ts"]
+    },
+    {
+      "id": "finance-17",
+      "title": "Create CampaignFinance React component",
+      "description": "Create src/components/CampaignFinance.tsx that displays campaign finance data: total raised with cycle context, total disbursements, cash on hand, PAC vs individual contribution breakdown (as percentage bar or similar visualization), and debts owed. Handle missing data gracefully.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-15"],
+      "acceptance_criteria": [
+        "Component displays total receipts prominently with cycle year",
+        "Total disbursements shown",
+        "Cash on hand shown",
+        "PAC vs individual contribution breakdown visualized",
+        "Debts owed shown when present",
+        "Handles null/missing data with 'Not available' message",
+        "Follows existing component patterns in the codebase"
+      ],
+      "files": ["src/components/CampaignFinance.tsx"]
+    },
+    {
+      "id": "finance-18",
+      "title": "Write unit tests for CampaignFinance component",
+      "description": "Add unit tests for the CampaignFinance component. Test rendering with full data, partial data, null data, and verify correct formatting of currency values.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-17"],
+      "acceptance_criteria": [
+        "Tests cover rendering with complete finance data",
+        "Tests cover rendering with null/missing data",
+        "Tests verify currency formatting",
+        "Tests verify PAC vs individual breakdown percentages",
+        "All tests pass with pnpm test"
+      ],
+      "files": ["src/components/CampaignFinance.test.tsx"]
+    },
+    {
+      "id": "finance-19",
+      "title": "Add CampaignFinance section to rep profile page",
+      "description": "Integrate the CampaignFinance component into src/pages/rep/[bioguideId].astro. Fetch finance data in the page's frontmatter using getFinanceByMember and pass it as props. Add a 'Data from ProPublica/FEC' attribution link below the component.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-17"],
+      "acceptance_criteria": [
+        "CampaignFinance component renders on rep profile page",
+        "Finance data fetched server-side in Astro frontmatter",
+        "Attribution link to ProPublica/FEC.gov displayed below the section",
+        "FEC source URL links to the specific candidate's FEC page",
+        "Section hidden gracefully when no finance data exists"
+      ],
+      "files": ["src/pages/rep/[bioguideId].astro"]
+    },
+    {
+      "id": "finance-20",
+      "title": "Add integration test for campaign finance query",
+      "description": "Add an integration test that runs against the real dev database to verify the campaign finance query returns correct data structure and handles edge cases.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-15", "finance-13"],
+      "acceptance_criteria": [
+        "Integration test queries a known legislator with finance data",
+        "Integration test verifies data shape matches expected types",
+        "Integration test handles legislator without finance data",
+        "Test file named campaign-finance.integration.test.ts",
+        "Test passes with pnpm test:integration"
+      ],
+      "files": ["src/db/queries/campaign-finance.integration.test.ts"]
+    },
+    {
+      "id": "finance-21",
+      "title": "Add E2E test for campaign finance on rep page",
+      "description": "Create tests/e2e/campaign-finance.spec.ts that navigates to a rep profile page and verifies the campaign finance section renders with expected data elements (total raised, breakdown, attribution link).",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-19"],
+      "acceptance_criteria": [
+        "E2E test navigates to a rep profile page",
+        "Verifies campaign finance section is visible",
+        "Verifies total raised amount is displayed",
+        "Verifies PAC/individual breakdown is present",
+        "Verifies attribution link is present and correct",
+        "Test passes with pnpm test:e2e"
+      ],
+      "files": ["tests/e2e/campaign-finance.spec.ts"]
+    },
+    {
+      "id": "finance-22",
+      "title": "Final verification and cleanup",
+      "description": "Run full lint, typecheck, and test suite. Verify all acceptance criteria from the verification checklist in docs/tasks/campaign-finance.md. Ensure no regressions in existing tests.",
+      "status": "not started",
+      "blockers": null,
+      "preconditions": ["finance-20", "finance-21", "finance-14"],
+      "acceptance_criteria": [
+        "pnpm lint passes",
+        "pnpm typecheck passes",
+        "pnpm test passes (all unit tests)",
+        "pnpm test:integration passes",
+        "pnpm test:e2e passes",
+        "All items in docs/tasks/campaign-finance.md verification checklist pass"
+      ],
+      "files": []
+    }
+  ]
+}
