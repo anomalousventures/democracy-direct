@@ -9,7 +9,30 @@ export function getPhotoUrl(bioguideId: string): string {
   if (!bioguideId || bioguideId.length === 0) {
     return "";
   }
-  return `https://bioguide.congress.gov/bioguide/photo/${bioguideId[0]}/${bioguideId}.jpg`;
+  return `/photos/lg/jpg/${bioguideId}.jpg`;
+}
+
+export type PhotoSize = "sm" | "lg" | "og";
+
+interface PhotoSource {
+  srcset: string;
+  type: string;
+}
+
+export function getPhotoSources(bioguideId: string, size: PhotoSize): PhotoSource[] {
+  if (!bioguideId || bioguideId.length === 0) return [];
+  if (size === "og") return [];
+
+  return [
+    { srcset: `/photos/${size}/avif/${bioguideId}.avif`, type: "image/avif" },
+    { srcset: `/photos/${size}/webp/${bioguideId}.webp`, type: "image/webp" },
+  ];
+}
+
+export function getPhotoFallbackSrc(bioguideId: string, size: PhotoSize): string {
+  if (!bioguideId || bioguideId.length === 0) return "";
+  if (size === "og") return `/photos/og/${bioguideId}.jpg`;
+  return `/photos/${size}/jpg/${bioguideId}.jpg`;
 }
 
 export function getPartyColor(party: string): string {

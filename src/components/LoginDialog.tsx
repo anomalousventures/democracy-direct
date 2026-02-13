@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { toast } from "sonner";
+import { loadTurnstile } from "@/lib/turnstile";
+import { toast } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +46,8 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
   const turnstileRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
-  const renderTurnstile = useCallback(() => {
+  const renderTurnstile = useCallback(async () => {
+    await loadTurnstile();
     if (turnstileRef.current && window.turnstile && window.TURNSTILE_SITE_KEY) {
       if (widgetIdRef.current) {
         window.turnstile.remove(widgetIdRef.current);
@@ -81,8 +83,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
 
   useEffect(() => {
     if (open && step === "email") {
-      const timer = setTimeout(renderTurnstile, 100);
-      return () => clearTimeout(timer);
+      renderTurnstile();
     }
   }, [open, step, renderTurnstile]);
 

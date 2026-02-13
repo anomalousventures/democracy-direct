@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/preact";
 import { ContactInfo } from "./ContactInfo";
 
 describe("ContactInfo", () => {
@@ -59,7 +59,7 @@ describe("ContactInfo", () => {
       render(<ContactInfo facebookId="reptest" />);
 
       expect(screen.getByText("Facebook")).toBeInTheDocument();
-      expect(screen.getByText("View Profile")).toBeInTheDocument();
+      expect(screen.getByText("View on Facebook")).toBeInTheDocument();
       expect(screen.getByRole("link")).toHaveAttribute("href", "https://facebook.com/reptest");
     });
 

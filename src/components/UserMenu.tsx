@@ -15,7 +15,7 @@ import { getStateName } from "@/lib/states";
 import { useMe } from "@/hooks/useMe";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { hasLegacyData, hasAnonData, migrateAnonymousData } from "@/lib/storage-migration";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 const publicNavLinks = [
   { href: "/about", label: "About" },

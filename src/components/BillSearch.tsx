@@ -243,7 +243,7 @@ export function BillSearch() {
   useEffect(() => {
     if (isInitialMount.current) return;
     fetchBills();
-  }, [debouncedSearch, congress, selectedTypes, selectedStatuses, selectedSubjects, fetchBills]);
+  }, [debouncedSearch, congress, selectedTypes, selectedStatuses, selectedSubjects]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

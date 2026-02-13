@@ -39,10 +39,16 @@ test-results/
 blob-report/
 .playwright-mcp/
 
+# Lighthouse
+lighthouse-reports/
+
 # Editor
 *.swp
 *.swo
 .vscode/
+
+# Photo optimization temp files
+.photos-tmp/
 
 # Ralph loop local state
 .claude/*.local.md

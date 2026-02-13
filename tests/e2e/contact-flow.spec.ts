@@ -6,11 +6,15 @@ const REP_PAGE = "/rep/P000622";
 async function fillComposer(page: Page, text: string) {
   await page.waitForLoadState("networkidle");
   const composer = page.getByTestId("tiptap-editor");
-  await composer.click();
-  await composer.pressSequentially(text, { delay: 10 });
-  await expect(page.getByTestId("character-count")).toHaveText(String(text.length), {
-    timeout: 5000,
-  });
+  await expect(composer).toHaveAttribute("data-editor-ready", "true", { timeout: 5000 });
+
+  await expect(async () => {
+    await composer.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Backspace");
+    await page.keyboard.insertText(text);
+    await expect(page.getByTestId("character-count")).toHaveText(String(text.length));
+  }).toPass({ timeout: 10000 });
 }
 
 test.describe("Phase 3: Contact Flow", () => {

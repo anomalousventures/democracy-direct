@@ -1,8 +1,8 @@
 ---
-status: pending
+status: completed
 created: 2026-02-11
-started: null
-completed: null
+started: 2026-02-11
+completed: 2026-02-11
 ---
 
 # Task: Configure Lighthouse CI PR Comments and Status Checks
@@ -64,6 +64,15 @@ Lighthouse CI can upload results to a temporary public storage or GitHub status 
    - Given the PR comment is posted
    - When a reviewer reads it
    - Then scores are clearly formatted with page names and all four categories
+
+## Manual Step Required
+
+Adding "Lighthouse Audit" as a required status check requires a manual change in GitHub repo settings:
+
+1. Go to Settings → Branches → Branch protection rules for `main`
+2. Under "Require status checks to pass before merging", add "Lighthouse Audit"
+
+This cannot be automated via code and must be done by a repo admin after the workflow has run at least once (GitHub only shows status checks that have previously reported).
 
 ## Metadata
 

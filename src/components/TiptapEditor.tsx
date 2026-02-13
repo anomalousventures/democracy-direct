@@ -1,4 +1,4 @@
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent } from "@/lib/tiptap-preact";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown } from "@tiptap/markdown";
@@ -48,6 +48,9 @@ export function TiptapEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
+    onCreate: ({ editor: e }) => {
+      e.view.dom.dataset.editorReady = "true";
+    },
     extensions: [
       StarterKit.configure({
         heading: false,
