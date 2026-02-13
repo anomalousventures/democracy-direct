@@ -22,7 +22,7 @@ permissions:
   checks: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.deployment.sha || github.event.check_run.head_sha || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.check_run.app.slug || 'deploy' }}-${{ github.event.deployment.sha || github.event.check_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:

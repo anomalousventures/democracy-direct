@@ -43,7 +43,7 @@ test.describe("Saved District - Authenticated User", () => {
     await expect(districtBadge).toBeVisible();
     await expect(districtBadge).toContainText("NY-12");
 
-    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
+    await districtBadge.click();
     await expect(userPage.getByRole("menuitem", { name: "View My Reps" })).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe("Saved District - Authenticated User", () => {
 
     // On desktop, district is shown in a separate badge dropdown
     const districtBadge = userPage.getByTestId("district-badge");
-    await districtBadge.dispatchEvent("pointerdown", { button: 0 });
+    await districtBadge.click();
 
     const clearButton = userPage.getByRole("menuitem", { name: "Clear Saved District" });
     await clearButton.click();

@@ -56,7 +56,7 @@ test.describe("Saved District - Anonymous User", () => {
 
     const badge = page.getByTestId("district-badge");
     await expect(badge).toBeVisible();
-    await badge.dispatchEvent("pointerdown", { button: 0 });
+    await badge.click();
 
     const viewRepsLink = page.getByRole("menuitem", { name: "View My Reps" });
     await expect(viewRepsLink).toBeVisible();
@@ -74,7 +74,7 @@ test.describe("Saved District - Anonymous User", () => {
 
     const badge = page.getByTestId("district-badge");
     await expect(badge).toBeVisible();
-    await badge.dispatchEvent("pointerdown", { button: 0 });
+    await badge.click();
 
     const clearButton = page.getByRole("menuitem", { name: "Clear Saved District" });
     await clearButton.click();

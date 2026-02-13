@@ -6,7 +6,9 @@ const REP_PAGE = "/rep/P000622";
 async function fillComposer(page: Page, text: string) {
   await page.waitForLoadState("networkidle");
   const composer = page.getByTestId("tiptap-editor");
+  await expect(composer).toHaveAttribute("contenteditable", "true");
   await composer.click();
+  await expect(composer).toBeFocused();
   await composer.pressSequentially(text, { delay: 10 });
   await expect(page.getByTestId("character-count")).toHaveText(String(text.length), {
     timeout: 5000,
