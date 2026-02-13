@@ -33,7 +33,7 @@ make photos                 # Download + optimize legislator photos (public/phot
 
 ### Astro + Preact Islands
 
-Server-rendered Astro pages with Preact components (compat mode — imports use `"react"` but runtime is Preact). Hydrated via `client:load` (interactive immediately) or `client:idle` (deferred, for below-fold). API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings. **Deployed on Cloudflare Pages** (not Workers) - Pages Functions lack persistent logging; use `wrangler pages deployment tail` for real-time logs.
+Server-rendered Astro pages with Preact components (compat mode: imports use `"react"` but runtime is Preact). Hydrated via `client:load` (interactive immediately) or `client:idle` (deferred, for below-fold). API routes in `src/pages/api/` require `export const prerender = false;`. Dev uses `platformProxy` for Cloudflare bindings. **Deployed on Cloudflare Pages** (not Workers) - Pages Functions lack persistent logging; use `wrangler pages deployment tail` for real-time logs.
 
 ### Database (Neon + Drizzle)
 
@@ -41,8 +41,8 @@ Server-rendered Astro pages with Preact components (compat mode — imports use 
 - Schema in `src/db/schema.ts`, relations in `src/db/relations.ts`, queries in `src/db/queries/`
 - **No global caching** - create fresh connection per request: `createDb(import.meta.env.DATABASE_URL)`
 - **Neon project**: `floral-term-50641531`
-  - **Dev branch**: `br-winter-recipe-afwrwb8w` — always specify this branchId when using Neon MCP tools for dev work (the default branch is prod)
-  - **Prod branch**: `br-old-waterfall-afvo9cny` (default) — do not modify without explicit confirmation
+  - **Dev branch**: `br-winter-recipe-afwrwb8w` - always specify this branchId when using Neon MCP tools for dev work (the default branch is prod)
+  - **Prod branch**: `br-old-waterfall-afvo9cny` (default) - do not modify without explicit confirmation
 - **Migrations (never create migration files manually)**:
   - Schema changes: Update `src/db/schema.ts`, then `pnpm db:generate`
   - Custom/data migrations: `pnpm drizzle-kit generate --custom --name=<name>`, then edit the generated SQL file
@@ -51,11 +51,11 @@ Server-rendered Astro pages with Preact components (compat mode — imports use 
 #### Drizzle Relational API (MANDATORY)
 
 - **ALWAYS use `db.query.*` relational queries** (`findFirst`, `findMany`) with `with:` for fetching entities with related data. NEVER write manual `.leftJoin()`/`.innerJoin()` + custom select objects when a relational query can do the same thing.
-- **SQL-like API (`db.select().from()`) is ONLY for:** aggregation (`count`, `sum`), `GROUP BY`, computed columns (`sql\`...\``), mutations (`insert`/`update`/`delete`), and raw SQL operations. `ILIKE`, `JSONB`, and other `where` operators work fine in the relational API — use it whenever you need related data.
+- **SQL-like API (`db.select().from()`) is ONLY for:** aggregation (`count`, `sum`), `GROUP BY`, computed columns (`sql\`...\``), mutations (`insert`/`update`/`delete`), and raw SQL operations. `ILIKE`, `JSONB`, and other `where` operators work fine in the relational API - use it whenever you need related data.
 - **When adding a new table:** add the table to `src/db/schema.ts` and define its relations in `src/db/relations.ts`. Do NOT re-export relations from schema.ts (circular dependency). Relations must be defined for EVERY foreign key.
 - **When adding a new FK column to an existing table:** update the corresponding `relations()` call in `src/db/relations.ts` immediately.
 - **Return types from query functions** should be inferred from Drizzle's relational API, not manually declared interfaces. Export type aliases derived from return types (e.g., `type BillWithSponsor = NonNullable<Awaited<ReturnType<typeof getBillByNumber>>>`).
-- **No client-side filtering** — all filtering must happen in the query. Never fetch extra rows and `.find()`/`.filter()` in JS.
+- **No client-side filtering** - all filtering must happen in the query. Never fetch extra rows and `.find()`/`.filter()` in JS.
 
 ### Authentication
 
@@ -94,7 +94,7 @@ Self-hosted optimized photos in `public/photos/` (AVIF/WebP/JPG at sm/lg/og size
 - **Tests**: Unit tests colocated as `*.test.ts`, E2E in `tests/e2e/`
 - **No `as` casts**: Use type guards and discriminated unions instead of type assertions
 - **Lookup objects over if/else chains**: Prefer `const handlers = { a: fn1, b: fn2 }` over `if (x === 'a') ... else if ...`
-- **Data scripts**: `src/scripts/*.ts` — export pure functions for testability + CLI entrypoint via ``if (import.meta.url === `file://${process.argv[1]}`)``
+- **Data scripts**: `src/scripts/*.ts` - export pure functions for testability + CLI entrypoint via ``if (import.meta.url === `file://${process.argv[1]}`)``
 
 ## Testing Notes
 

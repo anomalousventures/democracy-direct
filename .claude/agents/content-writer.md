@@ -54,10 +54,10 @@ When reviewing existing content, check for:
 
 Before writing, read relevant files to understand current voice and content:
 
-- `docs/WRITING.md` — Full style guide (read this first, always)
-- `README.md` — Canonical example of the DD product voice
-- `src/content/` — Existing content for tone calibration
-- `CONTRIBUTING.md` — Developer-facing voice example
+- `docs/WRITING.md` - Full style guide (read this first, always)
+- `README.md` - Canonical example of the DD product voice
+- `src/content/` - Existing content for tone calibration
+- `CONTRIBUTING.md` - Developer-facing voice example
 
 ## Writing Blog Posts
 

@@ -1,4 +1,4 @@
-# Writing Guidelines — Democracy Direct
+# Writing Guidelines: Democracy Direct
 
 This document defines the voice, style, and conventions for all Democracy Direct content: product copy, blog posts, template descriptions, changelogs, social posts, and meta text (descriptions, alt text, error messages). It's written for both human authors and AI assistants. If this file is referenced in `CLAUDE.md` or an agent definition, treat it as binding.
 
