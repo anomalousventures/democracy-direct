@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { loadTurnstile } from "@/lib/turnstile";
 import { toast } from "@/lib/toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,21 +100,23 @@ export function TemplateForm({
   const suggestedBillsRef = useRef<Set<string>>(new Set(initialData?.linkedBillNumbers ?? []));
 
   useEffect(() => {
-    const renderTurnstile = () => {
-      if (turnstileRef.current && window.turnstile && turnstileSiteKey) {
-        if (widgetIdRef.current) {
-          window.turnstile.remove(widgetIdRef.current);
-        }
-        widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: turnstileSiteKey,
-          callback: (token: string) => setTurnstileToken(token),
-        });
-      }
-    };
+    if (!turnstileSiteKey) return;
 
-    const timer = setTimeout(renderTurnstile, 100);
+    let cancelled = false;
+
+    loadTurnstile().then(() => {
+      if (cancelled || !turnstileRef.current || !window.turnstile) return;
+      if (widgetIdRef.current) {
+        window.turnstile.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: turnstileSiteKey,
+        callback: (token: string) => setTurnstileToken(token),
+      });
+    });
+
     return () => {
-      clearTimeout(timer);
+      cancelled = true;
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;

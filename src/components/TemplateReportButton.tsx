@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { loadTurnstile } from "@/lib/turnstile";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +54,8 @@ export function TemplateReportButton({
   const widgetIdRef = useRef<string | null>(null);
   const { capture } = useAnalytics();
 
-  const renderTurnstile = useCallback(() => {
+  const renderTurnstile = useCallback(async () => {
+    await loadTurnstile();
     if (turnstileRef.current && window.turnstile && window.TURNSTILE_SITE_KEY) {
       if (widgetIdRef.current) {
         window.turnstile.remove(widgetIdRef.current);
@@ -86,8 +88,7 @@ export function TemplateReportButton({
 
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(renderTurnstile, 100);
-      return () => clearTimeout(timer);
+      renderTurnstile();
     }
   }, [isOpen, renderTurnstile]);
 

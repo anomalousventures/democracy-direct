@@ -297,7 +297,10 @@ export function TemplateSearch({ repBioguideId, billFilter, billTitle }: Templat
                           {template.viewCount.toLocaleString()}
                         </span>
                         {template.useCount > 0 && (
-                          <span className="flex items-center gap-1.5 text-accent" title="Uses">
+                          <span
+                            className="flex items-center gap-1.5 text-muted-foreground"
+                            title="Uses"
+                          >
                             <Icon name="star" className="w-4 h-4" />
                             {template.useCount.toLocaleString()}
                           </span>
