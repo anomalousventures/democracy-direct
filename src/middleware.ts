@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { eq, and, gt } from "drizzle-orm";
+import { uuidv7 } from "uuidv7";
 import { createDb } from "./db/client";
 import { sessions } from "./db/schema";
 import { getConfig } from "./lib/config";
@@ -58,7 +59,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, request }, n
     }
 
     if (!visitorId) {
-      visitorId = crypto.randomUUID();
+      visitorId = uuidv7();
       const sig = await hmacSign(visitorId, hmacKey);
       cookies.set("visitor_id", `${visitorId}.${sig}`, {
         path: "/",
@@ -70,7 +71,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, request }, n
 
     locals.visitorId = visitorId;
   } else {
-    locals.visitorId = crypto.randomUUID();
+    locals.visitorId = uuidv7();
   }
 
   const sessionId = cookies.get("session")?.value;

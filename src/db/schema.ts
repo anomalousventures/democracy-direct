@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -71,7 +72,9 @@ export const zipDistricts = pgTable(
 export const users = pgTable(
   "users",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     emailHash: varchar("email_hash", { length: 64 }).notNull().unique(),
     trustLevel: integer("trust_level").notNull().default(0),
     approvedTemplatesCount: integer("approved_templates_count").notNull().default(0),
@@ -84,7 +87,9 @@ export const users = pgTable(
 );
 
 export const emailOtps = pgTable("email_otps", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuid_generate_v7()`),
   emailHash: varchar("email_hash", { length: 64 }).notNull(),
   otpHash: varchar("otp_hash", { length: 64 }).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -96,7 +101,9 @@ export const emailOtps = pgTable("email_otps", {
 export const sessions = pgTable(
   "sessions",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -109,7 +116,9 @@ export const sessions = pgTable(
 export const templates = pgTable(
   "templates",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     title: varchar("title", { length: 200 }).notNull(),
     description: varchar("description", { length: 200 }),
@@ -139,7 +148,9 @@ export const templates = pgTable(
 export const templateFlags = pgTable(
   "template_flags",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     templateId: uuid("template_id")
       .notNull()
       .references(() => templates.id, { onDelete: "cascade" }),
@@ -152,7 +163,9 @@ export const templateFlags = pgTable(
 );
 
 export const moderationLog = pgTable("moderation_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuid_generate_v7()`),
   templateId: uuid("template_id")
     .notNull()
     .references(() => templates.id, { onDelete: "cascade" }),
@@ -190,7 +203,9 @@ export const dataSourceMeta = pgTable("data_source_meta", {
 export const issueTags = pgTable(
   "issue_tags",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     name: varchar("name", { length: 50 }).notNull().unique(),
     suggestedBy: uuid("suggested_by").references(() => users.id, { onDelete: "set null" }),
     status: varchar("status", { length: 20 }).notNull().default("pending"),
@@ -225,7 +240,9 @@ export const templateIssueTags = pgTable(
 export const votes = pgTable(
   "votes",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     rollCall: integer("roll_call").notNull(),
     chamber: varchar("chamber", { length: 10 }).$type<Chamber>().notNull(),
     congress: integer("congress").notNull(),
@@ -280,7 +297,9 @@ export const memberVotes = pgTable(
 export const bills = pgTable(
   "bills",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     billNumber: varchar("bill_number", { length: 50 }).notNull(),
     billType: varchar("bill_type", { length: 10 }).$type<BillType>().notNull(),
     congress: integer("congress").notNull(),
@@ -313,7 +332,9 @@ export const bills = pgTable(
 export const amendments = pgTable(
   "amendments",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     amendmentNumber: varchar("amendment_number", { length: 20 }).notNull(),
     amendmentType: varchar("amendment_type", { length: 10 }).$type<AmendmentType>().notNull(),
     congress: integer("congress").notNull(),
@@ -345,7 +366,9 @@ export const amendments = pgTable(
 export const templateUses = pgTable(
   "template_uses",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
     templateId: uuid("template_id")
       .notNull()
       .references(() => templates.id, { onDelete: "cascade" }),
