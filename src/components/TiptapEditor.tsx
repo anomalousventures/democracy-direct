@@ -48,6 +48,9 @@ export function TiptapEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
+    onCreate: ({ editor: e }) => {
+      e.view.dom.dataset.editorReady = "true";
+    },
     extensions: [
       StarterKit.configure({
         heading: false,
