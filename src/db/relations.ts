@@ -14,6 +14,7 @@ import {
   amendments,
   votes,
   memberVotes,
+  campaignFinance,
 } from "./schema";
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -110,6 +111,7 @@ export const legislatorsRelations = relations(legislators, ({ many }) => ({
   bills: many(bills),
   amendments: many(amendments),
   memberVotes: many(memberVotes),
+  campaignFinance: many(campaignFinance),
 }));
 
 export const billsRelations = relations(bills, ({ one, many }) => ({
@@ -152,6 +154,13 @@ export const memberVotesRelations = relations(memberVotes, ({ one }) => ({
   }),
   legislator: one(legislators, {
     fields: [memberVotes.bioguideId],
+    references: [legislators.bioguideId],
+  }),
+}));
+
+export const campaignFinanceRelations = relations(campaignFinance, ({ one }) => ({
+  legislator: one(legislators, {
+    fields: [campaignFinance.bioguideId],
     references: [legislators.bioguideId],
   }),
 }));

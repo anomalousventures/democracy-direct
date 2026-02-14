@@ -48,6 +48,7 @@ export const legislators = pgTable(
     facebookId: varchar("facebook_id", { length: 100 }),
     youtubeId: varchar("youtube_id", { length: 100 }),
     lisId: varchar("lis_id", { length: 10 }),
+    fecIds: text("fec_ids").array(),
   },
   (table) => [
     index("legislators_state_idx").on(table.state),
@@ -363,6 +364,33 @@ export const amendments = pgTable(
   ]
 );
 
+export const campaignFinance = pgTable(
+  "campaign_finance",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
+    bioguideId: varchar("bioguide_id", { length: 10 })
+      .notNull()
+      .references(() => legislators.bioguideId, { onDelete: "cascade" }),
+    fecId: varchar("fec_id", { length: 20 }).notNull(),
+    cycle: varchar("cycle", { length: 4 }).notNull(),
+    totalReceipts: real("total_receipts").notNull(),
+    totalDisbursements: real("total_disbursements").notNull(),
+    cashOnHand: real("cash_on_hand").notNull(),
+    totalFromPACs: real("total_from_pacs").notNull(),
+    totalFromIndividuals: real("total_from_individuals").notNull(),
+    debtsOwed: real("debts_owed"),
+    sourceUrl: text("source_url"),
+    lastUpdated: timestamp("last_updated").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("campaign_finance_bioguide_cycle_unique").on(table.bioguideId, table.cycle),
+    index("campaign_finance_bioguide_id_idx").on(table.bioguideId),
+  ]
+);
+
 export const templateUses = pgTable(
   "template_uses",
   {
@@ -434,3 +462,5 @@ export type SyncCursor = typeof syncCursors.$inferSelect;
 export type NewSyncCursor = typeof syncCursors.$inferInsert;
 export type TemplateUse = typeof templateUses.$inferSelect;
 export type NewTemplateUse = typeof templateUses.$inferInsert;
+export type CampaignFinance = typeof campaignFinance.$inferSelect;
+export type NewCampaignFinance = typeof campaignFinance.$inferInsert;
