@@ -12,13 +12,16 @@ import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
 import { getVotesByMember, getVoteStats } from "@/db/queries/votes";
 import { getBillsByMember, getBillCount } from "@/db/queries/bills";
+import { getFinanceByMember } from "@/db/queries/campaign-finance";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
+import { CampaignFinance } from "@/components/CampaignFinance";
 import { RepTabs } from "@/components/RepTabs";
 import type { Legislator } from "@/db/schema";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";
+import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
 import {
   getPhotoSources,
   getPhotoFallbackSrc,
@@ -46,6 +49,7 @@ let votes: VoteWithPosition[] = [];
 let voteStats: VoteStats = { totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, present: 0 };
 let bills: Bill[] = [];
 let billCount = 0;
+let financeData: CampaignFinanceData | null = null;
 
 const isInvalidId = !bioguideId || !BIOGUIDE_RE.test(bioguideId);
 if (isInvalidId) {
@@ -95,16 +99,19 @@ if (!error) {
 
   if (rep && !error) {
     try {
-      const [loadedVotes, loadedStats, loadedBills, loadedBillCount] = await Promise.all([
-        getVotesByMember(db, bioguideId!, { limit: 50 }),
-        getVoteStats(db, bioguideId!),
-        getBillsByMember(db, bioguideId!, { limit: 50 }),
-        getBillCount(db, { bioguideId: bioguideId! }),
-      ]);
+      const [loadedVotes, loadedStats, loadedBills, loadedBillCount, loadedFinance] =
+        await Promise.all([
+          getVotesByMember(db, bioguideId!, { limit: 50 }),
+          getVoteStats(db, bioguideId!),
+          getBillsByMember(db, bioguideId!, { limit: 50 }),
+          getBillCount(db, { bioguideId: bioguideId! }),
+          getFinanceByMember(db, bioguideId!),
+        ]);
       votes = loadedVotes;
       voteStats = loadedStats;
       bills = loadedBills;
       billCount = loadedBillCount;
+      financeData = loadedFinance;
     } catch (e) {
       console.error("Failed to load voting/bill data:", e);
     }
@@ -221,6 +228,17 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                   />
                 </div>
               </AstroCard>
+
+              {financeData && (
+                <div
+                  class="mt-8 animate-fade-up-delay-1 no-print"
+                  data-testid="campaign-finance-section"
+                >
+                  <AstroCard variant="civicLg">
+                    <CampaignFinance client:idle data={financeData} />
+                  </AstroCard>
+                </div>
+              )}
 
               <div class="mt-8 animate-fade-up-delay-1">
                 <ContactFlow

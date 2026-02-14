@@ -174,13 +174,8 @@ describe("CampaignFinance", () => {
   });
 
   describe("source attribution", () => {
-    it("renders attribution link when sourceUrl provided", () => {
-      render(
-        <CampaignFinance
-          data={mockFinanceData}
-          sourceUrl="https://www.fec.gov/data/candidate/S4VT00033/"
-        />
-      );
+    it("renders attribution link when data includes sourceUrl", () => {
+      render(<CampaignFinance data={mockFinanceData} />);
 
       const link = screen.getByText("Data from ProPublica / FEC.gov");
       expect(link).toBeInTheDocument();
@@ -191,13 +186,7 @@ describe("CampaignFinance", () => {
     });
 
     it("does not render attribution when sourceUrl is null", () => {
-      render(<CampaignFinance data={mockFinanceData} sourceUrl={null} />);
-
-      expect(screen.queryByText("Data from ProPublica / FEC.gov")).not.toBeInTheDocument();
-    });
-
-    it("does not render attribution when sourceUrl is not provided", () => {
-      render(<CampaignFinance data={mockFinanceData} />);
+      render(<CampaignFinance data={{ ...mockFinanceData, sourceUrl: null }} />);
 
       expect(screen.queryByText("Data from ProPublica / FEC.gov")).not.toBeInTheDocument();
     });

@@ -3,7 +3,6 @@ import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
 
 export interface CampaignFinanceProps {
   data: CampaignFinanceData | null;
-  sourceUrl?: string | null;
 }
 
 const currencyFormat = new Intl.NumberFormat("en-US", {
@@ -63,7 +62,7 @@ function FundingBreakdownBar({
   );
 }
 
-export function CampaignFinance({ data, sourceUrl }: CampaignFinanceProps) {
+export function CampaignFinance({ data }: CampaignFinanceProps) {
   if (!data) {
     return (
       <div className="text-center py-8">
@@ -122,11 +121,11 @@ export function CampaignFinance({ data, sourceUrl }: CampaignFinanceProps) {
           />
         </div>
 
-        {sourceUrl && (
+        {data.sourceUrl && (
           <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
             <Icon name="external-link" className="w-3 h-3" />
             <a
-              href={sourceUrl}
+              href={data.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"
