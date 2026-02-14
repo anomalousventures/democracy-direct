@@ -96,6 +96,7 @@ export interface TransformedLegislator {
   facebookId: string | null;
   youtubeId: string | null;
   lisId: string | null;
+  fecIds: string[] | null;
 }
 
 export function validateRawLegislator(data: unknown, index: number): data is RawLegislator {
@@ -197,6 +198,7 @@ export function transformLegislator(raw: RawLegislator): TransformedLegislator {
     facebookId: raw.social?.facebook ?? null,
     youtubeId: raw.social?.youtube ?? null,
     lisId: raw.id.lis ?? null,
+    fecIds: raw.id.fec?.length ? raw.id.fec : null,
   };
 }
 
@@ -379,6 +381,7 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
           facebookId: leg.facebookId,
           youtubeId: leg.youtubeId,
           lisId: leg.lisId,
+          fecIds: leg.fecIds,
         }))
       )
       .onConflictDoUpdate({
@@ -405,6 +408,7 @@ export async function importLegislators(force: boolean = false): Promise<ImportR
           facebookId: sql`excluded.facebook_id`,
           youtubeId: sql`excluded.youtube_id`,
           lisId: sql`excluded.lis_id`,
+          fecIds: sql`excluded.fec_ids`,
         },
       });
 

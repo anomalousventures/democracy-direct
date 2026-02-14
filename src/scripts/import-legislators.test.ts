@@ -229,4 +229,40 @@ describe("transformLegislator", () => {
     const result = transformLegislator(rawRep);
     expect(result.lisId).toBeNull();
   });
+
+  it("extracts single FEC ID as array", () => {
+    const result = transformLegislator(rawSenator);
+    expect(result.fecIds).toEqual(["H0AA00001"]);
+  });
+
+  it("extracts multiple FEC IDs", () => {
+    const legislatorWithMultipleFecIds: RawLegislator = {
+      ...rawSenator,
+      id: {
+        ...rawSenator.id,
+        fec: ["S4VT00033", "P60007168"],
+      },
+    };
+
+    const result = transformLegislator(legislatorWithMultipleFecIds);
+    expect(result.fecIds).toEqual(["S4VT00033", "P60007168"]);
+  });
+
+  it("returns null for fecIds when not present", () => {
+    const result = transformLegislator(rawRep);
+    expect(result.fecIds).toBeNull();
+  });
+
+  it("returns null for fecIds when array is empty", () => {
+    const legislatorWithEmptyFec: RawLegislator = {
+      ...rawSenator,
+      id: {
+        ...rawSenator.id,
+        fec: [],
+      },
+    };
+
+    const result = transformLegislator(legislatorWithEmptyFec);
+    expect(result.fecIds).toBeNull();
+  });
 });

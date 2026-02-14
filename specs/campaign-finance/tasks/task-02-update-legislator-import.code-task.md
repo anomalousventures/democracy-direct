@@ -1,7 +1,7 @@
 ---
-status: pending
+status: in-progress
 created: 2026-02-11
-started: null
+started: 2026-02-13
 completed: null
 ---
 
