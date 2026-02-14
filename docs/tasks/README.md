@@ -23,7 +23,7 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 | [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Complete | Add rep and template pages to sitemap           |
 | [Voting Records](./voting-records.md)                       | Complete | Integrate voting records (House + Senate)       |
 | [Bill Summaries](./bill-summaries.md)                       | Complete | Bill tracking, summaries, and UI                |
-| [Lighthouse Optimization](./lighthouse-optimization.md)     | Ready    | Performance, a11y, SEO optimization             |
+| [Lighthouse Optimization](./lighthouse-optimization.md)     | Complete | Performance, a11y, SEO optimization             |
 | [Legislation Search](./legislation-search.md)               | Complete | Search bills, vote/amendment detail pages       |
 | [Template Bill Linking](./template-bill-linking.md)         | Complete | Link templates to specific legislation          |
 | [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
