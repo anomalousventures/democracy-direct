@@ -1,8 +1,8 @@
 ---
-status: in-progress
+status: completed
 created: 2026-02-11
 started: 2026-02-13
-completed: null
+completed: 2026-02-13
 ---
 
 # Task: Update Legislator Import to Store FEC IDs
