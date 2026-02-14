@@ -49,6 +49,25 @@ jobs:
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Sync campaign finance
+        id: finance
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:finance 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | tail -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PROPUBLICA_CAMPAIGN_FINANCE_KEY: ${{ secrets.PROPUBLICA_CAMPAIGN_FINANCE_KEY }}
+
       - name: Import ZIP districts
         id: zips
         run: |
@@ -173,6 +192,8 @@ jobs:
           VOTES_FAILED: ${{ steps.votes.outputs.failed }}
           BILLS_RESULT: ${{ steps.bills.outputs.result }}
           BILLS_FAILED: ${{ steps.bills.outputs.failed }}
+          FINANCE_RESULT: ${{ steps.finance.outputs.result }}
+          FINANCE_FAILED: ${{ steps.finance.outputs.failed }}
         run: |
           # Parse results
           LEG_CHANGED=$(echo "$LEGISLATORS_RESULT" | jq -r '.changed // false')
@@ -189,12 +210,16 @@ jobs:
           BILLS_CHANGED=$(echo "$BILLS_RESULT" | jq -r '.changed // false')
           BILLS_COUNT=$(echo "$BILLS_RESULT" | jq -r '.billsUpserted // 0')
 
+          FINANCE_SUCCEEDED=$(echo "$FINANCE_RESULT" | jq -r '.succeeded // 0')
+          FINANCE_SKIPPED=$(echo "$FINANCE_RESULT" | jq -r '.skipped // 0')
+          FINANCE_CHANGED=$( [ "$FINANCE_SUCCEEDED" -gt 0 ] 2>/dev/null && echo "true" || echo "false" )
+
           # Determine overall status
-          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ] || [ "$VOTES_FAILED" = "true" ] || [ "$BILLS_FAILED" = "true" ]; then
+          if [ "$LEGISLATORS_FAILED" = "true" ] || [ "$ZIPS_FAILED" = "true" ] || [ "$TEMPLATES_FAILED" = "true" ] || [ "$VOTES_FAILED" = "true" ] || [ "$BILLS_FAILED" = "true" ] || [ "$FINANCE_FAILED" = "true" ]; then
             TITLE="🚨 Data Refresh Failed"
             COLOR=15158332
             LEVEL=alert
-          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ] || [ "$VOTES_CHANGED" = "true" ] || [ "$BILLS_CHANGED" = "true" ]; then
+          elif [ "$LEG_CHANGED" = "true" ] || [ "$ZIPS_CHANGED" = "true" ] || [ "$VOTES_CHANGED" = "true" ] || [ "$BILLS_CHANGED" = "true" ] || [ "$FINANCE_CHANGED" = "true" ]; then
             TITLE="📊 Data Refresh Complete"
             COLOR=3066993
             LEVEL=success
@@ -243,7 +268,15 @@ jobs:
             BILLS_STATUS="⏭️ **Bills**: Unchanged"
           fi
 
-          DESC="${LEG_STATUS}"$'\n'"${ZIPS_STATUS}"$'\n'"${TEMPLATES_STATUS}"$'\n'"${VOTES_STATUS}"$'\n'"${BILLS_STATUS}"
+          if [ "$FINANCE_FAILED" = "true" ]; then
+            FINANCE_STATUS="❌ **Campaign Finance**: Failed"
+          elif [ "$FINANCE_CHANGED" = "true" ]; then
+            FINANCE_STATUS="✅ **Campaign Finance**: ${FINANCE_SUCCEEDED} synced, ${FINANCE_SKIPPED} skipped"
+          else
+            FINANCE_STATUS="⏭️ **Campaign Finance**: Unchanged"
+          fi
+
+          DESC="${LEG_STATUS}"$'\n'"${ZIPS_STATUS}"$'\n'"${TEMPLATES_STATUS}"$'\n'"${VOTES_STATUS}"$'\n'"${BILLS_STATUS}"$'\n'"${FINANCE_STATUS}"
 
           GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -255,7 +288,7 @@ jobs:
             --button "View Run|$GH_RUN"
 
       - name: Fail workflow if imports failed
-        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true' || steps.votes.outputs.failed == 'true' || steps.bills.outputs.failed == 'true'
+        if: steps.legislators.outputs.failed == 'true' || steps.zips.outputs.failed == 'true' || steps.templates.outputs.failed == 'true' || steps.votes.outputs.failed == 'true' || steps.bills.outputs.failed == 'true' || steps.finance.outputs.failed == 'true'
         run: |
           echo "One or more imports failed"
           exit 1
