@@ -29,6 +29,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cleanup expired sessions and OTPs
+        run: pnpm cleanup:expired
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
       - name: Import legislators
         id: legislators
         run: |
@@ -66,7 +71,7 @@ jobs:
           fi
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
-          PROPUBLICA_CAMPAIGN_FINANCE_KEY: ${{ secrets.PROPUBLICA_CAMPAIGN_FINANCE_KEY }}
+          FEC_API_KEY: ${{ secrets.FEC_API_KEY }}
 
       - name: Import ZIP districts
         id: zips

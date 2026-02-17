@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { CandidateFinanceData } from "@/lib/propublica-finance";
+import type { CandidateFinanceData } from "@/lib/fec-finance";
 
-const mockGetCandidateByFecId =
-  vi.fn<(apiKey: string, cycle: string, fecId: string) => Promise<CandidateFinanceData | null>>();
+const mockGetCandidateFinance =
+  vi.fn<(fecId: string, cycle: string, apiKey: string) => Promise<CandidateFinanceData | null>>();
 const mockDelay = vi.fn<(ms: number) => Promise<void>>();
 
-vi.mock("@/lib/propublica-finance", () => ({
-  getCandidateByFecId: (...args: [string, string, string]) => mockGetCandidateByFecId(...args),
+vi.mock("@/lib/fec-finance", () => ({
+  getCandidateFinance: (...args: [string, string, string]) => mockGetCandidateFinance(...args),
   delay: (...args: [number]) => mockDelay(...args),
 }));
 
@@ -73,7 +73,7 @@ describe("syncCampaignFinance", () => {
 
   it("syncs a legislator with a single FEC ID", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateByFecId.mockResolvedValueOnce(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
     const result = await syncCampaignFinance(db, "test-key", "2026");
 
@@ -82,17 +82,17 @@ describe("syncCampaignFinance", () => {
     expect(result.failed).toBe(0);
     expect(result.skipped).toBe(0);
 
-    expect(mockGetCandidateByFecId).toHaveBeenCalledWith("test-key", "2026", "H8CA05035");
+    expect(mockGetCandidateFinance).toHaveBeenCalledWith("H8CA05035", "2026", "test-key");
     expect(mockInsert).toHaveBeenCalled();
   });
 
   it("uses the last FEC ID from the array (most recent)", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("S000033", ["S4VT00033", "P60007168"])]);
-    mockGetCandidateByFecId.mockResolvedValueOnce(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
     await syncCampaignFinance(db, "test-key", "2026");
 
-    expect(mockGetCandidateByFecId).toHaveBeenCalledWith("test-key", "2026", "P60007168");
+    expect(mockGetCandidateFinance).toHaveBeenCalledWith("P60007168", "2026", "test-key");
   });
 
   it("filters out legislators without FEC IDs", async () => {
@@ -102,12 +102,12 @@ describe("syncCampaignFinance", () => {
 
     expect(result.processed).toBe(0);
     expect(result.succeeded).toBe(0);
-    expect(mockGetCandidateByFecId).not.toHaveBeenCalled();
+    expect(mockGetCandidateFinance).not.toHaveBeenCalled();
   });
 
   it("skips legislators when API returns null", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("T000123", ["H0XX00001"])]);
-    mockGetCandidateByFecId.mockResolvedValueOnce(null);
+    mockGetCandidateFinance.mockResolvedValueOnce(null);
 
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const result = await syncCampaignFinance(db, "test-key", "2026");
@@ -120,7 +120,7 @@ describe("syncCampaignFinance", () => {
 
   it("counts failures when API throws", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("E000123", ["H0YY00001"])]);
-    mockGetCandidateByFecId.mockRejectedValueOnce(new Error("Network error"));
+    mockGetCandidateFinance.mockRejectedValueOnce(new Error("Network error"));
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const result = await syncCampaignFinance(db, "test-key", "2026");
@@ -132,7 +132,7 @@ describe("syncCampaignFinance", () => {
 
   it("upserts existing records on conflict", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateByFecId.mockResolvedValueOnce(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
     await syncCampaignFinance(db, "test-key", "2026");
 
@@ -150,17 +150,17 @@ describe("syncCampaignFinance", () => {
       makeLegislatorRow("B000002", ["H0BB00002"]),
       makeLegislatorRow("C000003", ["H0CC00003"]),
     ]);
-    mockGetCandidateByFecId.mockResolvedValue(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
 
     await syncCampaignFinance(db, "test-key", "2026");
 
     expect(mockDelay).toHaveBeenCalledTimes(2);
-    expect(mockDelay).toHaveBeenCalledWith(100);
+    expect(mockDelay).toHaveBeenCalledWith(250);
   });
 
   it("does not delay after the last legislator", async () => {
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("A000001", ["H0AA00001"])]);
-    mockGetCandidateByFecId.mockResolvedValue(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
 
     await syncCampaignFinance(db, "test-key", "2026");
 
@@ -173,7 +173,7 @@ describe("syncCampaignFinance", () => {
       makeLegislatorRow("B000002", ["H0BB00002"]),
       makeLegislatorRow("C000003", ["H0CC00003"]),
     ]);
-    mockGetCandidateByFecId
+    mockGetCandidateFinance
       .mockResolvedValueOnce(makeFinanceData())
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(makeFinanceData());
@@ -199,7 +199,7 @@ describe("syncCampaignFinance", () => {
       fecUri: "https://api.open.fec.gov/candidate/H8CA05035",
     });
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateByFecId.mockResolvedValueOnce(financeData);
+    mockGetCandidateFinance.mockResolvedValueOnce(financeData);
 
     await syncCampaignFinance(db, "test-key", "2026");
 
@@ -225,7 +225,7 @@ describe("syncCampaignFinance", () => {
       return makeLegislatorRow(`X${id}`, [`H0XX${id.slice(0, 5)}`]);
     });
     mockWhere.mockResolvedValueOnce(legislators);
-    mockGetCandidateByFecId.mockResolvedValue(makeFinanceData());
+    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
 
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     await syncCampaignFinance(db, "test-key", "2026");

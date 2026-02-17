@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { isNotNull, sql } from "drizzle-orm";
-import { getCandidateByFecId, delay } from "@/lib/propublica-finance";
+import { getCandidateFinance, delay } from "@/lib/fec-finance";
 import type { Database } from "@/db/client";
 
 export interface SyncCampaignFinanceResult {
@@ -60,7 +60,7 @@ export async function syncCampaignFinance(
     const fecId = legislator.fecIds[legislator.fecIds.length - 1];
 
     try {
-      const data = await getCandidateByFecId(apiKey, targetCycle, fecId);
+      const data = await getCandidateFinance(fecId, targetCycle, apiKey);
 
       if (!data) {
         console.warn(
@@ -108,7 +108,7 @@ export async function syncCampaignFinance(
     }
 
     if (i < legislatorsWithFecIds.length - 1) {
-      await delay(100);
+      await delay(250);
     }
 
     if ((i + 1) % 50 === 0) {
@@ -144,9 +144,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
 
-  const apiKey = process.env.PROPUBLICA_CAMPAIGN_FINANCE_KEY;
+  const apiKey = process.env.FEC_API_KEY;
   if (!apiKey) {
-    console.error("PROPUBLICA_CAMPAIGN_FINANCE_KEY environment variable is required");
+    console.error("FEC_API_KEY environment variable is required");
     process.exit(1);
   }
 

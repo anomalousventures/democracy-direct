@@ -130,7 +130,7 @@ export function CampaignFinance({ data }: CampaignFinanceProps) {
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"
             >
-              Data from ProPublica / FEC.gov
+              Data from FEC.gov
             </a>
           </div>
         )}

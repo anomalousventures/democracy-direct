@@ -177,7 +177,7 @@ describe("CampaignFinance", () => {
     it("renders attribution link when data includes sourceUrl", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
-      const link = screen.getByText("Data from ProPublica / FEC.gov");
+      const link = screen.getByText("Data from FEC.gov");
       expect(link).toBeInTheDocument();
       expect(link.closest("a")).toHaveAttribute(
         "href",

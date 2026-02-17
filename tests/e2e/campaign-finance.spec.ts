@@ -48,7 +48,7 @@ test.describe("Campaign Finance on Rep Profile", () => {
 
     test("displays attribution link", async ({ page }) => {
       const financeSection = page.locator("[data-testid='campaign-finance-section']");
-      const attribution = financeSection.getByText("Data from ProPublica / FEC.gov");
+      const attribution = financeSection.getByText("Data from FEC.gov");
       await expect(attribution).toBeVisible();
     });
 
