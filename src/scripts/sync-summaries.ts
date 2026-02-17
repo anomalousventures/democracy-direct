@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createCongressClient } from "@/lib/congress-api";
-import { selectBestSummary } from "@/lib/summary-utils";
+import { selectBestSummary, truncateSummary } from "@/lib/summary-utils";
 import { getBillsWithoutSummary, updateBillSummary } from "@/db/queries/bills";
 
 export interface SyncSummariesResult {
@@ -86,7 +86,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
       const summary = selectBestSummary(response.summaries);
 
       if (summary) {
-        await updateBillSummary(db, bill.id, summary);
+        await updateBillSummary(db, bill.id, truncateSummary(summary));
         summariesAdded++;
       } else {
         noSummaryAvailable++;
