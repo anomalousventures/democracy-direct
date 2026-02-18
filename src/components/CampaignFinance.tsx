@@ -18,45 +18,76 @@ function formatCurrency(value: number): string {
 function FundingBreakdownBar({
   totalFromPACs,
   totalFromIndividuals,
+  totalReceipts,
 }: {
   totalFromPACs: number;
   totalFromIndividuals: number;
+  totalReceipts: number;
 }) {
-  const total = totalFromPACs + totalFromIndividuals;
-  if (total === 0) return null;
+  if (totalReceipts === 0) return null;
 
-  const pacPercent = Math.round((totalFromPACs / total) * 100);
-  const individualPercent = 100 - pacPercent;
+  const other = Math.max(0, totalReceipts - totalFromPACs - totalFromIndividuals);
+  const pacPercent = Math.round((totalFromPACs / totalReceipts) * 100);
+  const individualPercent = Math.round((totalFromIndividuals / totalReceipts) * 100);
+  const otherPercent = Math.max(0, 100 - pacPercent - individualPercent);
+
+  const segments = [
+    {
+      label: "PACs",
+      percent: pacPercent,
+      amount: totalFromPACs,
+      testId: "pac-bar",
+      color: "bg-accent",
+    },
+    {
+      label: "Individuals",
+      percent: individualPercent,
+      amount: totalFromIndividuals,
+      testId: "individual-bar",
+      color: "bg-primary",
+    },
+    ...(otherPercent > 0
+      ? [
+          {
+            label: "Other",
+            percent: otherPercent,
+            amount: other,
+            testId: "other-bar",
+            color: "bg-muted-foreground/30",
+          },
+        ]
+      : []),
+  ];
+
+  const ariaLabel = segments.map((s) => `${s.percent}% from ${s.label.toLowerCase()}`).join(", ");
 
   return (
     <div>
       <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-        <span>
-          PACs <span className="font-medium text-foreground">{pacPercent}%</span>
-        </span>
-        <span>
-          Individuals <span className="font-medium text-foreground">{individualPercent}%</span>
-        </span>
+        {segments.map((s) => (
+          <span key={s.label}>
+            {s.label} <span className="font-medium text-foreground">{s.percent}%</span>
+          </span>
+        ))}
       </div>
       <div
         className="flex h-3 rounded-sm overflow-hidden border border-border"
         role="img"
-        aria-label={`Funding breakdown: ${pacPercent}% from PACs, ${individualPercent}% from individuals`}
+        aria-label={`Funding breakdown: ${ariaLabel}`}
       >
-        <div
-          className="bg-accent transition-all duration-300"
-          style={{ width: `${pacPercent}%` }}
-          data-testid="pac-bar"
-        />
-        <div
-          className="bg-primary transition-all duration-300"
-          style={{ width: `${individualPercent}%` }}
-          data-testid="individual-bar"
-        />
+        {segments.map((s) => (
+          <div
+            key={s.testId}
+            className={`${s.color} transition-all duration-300`}
+            style={{ width: `${s.percent}%` }}
+            data-testid={s.testId}
+          />
+        ))}
       </div>
       <div className="flex justify-between text-xs text-muted-foreground mt-1">
-        <span>{formatCurrency(totalFromPACs)}</span>
-        <span>{formatCurrency(totalFromIndividuals)}</span>
+        {segments.map((s) => (
+          <span key={s.label}>{formatCurrency(s.amount)}</span>
+        ))}
       </div>
     </div>
   );
@@ -76,7 +107,6 @@ export function CampaignFinance({ data }: CampaignFinanceProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-primary">Campaign Finance</h2>
         <span className="text-xs text-muted-foreground">{data.cycle} Cycle</span>
       </div>
 
@@ -118,6 +148,7 @@ export function CampaignFinance({ data }: CampaignFinanceProps) {
           <FundingBreakdownBar
             totalFromPACs={data.totalFromPACs}
             totalFromIndividuals={data.totalFromIndividuals}
+            totalReceipts={data.totalReceipts}
           />
         </div>
 

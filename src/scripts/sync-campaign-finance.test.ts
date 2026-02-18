@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { CandidateFinanceData } from "@/lib/fec-finance";
+import type { CandidateFinanceData, FecOffice } from "@/lib/fec-finance";
 
-const mockGetCandidateFinance =
-  vi.fn<(fecId: string, cycle: string, apiKey: string) => Promise<CandidateFinanceData | null>>();
+const mockFetchAllCandidateTotals =
+  vi.fn<
+    (office: FecOffice, cycle: string, apiKey: string) => Promise<Map<string, CandidateFinanceData>>
+  >();
 const mockDelay = vi.fn<(ms: number) => Promise<void>>();
 
 vi.mock("@/lib/fec-finance", () => ({
-  getCandidateFinance: (...args: [string, string, string]) => mockGetCandidateFinance(...args),
+  fetchAllCandidateTotals: (...args: [FecOffice, string, string]) =>
+    mockFetchAllCandidateTotals(...args),
   delay: (...args: [number]) => mockDelay(...args),
 }));
 
@@ -54,9 +57,19 @@ function makeFinanceData(overrides: Partial<CandidateFinanceData> = {}): Candida
     totalFromPACs: 300000,
     totalFromIndividuals: 700000,
     debtsOwed: 50000,
-    fecUri: "https://api.open.fec.gov/candidate/H8CA05035",
+    fecUri: "https://www.fec.gov/data/candidate/H8CA05035/",
     ...overrides,
   };
+}
+
+function makeBulkData(
+  entries: Array<{ fecId: string; data?: Partial<CandidateFinanceData> }>
+): Map<string, CandidateFinanceData> {
+  const map = new Map<string, CandidateFinanceData>();
+  for (const entry of entries) {
+    map.set(entry.fecId, makeFinanceData(entry.data));
+  }
+  return map;
 }
 
 describe("syncCampaignFinance", () => {
@@ -66,33 +79,51 @@ describe("syncCampaignFinance", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockDelay.mockResolvedValue(undefined);
+    mockFetchAllCandidateTotals.mockResolvedValue(new Map());
     db = createMockDb();
     const mod = await import("./sync-campaign-finance");
     syncCampaignFinance = mod.syncCampaignFinance;
   });
 
-  it("syncs a legislator with a single FEC ID", async () => {
+  it("fetches bulk data for Senate and House", async () => {
+    mockWhere.mockResolvedValueOnce([]);
+
+    await syncCampaignFinance(db, "test-key", "2026");
+
+    expect(mockFetchAllCandidateTotals).toHaveBeenCalledWith("S", "2026", "test-key");
+    expect(mockFetchAllCandidateTotals).toHaveBeenCalledWith("H", "2026", "test-key");
+    expect(mockFetchAllCandidateTotals).toHaveBeenCalledTimes(2);
+  });
+
+  it("matches legislators to bulk data by FEC ID", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(makeBulkData([{ fecId: "H8CA05035" }]));
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
     const result = await syncCampaignFinance(db, "test-key", "2026");
 
-    expect(result.processed).toBe(1);
     expect(result.succeeded).toBe(1);
-    expect(result.failed).toBe(0);
     expect(result.skipped).toBe(0);
-
-    expect(mockGetCandidateFinance).toHaveBeenCalledWith("H8CA05035", "2026", "test-key");
     expect(mockInsert).toHaveBeenCalled();
   });
 
   it("uses the last FEC ID from the array (most recent)", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(makeBulkData([{ fecId: "P60007168" }]));
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("S000033", ["S4VT00033", "P60007168"])]);
-    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
-    await syncCampaignFinance(db, "test-key", "2026");
+    const result = await syncCampaignFinance(db, "test-key", "2026");
 
-    expect(mockGetCandidateFinance).toHaveBeenCalledWith("P60007168", "2026", "test-key");
+    expect(result.succeeded).toBe(1);
+  });
+
+  it("counts unmatched legislators as skipped", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(new Map());
+    mockWhere.mockResolvedValueOnce([makeLegislatorRow("T000123", ["H0XX00001"])]);
+
+    const result = await syncCampaignFinance(db, "test-key", "2026");
+
+    expect(result.skipped).toBe(1);
+    expect(result.succeeded).toBe(0);
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("filters out legislators without FEC IDs", async () => {
@@ -102,25 +133,14 @@ describe("syncCampaignFinance", () => {
 
     expect(result.processed).toBe(0);
     expect(result.succeeded).toBe(0);
-    expect(mockGetCandidateFinance).not.toHaveBeenCalled();
   });
 
-  it("skips legislators when API returns null", async () => {
-    mockWhere.mockResolvedValueOnce([makeLegislatorRow("T000123", ["H0XX00001"])]);
-    mockGetCandidateFinance.mockResolvedValueOnce(null);
-
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const result = await syncCampaignFinance(db, "test-key", "2026");
-    warnSpy.mockRestore();
-
-    expect(result.skipped).toBe(1);
-    expect(result.succeeded).toBe(0);
-    expect(mockInsert).not.toHaveBeenCalled();
-  });
-
-  it("counts failures when API throws", async () => {
+  it("counts batch upsert failures", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(makeBulkData([{ fecId: "H0YY00001" }]));
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("E000123", ["H0YY00001"])]);
-    mockGetCandidateFinance.mockRejectedValueOnce(new Error("Network error"));
+    mockInsert.mockImplementationOnce(() => {
+      throw new Error("DB error");
+    });
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const result = await syncCampaignFinance(db, "test-key", "2026");
@@ -130,13 +150,12 @@ describe("syncCampaignFinance", () => {
     expect(result.succeeded).toBe(0);
   });
 
-  it("upserts existing records on conflict", async () => {
+  it("upserts on conflict with correct target", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(makeBulkData([{ fecId: "H8CA05035" }]));
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateFinance.mockResolvedValueOnce(makeFinanceData());
 
     await syncCampaignFinance(db, "test-key", "2026");
 
-    expect(mockValues).toHaveBeenCalled();
     expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         target: expect.arrayContaining(["bioguide_id", "cycle"]),
@@ -144,43 +163,17 @@ describe("syncCampaignFinance", () => {
     );
   });
 
-  it("delays between API requests", async () => {
+  it("processes multiple legislators with mixed results", async () => {
+    mockFetchAllCandidateTotals.mockResolvedValue(
+      makeBulkData([{ fecId: "H0AA00001" }, { fecId: "H0CC00003" }])
+    );
     mockWhere.mockResolvedValueOnce([
       makeLegislatorRow("A000001", ["H0AA00001"]),
       makeLegislatorRow("B000002", ["H0BB00002"]),
       makeLegislatorRow("C000003", ["H0CC00003"]),
     ]);
-    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
 
-    await syncCampaignFinance(db, "test-key", "2026");
-
-    expect(mockDelay).toHaveBeenCalledTimes(2);
-    expect(mockDelay).toHaveBeenCalledWith(250);
-  });
-
-  it("does not delay after the last legislator", async () => {
-    mockWhere.mockResolvedValueOnce([makeLegislatorRow("A000001", ["H0AA00001"])]);
-    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
-
-    await syncCampaignFinance(db, "test-key", "2026");
-
-    expect(mockDelay).not.toHaveBeenCalled();
-  });
-
-  it("processes multiple legislators and returns correct totals", async () => {
-    mockWhere.mockResolvedValueOnce([
-      makeLegislatorRow("A000001", ["H0AA00001"]),
-      makeLegislatorRow("B000002", ["H0BB00002"]),
-      makeLegislatorRow("C000003", ["H0CC00003"]),
-    ]);
-    mockGetCandidateFinance
-      .mockResolvedValueOnce(makeFinanceData())
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(makeFinanceData());
-
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const result = await syncCampaignFinance(db, "test-key", "2026");
-    warnSpy.mockRestore();
 
     expect(result.processed).toBe(3);
     expect(result.succeeded).toBe(2);
@@ -188,7 +181,7 @@ describe("syncCampaignFinance", () => {
     expect(result.failed).toBe(0);
   });
 
-  it("passes correct finance data to the insert", async () => {
+  it("passes correct finance data to the batch insert", async () => {
     const financeData = makeFinanceData({
       totalReceipts: 5000000,
       totalDisbursements: 4000000,
@@ -196,14 +189,14 @@ describe("syncCampaignFinance", () => {
       totalFromPACs: 2000000,
       totalFromIndividuals: 3000000,
       debtsOwed: 100000,
-      fecUri: "https://api.open.fec.gov/candidate/H8CA05035",
+      fecUri: "https://www.fec.gov/data/candidate/H8CA05035/",
     });
+    mockFetchAllCandidateTotals.mockResolvedValue(new Map([["H8CA05035", financeData]]));
     mockWhere.mockResolvedValueOnce([makeLegislatorRow("P000197", ["H8CA05035"])]);
-    mockGetCandidateFinance.mockResolvedValueOnce(financeData);
 
     await syncCampaignFinance(db, "test-key", "2026");
 
-    expect(mockValues).toHaveBeenCalledWith(
+    expect(mockValues).toHaveBeenCalledWith([
       expect.objectContaining({
         bioguideId: "P000197",
         fecId: "H8CA05035",
@@ -214,26 +207,24 @@ describe("syncCampaignFinance", () => {
         totalFromPACs: 2000000,
         totalFromIndividuals: 3000000,
         debtsOwed: 100000,
-        sourceUrl: "https://api.open.fec.gov/candidate/H8CA05035",
-      })
-    );
+        sourceUrl: "https://www.fec.gov/data/candidate/H8CA05035/",
+      }),
+    ]);
   });
 
-  it("logs progress at intervals", async () => {
-    const legislators = Array.from({ length: 60 }, (_, i) => {
-      const id = String(i).padStart(6, "0");
-      return makeLegislatorRow(`X${id}`, [`H0XX${id.slice(0, 5)}`]);
-    });
-    mockWhere.mockResolvedValueOnce(legislators);
-    mockGetCandidateFinance.mockResolvedValue(makeFinanceData());
+  it("merges Senate and House bulk data", async () => {
+    const senateData = makeBulkData([{ fecId: "S4VT00033" }]);
+    const houseData = makeBulkData([{ fecId: "H8CA05035" }]);
 
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    await syncCampaignFinance(db, "test-key", "2026");
+    mockFetchAllCandidateTotals.mockResolvedValueOnce(senateData).mockResolvedValueOnce(houseData);
 
-    const progressLogs = logSpy.mock.calls.filter(
-      (call) => typeof call[0] === "string" && call[0].includes("Progress:")
-    );
-    expect(progressLogs.length).toBe(1);
-    logSpy.mockRestore();
+    mockWhere.mockResolvedValueOnce([
+      makeLegislatorRow("S000033", ["S4VT00033"]),
+      makeLegislatorRow("P000197", ["H8CA05035"]),
+    ]);
+
+    const result = await syncCampaignFinance(db, "test-key", "2026");
+
+    expect(result.succeeded).toBe(2);
   });
 });

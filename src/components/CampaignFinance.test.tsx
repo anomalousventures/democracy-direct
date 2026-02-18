@@ -8,7 +8,7 @@ const mockFinanceData: CampaignFinanceData = {
   bioguideId: "S000033",
   fecId: "S4VT00033",
   cycle: "2024",
-  totalReceipts: 5000000,
+  totalReceipts: 6000000,
   totalDisbursements: 3500000,
   cashOnHand: 1500000,
   totalFromPACs: 2000000,
@@ -31,7 +31,6 @@ describe("CampaignFinance", () => {
       render(<CampaignFinance data={null} />);
 
       expect(screen.queryByText("Total Raised")).not.toBeInTheDocument();
-      expect(screen.queryByText("Campaign Finance")).not.toBeInTheDocument();
     });
   });
 
@@ -40,7 +39,7 @@ describe("CampaignFinance", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
       expect(screen.getByText("Total Raised")).toBeInTheDocument();
-      expect(screen.getByText("$5,000,000")).toBeInTheDocument();
+      expect(screen.getByText("$6,000,000")).toBeInTheDocument();
     });
 
     it("displays cycle year", () => {
@@ -61,12 +60,6 @@ describe("CampaignFinance", () => {
 
       expect(screen.getByText("Cash on Hand")).toBeInTheDocument();
       expect(screen.getByText("$1,500,000")).toBeInTheDocument();
-    });
-
-    it("displays heading", () => {
-      render(<CampaignFinance data={mockFinanceData} />);
-
-      expect(screen.getByText("Campaign Finance")).toBeInTheDocument();
     });
   });
 
@@ -93,53 +86,64 @@ describe("CampaignFinance", () => {
     });
   });
 
-  describe("PAC vs individual breakdown", () => {
-    it("calculates correct percentages", () => {
+  describe("funding breakdown bar", () => {
+    it("calculates correct three-segment percentages", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
-      expect(screen.getByText("40%")).toBeInTheDocument();
-      expect(screen.getByText("60%")).toBeInTheDocument();
+      expect(screen.getByText("33%")).toBeInTheDocument();
+      expect(screen.getByText("50%")).toBeInTheDocument();
+      expect(screen.getByText("17%")).toBeInTheDocument();
     });
 
-    it("renders PAC and individual bar segments", () => {
+    it("renders PAC, individual, and other bar segments", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
-      const pacBar = screen.getByTestId("pac-bar");
-      const individualBar = screen.getByTestId("individual-bar");
-
-      expect(pacBar).toHaveStyle({ width: "40%" });
-      expect(individualBar).toHaveStyle({ width: "60%" });
+      expect(screen.getByTestId("pac-bar")).toHaveStyle({ width: "33%" });
+      expect(screen.getByTestId("individual-bar")).toHaveStyle({ width: "50%" });
+      expect(screen.getByTestId("other-bar")).toHaveStyle({ width: "17%" });
     });
 
-    it("shows PAC and individual dollar amounts", () => {
+    it("shows dollar amounts for all segments", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
       expect(screen.getByText("$2,000,000")).toBeInTheDocument();
       expect(screen.getByText("$3,000,000")).toBeInTheDocument();
+      expect(screen.getByText("$1,000,000")).toBeInTheDocument();
     });
 
-    it("has accessible label on breakdown bar", () => {
+    it("has accessible label including all segments", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
       expect(
         screen.getByRole("img", {
-          name: "Funding breakdown: 40% from PACs, 60% from individuals",
+          name: "Funding breakdown: 33% from pacs, 50% from individuals, 17% from other",
         })
       ).toBeInTheDocument();
+    });
+
+    it("hides Other segment when PACs + Individuals equal totalReceipts", () => {
+      render(<CampaignFinance data={{ ...mockFinanceData, totalReceipts: 5000000 }} />);
+
+      expect(screen.getByTestId("pac-bar")).toBeInTheDocument();
+      expect(screen.getByTestId("individual-bar")).toBeInTheDocument();
+      expect(screen.queryByTestId("other-bar")).not.toBeInTheDocument();
     });
 
     it("handles 100% individual funding", () => {
       render(
         <CampaignFinance
-          data={{ ...mockFinanceData, totalFromPACs: 0, totalFromIndividuals: 1000000 }}
+          data={{
+            ...mockFinanceData,
+            totalReceipts: 1000000,
+            totalFromPACs: 0,
+            totalFromIndividuals: 1000000,
+          }}
         />
       );
 
-      const pacBar = screen.getByTestId("pac-bar");
-      const individualBar = screen.getByTestId("individual-bar");
-
-      expect(pacBar).toHaveStyle({ width: "0%" });
-      expect(individualBar).toHaveStyle({ width: "100%" });
+      expect(screen.getByTestId("pac-bar")).toHaveStyle({ width: "0%" });
+      expect(screen.getByTestId("individual-bar")).toHaveStyle({ width: "100%" });
+      expect(screen.queryByTestId("other-bar")).not.toBeInTheDocument();
     });
   });
 
@@ -147,7 +151,7 @@ describe("CampaignFinance", () => {
     it("formats large numbers with commas", () => {
       render(<CampaignFinance data={mockFinanceData} />);
 
-      expect(screen.getByText("$5,000,000")).toBeInTheDocument();
+      expect(screen.getByText("$6,000,000")).toBeInTheDocument();
     });
 
     it("formats zero values", () => {

@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { isNotNull, sql } from "drizzle-orm";
-import { getCandidateFinance, delay } from "@/lib/fec-finance";
+import { fetchAllCandidateTotals, delay } from "@/lib/fec-finance";
+import type { CandidateFinanceData } from "@/lib/fec-finance";
 import type { Database } from "@/db/client";
+
+const BATCH_SIZE = 50;
 
 export interface SyncCampaignFinanceResult {
   processed: number;
@@ -46,75 +49,88 @@ export async function syncCampaignFinance(
 
   const { campaignFinance } = await import("@/db/schema");
 
-  const legislatorsWithFecIds = await fetchLegislatorsWithFecIds(db);
+  console.log(`Fetching bulk FEC data for cycle ${targetCycle}...`);
+  const senateData = await fetchAllCandidateTotals("S", targetCycle, apiKey);
+  await delay(500);
+  const houseData = await fetchAllCandidateTotals("H", targetCycle, apiKey);
+
+  const bulkData = new Map([...senateData, ...houseData]);
   console.log(
-    `Found ${legislatorsWithFecIds.length} legislators with FEC IDs, syncing cycle ${targetCycle}`
+    `Fetched ${bulkData.size} candidates (${senateData.size} Senate, ${houseData.size} House)`
   );
+
+  const legislatorsWithFecIds = await fetchLegislatorsWithFecIds(db);
+  console.log(`Found ${legislatorsWithFecIds.length} legislators with FEC IDs`);
+
+  const matched: Array<{
+    bioguideId: string;
+    fecId: string;
+    data: CandidateFinanceData;
+  }> = [];
+  let skipped = 0;
+
+  for (const legislator of legislatorsWithFecIds) {
+    const fecId = legislator.fecIds[legislator.fecIds.length - 1];
+    const data = bulkData.get(fecId);
+
+    if (data) {
+      matched.push({ bioguideId: legislator.bioguideId, fecId, data });
+    } else {
+      skipped++;
+    }
+  }
+
+  console.log(`Matched: ${matched.length}, No FEC data: ${skipped}`);
 
   let succeeded = 0;
   let failed = 0;
-  let skipped = 0;
 
-  for (let i = 0; i < legislatorsWithFecIds.length; i++) {
-    const legislator = legislatorsWithFecIds[i];
-    const fecId = legislator.fecIds[legislator.fecIds.length - 1];
+  for (let i = 0; i < matched.length; i += BATCH_SIZE) {
+    const batch = matched.slice(i, i + BATCH_SIZE);
 
     try {
-      const data = await getCandidateFinance(fecId, targetCycle, apiKey);
-
-      if (!data) {
-        console.warn(
-          `[${i + 1}/${legislatorsWithFecIds.length}] No data for ${legislator.bioguideId} (FEC: ${fecId})`
-        );
-        skipped++;
-      } else {
-        await db
-          .insert(campaignFinance)
-          .values({
-            bioguideId: legislator.bioguideId,
-            fecId,
+      await db
+        .insert(campaignFinance)
+        .values(
+          batch.map((row) => ({
+            bioguideId: row.bioguideId,
+            fecId: row.fecId,
             cycle: targetCycle,
-            totalReceipts: data.totalReceipts,
-            totalDisbursements: data.totalDisbursements,
-            cashOnHand: data.cashOnHand,
-            totalFromPACs: data.totalFromPACs,
-            totalFromIndividuals: data.totalFromIndividuals,
-            debtsOwed: data.debtsOwed,
-            sourceUrl: data.fecUri,
+            totalReceipts: row.data.totalReceipts,
+            totalDisbursements: row.data.totalDisbursements,
+            cashOnHand: row.data.cashOnHand,
+            totalFromPACs: row.data.totalFromPACs,
+            totalFromIndividuals: row.data.totalFromIndividuals,
+            debtsOwed: row.data.debtsOwed,
+            sourceUrl: row.data.fecUri,
             lastUpdated: new Date(),
-          })
-          .onConflictDoUpdate({
-            target: [campaignFinance.bioguideId, campaignFinance.cycle],
-            set: {
-              fecId: sql`excluded.fec_id`,
-              totalReceipts: sql`excluded.total_receipts`,
-              totalDisbursements: sql`excluded.total_disbursements`,
-              cashOnHand: sql`excluded.cash_on_hand`,
-              totalFromPACs: sql`excluded.total_from_pacs`,
-              totalFromIndividuals: sql`excluded.total_from_individuals`,
-              debtsOwed: sql`excluded.debts_owed`,
-              sourceUrl: sql`excluded.source_url`,
-              lastUpdated: sql`excluded.last_updated`,
-            },
-          });
-        succeeded++;
-      }
+          }))
+        )
+        .onConflictDoUpdate({
+          target: [campaignFinance.bioguideId, campaignFinance.cycle],
+          set: {
+            fecId: sql`excluded.fec_id`,
+            totalReceipts: sql`excluded.total_receipts`,
+            totalDisbursements: sql`excluded.total_disbursements`,
+            cashOnHand: sql`excluded.cash_on_hand`,
+            totalFromPACs: sql`excluded.total_from_pacs`,
+            totalFromIndividuals: sql`excluded.total_from_individuals`,
+            debtsOwed: sql`excluded.debts_owed`,
+            sourceUrl: sql`excluded.source_url`,
+            lastUpdated: sql`excluded.last_updated`,
+          },
+        });
+
+      succeeded += batch.length;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.error(
-        `[${i + 1}/${legislatorsWithFecIds.length}] Error for ${legislator.bioguideId} (FEC: ${fecId}): ${message}`
-      );
-      failed++;
+      console.error(`Batch upsert failed (rows ${i}-${i + batch.length}): ${message}`);
+      failed += batch.length;
     }
 
-    if (i < legislatorsWithFecIds.length - 1) {
-      await delay(250);
-    }
-
-    if ((i + 1) % 50 === 0) {
+    if (i + BATCH_SIZE < matched.length) {
       console.log(
-        `[${formatElapsed(startTime)}] Progress: ${i + 1}/${legislatorsWithFecIds.length} ` +
-          `(${succeeded} ok, ${skipped} skipped, ${failed} errors)`
+        `[${formatElapsed(startTime)}] Upserted ${Math.min(i + BATCH_SIZE, matched.length)}/${matched.length}`
       );
     }
   }

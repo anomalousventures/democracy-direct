@@ -391,6 +391,91 @@ export const campaignFinance = pgTable(
   ]
 );
 
+export const committees = pgTable("committees", {
+  fecCommitteeId: varchar("fec_committee_id", { length: 20 }).primaryKey(),
+  name: text("name").notNull(),
+  designation: varchar("designation", { length: 1 }),
+  committeeType: varchar("committee_type", { length: 1 }),
+  party: varchar("party", { length: 3 }),
+  treasurerName: text("treasurer_name"),
+  state: varchar("state", { length: 2 }),
+  sourceUrl: text("source_url"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const candidateCommittees = pgTable(
+  "candidate_committees",
+  {
+    fecId: varchar("fec_id", { length: 20 }).notNull(),
+    committeeId: varchar("committee_id", { length: 20 })
+      .notNull()
+      .references(() => committees.fecCommitteeId),
+    cycle: varchar("cycle", { length: 4 }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.fecId, table.cycle] })]
+);
+
+export const pacContributions = pgTable(
+  "pac_contributions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
+    bioguideId: varchar("bioguide_id", { length: 10 })
+      .notNull()
+      .references(() => legislators.bioguideId, { onDelete: "cascade" }),
+    committeeId: varchar("committee_id", { length: 20 })
+      .notNull()
+      .references(() => committees.fecCommitteeId),
+    fecId: varchar("fec_id", { length: 20 }).notNull(),
+    recipientCommitteeId: varchar("recipient_committee_id", { length: 20 }),
+    cycle: varchar("cycle", { length: 4 }).notNull(),
+    totalAmount: real("total_amount").notNull(),
+    contributionCount: integer("contribution_count").notNull(),
+    lastContributionDate: timestamp("last_contribution_date"),
+  },
+  (table) => [
+    unique("pac_contributions_bioguide_committee_cycle_unique").on(
+      table.bioguideId,
+      table.committeeId,
+      table.cycle
+    ),
+    index("pac_contributions_bioguide_id_idx").on(table.bioguideId),
+    index("pac_contributions_committee_id_idx").on(table.committeeId),
+  ]
+);
+
+export const independentExpenditures = pgTable(
+  "independent_expenditures",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`uuid_generate_v7()`),
+    bioguideId: varchar("bioguide_id", { length: 10 })
+      .notNull()
+      .references(() => legislators.bioguideId, { onDelete: "cascade" }),
+    committeeId: varchar("committee_id", { length: 20 })
+      .notNull()
+      .references(() => committees.fecCommitteeId),
+    fecId: varchar("fec_id", { length: 20 }).notNull(),
+    cycle: varchar("cycle", { length: 4 }).notNull(),
+    totalAmount: real("total_amount").notNull(),
+    expenditureCount: integer("expenditure_count").notNull(),
+    supportOppose: varchar("support_oppose", { length: 1 }).notNull(),
+  },
+  (table) => [
+    unique("independent_expenditures_bioguide_committee_cycle_so_unique").on(
+      table.bioguideId,
+      table.committeeId,
+      table.cycle,
+      table.supportOppose
+    ),
+    index("independent_expenditures_bioguide_id_idx").on(table.bioguideId),
+    index("independent_expenditures_committee_id_idx").on(table.committeeId),
+  ]
+);
+
 export const templateUses = pgTable(
   "template_uses",
   {
@@ -464,3 +549,11 @@ export type TemplateUse = typeof templateUses.$inferSelect;
 export type NewTemplateUse = typeof templateUses.$inferInsert;
 export type CampaignFinance = typeof campaignFinance.$inferSelect;
 export type NewCampaignFinance = typeof campaignFinance.$inferInsert;
+export type Committee = typeof committees.$inferSelect;
+export type NewCommittee = typeof committees.$inferInsert;
+export type CandidateCommittee = typeof candidateCommittees.$inferSelect;
+export type NewCandidateCommittee = typeof candidateCommittees.$inferInsert;
+export type PacContribution = typeof pacContributions.$inferSelect;
+export type NewPacContribution = typeof pacContributions.$inferInsert;
+export type IndependentExpenditure = typeof independentExpenditures.$inferSelect;
+export type NewIndependentExpenditure = typeof independentExpenditures.$inferInsert;

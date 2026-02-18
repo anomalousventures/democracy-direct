@@ -120,6 +120,13 @@
       "when": 1771030718841,
       "tag": "0016_ambiguous_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1771429647325,
+      "tag": "0017_chubby_fixer",
+      "breakpoints": true
     }
   ]
 }

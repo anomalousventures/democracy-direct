@@ -16,7 +16,6 @@ import { getFinanceByMember } from "@/db/queries/campaign-finance";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
-import { CampaignFinance } from "@/components/CampaignFinance";
 import { RepTabs } from "@/components/RepTabs";
 import type { Legislator } from "@/db/schema";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
@@ -225,20 +224,10 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                     voteStats={voteStats}
                     bills={bills}
                     billCount={billCount}
+                    financeData={financeData}
                   />
                 </div>
               </AstroCard>
-
-              {financeData && (
-                <div
-                  class="mt-8 animate-fade-up-delay-1 no-print"
-                  data-testid="campaign-finance-section"
-                >
-                  <AstroCard variant="civicLg">
-                    <CampaignFinance client:idle data={financeData} />
-                  </AstroCard>
-                </div>
-              )}
 
               <div class="mt-8 animate-fade-up-delay-1">
                 <ContactFlow
