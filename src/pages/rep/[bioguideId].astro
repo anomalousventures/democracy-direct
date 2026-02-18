@@ -12,7 +12,11 @@ import { createDb } from "@/db/client";
 import { getLegislatorByBioguideId } from "@/db/queries/legislators";
 import { getVotesByMember, getVoteStats } from "@/db/queries/votes";
 import { getBillsByMember, getBillCount } from "@/db/queries/bills";
-import { getFinanceByMember } from "@/db/queries/campaign-finance";
+import {
+  getFinanceByMember,
+  getTopPacDonors,
+  getIndependentExpenditures,
+} from "@/db/queries/campaign-finance";
 import { templates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { ContactFlow } from "@/components/ContactFlow";
@@ -20,7 +24,11 @@ import { RepTabs } from "@/components/RepTabs";
 import type { Legislator } from "@/db/schema";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
 import type { Bill } from "@/db/schema";
-import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
+import type {
+  CampaignFinanceData,
+  TopPacDonor,
+  IndependentExpenditureWithCommittee,
+} from "@/db/queries/campaign-finance";
 import {
   getPhotoSources,
   getPhotoFallbackSrc,
@@ -49,6 +57,8 @@ let voteStats: VoteStats = { totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, pres
 let bills: Bill[] = [];
 let billCount = 0;
 let financeData: CampaignFinanceData | null = null;
+let topPacDonors: TopPacDonor[] = [];
+let loadedIndependentExpenditures: IndependentExpenditureWithCommittee[] = [];
 
 const isInvalidId = !bioguideId || !BIOGUIDE_RE.test(bioguideId);
 if (isInvalidId) {
@@ -98,19 +108,36 @@ if (!error) {
 
   if (rep && !error) {
     try {
-      const [loadedVotes, loadedStats, loadedBills, loadedBillCount, loadedFinance] =
-        await Promise.all([
-          getVotesByMember(db, bioguideId!, { limit: 50 }),
-          getVoteStats(db, bioguideId!),
-          getBillsByMember(db, bioguideId!, { limit: 50 }),
-          getBillCount(db, { bioguideId: bioguideId! }),
-          getFinanceByMember(db, bioguideId!),
-        ]);
+      const [
+        loadedVotes,
+        loadedStats,
+        loadedBills,
+        loadedBillCount,
+        loadedFinance,
+        loadedPacDonors,
+        loadedIndExpenditures,
+      ] = await Promise.all([
+        getVotesByMember(db, bioguideId!, { limit: 50 }),
+        getVoteStats(db, bioguideId!),
+        getBillsByMember(db, bioguideId!, { limit: 50 }),
+        getBillCount(db, { bioguideId: bioguideId! }),
+        getFinanceByMember(db, bioguideId!),
+        getTopPacDonors(db, bioguideId!),
+        getIndependentExpenditures(
+          db,
+          bioguideId!,
+          new Date().getFullYear() % 2 === 0
+            ? new Date().getFullYear().toString()
+            : (new Date().getFullYear() + 1).toString()
+        ),
+      ]);
       votes = loadedVotes;
       voteStats = loadedStats;
       bills = loadedBills;
       billCount = loadedBillCount;
       financeData = loadedFinance;
+      topPacDonors = loadedPacDonors;
+      loadedIndependentExpenditures = loadedIndExpenditures;
     } catch (e) {
       console.error("Failed to load voting/bill data:", e);
     }
@@ -225,6 +252,9 @@ const sanitizedContactUrl = rep ? sanitizeExternalUrl(rep.contactFormUrl) : null
                     bills={bills}
                     billCount={billCount}
                     financeData={financeData}
+                    topPacDonors={topPacDonors}
+                    independentExpenditures={loadedIndependentExpenditures}
+                    bioguideId={bioguideId}
                   />
                 </div>
               </AstroCard>

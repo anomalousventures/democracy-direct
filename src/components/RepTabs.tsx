@@ -6,7 +6,11 @@ import { ContactInfo, type ContactInfoProps } from "./ContactInfo";
 import { cn } from "@/lib/utils";
 import { useHashTabs, TAB_TRIGGER_CLASS } from "@/hooks/useHashTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
-import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
+import type {
+  CampaignFinanceData,
+  TopPacDonor,
+  IndependentExpenditureWithCommittee,
+} from "@/db/queries/campaign-finance";
 import type { Bill } from "@/db/schema";
 
 export interface RepTabsProps {
@@ -16,6 +20,9 @@ export interface RepTabsProps {
   bills: Bill[];
   billCount: number;
   financeData: CampaignFinanceData | null;
+  topPacDonors?: TopPacDonor[];
+  independentExpenditures?: IndependentExpenditureWithCommittee[];
+  bioguideId?: string;
   className?: string;
 }
 
@@ -35,6 +42,9 @@ export function RepTabs({
   bills,
   billCount,
   financeData,
+  topPacDonors,
+  independentExpenditures,
+  bioguideId,
   className,
 }: RepTabsProps) {
   const { activeTab, handleTabChange } = useHashTabs(TAB_HASH_MAP, "contact" as TabValue);
@@ -89,7 +99,12 @@ export function RepTabs({
 
       {financeData && (
         <TabsContent value="finance" className="mt-0 pt-6">
-          <CampaignFinance data={financeData} />
+          <CampaignFinance
+            data={financeData}
+            topPacDonors={topPacDonors}
+            independentExpenditures={independentExpenditures}
+            bioguideId={bioguideId}
+          />
         </TabsContent>
       )}
     </Tabs>

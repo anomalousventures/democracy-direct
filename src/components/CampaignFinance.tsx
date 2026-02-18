@@ -1,8 +1,15 @@
 import { Icon } from "@/components/icons";
-import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
+import type {
+  CampaignFinanceData,
+  TopPacDonor,
+  IndependentExpenditureWithCommittee,
+} from "@/db/queries/campaign-finance";
 
 export interface CampaignFinanceProps {
   data: CampaignFinanceData | null;
+  topPacDonors?: TopPacDonor[];
+  independentExpenditures?: IndependentExpenditureWithCommittee[];
+  bioguideId?: string;
 }
 
 const currencyFormat = new Intl.NumberFormat("en-US", {
@@ -93,7 +100,84 @@ function FundingBreakdownBar({
   );
 }
 
-export function CampaignFinance({ data }: CampaignFinanceProps) {
+function TopPacDonors({ donors }: { donors: TopPacDonor[] }) {
+  if (donors.length === 0) return null;
+
+  return (
+    <div className="p-4 bg-secondary border border-border rounded-sm" data-testid="top-pac-donors">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Top PAC Donors</p>
+      <ul className="space-y-2">
+        {donors.map((donor) => (
+          <li key={donor.committeeId} className="flex items-center justify-between gap-2">
+            <a
+              href={`/committee/${donor.committeeId}`}
+              className="text-sm text-primary hover:underline truncate"
+            >
+              {donor.committee.name}
+            </a>
+            <span className="text-sm font-medium text-foreground whitespace-nowrap">
+              {formatCurrency(donor.totalAmount)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function IndependentExpenditureSummary({
+  expenditures,
+}: {
+  expenditures: IndependentExpenditureWithCommittee[];
+}) {
+  if (expenditures.length === 0) return null;
+
+  let totalSupport = 0;
+  let totalOppose = 0;
+  for (const exp of expenditures) {
+    if (exp.supportOppose === "S") totalSupport += exp.totalAmount;
+    else if (exp.supportOppose === "O") totalOppose += exp.totalAmount;
+  }
+
+  if (totalSupport === 0 && totalOppose === 0) return null;
+
+  return (
+    <div
+      className="p-4 bg-secondary border border-border rounded-sm"
+      data-testid="independent-expenditures"
+    >
+      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
+        Independent Expenditures
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        {totalSupport > 0 && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Supporting</p>
+            <p className="text-base font-semibold text-green-600">{formatCurrency(totalSupport)}</p>
+          </div>
+        )}
+        {totalOppose > 0 && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Opposing</p>
+            <p className="text-base font-semibold text-destructive">
+              {formatCurrency(totalOppose)}
+            </p>
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        from {expenditures.length} {expenditures.length === 1 ? "committee" : "committees"}
+      </p>
+    </div>
+  );
+}
+
+export function CampaignFinance({
+  data,
+  topPacDonors = [],
+  independentExpenditures = [],
+  bioguideId,
+}: CampaignFinanceProps) {
   if (!data) {
     return (
       <div className="text-center py-8">
@@ -152,19 +236,34 @@ export function CampaignFinance({ data }: CampaignFinanceProps) {
           />
         </div>
 
-        {data.sourceUrl && (
-          <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-            <Icon name="external-link" className="w-3 h-3" />
+        <TopPacDonors donors={topPacDonors} />
+
+        <IndependentExpenditureSummary expenditures={independentExpenditures} />
+
+        <div className="flex items-center justify-between">
+          {data.sourceUrl && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Icon name="external-link" className="w-3 h-3" />
+              <a
+                href={data.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Data from FEC.gov
+              </a>
+            </div>
+          )}
+          {bioguideId && (
             <a
-              href={data.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary transition-colors"
+              href={`/rep/${bioguideId}/finance`}
+              className="text-xs text-primary hover:underline"
+              data-testid="finance-detail-link"
             >
-              Data from FEC.gov
+              View full finance details
             </a>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

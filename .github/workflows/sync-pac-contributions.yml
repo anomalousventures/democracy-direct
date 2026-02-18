@@ -1,0 +1,98 @@
+name: Sync PAC Contributions
+
+on:
+  schedule:
+    # Runs 3x/week (Mon/Wed/Fri at 8am UTC) — each run budgets ~450 API calls,
+    # needs multiple runs to complete full sync across all legislators
+    - cron: "0 8 * * 1,3,5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync PAC Contributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync PAC contributions
+        id: sync
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:pac-contributions 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | tail -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          FEC_API_KEY: ${{ secrets.FEC_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
+          SYNC_RESULT: ${{ steps.sync.outputs.result }}
+          SYNC_FAILED: ${{ steps.sync.outputs.failed }}
+        run: |
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          LEGISLATORS=$(echo "$SYNC_RESULT" | jq -r '.processed // 0')
+          COMMITTEES=$(echo "$SYNC_RESULT" | jq -r '.committeesFound // 0')
+          CONTRIBUTIONS=$(echo "$SYNC_RESULT" | jq -r '.contributionsInserted // 0')
+          API_CALLS=$(echo "$SYNC_RESULT" | jq -r '.apiCallsMade // 0')
+          BUDGET_EXHAUSTED=$(echo "$SYNC_RESULT" | jq -r '.budgetExhausted // false')
+
+          if [ "$SYNC_FAILED" = "true" ]; then
+            TITLE="🚨 PAC Contributions Sync Failed"
+            COLOR=15158332
+            LEVEL=alert
+            DESC="❌ **Sync**: Failed"
+          elif [ "$CONTRIBUTIONS" -gt 0 ] 2>/dev/null; then
+            TITLE="📊 PAC Contributions Sync Complete"
+            COLOR=3066993
+            LEVEL=success
+            DESC="✅ **PAC Contributions**: ${CONTRIBUTIONS} upserted from ${LEGISLATORS} legislators (${API_CALLS} API calls)"
+            if [ "$BUDGET_EXHAUSTED" = "true" ]; then
+              DESC="${DESC}"$'\n'"⏸️ **Budget**: Exhausted, will resume next run"
+            fi
+          else
+            TITLE="✅ PAC Contributions Sync - No Changes"
+            COLOR=9807270
+            LEVEL=success
+            DESC="⏭️ **PAC Contributions**: No new data (${LEGISLATORS} legislators checked, ${API_CALLS} API calls)"
+          fi
+
+          .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
+
+      - name: Fail workflow if sync failed
+        if: steps.sync.outputs.failed == 'true'
+        run: |
+          echo "PAC contributions sync failed - check logs above for details"
+          exit 1

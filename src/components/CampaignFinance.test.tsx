@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/preact";
 import { CampaignFinance } from "./CampaignFinance";
-import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
+import type {
+  CampaignFinanceData,
+  TopPacDonor,
+  IndependentExpenditureWithCommittee,
+} from "@/db/queries/campaign-finance";
 
 const mockFinanceData: CampaignFinanceData = {
   id: "finance-1",
@@ -193,6 +197,132 @@ describe("CampaignFinance", () => {
       render(<CampaignFinance data={{ ...mockFinanceData, sourceUrl: null }} />);
 
       expect(screen.queryByText("Data from ProPublica / FEC.gov")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("top PAC donors", () => {
+    const mockDonors: TopPacDonor[] = [
+      {
+        id: "pac-1",
+        bioguideId: "S000033",
+        committeeId: "C00000935",
+        fecId: "S4VT00033",
+        recipientCommitteeId: "C00401224",
+        cycle: "2026",
+        totalAmount: 10000,
+        contributionCount: 2,
+        lastContributionDate: new Date("2025-06-15"),
+        committee: {
+          fecCommitteeId: "C00000935",
+          name: "NATIONAL BEER WHOLESALERS",
+          designation: null,
+          committeeType: null,
+          party: null,
+          treasurerName: null,
+          state: null,
+          sourceUrl: null,
+          lastUpdated: new Date(),
+          createdAt: new Date(),
+        },
+      },
+    ];
+
+    it("renders top PAC donors section when donors provided", () => {
+      render(<CampaignFinance data={mockFinanceData} topPacDonors={mockDonors} />);
+
+      expect(screen.getByTestId("top-pac-donors")).toBeInTheDocument();
+      expect(screen.getByText("NATIONAL BEER WHOLESALERS")).toBeInTheDocument();
+    });
+
+    it("hides top PAC donors section when empty", () => {
+      render(<CampaignFinance data={mockFinanceData} topPacDonors={[]} />);
+
+      expect(screen.queryByTestId("top-pac-donors")).not.toBeInTheDocument();
+    });
+
+    it("links each donor to committee page", () => {
+      render(<CampaignFinance data={mockFinanceData} topPacDonors={mockDonors} />);
+
+      const link = screen.getByText("NATIONAL BEER WHOLESALERS").closest("a");
+      expect(link).toHaveAttribute("href", "/committee/C00000935");
+    });
+  });
+
+  describe("independent expenditures summary", () => {
+    const mockExpenditures: IndependentExpenditureWithCommittee[] = [
+      {
+        id: "ie-1",
+        bioguideId: "S000033",
+        committeeId: "C00578997",
+        fecId: "S4VT00033",
+        cycle: "2026",
+        totalAmount: 1500000,
+        expenditureCount: 25,
+        supportOppose: "S",
+        committee: {
+          fecCommitteeId: "C00578997",
+          name: "SENATE LEADERSHIP FUND",
+          designation: null,
+          committeeType: null,
+          party: null,
+          treasurerName: null,
+          state: null,
+          sourceUrl: null,
+          lastUpdated: new Date(),
+          createdAt: new Date(),
+        },
+      },
+      {
+        id: "ie-2",
+        bioguideId: "S000033",
+        committeeId: "C00123456",
+        fecId: "S4VT00033",
+        cycle: "2026",
+        totalAmount: 500000,
+        expenditureCount: 10,
+        supportOppose: "O",
+        committee: {
+          fecCommitteeId: "C00123456",
+          name: "OPPOSE PAC",
+          designation: null,
+          committeeType: null,
+          party: null,
+          treasurerName: null,
+          state: null,
+          sourceUrl: null,
+          lastUpdated: new Date(),
+          createdAt: new Date(),
+        },
+      },
+    ];
+
+    it("renders independent expenditure summary when data provided", () => {
+      render(<CampaignFinance data={mockFinanceData} independentExpenditures={mockExpenditures} />);
+
+      expect(screen.getByTestId("independent-expenditures")).toBeInTheDocument();
+      expect(screen.getByText("Supporting")).toBeInTheDocument();
+      expect(screen.getByText("Opposing")).toBeInTheDocument();
+    });
+
+    it("hides independent expenditure summary when empty", () => {
+      render(<CampaignFinance data={mockFinanceData} independentExpenditures={[]} />);
+
+      expect(screen.queryByTestId("independent-expenditures")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("detail link", () => {
+    it("renders detail link when bioguideId provided", () => {
+      render(<CampaignFinance data={mockFinanceData} bioguideId="S000033" />);
+
+      const link = screen.getByTestId("finance-detail-link");
+      expect(link).toHaveAttribute("href", "/rep/S000033/finance");
+    });
+
+    it("hides detail link when bioguideId not provided", () => {
+      render(<CampaignFinance data={mockFinanceData} />);
+
+      expect(screen.queryByTestId("finance-detail-link")).not.toBeInTheDocument();
     });
   });
 });

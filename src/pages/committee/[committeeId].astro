@@ -1,0 +1,257 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
+import { createDb } from "@/db/client";
+import {
+  getCommitteeById,
+  getCommitteeContributions,
+  getCommitteeExpenditures,
+} from "@/db/queries/campaign-finance";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+const { committeeId } = Astro.params;
+
+const COMMITTEE_ID_RE = /^C\d{8}$/;
+let error: string | null = null;
+
+const isInvalidId = !committeeId || !COMMITTEE_ID_RE.test(committeeId);
+if (isInvalidId) {
+  error = "Invalid committee ID.";
+}
+
+function getCurrentCycle(): string {
+  const year = new Date().getFullYear();
+  return (year % 2 === 0 ? year : year + 1).toString();
+}
+
+const cycle = getCurrentCycle();
+let committee: Awaited<ReturnType<typeof getCommitteeById>> = null;
+let contributions: Awaited<ReturnType<typeof getCommitteeContributions>> = [];
+let expenditures: Awaited<ReturnType<typeof getCommitteeExpenditures>> = [];
+
+if (!error) {
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
+
+  try {
+    const [loadedCommittee, loadedContributions, loadedExpenditures] = await Promise.all([
+      getCommitteeById(db, committeeId!),
+      getCommitteeContributions(db, committeeId!, cycle),
+      getCommitteeExpenditures(db, committeeId!, cycle),
+    ]);
+    committee = loadedCommittee;
+    contributions = loadedContributions;
+    expenditures = loadedExpenditures;
+  } catch (e) {
+    console.error("Database error:", e);
+    error = "Failed to load committee details.";
+  }
+
+  if (!error && !committee) {
+    Astro.response.status = 404;
+    error = "Committee not found.";
+  }
+}
+
+const currencyFormat = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+function formatCurrency(value: number): string {
+  return currencyFormat.format(value);
+}
+
+const designationLabels: Record<string, string> = {
+  A: "Authorized by candidate",
+  B: "Lobbyist/Registrant PAC",
+  D: "Leadership PAC",
+  J: "Joint fundraising committee",
+  P: "Principal campaign committee",
+  U: "Unauthorized",
+};
+
+const typeLabels: Record<string, string> = {
+  C: "Communication cost",
+  D: "Delegate committee",
+  E: "Electioneering communication",
+  H: "House campaign",
+  I: "Independent expenditure (person or group)",
+  N: "PAC (nonqualified)",
+  O: "Super PAC (independent expenditure only)",
+  P: "Presidential campaign",
+  Q: "PAC (qualified)",
+  S: "Senate campaign",
+  U: "Single candidate independent expenditure",
+  V: "PAC with non-contribution account",
+  W: "PAC with non-contribution account (nonqualified)",
+  X: "Party (nonqualified)",
+  Y: "Party (qualified)",
+  Z: "National party nonfederal account",
+};
+---
+
+<Layout
+  title={committee ? committee.name : "Committee Not Found"}
+  description={committee ? `Details for ${committee.name}` : "Committee not found"}
+>
+  <Header currentPath={`/committee/${committeeId}`} user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <ErrorCard
+            title={error}
+            description="The committee you're looking for couldn't be found."
+            actionHref="/"
+            actionLabel="Find Your Representatives"
+          />
+        ) : (
+          committee && (
+            <div class="container-wide space-y-6">
+              <AstroCard variant="civicLg">
+                <h1 class="text-2xl font-bold mb-2">{committee.name}</h1>
+                <div class="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                  {committee.designation && (
+                    <span>{designationLabels[committee.designation] ?? committee.designation}</span>
+                  )}
+                  {committee.committeeType && (
+                    <span>{typeLabels[committee.committeeType] ?? committee.committeeType}</span>
+                  )}
+                  {committee.party && <span>Party: {committee.party}</span>}
+                  {committee.state && <span>{committee.state}</span>}
+                </div>
+                {committee.treasurerName && (
+                  <p class="text-sm text-muted-foreground">Treasurer: {committee.treasurerName}</p>
+                )}
+                <div class="flex items-center gap-1.5 text-xs text-muted-foreground mt-3">
+                  <Icon name="external-link" class="w-3 h-3" />
+                  <a
+                    href={`https://www.fec.gov/data/committee/${committeeId}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:text-primary transition-colors"
+                  >
+                    View on FEC.gov
+                  </a>
+                </div>
+              </AstroCard>
+
+              {contributions.length > 0 && (
+                <AstroCard variant="civicLg">
+                  <h2 class="text-lg font-bold mb-4">Contributions to Candidates</h2>
+                  <p class="text-sm text-muted-foreground mb-4">
+                    {cycle} cycle — {contributions.length}{" "}
+                    {contributions.length === 1 ? "recipient" : "recipients"}
+                  </p>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-border text-left">
+                          <th class="py-2 pr-4 font-medium text-muted-foreground">Candidate</th>
+                          <th class="py-2 pr-4 font-medium text-muted-foreground text-right">
+                            Amount
+                          </th>
+                          <th class="py-2 font-medium text-muted-foreground text-right">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {contributions.map((c) => (
+                          <tr class="border-b border-border/50">
+                            <td class="py-2 pr-4">
+                              <a
+                                href={`/rep/${c.bioguideId}#finance`}
+                                class="text-primary hover:underline"
+                              >
+                                {c.legislator.firstName} {c.legislator.lastName}
+                              </a>
+                              <span class="ml-2 text-xs text-muted-foreground">
+                                ({c.legislator.party}-{c.legislator.state})
+                              </span>
+                            </td>
+                            <td class="py-2 pr-4 text-right font-medium">
+                              {formatCurrency(c.totalAmount)}
+                            </td>
+                            <td class="py-2 text-right text-muted-foreground">
+                              {c.contributionCount}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AstroCard>
+              )}
+
+              {expenditures.length > 0 && (
+                <AstroCard variant="civicLg">
+                  <h2 class="text-lg font-bold mb-4">Independent Expenditures</h2>
+                  <p class="text-sm text-muted-foreground mb-4">
+                    {cycle} cycle — spending for or against candidates
+                  </p>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-border text-left">
+                          <th class="py-2 pr-4 font-medium text-muted-foreground">Candidate</th>
+                          <th class="py-2 pr-4 font-medium text-muted-foreground text-right">
+                            Amount
+                          </th>
+                          <th class="py-2 font-medium text-muted-foreground">Position</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expenditures.map((exp) => (
+                          <tr class="border-b border-border/50">
+                            <td class="py-2 pr-4">
+                              <a
+                                href={`/rep/${exp.bioguideId}#finance`}
+                                class="text-primary hover:underline"
+                              >
+                                {exp.legislator.firstName} {exp.legislator.lastName}
+                              </a>
+                              <span class="ml-2 text-xs text-muted-foreground">
+                                ({exp.legislator.party}-{exp.legislator.state})
+                              </span>
+                            </td>
+                            <td class="py-2 pr-4 text-right font-medium">
+                              {formatCurrency(exp.totalAmount)}
+                            </td>
+                            <td
+                              class={`py-2 font-medium ${exp.supportOppose === "S" ? "text-green-600" : "text-destructive"}`}
+                            >
+                              {exp.supportOppose === "S" ? "Support" : "Oppose"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AstroCard>
+              )}
+
+              {contributions.length === 0 && expenditures.length === 0 && (
+                <AstroCard variant="civicLg">
+                  <p class="text-center text-muted-foreground py-8">
+                    No contribution or expenditure data found for the {cycle} cycle.
+                  </p>
+                </AstroCard>
+              )}
+            </div>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath={`/committee/${committeeId}`} />
+</Layout>

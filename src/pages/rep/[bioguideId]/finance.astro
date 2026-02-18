@@ -1,0 +1,297 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import AstroCard from "@/components/ui/AstroCard.astro";
+import Icon from "@/components/icons/Icon.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
+import { createDb } from "@/db/client";
+import { getLegislatorByBioguideId } from "@/db/queries/legislators";
+import {
+  getFinanceByMember,
+  getAllPacDonors,
+  getIndependentExpenditures,
+} from "@/db/queries/campaign-finance";
+import type { Legislator } from "@/db/schema";
+import { getRepTitle, getPartyLabel, getPartyColor } from "@/lib/legislator-utils";
+import { BIOGUIDE_RE } from "@/lib/bioguide";
+import { getConfig } from "@/lib/config";
+
+const user = Astro.locals.user;
+const { bioguideId } = Astro.params;
+
+let rep: Legislator | null = null;
+let error: string | null = null;
+
+const isInvalidId = !bioguideId || !BIOGUIDE_RE.test(bioguideId);
+if (isInvalidId) {
+  error = "Invalid representative ID.";
+}
+
+function getCurrentCycle(): string {
+  const year = new Date().getFullYear();
+  return (year % 2 === 0 ? year : year + 1).toString();
+}
+
+const cycle = getCurrentCycle();
+let financeData: Awaited<ReturnType<typeof getFinanceByMember>> = null;
+let allPacDonors: Awaited<ReturnType<typeof getAllPacDonors>> = [];
+let expenditures: Awaited<ReturnType<typeof getIndependentExpenditures>> = [];
+
+if (!error) {
+  const config = getConfig(Astro.locals);
+  const db = createDb(config.database.url);
+  const [loadedRep, dbError] = await getLegislatorByBioguideId(db, bioguideId!)
+    .then((result) => [result, null] as const)
+    .catch((e) => {
+      console.error("Database error:", e);
+      return [null, "Failed to load representative details."] as const;
+    });
+
+  rep = loadedRep;
+  error = dbError;
+
+  if (!error && !rep) {
+    Astro.response.status = 404;
+    error = "Representative not found.";
+  }
+
+  if (rep && !error) {
+    try {
+      const [loadedFinance, loadedDonors, loadedExpenditures] = await Promise.all([
+        getFinanceByMember(db, bioguideId!),
+        getAllPacDonors(db, bioguideId!, cycle, { limit: 200 }),
+        getIndependentExpenditures(db, bioguideId!, cycle),
+      ]);
+      financeData = loadedFinance;
+      allPacDonors = loadedDonors;
+      expenditures = loadedExpenditures;
+    } catch (e) {
+      console.error("Failed to load finance data:", e);
+    }
+  }
+}
+
+const currencyFormat = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+function formatCurrency(value: number): string {
+  return currencyFormat.format(value);
+}
+
+let totalSupport = 0;
+let totalOppose = 0;
+for (const exp of expenditures) {
+  if (exp.supportOppose === "S") totalSupport += exp.totalAmount;
+  else if (exp.supportOppose === "O") totalOppose += exp.totalAmount;
+}
+---
+
+<Layout
+  title={rep ? `Campaign Finance — ${rep.firstName} ${rep.lastName}` : "Finance Details Not Found"}
+  description={rep
+    ? `Campaign finance details for ${rep.firstName} ${rep.lastName}`
+    : "Finance details not found"}
+>
+  <Header currentPath={`/rep/${bioguideId}/finance`} user={user} />
+
+  <main id="main-content" class="flex-1 py-12">
+    <div class="container-page">
+      {
+        error ? (
+          <ErrorCard
+            title={error}
+            description="Could not load finance details."
+            actionHref="/"
+            actionLabel="Find Your Representatives"
+          />
+        ) : (
+          rep && (
+            <div class="container-wide space-y-6">
+              <a
+                href={`/rep/${bioguideId}#finance`}
+                class="link-back inline-flex items-center gap-1.5"
+              >
+                <Icon name="chevron-left" class="w-4 h-4" />
+                <span>
+                  Back to {rep.firstName} {rep.lastName}
+                </span>
+              </a>
+
+              <AstroCard variant="civicLg">
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 class="text-2xl font-bold">Campaign Finance</h1>
+                    <p class="text-sm text-muted-foreground mt-1">
+                      {rep.firstName} {rep.lastName}
+                      <span class={`ml-2 ${getPartyColor(rep.party)} party-badge`}>
+                        {getPartyLabel(rep.party, true)}
+                      </span>
+                      <span class="ml-1 text-muted-foreground">
+                        {getRepTitle(rep.chamber, rep.state, rep.district)}
+                      </span>
+                    </p>
+                  </div>
+                  <span class="text-xs text-muted-foreground">{cycle} Cycle</span>
+                </div>
+
+                {financeData && (
+                  <div class="space-y-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">Total Raised</p>
+                        <p class="text-lg font-bold text-primary">
+                          {formatCurrency(financeData.totalReceipts)}
+                        </p>
+                      </div>
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">Spent</p>
+                        <p class="text-lg font-semibold text-primary">
+                          {formatCurrency(financeData.totalDisbursements)}
+                        </p>
+                      </div>
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">Cash on Hand</p>
+                        <p class="text-lg font-semibold text-primary">
+                          {formatCurrency(financeData.cashOnHand)}
+                        </p>
+                      </div>
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">From PACs</p>
+                        <p class="text-lg font-semibold text-primary">
+                          {formatCurrency(financeData.totalFromPACs)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {financeData.sourceUrl && (
+                      <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Icon name="external-link" class="w-3 h-3" />
+                        <a
+                          href={financeData.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="hover:text-primary transition-colors"
+                        >
+                          Data from FEC.gov
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </AstroCard>
+
+              {allPacDonors.length > 0 && (
+                <AstroCard variant="civicLg">
+                  <h2 class="text-lg font-bold mb-4">PAC Contributions</h2>
+                  <p class="text-sm text-muted-foreground mb-4">
+                    {allPacDonors.length} PACs contributed to this candidate in the {cycle} cycle.
+                  </p>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-border text-left">
+                          <th class="py-2 pr-4 font-medium text-muted-foreground">Committee</th>
+                          <th class="py-2 pr-4 font-medium text-muted-foreground text-right">
+                            Amount
+                          </th>
+                          <th class="py-2 font-medium text-muted-foreground text-right">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allPacDonors.map((donor) => (
+                          <tr class="border-b border-border/50">
+                            <td class="py-2 pr-4">
+                              <a
+                                href={`/committee/${donor.committeeId}`}
+                                class="text-primary hover:underline"
+                              >
+                                {donor.committee.name}
+                              </a>
+                            </td>
+                            <td class="py-2 pr-4 text-right font-medium">
+                              {formatCurrency(donor.totalAmount)}
+                            </td>
+                            <td class="py-2 text-right text-muted-foreground">
+                              {donor.contributionCount}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AstroCard>
+              )}
+
+              {expenditures.length > 0 && (
+                <AstroCard variant="civicLg">
+                  <h2 class="text-lg font-bold mb-4">Independent Expenditures</h2>
+                  <div class="grid grid-cols-2 gap-3 mb-4">
+                    {totalSupport > 0 && (
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">Total Supporting</p>
+                        <p class="text-lg font-semibold text-green-600">
+                          {formatCurrency(totalSupport)}
+                        </p>
+                      </div>
+                    )}
+                    {totalOppose > 0 && (
+                      <div class="p-3 bg-secondary border border-border rounded-sm">
+                        <p class="text-xs text-muted-foreground mb-1">Total Opposing</p>
+                        <p class="text-lg font-semibold text-destructive">
+                          {formatCurrency(totalOppose)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-border text-left">
+                          <th class="py-2 pr-4 font-medium text-muted-foreground">Committee</th>
+                          <th class="py-2 pr-4 font-medium text-muted-foreground text-right">
+                            Amount
+                          </th>
+                          <th class="py-2 font-medium text-muted-foreground">Position</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expenditures.map((exp) => (
+                          <tr class="border-b border-border/50">
+                            <td class="py-2 pr-4">
+                              <a
+                                href={`/committee/${exp.committeeId}`}
+                                class="text-primary hover:underline"
+                              >
+                                {exp.committee.name}
+                              </a>
+                            </td>
+                            <td class="py-2 pr-4 text-right font-medium">
+                              {formatCurrency(exp.totalAmount)}
+                            </td>
+                            <td
+                              class={`py-2 font-medium ${exp.supportOppose === "S" ? "text-green-600" : "text-destructive"}`}
+                            >
+                              {exp.supportOppose === "S" ? "Support" : "Oppose"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AstroCard>
+              )}
+            </div>
+          )
+        )
+      }
+    </div>
+  </main>
+
+  <Footer currentPath={`/rep/${bioguideId}/finance`} />
+</Layout>
