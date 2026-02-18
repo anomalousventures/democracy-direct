@@ -107,6 +107,8 @@ if (!error) {
   }
 
   if (rep && !error) {
+    const currentYear = new Date().getFullYear();
+    const currentCycle = (currentYear % 2 === 0 ? currentYear : currentYear + 1).toString();
     try {
       const [
         loadedVotes,
@@ -122,14 +124,8 @@ if (!error) {
         getBillsByMember(db, bioguideId!, { limit: 50 }),
         getBillCount(db, { bioguideId: bioguideId! }),
         getFinanceByMember(db, bioguideId!),
-        getTopPacDonors(db, bioguideId!),
-        getIndependentExpenditures(
-          db,
-          bioguideId!,
-          new Date().getFullYear() % 2 === 0
-            ? new Date().getFullYear().toString()
-            : (new Date().getFullYear() + 1).toString()
-        ),
+        getTopPacDonors(db, bioguideId!, { cycle: currentCycle }),
+        getIndependentExpenditures(db, bioguideId!, currentCycle),
       ]);
       votes = loadedVotes;
       voteStats = loadedStats;
@@ -139,7 +135,7 @@ if (!error) {
       topPacDonors = loadedPacDonors;
       loadedIndependentExpenditures = loadedIndExpenditures;
     } catch (e) {
-      console.error("Failed to load voting/bill data:", e);
+      console.error("Failed to load voting, bill, or campaign finance data:", e);
     }
   }
 }

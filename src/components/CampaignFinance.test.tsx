@@ -196,7 +196,7 @@ describe("CampaignFinance", () => {
     it("does not render attribution when sourceUrl is null", () => {
       render(<CampaignFinance data={{ ...mockFinanceData, sourceUrl: null }} />);
 
-      expect(screen.queryByText("Data from ProPublica / FEC.gov")).not.toBeInTheDocument();
+      expect(screen.queryByText("Data from FEC.gov")).not.toBeInTheDocument();
     });
   });
 

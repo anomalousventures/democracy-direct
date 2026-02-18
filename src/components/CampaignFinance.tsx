@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icons";
+import { sanitizeExternalUrl } from "@/lib/url";
 import type {
   CampaignFinanceData,
   TopPacDonor,
@@ -187,9 +188,10 @@ export function CampaignFinance({
   }
 
   const debtsOwed = data.debtsOwed != null && data.debtsOwed > 0 ? data.debtsOwed : null;
+  const sanitizedSourceUrl = sanitizeExternalUrl(data.sourceUrl);
 
   return (
-    <div>
+    <div data-testid="campaign-finance-section">
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs text-muted-foreground">{data.cycle} Cycle</span>
       </div>
@@ -241,11 +243,11 @@ export function CampaignFinance({
         <IndependentExpenditureSummary expenditures={independentExpenditures} />
 
         <div className="flex items-center justify-between">
-          {data.sourceUrl && (
+          {sanitizedSourceUrl && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Icon name="external-link" className="w-3 h-3" />
               <a
-                href={data.sourceUrl}
+                href={sanitizedSourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"

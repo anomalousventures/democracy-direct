@@ -292,7 +292,7 @@ async function syncHouseVotes(
     offset += limit;
   }
 
-  let votesToProcess = options.maxVotes ? allVotes.slice(0, options.maxVotes) : allVotes;
+  let votesToProcess = allVotes;
 
   if (!options.force) {
     const [maxRow] = await db
@@ -309,6 +309,10 @@ async function syncHouseVotes(
         `Incremental sync: ${before} total, ${votesToProcess.length} new (max stored roll call: ${maxRollCall})`
       );
     }
+  }
+
+  if (options.maxVotes) {
+    votesToProcess = votesToProcess.slice(0, options.maxVotes);
   }
 
   console.log(
@@ -469,7 +473,7 @@ async function syncSenateVotes(
   console.log(`Fetching Senate votes for Congress ${congress}, Session ${session}...`);
 
   const menu = await senateClient.getVoteMenu(congress, session);
-  let votesToProcess = options.maxVotes ? menu.votes.slice(0, options.maxVotes) : menu.votes;
+  let votesToProcess = menu.votes;
 
   if (!options.force) {
     const [maxRow] = await db
@@ -486,6 +490,10 @@ async function syncSenateVotes(
         `Incremental sync: ${before} total, ${votesToProcess.length} new (max stored roll call: ${maxRollCall})`
       );
     }
+  }
+
+  if (options.maxVotes) {
+    votesToProcess = votesToProcess.slice(0, options.maxVotes);
   }
 
   console.log(

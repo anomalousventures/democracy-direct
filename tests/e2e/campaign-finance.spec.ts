@@ -5,8 +5,12 @@ test.describe("Campaign Finance on Rep Profile", () => {
     await page.goto("/rep/P000622");
     await page.waitForLoadState("networkidle");
 
-    const financeSection = page.locator("[data-testid='campaign-finance-section']");
-    await expect(financeSection).toHaveCount(0);
+    const financeTab = page.getByRole("tab", { name: /finance/i });
+    if (await financeTab.isVisible()) {
+      await financeTab.click();
+      const financeSection = page.locator("[data-testid='campaign-finance-section']");
+      await expect(financeSection).toHaveCount(0);
+    }
   });
 
   test("section is absent for invalid rep (404 page)", async ({ page }) => {
@@ -16,16 +20,15 @@ test.describe("Campaign Finance on Rep Profile", () => {
   });
 
   test.describe("with finance data", () => {
-    test.skip(
-      !process.env.CAMPAIGN_FINANCE_SEEDED,
-      "Requires campaign finance data in database (task-07 blocked on API key)"
-    );
+    test.skip(!process.env.CAMPAIGN_FINANCE_SEEDED, "Requires campaign finance data in database");
 
     const REP_WITH_DATA = "/rep/S000033";
 
     test.beforeEach(async ({ page }) => {
       await page.goto(REP_WITH_DATA);
       await page.waitForLoadState("networkidle");
+      const financeTab = page.getByRole("tab", { name: /finance/i });
+      await financeTab.click();
     });
 
     test("campaign finance section is visible", async ({ page }) => {

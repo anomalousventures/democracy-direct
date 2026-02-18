@@ -209,6 +209,41 @@ describe("fec-finance", () => {
         "Invalid FEC ID: invalid"
       );
     });
+
+    it("accepts presidential FEC ID format", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockFecResponse,
+      });
+
+      const result = await getCandidateFinance("P60007168", "2024", MOCK_API_KEY);
+      expect(result).not.toBeNull();
+      expect(result?.fecUri).toBe("https://www.fec.gov/data/candidate/P60007168/");
+    });
+
+    it("throws on 401 unauthorized", async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+
+      await expect(getCandidateFinance("S4VT00033", "2024", MOCK_API_KEY)).rejects.toThrow(
+        "FEC API returned 401 for candidate S4VT00033"
+      );
+    });
+
+    it("throws on 403 forbidden", async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
+
+      await expect(getCandidateFinance("S4VT00033", "2024", MOCK_API_KEY)).rejects.toThrow(
+        "FEC API returned 403 for candidate S4VT00033"
+      );
+    });
+
+    it("throws on 500 server error", async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+      await expect(getCandidateFinance("S4VT00033", "2024", MOCK_API_KEY)).rejects.toThrow(
+        "FEC API returned 500 for candidate S4VT00033"
+      );
+    });
   });
 
   describe("fetchAllCandidateTotals", () => {

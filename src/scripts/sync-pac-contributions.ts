@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { eq, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNotNull, sql } from "drizzle-orm";
 import {
   fetchCandidateCommittee,
   fetchPacContributions,
@@ -166,7 +166,7 @@ export async function syncPacContributions(
     const [existingCommittee] = await db
       .select({ committeeId: candidateCommittees.committeeId })
       .from(candidateCommittees)
-      .where(eq(candidateCommittees.fecId, fecId));
+      .where(and(eq(candidateCommittees.fecId, fecId), eq(candidateCommittees.cycle, targetCycle)));
 
     let principalCommitteeId: string | null = existingCommittee?.committeeId ?? null;
 

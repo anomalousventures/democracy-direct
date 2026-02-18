@@ -2,7 +2,7 @@ const BASE_URL = "https://api.open.fec.gov/v1";
 const PAGE_DELAY_MS = 500;
 
 const CYCLE_PATTERN = /^20\d{2}$/;
-const FEC_ID_PATTERN = /^[A-Z]\d[A-Z]{2}\d{5}$/;
+const FEC_ID_PATTERN = /^[A-Z][A-Z0-9]{8}$/;
 
 export type FecOffice = "H" | "S";
 
@@ -140,7 +140,10 @@ export async function getCandidateFinance(
   try {
     const response = await fetch(url);
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 429) return null;
+      throw new Error(`FEC API returned ${response.status} for candidate ${fecId}`);
+    }
 
     const json: unknown = await response.json();
     if (!hasResultsArray(json) || json.results.length === 0) return null;
@@ -158,7 +161,8 @@ export async function getCandidateFinance(
       debtsOwed: toNumber(result.last_debts_owed_by_committee ?? result.debts_owed_by_committee),
       fecUri: `https://www.fec.gov/data/candidate/${fecId}/`,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("FEC API returned")) throw error;
     return null;
   }
 }
