@@ -264,7 +264,7 @@ async function syncHouseVotes(
   congress: number,
   session: number,
   errors: SyncVotesResult["errors"],
-  maxVotes?: number
+  options: { maxVotes?: number; force?: boolean } = {}
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number }> {
   const { votes, memberVotes } = await import("@/db/schema");
 
@@ -292,9 +292,31 @@ async function syncHouseVotes(
     offset += limit;
   }
 
-  const votesToProcess = maxVotes ? allVotes.slice(0, maxVotes) : allVotes;
+  let votesToProcess = allVotes;
+
+  if (!options.force) {
+    const [maxRow] = await db
+      .select({ max: sql<number>`coalesce(max(${votes.rollCall}), 0)` })
+      .from(votes)
+      .where(
+        and(eq(votes.chamber, "house"), eq(votes.congress, congress), eq(votes.session, session))
+      );
+    const maxRollCall = maxRow?.max ?? 0;
+    const before = votesToProcess.length;
+    votesToProcess = votesToProcess.filter((v) => v.rollCallNumber > maxRollCall);
+    if (before !== votesToProcess.length) {
+      console.log(
+        `Incremental sync: ${before} total, ${votesToProcess.length} new (max stored roll call: ${maxRollCall})`
+      );
+    }
+  }
+
+  if (options.maxVotes) {
+    votesToProcess = votesToProcess.slice(0, options.maxVotes);
+  }
+
   console.log(
-    `Found ${allVotes.length} House votes${maxVotes ? `, processing ${votesToProcess.length}` : ""}`
+    `Found ${allVotes.length} House votes${votesToProcess.length !== allVotes.length ? `, processing ${votesToProcess.length}` : ""}`
   );
 
   for (let i = 0; i < votesToProcess.length; i++) {
@@ -444,16 +466,38 @@ async function syncSenateVotes(
   congress: number,
   session: number,
   errors: SyncVotesResult["errors"],
-  maxVotes?: number
+  options: { maxVotes?: number; force?: boolean } = {}
 ): Promise<{ votesUpserted: number; memberVotesUpserted: number; unmappedMembers: number }> {
   const { votes, memberVotes } = await import("@/db/schema");
 
   console.log(`Fetching Senate votes for Congress ${congress}, Session ${session}...`);
 
   const menu = await senateClient.getVoteMenu(congress, session);
-  const votesToProcess = maxVotes ? menu.votes.slice(0, maxVotes) : menu.votes;
+  let votesToProcess = menu.votes;
+
+  if (!options.force) {
+    const [maxRow] = await db
+      .select({ max: sql<number>`coalesce(max(${votes.rollCall}), 0)` })
+      .from(votes)
+      .where(
+        and(eq(votes.chamber, "senate"), eq(votes.congress, congress), eq(votes.session, session))
+      );
+    const maxRollCall = maxRow?.max ?? 0;
+    const before = votesToProcess.length;
+    votesToProcess = votesToProcess.filter((v) => v.voteNumber > maxRollCall);
+    if (before !== votesToProcess.length) {
+      console.log(
+        `Incremental sync: ${before} total, ${votesToProcess.length} new (max stored roll call: ${maxRollCall})`
+      );
+    }
+  }
+
+  if (options.maxVotes) {
+    votesToProcess = votesToProcess.slice(0, options.maxVotes);
+  }
+
   console.log(
-    `Found ${menu.votes.length} Senate votes${maxVotes ? `, processing ${votesToProcess.length}` : ""}`
+    `Found ${menu.votes.length} Senate votes${votesToProcess.length !== menu.votes.length ? `, processing ${votesToProcess.length}` : ""}`
   );
 
   let totalVotesUpserted = 0;
@@ -668,7 +712,15 @@ export async function syncVotes(
 
   const errors: SyncVotesResult["errors"] = [];
 
-  const houseResult = await syncHouseVotes(db, congressClient, congress, session, errors, limit);
+  const syncOptions = { maxVotes: limit, force };
+  const houseResult = await syncHouseVotes(
+    db,
+    congressClient,
+    congress,
+    session,
+    errors,
+    syncOptions
+  );
   const senateResult = await syncSenateVotes(
     db,
     senateClient,
@@ -677,7 +729,7 @@ export async function syncVotes(
     congress,
     session,
     errors,
-    limit
+    syncOptions
   );
 
   if (senateResult.unmappedMembers > 0) {

@@ -62,6 +62,7 @@ export class SesEmailProvider implements EmailProvider {
     const rawEmail = emailParts.join("\r\n");
 
     const command = new SendEmailCommand({
+      FromEmailAddress: this.from,
       Content: {
         Raw: {
           Data: new TextEncoder().encode(rawEmail),

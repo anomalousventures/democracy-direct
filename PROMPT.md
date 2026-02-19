@@ -2,9 +2,9 @@
 
 ## Target Feature
 
-**Spec directory:** `specs/lighthouse-optimization/tasks/`
-**Branch name:** `feat/lighthouse-optimization`
-**Design doc:** `docs/tasks/lighthouse-optimization.md`
+**Spec directory:** `specs/campaign-finance/tasks/`
+**Branch name:** `feat/campaign-finance`
+**Design doc:** `docs/tasks/campaign-finance.md`
 
 ## Objective
 

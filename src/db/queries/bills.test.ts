@@ -64,6 +64,7 @@ describe("BillWithSponsor type", () => {
         facebookId: null,
         youtubeId: null,
         lisId: null,
+        fecIds: null,
       },
     };
 

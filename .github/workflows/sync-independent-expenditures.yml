@@ -1,0 +1,95 @@
+name: Sync Independent Expenditures
+
+on:
+  schedule:
+    # Weekly on Saturday at 8am UTC — ~538 API calls fits in a single run
+    - cron: "0 8 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync Independent Expenditures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync independent expenditures
+        id: sync
+        run: |
+          set +e
+          OUTPUT=$(pnpm sync:independent-expenditures 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          JSON=$(echo "$OUTPUT" | grep -E '^\{' | tail -1 || echo '{}')
+          echo "result=$JSON" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          FEC_API_KEY: ${{ secrets.FEC_API_KEY }}
+
+      - name: Send Discord notification
+        if: always()
+        env:
+          DISCORD_NOTIFICATIONS_WEBHOOK: ${{ secrets.DISCORD_NOTIFICATIONS_WEBHOOK }}
+          DISCORD_ALERTS_WEBHOOK: ${{ secrets.DISCORD_ALERTS_WEBHOOK }}
+          SYNC_RESULT: ${{ steps.sync.outputs.result }}
+          SYNC_FAILED: ${{ steps.sync.outputs.failed }}
+        run: |
+          GH_RUN="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          LEGISLATORS=$(echo "$SYNC_RESULT" | jq -r '.processed // 0')
+          EXPENDITURES=$(echo "$SYNC_RESULT" | jq -r '.expendituresInserted // 0')
+          ERRORS=$(echo "$SYNC_RESULT" | jq -r '.failed // 0')
+
+          if [ "$SYNC_FAILED" = "true" ]; then
+            TITLE="🚨 Independent Expenditures Sync Failed"
+            COLOR=15158332
+            LEVEL=alert
+            DESC="❌ **Sync**: Failed"
+          elif [ "$EXPENDITURES" -gt 0 ] 2>/dev/null; then
+            TITLE="📊 Independent Expenditures Sync Complete"
+            COLOR=3066993
+            LEVEL=success
+            DESC="✅ **Independent Expenditures**: ${EXPENDITURES} upserted from ${LEGISLATORS} legislators"
+            if [ "$ERRORS" -gt 0 ] 2>/dev/null; then
+              DESC="${DESC}"$'\n'"⚠️ **Errors**: ${ERRORS} legislators had issues"
+            fi
+          else
+            TITLE="✅ Independent Expenditures Sync - No Changes"
+            COLOR=9807270
+            LEVEL=success
+            DESC="⏭️ **Independent Expenditures**: No new data (${LEGISLATORS} legislators checked)"
+          fi
+
+          .github/scripts/discord-notify.sh \
+            --level "$LEVEL" \
+            --title "$TITLE" \
+            --color "$COLOR" \
+            --description "$DESC" \
+            --button "View Run|$GH_RUN"
+
+      - name: Fail workflow if sync failed
+        if: steps.sync.outputs.failed == 'true'
+        run: |
+          echo "Independent expenditures sync failed - check logs above for details"
+          exit 1

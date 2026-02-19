@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectBestSummary, stripHtmlTags } from "./summary-utils";
+import { selectBestSummary, stripHtmlTags, truncateSummary } from "./summary-utils";
 
 describe("stripHtmlTags", () => {
   it("removes HTML tags", () => {
@@ -27,6 +27,41 @@ describe("stripHtmlTags", () => {
     expect(stripHtmlTags(html)).toBe(
       "This bill authorizes the & requires the Department to submit a report."
     );
+  });
+});
+
+describe("truncateSummary", () => {
+  it("returns short text unchanged", () => {
+    expect(truncateSummary("short text")).toBe("short text");
+  });
+
+  it("returns text at exactly maxLength unchanged", () => {
+    const text = "a".repeat(100);
+    expect(truncateSummary(text, 100)).toBe(text);
+  });
+
+  it("truncates at word boundary and appends ellipsis", () => {
+    const text = "word ".repeat(20).trim();
+    const result = truncateSummary(text, 30);
+    expect(result.endsWith("...")).toBe(true);
+    expect(result.length).toBeLessThanOrEqual(33);
+    expect(result).not.toContain("  ");
+  });
+
+  it("truncates mid-word when no space in last 20% of text", () => {
+    const text = "a".repeat(200);
+    const result = truncateSummary(text, 100);
+    expect(result).toBe("a".repeat(100) + "...");
+  });
+
+  it("uses default maxLength of 10000", () => {
+    const short = "a".repeat(9999);
+    expect(truncateSummary(short)).toBe(short);
+
+    const long = "word ".repeat(3000);
+    const result = truncateSummary(long);
+    expect(result.length).toBeLessThanOrEqual(10_003);
+    expect(result.endsWith("...")).toBe(true);
   });
 });
 

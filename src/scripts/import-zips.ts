@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { eq } from "drizzle-orm";
+import { eq, sql, notInArray } from "drizzle-orm";
 
 export interface ImportResult {
   source: "census";
@@ -255,28 +255,44 @@ export async function importZipDistricts(force: boolean = false): Promise<Import
   const zipDistrictsData = calculateProportions(records);
   console.log(`Calculated ${zipDistrictsData.length} ZIP-district mappings`);
 
-  console.log("Deleting existing data...");
-  await db.delete(zipDistrictsTable);
-
-  console.log("Inserting ZIP-district data...");
+  console.log("Upserting ZIP-district data...");
   const batchSize = 1000;
-  let inserted = 0;
+  let upserted = 0;
 
   for (let i = 0; i < zipDistrictsData.length; i += batchSize) {
     const batch = zipDistrictsData.slice(i, i + batchSize);
 
-    await db.insert(zipDistrictsTable).values(
-      batch.map((record) => ({
-        zip: record.zip,
-        state: record.state,
-        district: record.district,
-        proportion: record.proportion,
-      }))
-    );
+    await db
+      .insert(zipDistrictsTable)
+      .values(
+        batch.map((record) => ({
+          zip: record.zip,
+          state: record.state,
+          district: record.district,
+          proportion: record.proportion,
+        }))
+      )
+      .onConflictDoUpdate({
+        target: [zipDistrictsTable.zip, zipDistrictsTable.state, zipDistrictsTable.district],
+        set: { proportion: sql`excluded.proportion` },
+      });
 
-    inserted += batch.length;
-    console.log(`Inserted ${inserted} / ${zipDistrictsData.length} records...`);
+    upserted += batch.length;
+    if (upserted % 5000 === 0 || i + batchSize >= zipDistrictsData.length) {
+      console.log(`Upserted ${upserted} / ${zipDistrictsData.length} records...`);
+    }
   }
+
+  const allZips = [...new Set(zipDistrictsData.map((r) => r.zip))];
+  const staleResult = await db
+    .delete(zipDistrictsTable)
+    .where(notInArray(zipDistrictsTable.zip, allZips));
+  const staleDeleted = staleResult.rowCount ?? 0;
+  if (staleDeleted > 0) {
+    console.log(`Removed ${staleDeleted} stale records for ZIPs no longer in source data`);
+  }
+
+  const inserted = upserted;
 
   const sourceChanged = currentLastModified && existingMeta?.lastModified !== currentLastModified;
 

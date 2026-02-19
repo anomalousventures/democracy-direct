@@ -14,6 +14,11 @@ import {
   amendments,
   votes,
   memberVotes,
+  campaignFinance,
+  committees,
+  candidateCommittees,
+  pacContributions,
+  independentExpenditures,
 } from "./schema";
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -110,6 +115,9 @@ export const legislatorsRelations = relations(legislators, ({ many }) => ({
   bills: many(bills),
   amendments: many(amendments),
   memberVotes: many(memberVotes),
+  campaignFinance: many(campaignFinance),
+  pacContributions: many(pacContributions),
+  independentExpenditures: many(independentExpenditures),
 }));
 
 export const billsRelations = relations(bills, ({ one, many }) => ({
@@ -153,5 +161,47 @@ export const memberVotesRelations = relations(memberVotes, ({ one }) => ({
   legislator: one(legislators, {
     fields: [memberVotes.bioguideId],
     references: [legislators.bioguideId],
+  }),
+}));
+
+export const campaignFinanceRelations = relations(campaignFinance, ({ one }) => ({
+  legislator: one(legislators, {
+    fields: [campaignFinance.bioguideId],
+    references: [legislators.bioguideId],
+  }),
+}));
+
+export const committeesRelations = relations(committees, ({ many }) => ({
+  pacContributions: many(pacContributions),
+  independentExpenditures: many(independentExpenditures),
+  candidateCommittees: many(candidateCommittees),
+}));
+
+export const candidateCommitteesRelations = relations(candidateCommittees, ({ one }) => ({
+  committee: one(committees, {
+    fields: [candidateCommittees.committeeId],
+    references: [committees.fecCommitteeId],
+  }),
+}));
+
+export const pacContributionsRelations = relations(pacContributions, ({ one }) => ({
+  legislator: one(legislators, {
+    fields: [pacContributions.bioguideId],
+    references: [legislators.bioguideId],
+  }),
+  committee: one(committees, {
+    fields: [pacContributions.committeeId],
+    references: [committees.fecCommitteeId],
+  }),
+}));
+
+export const independentExpendituresRelations = relations(independentExpenditures, ({ one }) => ({
+  legislator: one(legislators, {
+    fields: [independentExpenditures.bioguideId],
+    references: [legislators.bioguideId],
+  }),
+  committee: one(committees, {
+    fields: [independentExpenditures.committeeId],
+    references: [committees.fecCommitteeId],
   }),
 }));

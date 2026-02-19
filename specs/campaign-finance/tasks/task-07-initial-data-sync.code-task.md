@@ -1,7 +1,7 @@
 ---
-status: pending
+status: blocked
 created: 2026-02-11
-started: null
+started: 2026-02-13
 completed: null
 ---
 
@@ -77,6 +77,12 @@ The sync script, ProPublica wrapper, and database schema are all in place. This 
    - Given legislators without fecIds
    - When the campaignFinance table is queried for their bioguideId
    - Then no records exist for them
+
+## Blockers
+
+- **Blocked on task-04**: Requires `PROPUBLICA_CAMPAIGN_FINANCE_KEY` to be configured in `.dev.vars`. The API key must be manually requested from apihelp@propublica.org.
+- **What needs to happen**: User receives the API key and adds it to `.dev.vars`
+- **Subsequent tasks can proceed**: Task-08 (workflow), task-09 (query module unit tests), task-10 (component), task-11 (integration) can all proceed. Integration tests for task-09 that verify real data will need to be deferred until after sync.
 
 ## Metadata
 

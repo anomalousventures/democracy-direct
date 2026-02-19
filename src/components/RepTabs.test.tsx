@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/preact";
 import { RepTabs } from "./RepTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
+import type { CampaignFinanceData } from "@/db/queries/campaign-finance";
 import type { Bill } from "@/db/schema";
 
 const mockStats: VoteStats = {
@@ -58,6 +59,22 @@ const mockBills: Bill[] = [
   },
 ];
 
+const mockFinanceData: CampaignFinanceData = {
+  id: "finance-1",
+  bioguideId: "A000001",
+  fecId: "H4NY00001",
+  cycle: "2026",
+  totalReceipts: 6000000,
+  totalDisbursements: 3500000,
+  cashOnHand: 1500000,
+  totalFromPACs: 2000000,
+  totalFromIndividuals: 3000000,
+  debtsOwed: 50000,
+  sourceUrl: "https://www.fec.gov/data/candidate/H4NY00001/",
+  lastUpdated: new Date("2025-06-01"),
+  createdAt: new Date("2025-06-01"),
+};
+
 const mockContactInfo = {
   phone: "202-555-1234",
   contactFormUrl: "https://example.gov/contact",
@@ -84,7 +101,7 @@ describe("RepTabs", () => {
   });
 
   describe("tab rendering", () => {
-    it("renders all three tabs", () => {
+    it("renders three tabs when no finance data", () => {
       render(
         <RepTabs
           contactInfo={mockContactInfo}
@@ -92,6 +109,7 @@ describe("RepTabs", () => {
           voteStats={mockStats}
           bills={mockBills}
           billCount={1}
+          financeData={null}
         />
       );
 
@@ -108,6 +126,7 @@ describe("RepTabs", () => {
           voteStats={{ totalVotes: 0, yeas: 0, nays: 0, notVoting: 0, present: 0 }}
           bills={[]}
           billCount={0}
+          financeData={null}
         />
       );
 
@@ -130,6 +149,7 @@ describe("RepTabs", () => {
           voteStats={mockStats}
           bills={mockBills}
           billCount={1}
+          financeData={null}
         />
       );
 
@@ -146,6 +166,7 @@ describe("RepTabs", () => {
           voteStats={mockStats}
           bills={mockBills}
           billCount={1}
+          financeData={null}
         />
       );
 
@@ -162,12 +183,63 @@ describe("RepTabs", () => {
           voteStats={mockStats}
           bills={mockBills}
           billCount={1}
+          financeData={null}
         />
       );
 
       const billsTab = screen.getByRole("tab", { name: /Sponsored Bills/i });
       expect(billsTab).toBeInTheDocument();
       expect(billsTab).toHaveAttribute("aria-selected", "false");
+    });
+  });
+
+  describe("finance tab", () => {
+    it("renders Finance tab when financeData is provided", () => {
+      render(
+        <RepTabs
+          contactInfo={mockContactInfo}
+          votes={mockVotes}
+          voteStats={mockStats}
+          bills={mockBills}
+          billCount={1}
+          financeData={mockFinanceData}
+        />
+      );
+
+      expect(screen.getByRole("tab", { name: /Campaign Finance/i })).toBeInTheDocument();
+    });
+
+    it("does not render Finance tab when financeData is null", () => {
+      render(
+        <RepTabs
+          contactInfo={mockContactInfo}
+          votes={mockVotes}
+          voteStats={mockStats}
+          bills={mockBills}
+          billCount={1}
+          financeData={null}
+        />
+      );
+
+      expect(screen.queryByRole("tab", { name: /Campaign Finance/i })).not.toBeInTheDocument();
+    });
+
+    it("renders all four tabs when finance data is available", () => {
+      render(
+        <RepTabs
+          contactInfo={mockContactInfo}
+          votes={mockVotes}
+          voteStats={mockStats}
+          bills={mockBills}
+          billCount={1}
+          financeData={mockFinanceData}
+        />
+      );
+
+      expect(screen.getByRole("tab", { name: /Contact/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Voting Record/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Sponsored Bills/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Campaign Finance/i })).toBeInTheDocument();
     });
   });
 });

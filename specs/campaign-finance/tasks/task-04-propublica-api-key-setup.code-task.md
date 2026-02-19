@@ -1,7 +1,7 @@
 ---
-status: pending
+status: blocked
 created: 2026-02-11
-started: null
+started: 2026-02-13
 completed: null
 ---
 
@@ -66,6 +66,12 @@ The ProPublica Campaign Finance API requires an API key obtained by emailing api
    - Given the repository secrets are updated
    - When a GitHub Actions workflow references the secret
    - Then `secrets.PROPUBLICA_CAMPAIGN_FINANCE_KEY` is available
+
+## Blockers
+
+- **API key requires manual request**: Must email apihelp@propublica.org and wait for a response (typically 1-2 business days)
+- **What needs to happen**: User must send the email, receive the key, add it to `.dev.vars` and GitHub secrets
+- **Subsequent tasks can proceed**: Task-05 (API wrapper) can be fully implemented and tested with mocked responses. Task-06+ will need the key for live data sync.
 
 ## Metadata
 

@@ -1,10 +1,16 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { VotingRecord } from "./VotingRecord";
 import { SponsoredBills } from "./SponsoredBills";
+import { CampaignFinance } from "./CampaignFinance";
 import { ContactInfo, type ContactInfoProps } from "./ContactInfo";
 import { cn } from "@/lib/utils";
 import { useHashTabs, TAB_TRIGGER_CLASS } from "@/hooks/useHashTabs";
 import type { VoteWithPosition, VoteStats } from "@/db/queries/votes";
+import type {
+  CampaignFinanceData,
+  TopPacDonor,
+  IndependentExpenditureWithCommittee,
+} from "@/db/queries/campaign-finance";
 import type { Bill } from "@/db/schema";
 
 export interface RepTabsProps {
@@ -13,15 +19,20 @@ export interface RepTabsProps {
   voteStats: VoteStats;
   bills: Bill[];
   billCount: number;
+  financeData: CampaignFinanceData | null;
+  topPacDonors?: TopPacDonor[];
+  independentExpenditures?: IndependentExpenditureWithCommittee[];
+  bioguideId?: string;
   className?: string;
 }
 
-type TabValue = "contact" | "votes" | "bills";
+type TabValue = "contact" | "votes" | "bills" | "finance";
 
 const TAB_HASH_MAP: Record<string, TabValue> = {
   "#contact": "contact",
   "#votes": "votes",
   "#bills": "bills",
+  "#finance": "finance",
 };
 
 export function RepTabs({
@@ -30,6 +41,10 @@ export function RepTabs({
   voteStats,
   bills,
   billCount,
+  financeData,
+  topPacDonors,
+  independentExpenditures,
+  bioguideId,
   className,
 }: RepTabsProps) {
   const { activeTab, handleTabChange } = useHashTabs(TAB_HASH_MAP, "contact" as TabValue);
@@ -61,6 +76,12 @@ export function RepTabs({
               </span>
             )}
           </TabsTrigger>
+          {financeData && (
+            <TabsTrigger value="finance" className={TAB_TRIGGER_CLASS}>
+              <span className="hidden sm:inline">Campaign Finance</span>
+              <span className="sm:hidden">Finance</span>
+            </TabsTrigger>
+          )}
         </TabsList>
       </div>
 
@@ -75,6 +96,17 @@ export function RepTabs({
       <TabsContent value="bills" className="mt-0 pt-6">
         <SponsoredBills bills={bills} totalCount={billCount} />
       </TabsContent>
+
+      {financeData && (
+        <TabsContent value="finance" className="mt-0 pt-6">
+          <CampaignFinance
+            data={financeData}
+            topPacDonors={topPacDonors}
+            independentExpenditures={independentExpenditures}
+            bioguideId={bioguideId}
+          />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }

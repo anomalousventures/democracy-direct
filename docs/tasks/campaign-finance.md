@@ -1,6 +1,6 @@
 # Campaign Finance Data Integration
 
-## Status: Ready
+## Status: Complete
 
 ## Problem Statement
 
@@ -189,17 +189,17 @@ The congress-legislators YAML includes FEC IDs:
 
 ## Verification
 
-- [ ] FEC IDs stored in legislators table
-- [ ] Import script captures FEC IDs from congress-legislators
-- [ ] Campaign finance section displays on rep pages
-- [ ] Total receipts/disbursements show correctly
-- [ ] PAC vs individual breakdown shown
-- [ ] Cash on hand displayed
-- [ ] Attribution link present
-- [ ] Link to FEC source works
-- [ ] Data loads within acceptable time (<2s)
-- [ ] GitHub Action sync completes successfully
-- [ ] Handles legislators without FEC IDs gracefully
-- [ ] Handles multiple FEC IDs per legislator
-- [ ] Unit tests pass
-- [ ] E2E tests pass
+- [x] FEC IDs stored in legislators table
+- [x] Import script captures FEC IDs from congress-legislators
+- [x] Campaign finance section displays on rep pages
+- [x] Total receipts/disbursements show correctly
+- [x] PAC vs individual breakdown shown
+- [x] Cash on hand displayed
+- [x] Attribution link present
+- [x] Link to FEC source works
+- [x] Data loads within acceptable time (<2s)
+- [x] GitHub Action sync completes successfully
+- [x] Handles legislators without FEC IDs gracefully
+- [x] Handles multiple FEC IDs per legislator
+- [x] Unit tests pass
+- [x] E2E tests pass

@@ -33,6 +33,15 @@ export function selectBestSummary(summaries: SummaryItem[]): string | null {
   return stripHtmlTags(sorted[0].text);
 }
 
+const SUMMARY_MAX_LENGTH = 10_000;
+
+export function truncateSummary(text: string, maxLength = SUMMARY_MAX_LENGTH): string {
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > maxLength * 0.8 ? truncated.slice(0, lastSpace) : truncated) + "...";
+}
+
 export function stripHtmlTags(html: string): string {
   return html
     .replace(/<[^>]*>/g, " ")
