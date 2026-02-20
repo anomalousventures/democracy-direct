@@ -1,0 +1,61 @@
+import { Component, useState } from "react";
+import type { JSX, ReactNode } from "react";
+import type { DistrictInfo } from "@/lib/tigerweb";
+import { DistrictMap } from "./DistrictMap";
+import { DistrictTooltip } from "./DistrictTooltip";
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class MapErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error): void {
+    console.error("Map component crashed:", error);
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex-center bg-background/60">
+          <div className="text-center space-y-2 px-4">
+            <p className="text-sm text-destructive font-medium">The map could not be displayed.</p>
+            <p className="text-xs text-muted-foreground">
+              Try{" "}
+              <a href="/" className="underline hover:text-primary transition-colors">
+                looking up your ZIP code
+              </a>{" "}
+              instead.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function MapWithTooltip(): JSX.Element {
+  const [selectedDistrict, setSelectedDistrict] = useState<DistrictInfo | null>(null);
+
+  return (
+    <MapErrorBoundary>
+      <div className="relative w-full h-full">
+        <DistrictMap className="w-full h-full" onDistrictSelect={setSelectedDistrict} />
+        {selectedDistrict && (
+          <div className="absolute top-4 left-4 z-20">
+            <DistrictTooltip
+              districtInfo={selectedDistrict}
+              onClose={() => setSelectedDistrict(null)}
+            />
+          </div>
+        )}
+      </div>
+    </MapErrorBoundary>
+  );
+}

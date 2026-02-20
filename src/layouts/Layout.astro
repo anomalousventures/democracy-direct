@@ -70,6 +70,7 @@ const ogImageUrl = ogImage.startsWith("http") ? ogImage : new URL(ogImage, canon
       />
     </noscript>
     <title>{fullTitle}</title>
+    <slot name="head" />
   </head>
   <body class="min-h-screen bg-background antialiased flex flex-col">
     <a
