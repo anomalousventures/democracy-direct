@@ -192,6 +192,52 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
         )}
       </form>
 
+      {(!result || result.type !== "ambiguous") && !isLoading && (
+        <div
+          className="mt-6 flex items-center gap-4 justify-center animate-fade-up"
+          style={{ animationDelay: "0.35s" }}
+        >
+          <span className="h-px w-10 bg-gradient-to-r from-transparent to-border" />
+          <span className="text-xs tracking-widest uppercase text-muted-foreground/60 font-medium select-none">
+            or
+          </span>
+          <span className="h-px w-10 bg-gradient-to-l from-transparent to-border" />
+        </div>
+      )}
+
+      {(!result || result.type !== "ambiguous") && !isLoading && (
+        <div className="mt-3 text-center animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <a
+            href="/map"
+            className="group inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-300"
+          >
+            <svg
+              className="w-4 h-4 text-accent/70 group-hover:text-accent transition-colors duration-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+              />
+            </svg>
+            <span className="font-medium">Browse the district map</span>
+            <svg
+              className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      )}
+
       {result && result.type === "ambiguous" && (
         <div className="mt-8 animate-fade-up">
           <div className="card-civic-lg">
