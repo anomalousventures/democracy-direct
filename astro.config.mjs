@@ -13,6 +13,15 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      allowedHosts: [".ts.net"],
+    },
+    optimizeDeps: {
+      include: ["maplibre-gl"],
+      esbuildOptions: {
+        target: "es2022",
+      },
+    },
     ssr: {
       external: ["nodemailer", "node:crypto"],
     },

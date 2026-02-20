@@ -10,10 +10,10 @@ interface DistrictMapProps {
   className?: string;
 }
 
-const STADIA_STYLE = "https://tiles.stadiamaps.com/styles/alidade_smooth.json";
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const US_CENTER: [number, number] = [-98.5, 39.8];
 const US_ZOOM = 4;
-const FETCH_TIMEOUT_MS = 15_000;
+const FETCH_TIMEOUT_MS = 30_000;
 
 const DISTRICT_SOURCE = "districts";
 const DISTRICT_FILL_LAYER = "district-fill";
@@ -22,6 +22,7 @@ const DISTRICT_LINE_LAYER = "district-line";
 export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const hoveredIdRef = useRef<number | null>(null);
   const [mapState, setMapState] = useState<MapState>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -40,7 +41,7 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STADIA_STYLE,
+      style: MAP_STYLE,
       center: US_CENTER,
       zoom: US_ZOOM,
       attributionControl: {},
@@ -59,7 +60,11 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
 
         if (abortController.signal.aborted) return;
 
-        map.addSource(DISTRICT_SOURCE, { type: "geojson", data: geojson });
+        map.addSource(DISTRICT_SOURCE, {
+          type: "geojson",
+          data: geojson,
+          generateId: true,
+        });
 
         map.addLayer({
           id: DISTRICT_FILL_LAYER,
@@ -67,7 +72,7 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
           source: DISTRICT_SOURCE,
           paint: {
             "fill-color": "#1e3a5f",
-            "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.22, 0.1],
+            "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.3, 0.12],
           },
         });
 
@@ -77,14 +82,41 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
           source: DISTRICT_SOURCE,
           paint: {
             "line-color": "#1e3a5f",
-            "line-opacity": 0.45,
-            "line-width": 1,
+            "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 1, 0.6],
+            "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2.5, 1.5],
           },
+        });
+
+        map.on("mousemove", DISTRICT_FILL_LAYER, (e) => {
+          if (e.features && e.features.length > 0) {
+            const id = e.features[0].id as number;
+            if (hoveredIdRef.current !== null && hoveredIdRef.current !== id) {
+              map.setFeatureState(
+                { source: DISTRICT_SOURCE, id: hoveredIdRef.current },
+                { hover: false }
+              );
+            }
+            hoveredIdRef.current = id;
+            map.setFeatureState({ source: DISTRICT_SOURCE, id }, { hover: true });
+            map.getCanvas().style.cursor = "pointer";
+          }
+        });
+
+        map.on("mouseleave", DISTRICT_FILL_LAYER, () => {
+          if (hoveredIdRef.current !== null) {
+            map.setFeatureState(
+              { source: DISTRICT_SOURCE, id: hoveredIdRef.current },
+              { hover: false }
+            );
+            hoveredIdRef.current = null;
+          }
+          map.getCanvas().style.cursor = "";
         });
 
         setMapState("ready");
       } catch (err) {
         clearTimeout(timeoutId);
+        if (abortController.signal.aborted) return;
         const message =
           err instanceof DOMException && err.name === "AbortError"
             ? "District data took too long to load."
@@ -94,7 +126,7 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
       }
     });
 
-    map.on("click", handleMapClick);
+    map.on("click", DISTRICT_FILL_LAYER, handleMapClick);
 
     return () => {
       clearTimeout(timeoutId);
@@ -105,10 +137,10 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
   }, [handleMapClick]);
 
   return (
-    <div className={`relative${className ? ` ${className}` : ""}`}>
+    <div className={className}>
       <div
         ref={containerRef}
-        className="absolute inset-0"
+        className="w-full h-full"
         role="application"
         aria-label="Interactive congressional district map. Use arrow keys to pan, plus and minus to zoom."
         tabIndex={0}
@@ -122,13 +154,13 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
 
 function LoadingOverlay() {
   return (
-    <div className="absolute inset-0 z-10 flex-center bg-background/60 backdrop-blur-sm pointer-events-none">
-      <div className="flex flex-col items-center gap-4 animate-fade-up">
-        <div className="relative w-12 h-12">
+    <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center pointer-events-none">
+      <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-5 py-2.5 shadow-md border border-border/50">
+        <div className="relative w-4 h-4">
           <div className="absolute inset-0 rounded-full border-2 border-border" />
           <div className="absolute inset-0 rounded-full border-2 border-t-primary animate-spin" />
         </div>
-        <p className="text-sm font-medium text-muted-foreground tracking-wide">
+        <p className="text-sm font-medium text-muted-foreground">
           Loading district boundaries&hellip;
         </p>
       </div>

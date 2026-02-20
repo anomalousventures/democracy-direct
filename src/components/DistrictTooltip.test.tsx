@@ -13,7 +13,7 @@ const mockDistrictInfo: DistrictInfo = {
 
 const mockAtLargeInfo: DistrictInfo = {
   state: "50",
-  district: "00",
+  district: "0",
   name: "Congressional District (at Large)",
   geoid: "5000",
 };
@@ -26,18 +26,49 @@ const mockRepResponse = {
   district: "12",
 };
 
-describe("DistrictTooltip", () => {
-  beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() =>
-        Promise.resolve({
+const mockSenators = [
+  {
+    bioguideId: "F000062",
+    fullName: "Dianne Feinstein",
+    party: "Democrat",
+    state: "CA",
+    district: null,
+  },
+  {
+    bioguideId: "P000145",
+    fullName: "Alex Padilla",
+    party: "Democrat",
+    state: "CA",
+    district: null,
+  },
+];
+
+function mockFetchResponses(
+  houseData: unknown = mockRepResponse,
+  senateData: unknown = mockSenators
+) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) => {
+      if (typeof url === "string" && url.includes("chamber=senate")) {
+        return Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve(mockRepResponse),
-        })
-      )
-    );
+          json: () => Promise.resolve(senateData),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(houseData),
+      });
+    })
+  );
+}
+
+describe("DistrictTooltip", () => {
+  beforeEach(() => {
+    mockFetchResponses();
   });
 
   afterEach(() => {
@@ -62,24 +93,36 @@ describe("DistrictTooltip", () => {
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
-  it("shows rep info when loaded", async () => {
+  it("shows all three reps when loaded", async () => {
     render(<DistrictTooltip districtInfo={mockDistrictInfo} />);
 
     await waitFor(() => {
       expect(screen.getByText("Nancy Pelosi")).toBeInTheDocument();
     });
-    expect(screen.getByText("D")).toBeInTheDocument();
+    expect(screen.getByText("Dianne Feinstein")).toBeInTheDocument();
+    expect(screen.getByText("Alex Padilla")).toBeInTheDocument();
   });
 
-  it("shows View Representative link", async () => {
+  it("shows district page link", async () => {
     render(<DistrictTooltip districtInfo={mockDistrictInfo} />);
 
     await waitFor(() => {
       expect(screen.getByText("Nancy Pelosi")).toBeInTheDocument();
     });
 
-    const link = screen.getByRole("link", { name: /View Representative/i });
-    expect(link).toHaveAttribute("href", "/rep/P000197");
+    const link = screen.getByRole("link", { name: /View full district page/i });
+    expect(link).toHaveAttribute("href", "/reps/ca/12");
+  });
+
+  it("links each rep to their profile", async () => {
+    render(<DistrictTooltip districtInfo={mockDistrictInfo} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Nancy Pelosi")).toBeInTheDocument();
+    });
+
+    const repLink = screen.getByText("Nancy Pelosi").closest("a");
+    expect(repLink).toHaveAttribute("href", "/rep/P000197");
   });
 
   it("shows At-Large for at-large districts", async () => {
@@ -89,7 +132,7 @@ describe("DistrictTooltip", () => {
     expect(screen.getByText("At-Large")).toBeInTheDocument();
   });
 
-  it("shows missing rep message on 404", async () => {
+  it("shows missing rep message when no reps found", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
@@ -139,7 +182,7 @@ describe("DistrictTooltip", () => {
     expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
   });
 
-  it("fetches rep data with correct params", async () => {
+  it("fetches house rep and senators with correct params", async () => {
     render(<DistrictTooltip districtInfo={mockDistrictInfo} />);
 
     await waitFor(() => {
@@ -150,12 +193,16 @@ describe("DistrictTooltip", () => {
       expect.stringContaining("/api/rep/by-district?state=CA&district=12"),
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/rep/by-district?state=CA&chamber=senate"),
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
   });
 
   it("handles unknown FIPS code gracefully", async () => {
     const unknownFips: DistrictInfo = {
       state: "99",
-      district: "01",
+      district: "1",
       name: "Unknown",
       geoid: "9901",
     };

@@ -24,9 +24,9 @@ describe("queryDistrictAtPoint", () => {
       {
         type: "Feature",
         properties: {
-          STATEFP: "06",
-          CD119FP: "12",
-          NAMELSAD: "Congressional District 12",
+          STATE: "06",
+          CD119: "12",
+          NAME: "Congressional District 12",
           GEOID: "0612",
         },
         geometry: { type: "Polygon", coordinates: [] },
@@ -74,6 +74,18 @@ describe("queryDistrictAtPoint", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null when API returns error in body", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        error: { code: 400, message: "Failed to execute query.", details: [] },
+      }),
+    });
+
+    const result = await queryDistrictAtPoint(-122.4, 37.8);
+    expect(result).toBeNull();
+  });
+
   it("constructs the URL with correct coordinates and params", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -86,11 +98,11 @@ describe("queryDistrictAtPoint", () => {
     expect(calledUrl).toContain("geometry=-122.4%2C37.8");
     expect(calledUrl).toContain("geometryType=esriGeometryPoint");
     expect(calledUrl).toContain("spatialRel=esriSpatialRelIntersects");
-    expect(calledUrl).toContain("outFields=STATEFP%2CCD119FP%2CNAMELSAD%2CGEOID");
+    expect(calledUrl).toContain("outFields=STATE%2CCD119%2CNAME%2CGEOID");
     expect(calledUrl).toContain("f=geojson");
   });
 
-  it("handles at-large district (CD119FP = 00)", async () => {
+  it("handles at-large district (CD119 = 00)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -99,9 +111,9 @@ describe("queryDistrictAtPoint", () => {
           {
             type: "Feature",
             properties: {
-              STATEFP: "50",
-              CD119FP: "00",
-              NAMELSAD: "Congressional District (at Large)",
+              STATE: "50",
+              CD119: "00",
+              NAME: "Congressional District (at Large)",
               GEOID: "5000",
             },
             geometry: { type: "Polygon", coordinates: [] },
@@ -114,7 +126,7 @@ describe("queryDistrictAtPoint", () => {
 
     expect(result).toEqual({
       state: "50",
-      district: "00",
+      district: "0",
       name: "Congressional District (at Large)",
       geoid: "5000",
     });
@@ -129,9 +141,9 @@ describe("getAllDistrictsGeoJSON", () => {
         {
           type: "Feature",
           properties: {
-            STATEFP: "06",
-            CD119FP: "12",
-            NAMELSAD: "Congressional District 12",
+            STATE: "06",
+            CD119: "12",
+            NAME: "Congressional District 12",
             GEOID: "0612",
           },
           geometry: { type: "Polygon", coordinates: [] },
@@ -164,6 +176,19 @@ describe("getAllDistrictsGeoJSON", () => {
     );
   });
 
+  it("throws when API returns error in body", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        error: { code: 400, message: "Failed to execute query.", details: [] },
+      }),
+    });
+
+    await expect(getAllDistrictsGeoJSON()).rejects.toThrow(
+      "TIGERweb query error: Failed to execute query."
+    );
+  });
+
   it("constructs the URL with where=1=1 and geojson format", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -175,7 +200,7 @@ describe("getAllDistrictsGeoJSON", () => {
     const calledUrl = mockFetch.mock.calls[0][0];
     expect(calledUrl).toContain("where=1%3D1");
     expect(calledUrl).toContain("f=geojson");
-    expect(calledUrl).toContain("outFields=STATEFP%2CCD119FP%2CNAMELSAD%2CGEOID");
+    expect(calledUrl).toContain("outFields=STATE%2CCD119%2CNAME%2CGEOID");
   });
 });
 

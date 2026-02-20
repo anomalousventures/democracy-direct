@@ -13,7 +13,7 @@ const user = Astro.locals.user;
   title="District Map"
   description="Find your congressional district and representative on an interactive map"
 >
-  <link slot="head" rel="preconnect" href="https://tiles.stadiamaps.com" />
+  <link slot="head" rel="preconnect" href="https://tiles.openfreemap.org" />
   <link slot="head" rel="preconnect" href="https://tigerweb.geo.census.gov" />
 
   <Header currentPath="/map" user={user} />
@@ -53,17 +53,21 @@ const user = Astro.locals.user;
           <p class="text-sm text-muted-foreground/60 tracking-wide">Loading district map&hellip;</p>
         </div>
       </div>
-
       <MapWithTooltip client:only="react" />
     </div>
 
     <div class="border-t border-border bg-white/80 px-4 py-2">
       <p class="text-[11px] text-muted-foreground text-center">
         Map tiles by <a
-          href="https://stadiamaps.com/"
+          href="https://openfreemap.org/"
           target="_blank"
           rel="noopener noreferrer"
-          class="underline hover:text-primary transition-colors">Stadia Maps</a
+          class="underline hover:text-primary transition-colors">OpenFreeMap</a
+        > &amp; <a
+          href="https://www.openstreetmap.org/copyright"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline hover:text-primary transition-colors">OpenStreetMap</a
         >. District boundaries from <a
           href="https://tigerweb.geo.census.gov/"
           target="_blank"

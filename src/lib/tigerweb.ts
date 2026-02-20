@@ -86,8 +86,10 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
     const url = buildQueryUrl({
       geometry: `${lng},${lat}`,
       geometryType: "esriGeometryPoint",
+      inSR: "4326",
       spatialRel: "esriSpatialRelIntersects",
-      outFields: "STATEFP,CD119FP,NAMELSAD,GEOID",
+      outFields: "STATE,CD119,NAME,GEOID",
+      returnGeometry: "false",
       f: "geojson",
     });
 
@@ -95,13 +97,14 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
     if (!res.ok) return null;
 
     const data = await res.json();
+    if (data.error) return null;
     if (!data.features?.length) return null;
 
     const props = data.features[0].properties;
     return {
-      state: props.STATEFP,
-      district: props.CD119FP,
-      name: props.NAMELSAD,
+      state: props.STATE,
+      district: String(parseInt(props.CD119, 10)),
+      name: props.NAME,
       geoid: props.GEOID,
     };
   } catch {
@@ -109,10 +112,14 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
   }
 }
 
+const SIMPLIFY_OFFSET = "0.01";
+
 export async function getAllDistrictsGeoJSON(signal?: AbortSignal): Promise<FeatureCollection> {
   const url = buildQueryUrl({
     where: "1=1",
-    outFields: "STATEFP,CD119FP,NAMELSAD,GEOID",
+    outFields: "STATE,CD119,NAME,GEOID",
+    returnGeometry: "true",
+    maxAllowableOffset: SIMPLIFY_OFFSET,
     f: "geojson",
   });
 
@@ -121,5 +128,10 @@ export async function getAllDistrictsGeoJSON(signal?: AbortSignal): Promise<Feat
     throw new Error(`TIGERweb request failed: ${res.status} ${res.statusText}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(`TIGERweb query error: ${data.error.message}`);
+  }
+
+  return data;
 }

@@ -98,7 +98,7 @@ describe("MapWithTooltip", () => {
 
   it("passes sizing classes to DistrictMap", () => {
     render(<MapWithTooltip />);
-    expect(screen.getByTestId("district-map")).toHaveClass("w-full", "h-full");
+    expect(screen.getByTestId("district-map")).toHaveClass("absolute", "inset-0");
   });
 
   it("shows error boundary fallback when child throws", () => {

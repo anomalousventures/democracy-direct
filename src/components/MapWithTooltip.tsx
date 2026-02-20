@@ -44,8 +44,8 @@ export function MapWithTooltip() {
 
   return (
     <MapErrorBoundary>
-      <div className="relative w-full h-full">
-        <DistrictMap className="w-full h-full" onDistrictSelect={setSelectedDistrict} />
+      <div className="absolute inset-0 z-10">
+        <DistrictMap className="absolute inset-0" onDistrictSelect={setSelectedDistrict} />
         {selectedDistrict && (
           <div className="absolute top-4 left-4 z-20">
             <DistrictTooltip
