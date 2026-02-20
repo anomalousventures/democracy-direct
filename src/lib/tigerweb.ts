@@ -109,14 +109,14 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
   }
 }
 
-export async function getAllDistrictsGeoJSON(): Promise<FeatureCollection> {
+export async function getAllDistrictsGeoJSON(signal?: AbortSignal): Promise<FeatureCollection> {
   const url = buildQueryUrl({
     where: "1=1",
     outFields: "STATEFP,CD119FP,NAMELSAD,GEOID",
     f: "geojson",
   });
 
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error(`TIGERweb request failed: ${res.status} ${res.statusText}`);
   }
