@@ -45,6 +45,7 @@
     "cleanup:expired": "npx tsx src/scripts/cleanup-expired.ts",
     "moderate:pending": "npx tsx src/scripts/moderate-pending.ts",
     "generate:api-schema": "pnpm tsx src/scripts/generate-api-schema.ts api-schema.json",
+    "generate:tiles": "npx tsx src/scripts/generate-tiles.ts",
     "optimize:photos": "npx tsx src/scripts/optimize-photos.ts",
     "prepare": "husky"
   },
