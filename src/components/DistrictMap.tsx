@@ -154,11 +154,14 @@ export function DistrictMap({
           map.getCanvas().style.cursor = "";
         });
 
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const duration = prefersReducedMotion ? 0 : 1500;
+
         if (initialView) {
           map.flyTo({
             center: [initialView.lng, initialView.lat],
             zoom: initialView.zoom,
-            duration: 1500,
+            duration,
           });
         } else if (highlightDistrict) {
           const bounds = await getDistrictBounds(
@@ -166,7 +169,7 @@ export function DistrictMap({
             highlightDistrict.district
           );
           if (bounds) {
-            map.fitBounds(bounds, { padding: 40, duration: 1500 });
+            map.fitBounds(bounds, { padding: 40, duration });
           }
         }
 
