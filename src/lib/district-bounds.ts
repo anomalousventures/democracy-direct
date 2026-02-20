@@ -21,6 +21,9 @@ export async function getDistrictBounds(
   const fips = STATE_TO_FIPS[state];
   if (!fips) return null;
 
-  const geoid = `${fips}${district.padStart(2, "0")}`;
-  return cachedBounds?.[geoid] ?? null;
+  const geoid00 = `${fips}${district.padStart(2, "0")}`;
+  if (district === "0") {
+    return cachedBounds?.[`${fips}98`] ?? cachedBounds?.[geoid00] ?? null;
+  }
+  return cachedBounds?.[geoid00] ?? null;
 }

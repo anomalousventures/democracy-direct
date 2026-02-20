@@ -188,7 +188,7 @@ export function DistrictMap({
       map.remove();
       mapRef.current = null;
     };
-  }, [handleMapClick]);
+  }, [handleMapClick, initialView, highlightDistrict]);
 
   const handleLocate = useCallback((lat: number, lng: number) => {
     const map = mapRef.current;

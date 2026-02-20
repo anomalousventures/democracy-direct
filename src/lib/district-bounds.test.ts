@@ -4,6 +4,8 @@ import { getDistrictBounds, resetBoundsCache } from "./district-bounds";
 const SAMPLE_BOUNDS = {
   "0637": [-122.42, 37.12, -121.86, 37.56],
   "4801": [-97.5, 30.1, -96.8, 30.9],
+  "1198": [-77.12, 38.79, -76.91, 38.99],
+  "0200": [-179.15, 51.21, -129.98, 71.39],
 };
 
 beforeEach(() => {
@@ -27,6 +29,16 @@ describe("getDistrictBounds", () => {
   it("pads single-digit district numbers", async () => {
     const bounds = await getDistrictBounds("TX", "1");
     expect(bounds).toEqual([-97.5, 30.1, -96.8, 30.9]);
+  });
+
+  it("resolves DC at-large (district 0) via CD119=98 key", async () => {
+    const bounds = await getDistrictBounds("DC", "0");
+    expect(bounds).toEqual([-77.12, 38.79, -76.91, 38.99]);
+  });
+
+  it("resolves Alaska at-large (district 0) via 00 key", async () => {
+    const bounds = await getDistrictBounds("AK", "0");
+    expect(bounds).toEqual([-179.15, 51.21, -129.98, 71.39]);
   });
 
   it("returns null for unknown district", async () => {

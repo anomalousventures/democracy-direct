@@ -97,6 +97,36 @@ describe("queryDistrictAtPoint", () => {
     expect(calledUrl).toContain("f=geojson");
   });
 
+  it("normalizes CD119=98 (non-voting delegate) to district 0", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              STATE: "11",
+              CD119: "98",
+              NAME: "Delegate District (at Large)",
+              GEOID: "1198",
+            },
+            geometry: { type: "Polygon", coordinates: [] },
+          },
+        ],
+      }),
+    });
+
+    const result = await queryDistrictAtPoint(-77.04, 38.9);
+
+    expect(result).toEqual({
+      state: "11",
+      district: "0",
+      name: "Delegate District (at Large)",
+      geoid: "1198",
+    });
+  });
+
   it("handles at-large district (CD119 = 00)", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,

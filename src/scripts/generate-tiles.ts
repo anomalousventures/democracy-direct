@@ -1,7 +1,7 @@
 import { writeFile, mkdir, unlink, rename } from "fs/promises";
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
-import type { FeatureCollection, Polygon, MultiPolygon } from "geojson";
+import type { FeatureCollection } from "geojson";
 
 const TIGERWEB_BASE =
   "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer";
@@ -50,13 +50,18 @@ export function computeDistrictBounds(geojson: FeatureCollection): BoundsRecord 
   for (const feature of geojson.features) {
     const geoid = feature.properties?.GEOID;
     if (!geoid) continue;
+    if (
+      !feature.geometry ||
+      (feature.geometry.type !== "Polygon" && feature.geometry.type !== "MultiPolygon")
+    )
+      continue;
 
     let west = Infinity;
     let south = Infinity;
     let east = -Infinity;
     let north = -Infinity;
 
-    const geom = feature.geometry as Polygon | MultiPolygon;
+    const geom = feature.geometry;
     const rings =
       geom.type === "Polygon" ? geom.coordinates : geom.coordinates.flatMap((polygon) => polygon);
 

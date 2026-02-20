@@ -103,9 +103,10 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
     if (!data.features?.length) return null;
 
     const props = data.features[0].properties;
+    const cd = parseInt(props.CD119, 10);
     return {
       state: props.STATE,
-      district: String(parseInt(props.CD119, 10)),
+      district: cd === 98 ? "0" : String(cd),
       name: props.NAME,
       geoid: props.GEOID,
     };

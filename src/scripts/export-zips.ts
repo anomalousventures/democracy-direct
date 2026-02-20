@@ -70,30 +70,37 @@ interface HudFeature {
 }
 
 export async function fetchZipCentroids(): Promise<Map<string, { lat: number; lng: number }>> {
-  console.log("Fetching ZIP centroid data from HUD...");
-  const res = await fetch(HUD_CENTROIDS_URL);
-  if (!res.ok) {
-    console.warn(`Failed to fetch centroids: ${res.statusText}. Proceeding without.`);
+  try {
+    console.log("Fetching ZIP centroid data from HUD...");
+    const res = await fetch(HUD_CENTROIDS_URL);
+    if (!res.ok) {
+      console.warn(`Failed to fetch centroids: ${res.statusText}. Proceeding without.`);
+      return new Map();
+    }
+
+    const geojson = (await res.json()) as { features: HudFeature[] };
+    const centroids = new Map<string, { lat: number; lng: number }>();
+
+    for (const feature of geojson.features) {
+      const zip = feature.properties.STD_ZIP5;
+      const lat = feature.properties.LATITUDE;
+      const lng = feature.properties.LONGITUDE;
+      if (zip && lat != null && lng != null) {
+        centroids.set(zip, {
+          lat: Math.round(lat * 1000) / 1000,
+          lng: Math.round(lng * 1000) / 1000,
+        });
+      }
+    }
+
+    console.log(`Loaded ${centroids.size} ZIP centroids`);
+    return centroids;
+  } catch (err) {
+    console.warn(
+      `Failed to fetch centroids: ${err instanceof Error ? err.message : err}. Proceeding without.`
+    );
     return new Map();
   }
-
-  const geojson = (await res.json()) as { features: HudFeature[] };
-  const centroids = new Map<string, { lat: number; lng: number }>();
-
-  for (const feature of geojson.features) {
-    const zip = feature.properties.STD_ZIP5;
-    const lat = feature.properties.LATITUDE;
-    const lng = feature.properties.LONGITUDE;
-    if (zip && lat != null && lng != null) {
-      centroids.set(zip, {
-        lat: Math.round(lat * 1000) / 1000,
-        lng: Math.round(lng * 1000) / 1000,
-      });
-    }
-  }
-
-  console.log(`Loaded ${centroids.size} ZIP centroids`);
-  return centroids;
 }
 
 export async function exportZipData(outputPath: string): Promise<{

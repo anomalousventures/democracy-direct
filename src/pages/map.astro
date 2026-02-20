@@ -5,6 +5,7 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import { MapWithTooltip } from "@/components/MapWithTooltip";
+import { STATE_TO_FIPS } from "@/lib/tigerweb";
 
 const user = Astro.locals.user;
 
@@ -14,18 +15,23 @@ const zoomParam = Astro.url.searchParams.get("zoom");
 const stateParam = Astro.url.searchParams.get("state");
 const districtParam = Astro.url.searchParams.get("district");
 
+const parsedLat = latParam ? parseFloat(latParam) : NaN;
+const parsedLng = lngParam ? parseFloat(lngParam) : NaN;
+const parsedZoom = zoomParam ? parseInt(zoomParam, 10) : 11;
+
+const validLat = Number.isFinite(parsedLat) && parsedLat >= -90 && parsedLat <= 90;
+const validLng = Number.isFinite(parsedLng) && parsedLng >= -180 && parsedLng <= 180;
+const clampedZoom = Number.isFinite(parsedZoom) ? Math.min(20, Math.max(1, parsedZoom)) : 11;
+
 const initialView =
-  latParam && lngParam
-    ? {
-        lat: parseFloat(latParam),
-        lng: parseFloat(lngParam),
-        zoom: zoomParam ? parseInt(zoomParam, 10) : 11,
-      }
-    : undefined;
+  validLat && validLng ? { lat: parsedLat, lng: parsedLng, zoom: clampedZoom } : undefined;
+
+const validState = stateParam ? stateParam.toUpperCase() in STATE_TO_FIPS : false;
+const validDistrict = districtParam ? /^\d{1,2}$/.test(districtParam) : false;
 
 const highlightDistrict =
-  stateParam && districtParam
-    ? { state: stateParam.toUpperCase(), district: districtParam }
+  validState && validDistrict
+    ? { state: stateParam!.toUpperCase(), district: districtParam! }
     : undefined;
 ---
 
