@@ -7,6 +7,26 @@ import Footer from "@/components/Footer.astro";
 import { MapWithTooltip } from "@/components/MapWithTooltip";
 
 const user = Astro.locals.user;
+
+const latParam = Astro.url.searchParams.get("lat");
+const lngParam = Astro.url.searchParams.get("lng");
+const zoomParam = Astro.url.searchParams.get("zoom");
+const stateParam = Astro.url.searchParams.get("state");
+const districtParam = Astro.url.searchParams.get("district");
+
+const initialView =
+  latParam && lngParam
+    ? {
+        lat: parseFloat(latParam),
+        lng: parseFloat(lngParam),
+        zoom: zoomParam ? parseInt(zoomParam, 10) : 11,
+      }
+    : undefined;
+
+const highlightDistrict =
+  stateParam && districtParam
+    ? { state: stateParam.toUpperCase(), district: districtParam }
+    : undefined;
 ---
 
 <Layout
@@ -53,7 +73,11 @@ const user = Astro.locals.user;
           <p class="text-sm text-muted-foreground/60 tracking-wide">Loading district map&hellip;</p>
         </div>
       </div>
-      <MapWithTooltip client:only="react" />
+      <MapWithTooltip
+        client:only="react"
+        initialView={initialView}
+        highlightDistrict={highlightDistrict}
+      />
     </div>
 
     <div class="border-t border-border bg-white/80 px-4 py-2">

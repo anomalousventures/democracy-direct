@@ -50,6 +50,27 @@ test.describe("District Map Page", () => {
   });
 });
 
+test.describe("District Map Deep Linking", () => {
+  test("renders map canvas when lat/lng params provided", async ({ page }) => {
+    await page.goto("/map?lat=34.09&lng=-118.41&zoom=12");
+    const canvas = page.locator(".map-area canvas");
+    await expect(canvas).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("renders map canvas when state/district params provided", async ({ page }) => {
+    await page.goto("/map?state=CA&district=37");
+    const canvas = page.locator(".map-area canvas");
+    await expect(canvas).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("district page has view on map link", async ({ page }) => {
+    await page.goto("/reps/ca/37");
+    const mapLink = page.getByRole("link", { name: /view district on map/i });
+    await expect(mapLink).toBeVisible();
+    await expect(mapLink).toHaveAttribute("href", /\/map\?state=ca&district=37/);
+  });
+});
+
 test.describe("District Map Navigation", () => {
   test("header navigation contains map link", async ({ page }) => {
     await page.goto("/");

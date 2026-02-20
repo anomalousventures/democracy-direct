@@ -1,6 +1,6 @@
 import { Component, useState, type ReactNode } from "react";
 import type { DistrictInfo } from "@/lib/tigerweb";
-import { DistrictMap } from "./DistrictMap";
+import { DistrictMap, type InitialView, type HighlightDistrict } from "./DistrictMap";
 import { DistrictTooltip } from "./DistrictTooltip";
 
 interface ErrorBoundaryState {
@@ -39,13 +39,23 @@ class MapErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
   }
 }
 
-export function MapWithTooltip() {
+interface MapWithTooltipProps {
+  initialView?: InitialView;
+  highlightDistrict?: HighlightDistrict;
+}
+
+export function MapWithTooltip({ initialView, highlightDistrict }: MapWithTooltipProps) {
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictInfo | null>(null);
 
   return (
     <MapErrorBoundary>
       <div className="absolute inset-0 z-10">
-        <DistrictMap className="absolute inset-0" onDistrictSelect={setSelectedDistrict} />
+        <DistrictMap
+          className="absolute inset-0"
+          onDistrictSelect={setSelectedDistrict}
+          initialView={initialView}
+          highlightDistrict={highlightDistrict}
+        />
         {selectedDistrict && (
           <div className="absolute top-4 left-4 z-20">
             <DistrictTooltip

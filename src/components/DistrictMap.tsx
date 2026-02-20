@@ -1,13 +1,32 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { getAllDistrictsGeoJSON, type DistrictInfo } from "@/lib/tigerweb";
+import {
+  getAllDistrictsGeoJSON,
+  getDistrictsForBBox,
+  STATE_TO_FIPS,
+  type DistrictInfo,
+} from "@/lib/tigerweb";
+import type { FeatureCollection, Polygon, MultiPolygon } from "geojson";
 
 type MapState = "loading" | "ready" | "error";
+
+export interface InitialView {
+  lat: number;
+  lng: number;
+  zoom: number;
+}
+
+export interface HighlightDistrict {
+  state: string;
+  district: string;
+}
 
 interface DistrictMapProps {
   onDistrictSelect?: (district: DistrictInfo | null) => void;
   className?: string;
+  initialView?: InitialView;
+  highlightDistrict?: HighlightDistrict;
 }
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -19,10 +38,68 @@ const DISTRICT_SOURCE = "districts";
 const DISTRICT_FILL_LAYER = "district-fill";
 const DISTRICT_LINE_LAYER = "district-line";
 
-export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
+const DETAIL_TIERS = [
+  { minZoom: 6, offset: "0.005" },
+  { minZoom: 8, offset: "0.002" },
+  { minZoom: 10, offset: "0.0005" },
+  { minZoom: 12, offset: "0.0001" },
+] as const;
+
+function getOffsetForZoom(zoom: number): string | null {
+  for (let i = DETAIL_TIERS.length - 1; i >= 0; i--) {
+    if (zoom >= DETAIL_TIERS[i].minZoom) return DETAIL_TIERS[i].offset;
+  }
+  return null;
+}
+
+function fitBoundsToDistrict(
+  map: maplibregl.Map,
+  geojson: FeatureCollection,
+  highlight: HighlightDistrict
+) {
+  const fips = STATE_TO_FIPS[highlight.state];
+  if (!fips) return;
+
+  const cd = highlight.district.padStart(2, "0");
+  const bounds = new maplibregl.LngLatBounds();
+  let found = false;
+
+  for (const feature of geojson.features) {
+    const props = feature.properties;
+    if (!props || props.STATE !== fips || props.CD119 !== cd) continue;
+
+    found = true;
+    const geom = feature.geometry as Polygon | MultiPolygon;
+    if (geom.type === "Polygon") {
+      for (const ring of geom.coordinates) {
+        for (const coord of ring) bounds.extend(coord as [number, number]);
+      }
+    } else if (geom.type === "MultiPolygon") {
+      for (const polygon of geom.coordinates) {
+        for (const ring of polygon) {
+          for (const coord of ring) bounds.extend(coord as [number, number]);
+        }
+      }
+    }
+  }
+
+  if (found) {
+    map.fitBounds(bounds, { padding: 40, duration: 1500 });
+  }
+}
+
+export function DistrictMap({
+  onDistrictSelect,
+  className,
+  initialView,
+  highlightDistrict,
+}: DistrictMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const hoveredIdRef = useRef<number | null>(null);
+  const currentOffsetRef = useRef<string | null>(null);
+  const detailAbortRef = useRef<AbortController | null>(null);
+  const coarseGeoJsonRef = useRef<FeatureCollection | null>(null);
   const [mapState, setMapState] = useState<MapState>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -126,6 +203,65 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
           map.getCanvas().style.cursor = "";
         });
 
+        coarseGeoJsonRef.current = geojson;
+
+        map.on("moveend", async () => {
+          const zoom = map.getZoom();
+          const source = map.getSource(DISTRICT_SOURCE) as maplibregl.GeoJSONSource | undefined;
+          if (!source) return;
+
+          const neededOffset = getOffsetForZoom(zoom);
+
+          if (!neededOffset) {
+            if (currentOffsetRef.current !== null && coarseGeoJsonRef.current) {
+              source.setData(coarseGeoJsonRef.current);
+              currentOffsetRef.current = null;
+            }
+            return;
+          }
+
+          detailAbortRef.current?.abort();
+          const controller = new AbortController();
+          detailAbortRef.current = controller;
+
+          try {
+            const bounds = map.getBounds();
+            const detailed = await getDistrictsForBBox(
+              {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth(),
+              },
+              neededOffset,
+              controller.signal
+            );
+            if (!controller.signal.aborted) {
+              const seen = new Set<string>();
+              detailed.features = detailed.features.filter((f) => {
+                const geoid = f.properties?.GEOID;
+                if (!geoid || seen.has(geoid)) return false;
+                seen.add(geoid);
+                return true;
+              });
+              source.setData(detailed);
+              currentOffsetRef.current = neededOffset;
+            }
+          } catch {
+            // Silently keep current resolution
+          }
+        });
+
+        if (initialView) {
+          map.flyTo({
+            center: [initialView.lng, initialView.lat],
+            zoom: initialView.zoom,
+            duration: 1500,
+          });
+        } else if (highlightDistrict) {
+          fitBoundsToDistrict(map, geojson, highlightDistrict);
+        }
+
         setMapState("ready");
       } catch (err) {
         clearTimeout(timeoutId);
@@ -144,6 +280,7 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
     return () => {
       clearTimeout(timeoutId);
       abortController.abort();
+      detailAbortRef.current?.abort();
       map.remove();
       mapRef.current = null;
     };
@@ -159,13 +296,15 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
         tabIndex={0}
       />
 
-      {mapState === "loading" && <LoadingOverlay />}
+      {mapState === "loading" && (
+        <LoadingOverlay hasTarget={!!(initialView || highlightDistrict)} />
+      )}
       {mapState === "error" && <ErrorOverlay message={errorMessage} />}
     </div>
   );
 }
 
-function LoadingOverlay() {
+function LoadingOverlay({ hasTarget }: { hasTarget: boolean }) {
   return (
     <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center pointer-events-none">
       <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-5 py-2.5 shadow-md border border-border/50">
@@ -174,7 +313,7 @@ function LoadingOverlay() {
           <div className="absolute inset-0 rounded-full border-2 border-t-primary animate-spin" />
         </div>
         <p className="text-sm font-medium text-muted-foreground">
-          Loading district boundaries&hellip;
+          {hasTarget ? "Loading your district\u2026" : "Loading district boundaries\u2026"}
         </p>
       </div>
     </div>

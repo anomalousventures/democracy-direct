@@ -284,7 +284,11 @@ export function ZipLookup({ autoFocus = true, templateSlug, initialZip }: ZipLoo
             </div>
             <div className="mt-6 pt-4 border-t border-border">
               <a
-                href="/map"
+                href={
+                  result.lat != null && result.lng != null
+                    ? `/map?lat=${result.lat}&lng=${result.lng}&zoom=12`
+                    : "/map"
+                }
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 <svg
