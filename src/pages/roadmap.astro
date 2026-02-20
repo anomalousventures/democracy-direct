@@ -68,15 +68,18 @@ const completed: Feature[] = [
     name: "Amendments Tracking",
     description: "View amendments proposed and voted on for each bill",
   },
-];
-
-const planned: Feature[] = [
+  {
+    name: "District Map",
+    description: "Find your district on an interactive map or use your location",
+  },
   {
     name: "Performance Optimization",
     description: "Faster page loads and improved accessibility scores",
   },
-  { name: "Campaign Finance", description: "See who funds your representatives' campaigns" },
-  { name: "District Map", description: "Find your district visually on an interactive map" },
+  {
+    name: "Campaign Finance",
+    description: "See who funds your representatives' campaigns",
+  },
 ];
 
 const future: Feature[] = [
@@ -117,28 +120,6 @@ const future: Feature[] = [
                 <div class="roadmap-item">
                   <div class="roadmap-circle-completed">
                     <Icon name="check" class="w-4 h-4 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-primary">{feature.name}</h3>
-                    <p class="text-caption">{feature.description}</p>
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </section>
-
-        <section aria-labelledby="planned-heading">
-          <h2 id="planned-heading" class="roadmap-badge-planned">
-            <Icon name="clipboard-list" />
-            Planned
-          </h2>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {
-              planned.map((feature) => (
-                <div class="roadmap-item">
-                  <div class="roadmap-circle-planned">
-                    <Icon name="clipboard-list" class="w-4 h-4 text-gray-500" />
                   </div>
                   <div>
                     <h3 class="font-semibold text-primary">{feature.name}</h3>
