@@ -1,5 +1,3 @@
-import type { FeatureCollection } from "geojson";
-
 const TIGERWEB_BASE =
   "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer";
 
@@ -114,64 +112,4 @@ export async function queryDistrictAtPoint(lng: number, lat: number): Promise<Di
   } catch {
     return null;
   }
-}
-
-const SIMPLIFY_OFFSET_COARSE = "0.01";
-
-export async function getAllDistrictsGeoJSON(signal?: AbortSignal): Promise<FeatureCollection> {
-  const url = buildQueryUrl({
-    where: "1=1",
-    outFields: "STATE,CD119,NAME,GEOID",
-    returnGeometry: "true",
-    maxAllowableOffset: SIMPLIFY_OFFSET_COARSE,
-    f: "geojson",
-  });
-
-  const res = await fetch(url, { signal });
-  if (!res.ok) {
-    throw new Error(`TIGERweb request failed: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(`TIGERweb query error: ${data.error.message}`);
-  }
-
-  return data;
-}
-
-export interface BBox {
-  west: number;
-  south: number;
-  east: number;
-  north: number;
-}
-
-export async function getDistrictsForBBox(
-  bbox: BBox,
-  maxOffset: string,
-  signal?: AbortSignal
-): Promise<FeatureCollection> {
-  const url = buildQueryUrl({
-    geometry: `${bbox.west},${bbox.south},${bbox.east},${bbox.north}`,
-    geometryType: "esriGeometryEnvelope",
-    inSR: "4326",
-    spatialRel: "esriSpatialRelIntersects",
-    outFields: "STATE,CD119,NAME,GEOID",
-    returnGeometry: "true",
-    maxAllowableOffset: maxOffset,
-    f: "geojson",
-  });
-
-  const res = await fetch(url, { signal });
-  if (!res.ok) {
-    throw new Error(`TIGERweb detail request failed: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(`TIGERweb detail query error: ${data.error.message}`);
-  }
-
-  return data;
 }

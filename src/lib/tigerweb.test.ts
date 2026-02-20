@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  queryDistrictAtPoint,
-  getAllDistrictsGeoJSON,
-  FIPS_TO_STATE,
-  fipsToState,
-} from "./tigerweb";
+import { queryDistrictAtPoint, FIPS_TO_STATE, fipsToState } from "./tigerweb";
 
 const mockFetch = vi.fn();
 
@@ -130,77 +125,6 @@ describe("queryDistrictAtPoint", () => {
       name: "Congressional District (at Large)",
       geoid: "5000",
     });
-  });
-});
-
-describe("getAllDistrictsGeoJSON", () => {
-  it("returns a FeatureCollection on success", async () => {
-    const mockCollection = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {
-            STATE: "06",
-            CD119: "12",
-            NAME: "Congressional District 12",
-            GEOID: "0612",
-          },
-          geometry: { type: "Polygon", coordinates: [] },
-        },
-      ],
-    };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockCollection,
-    });
-
-    const result = await getAllDistrictsGeoJSON();
-
-    expect(result.type).toBe("FeatureCollection");
-    expect(result.features).toHaveLength(1);
-  });
-
-  it("throws on fetch error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("Network error"));
-
-    await expect(getAllDistrictsGeoJSON()).rejects.toThrow("Network error");
-  });
-
-  it("throws on non-OK response", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 503, statusText: "Service Unavailable" });
-
-    await expect(getAllDistrictsGeoJSON()).rejects.toThrow(
-      "TIGERweb request failed: 503 Service Unavailable"
-    );
-  });
-
-  it("throws when API returns error in body", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        error: { code: 400, message: "Failed to execute query.", details: [] },
-      }),
-    });
-
-    await expect(getAllDistrictsGeoJSON()).rejects.toThrow(
-      "TIGERweb query error: Failed to execute query."
-    );
-  });
-
-  it("constructs the URL with where=1=1 and geojson format", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ type: "FeatureCollection", features: [] }),
-    });
-
-    await getAllDistrictsGeoJSON();
-
-    const calledUrl = mockFetch.mock.calls[0][0];
-    expect(calledUrl).toContain("where=1%3D1");
-    expect(calledUrl).toContain("f=geojson");
-    expect(calledUrl).toContain("outFields=STATE%2CCD119%2CNAME%2CGEOID");
   });
 });
 
