@@ -45,7 +45,7 @@ test.describe("District Map Page", () => {
 
   test("attribution text is present", async ({ page }) => {
     await page.goto("/map");
-    await expect(page.getByText("Stadia Maps")).toBeVisible();
+    await expect(page.getByText("OpenFreeMap")).toBeVisible();
     await expect(page.getByText("U.S. Census Bureau")).toBeVisible();
   });
 });

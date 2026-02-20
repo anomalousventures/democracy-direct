@@ -52,7 +52,8 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
     return badRequest("Invalid district (must be 1-2 digits or AL)");
   }
 
-  return fetchHouseRep(state, district, locals, logger);
+  const normalizedDistrict = isAtLarge(district) ? district : String(parseInt(district, 10));
+  return fetchHouseRep(state, normalizedDistrict, locals, logger);
 };
 
 async function fetchSenators(state: string, locals: App.Locals, logger: Logger): Promise<Response> {

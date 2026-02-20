@@ -12,9 +12,9 @@ async function fillComposer(page: Page, text: string) {
     await composer.click();
     await page.keyboard.press("Control+a");
     await page.keyboard.press("Backspace");
-    await page.keyboard.insertText(text);
+    await page.keyboard.type(text);
     await expect(page.getByTestId("character-count")).toHaveText(String(text.length));
-  }).toPass({ timeout: 10000 });
+  }).toPass({ timeout: 15000 });
 }
 
 test.describe("Phase 3: Contact Flow", () => {

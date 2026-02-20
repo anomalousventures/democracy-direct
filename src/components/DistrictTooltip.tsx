@@ -16,10 +16,10 @@ interface DistrictTooltipProps {
   onClose?: () => void;
 }
 
-const AT_LARGE_VALUES = new Set(["0", "00"]);
+const AT_LARGE_VALUES = new Set(["0", "00", "AL"]);
 
 function isAtLarge(district: string): boolean {
-  return AT_LARGE_VALUES.has(district);
+  return AT_LARGE_VALUES.has(district.toUpperCase());
 }
 
 function formatDistrictLabel(district: string): string {

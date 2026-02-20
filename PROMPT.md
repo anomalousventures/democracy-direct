@@ -2,9 +2,9 @@
 
 ## Target Feature
 
-**Spec directory:** `specs/distric-map/tasks/`
-**Branch name:** `feat/distric-map`
-**Design doc:** `docs/tasks/distric-map.md`
+**Spec directory:** `specs/district-map/tasks/`
+**Branch name:** `feat/district-map`
+**Design doc:** `docs/tasks/district-map.md`
 
 ## Objective
 

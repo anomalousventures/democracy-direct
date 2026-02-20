@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { getAllDistrictsGeoJSON, queryDistrictAtPoint, type DistrictInfo } from "@/lib/tigerweb";
+import { getAllDistrictsGeoJSON, type DistrictInfo } from "@/lib/tigerweb";
 
 type MapState = "loading" | "ready" | "error";
 
@@ -27,11 +27,24 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleMapClick = useCallback(
-    async (e: maplibregl.MapMouseEvent) => {
+    (e: maplibregl.MapMouseEvent) => {
       if (!onDistrictSelect) return;
-      const { lng, lat } = e.lngLat;
-      const district = await queryDistrictAtPoint(lng, lat);
-      onDistrictSelect(district);
+      const map = mapRef.current;
+      if (!map) return;
+
+      const features = map.queryRenderedFeatures(e.point, { layers: [DISTRICT_FILL_LAYER] });
+      if (!features.length || !features[0].properties) {
+        onDistrictSelect(null);
+        return;
+      }
+
+      const props = features[0].properties;
+      onDistrictSelect({
+        state: props.STATE,
+        district: String(parseInt(props.CD119, 10)),
+        name: props.NAME,
+        geoid: props.GEOID,
+      });
     },
     [onDistrictSelect]
   );
