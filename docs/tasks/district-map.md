@@ -192,16 +192,16 @@ const FIPS_TO_STATE: Record<string, string> = {
 
 ## Verification
 
-- [ ] Map loads without blocking page render
-- [ ] District boundaries display correctly from TIGERweb
-- [ ] Click identifies correct district
-- [ ] Tooltip shows district name and rep info
-- [ ] "View Representative" link navigates correctly
-- [ ] Works on mobile (touch interaction)
-- [ ] Handles TIGERweb errors gracefully
-- [ ] Map is accessible (keyboard navigation)
-- [ ] Bundle size impact is acceptable (<250KB additional)
-- [ ] Performance is smooth on mid-range devices
-- [ ] Attribution for tile provider is displayed
-- [ ] Navigation includes map link
-- [ ] E2E tests pass
+- [x] Map loads without blocking page render
+- [x] District boundaries display correctly from TIGERweb
+- [x] Click identifies correct district
+- [x] Tooltip shows district name and rep info
+- [x] "View Representative" link navigates correctly
+- [x] Works on mobile (touch interaction)
+- [x] Handles TIGERweb errors gracefully
+- [x] Map is accessible (keyboard navigation)
+- [x] Bundle size impact is acceptable (<250KB additional)
+- [x] Performance is smooth on mid-range devices
+- [x] Attribution for tile provider is displayed
+- [x] Navigation includes map link
+- [x] E2E tests pass

@@ -106,7 +106,13 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
 
   return (
     <div className={`relative${className ? ` ${className}` : ""}`}>
-      <div ref={containerRef} className="absolute inset-0" />
+      <div
+        ref={containerRef}
+        className="absolute inset-0"
+        role="application"
+        aria-label="Interactive congressional district map. Use arrow keys to pan, plus and minus to zoom."
+        tabIndex={0}
+      />
 
       {mapState === "loading" && <LoadingOverlay />}
       {mapState === "error" && <ErrorOverlay message={errorMessage} />}
