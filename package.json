@@ -91,6 +91,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/preact": "^3.2.4",
     "@testing-library/user-event": "^14.6.1",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "25.2.3",
     "@types/nodemailer": "^7.0.10",
     "@types/react": "19.2.14",
