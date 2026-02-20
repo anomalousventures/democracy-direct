@@ -59,9 +59,10 @@ export function DistrictMap({
       }
 
       const props = features[0].properties;
+      const cd = parseInt(props.CD119, 10);
       onDistrictSelect({
         state: props.STATE,
-        district: String(parseInt(props.CD119, 10)),
+        district: cd === 98 ? "0" : String(cd),
         name: props.NAME,
         geoid: props.GEOID,
       });
