@@ -22,7 +22,7 @@ const user = Astro.locals.user;
         description="Democracy Direct is designed with privacy as a core principle. We minimize data collection and never sell or share your information with third parties."
       >
         <p slot="subtitle" class="text-sm text-muted-foreground mb-4 animate-fade-up">
-          Last updated: January 2026
+          Last updated: February 2026
         </p>
       </PageHeader>
 
@@ -57,6 +57,17 @@ const user = Astro.locals.user;
                 <span class="text-muted-foreground">
                   ZIP code lookups happen entirely in your browser using pre-loaded data. We have no
                   way to know what ZIP codes you've searched.
+                </span>
+              </div>
+            </li>
+            <li class="list-item-bullet">
+              <span class="list-bullet-destructive"></span>
+              <div>
+                <strong class="text-primary">Your location:</strong>
+                <span class="text-muted-foreground">
+                  If you use the "Use my location" feature on the district map, your coordinates are
+                  processed entirely in your browser to center the map. They are never sent to our
+                  servers.
                 </span>
               </div>
             </li>

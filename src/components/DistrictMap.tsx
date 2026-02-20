@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { DistrictInfo } from "@/lib/tigerweb";
 import { ensurePmtilesProtocol } from "@/lib/pmtiles-protocol";
 import { getDistrictBounds } from "@/lib/district-bounds";
+import { Icon } from "@/components/icons";
 
 type MapState = "loading" | "ready" | "error";
 
@@ -80,7 +81,7 @@ export function DistrictMap({
       style: MAP_STYLE,
       center: US_CENTER,
       zoom: US_ZOOM,
-      attributionControl: {},
+      attributionControl: false,
     });
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
@@ -101,7 +102,7 @@ export function DistrictMap({
           "source-layer": DISTRICT_SOURCE_LAYER,
           paint: {
             "fill-color": "#1e3a5f",
-            "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.3, 0.12],
+            "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.25, 0],
           },
         });
 
@@ -112,8 +113,8 @@ export function DistrictMap({
           "source-layer": DISTRICT_SOURCE_LAYER,
           paint: {
             "line-color": "#1e3a5f",
-            "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 1, 0.6],
-            "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2.5, 1.5],
+            "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.8, 0.35],
+            "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 1],
           },
         });
 
@@ -189,6 +190,17 @@ export function DistrictMap({
     };
   }, [handleMapClick]);
 
+  const handleLocate = useCallback((lat: number, lng: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    map.flyTo({
+      center: [lng, lat],
+      zoom: 11,
+      duration: prefersReducedMotion ? 0 : 1500,
+    });
+  }, []);
+
   return (
     <div className={className}>
       <div
@@ -199,6 +211,7 @@ export function DistrictMap({
         tabIndex={0}
       />
 
+      {mapState === "ready" && <GeolocationControl onLocate={handleLocate} />}
       {mapState === "loading" && (
         <LoadingOverlay hasTarget={!!(initialView || highlightDistrict)} />
       )}
@@ -219,6 +232,48 @@ function LoadingOverlay({ hasTarget }: { hasTarget: boolean }) {
           {hasTarget ? "Loading your district\u2026" : "Loading district boundaries\u2026"}
         </p>
       </div>
+    </div>
+  );
+}
+
+function GeolocationControl({ onLocate }: { onLocate: (lat: number, lng: number) => void }) {
+  const [locating, setLocating] = useState(false);
+
+  const handleClick = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onLocate(pos.coords.latitude, pos.coords.longitude);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: false }
+    );
+  }, [onLocate]);
+
+  return (
+    <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={locating}
+        className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-border/50 text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+        aria-label="Use my location to find your congressional district"
+      >
+        {locating ? (
+          <div className="relative w-4 h-4">
+            <div className="absolute inset-0 rounded-full border-2 border-border" />
+            <div className="absolute inset-0 rounded-full border-2 border-t-primary animate-spin" />
+          </div>
+        ) : (
+          <Icon name="current-location" />
+        )}
+        {locating ? "Locating\u2026" : "Use my location"}
+      </button>
+      <p className="text-[10px] text-muted-foreground bg-white/80 backdrop-blur-sm rounded-full px-2.5 py-0.5 select-none">
+        Your location stays in your browser.
+      </p>
     </div>
   );
 }
