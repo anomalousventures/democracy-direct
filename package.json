@@ -70,6 +70,7 @@
     "maplibre-gl": "^5.18.0",
     "nanostores": "^1.1.0",
     "nodemailer": "^8.0.1",
+    "pmtiles": "^4.4.0",
     "preact": "^10.25.0",
     "tailwind-merge": "3.4.1",
     "tailwindcss": "4.1.18",
