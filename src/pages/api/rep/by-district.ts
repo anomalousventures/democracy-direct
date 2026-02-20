@@ -6,7 +6,7 @@ import { createDb } from "@/db/client";
 import { legislators } from "@/db/schema";
 import { badRequest, jsonResponse, notFound, serverError } from "@/lib/api-response";
 import { getConfig } from "@/lib/config";
-import { createLogger } from "@/lib/logger";
+import { createLogger, type Logger } from "@/lib/logger";
 import { DISTRICT_PATTERN } from "@/lib/saved-district";
 import { isValidState } from "@/lib/states";
 
@@ -54,10 +54,6 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
 
   return fetchHouseRep(state, district, locals, logger);
 };
-
-interface Logger {
-  error: (event: string, data: Record<string, unknown>) => void;
-}
 
 async function fetchSenators(state: string, locals: App.Locals, logger: Logger): Promise<Response> {
   try {

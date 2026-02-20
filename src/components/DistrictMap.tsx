@@ -105,7 +105,7 @@ export function DistrictMap({ onDistrictSelect, className }: DistrictMapProps) {
   }, [handleMapClick]);
 
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative${className ? ` ${className}` : ""}`}>
       <div ref={containerRef} className="absolute inset-0" />
 
       {mapState === "loading" && <LoadingOverlay />}

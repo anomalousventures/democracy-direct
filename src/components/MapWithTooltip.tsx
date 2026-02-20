@@ -1,5 +1,4 @@
-import { Component, useState } from "react";
-import type { JSX, ReactNode } from "react";
+import { Component, useState, type ReactNode } from "react";
 import type { DistrictInfo } from "@/lib/tigerweb";
 import { DistrictMap } from "./DistrictMap";
 import { DistrictTooltip } from "./DistrictTooltip";
@@ -40,7 +39,7 @@ class MapErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
   }
 }
 
-export function MapWithTooltip(): JSX.Element {
+export function MapWithTooltip() {
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictInfo | null>(null);
 
   return (

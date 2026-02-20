@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import type { JSX } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { getOrdinalSuffix, getPartyColor, getPartyLabel } from "@/lib/legislator-utils";
 import { getStateName } from "@/lib/states";
-import type { DistrictInfo } from "@/lib/tigerweb";
-import { fipsToState } from "@/lib/tigerweb";
+import { fipsToState, type DistrictInfo } from "@/lib/tigerweb";
 
 interface RepData {
   bioguideId: string;
@@ -32,7 +30,7 @@ function formatDistrictLabel(district: string): string {
   return `${num}${getOrdinalSuffix(num)} District`;
 }
 
-export function DistrictTooltip({ districtInfo, onClose }: DistrictTooltipProps): JSX.Element {
+export function DistrictTooltip({ districtInfo, onClose }: DistrictTooltipProps) {
   const [rep, setRep] = useState<RepData | null>(null);
   const [fetchState, setFetchState] = useState<FetchState>("loading");
 
@@ -76,7 +74,7 @@ export function DistrictTooltip({ districtInfo, onClose }: DistrictTooltipProps)
     return () => controller.abort();
   }, [stateAbbr, districtInfo.district]);
 
-  const fetchStateContent: Record<FetchState, JSX.Element | null> = {
+  const fetchStateContent: Record<FetchState, ReactNode> = {
     loading: <LoadingSkeleton />,
     loaded: rep ? <RepInfo rep={rep} /> : null,
     "not-found": <MissingRep />,
@@ -124,7 +122,7 @@ export function DistrictTooltip({ districtInfo, onClose }: DistrictTooltipProps)
   );
 }
 
-function LoadingSkeleton(): JSX.Element {
+function LoadingSkeleton() {
   return (
     <div className="space-y-2" role="status" aria-label="Loading representative data">
       <div className="h-4 w-3/4 bg-muted rounded-sm animate-pulse" />
@@ -133,7 +131,7 @@ function LoadingSkeleton(): JSX.Element {
   );
 }
 
-function RepInfo({ rep }: { rep: RepData }): JSX.Element {
+function RepInfo({ rep }: { rep: RepData }) {
   const partyColor = getPartyColor(rep.party);
   const partyLabel = getPartyLabel(rep.party, true);
 
@@ -161,10 +159,10 @@ function RepInfo({ rep }: { rep: RepData }): JSX.Element {
   );
 }
 
-function MissingRep(): JSX.Element {
+function MissingRep() {
   return <p className="text-xs text-muted-foreground italic">Representative data unavailable</p>;
 }
 
-function ErrorState(): JSX.Element {
+function ErrorState() {
   return <p className="text-xs text-destructive">Could not load representative data</p>;
 }
