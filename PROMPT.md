@@ -2,9 +2,9 @@
 
 ## Target Feature
 
-**Spec directory:** `specs/campaign-finance/tasks/`
-**Branch name:** `feat/campaign-finance`
-**Design doc:** `docs/tasks/campaign-finance.md`
+**Spec directory:** `specs/distric-map/tasks/`
+**Branch name:** `feat/distric-map`
+**Design doc:** `docs/tasks/distric-map.md`
 
 ## Objective
 
