@@ -25,6 +25,7 @@ export interface Env {
   POSTHOG_API_KEY?: string;
   POSTHOG_HOST?: string;
   VISITOR_COOKIE_SECRET?: string;
+  TILES_BUCKET?: R2Bucket;
 }
 
 interface PostHogInstance {
