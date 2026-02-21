@@ -91,7 +91,7 @@ export function DistrictMap({
       try {
         map.addSource(DISTRICT_SOURCE, {
           type: "vector",
-          url: "pmtiles:///data/districts.pmtiles",
+          url: "pmtiles:///api/tiles/districts.pmtiles",
           promoteId: "GEOID",
         });
 

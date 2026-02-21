@@ -135,6 +135,9 @@ export async function generateTiles(): Promise<void> {
 
     await rename(tmpPmtiles, OUTPUT_PMTILES);
     console.log(`Wrote ${OUTPUT_PMTILES}`);
+    console.log(
+      "Upload to R2: wrangler r2 object put dd-tiles/districts.pmtiles --file=public/data/districts.pmtiles"
+    );
   } finally {
     await unlink(tmpGeojson).catch(() => {});
     await unlink(tmpPmtiles).catch(() => {});

@@ -27,3 +27,15 @@ AWS_REGION = "us-west-1"
 TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
 TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
 
+[[r2_buckets]]
+binding = "TILES_BUCKET"
+bucket_name = "dd-tiles"
+
+[[env.production.r2_buckets]]
+binding = "TILES_BUCKET"
+bucket_name = "dd-tiles"
+
+[[env.preview.r2_buckets]]
+binding = "TILES_BUCKET"
+bucket_name = "dd-tiles"
+
