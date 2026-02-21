@@ -6,7 +6,7 @@ test.describe("Representative Profile Page", () => {
   test.describe("tabs navigation", () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(REP_PAGE);
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.getByRole("tab", { name: /Contact/i }).waitFor({ state: "visible" });
     });
 
     test("displays all three tabs", async ({ page }) => {
