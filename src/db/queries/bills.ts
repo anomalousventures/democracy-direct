@@ -1,4 +1,4 @@
-import { eq, and, desc, ilike, or, sql, isNull, count, inArray, type SQL } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, isNull, count, inArray, lt, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
 import { bills, type Bill, type Legislator } from "../schema";
 import type { BillStatus, BillType } from "@/lib/types/legislation";
@@ -207,8 +207,11 @@ export interface BillForSummarySync {
 
 export async function getBillsWithoutSummary(
   db: Database,
-  limit: number = 100
+  limit: number = 100,
+  recheckAfterDays: number = 7
 ): Promise<BillForSummarySync[]> {
+  const cutoff = new Date(Date.now() - recheckAfterDays * 24 * 60 * 60 * 1000);
+
   return db
     .select({
       id: bills.id,
@@ -217,7 +220,12 @@ export async function getBillsWithoutSummary(
       billNumber: bills.billNumber,
     })
     .from(bills)
-    .where(isNull(bills.summary))
+    .where(
+      and(
+        isNull(bills.summary),
+        or(isNull(bills.summaryCheckedAt), lt(bills.summaryCheckedAt, cutoff))
+      )
+    )
     .orderBy(
       sql`CASE WHEN ${bills.status} != 'introduced' THEN 0 ELSE 1 END`,
       desc(bills.latestActionDate),
@@ -232,4 +240,9 @@ export async function updateBillSummary(
   summary: string
 ): Promise<void> {
   await db.update(bills).set({ summary, updatedAt: new Date() }).where(eq(bills.id, billId));
+}
+
+export async function markSummaryChecked(db: Database, billIds: string[]): Promise<void> {
+  if (billIds.length === 0) return;
+  await db.update(bills).set({ summaryCheckedAt: new Date() }).where(inArray(bills.id, billIds));
 }

@@ -14,6 +14,7 @@ describe("bills query module", () => {
       "getDistinctSubjects",
       "getBillsWithoutSummary",
       "updateBillSummary",
+      "markSummaryChecked",
     ];
 
     for (const name of expectedExports) {
@@ -32,7 +33,6 @@ describe("BillWithSponsor type", () => {
       congress: 119,
       title: "Test Bill Act",
       summary: "A bill to test things",
-      summaryCheckedAt: null,
       status: "introduced",
       subjects: ["Testing", "Development"],
       introducedDate: new Date("2025-01-15"),
@@ -42,6 +42,7 @@ describe("BillWithSponsor type", () => {
       congressGovUrl: "https://congress.gov/bill/119th-congress/hr-bill/1234",
       createdAt: new Date(),
       updatedAt: new Date(),
+      summaryCheckedAt: null,
       sponsor: {
         bioguideId: "A000001",
         firstName: "John",
@@ -82,7 +83,6 @@ describe("BillWithSponsor type", () => {
       congress: 119,
       title: "Test Senate Bill",
       summary: null,
-      summaryCheckedAt: null,
       status: "introduced",
       subjects: [],
       introducedDate: new Date("2025-01-15"),
@@ -92,6 +92,7 @@ describe("BillWithSponsor type", () => {
       congressGovUrl: "https://congress.gov/bill/119th-congress/s-bill/567",
       createdAt: new Date(),
       updatedAt: new Date(),
+      summaryCheckedAt: null,
       sponsor: null,
     };
 
