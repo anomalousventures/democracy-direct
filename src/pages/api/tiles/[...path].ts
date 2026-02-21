@@ -3,7 +3,10 @@ import { notFound } from "@/lib/api-response";
 
 export const prerender = false;
 
-function parseRange(header: string, fileSize: number): { offset: number; length: number } | null {
+export function parseRange(
+  header: string,
+  fileSize: number
+): { offset: number; length: number } | null {
   const match = header.match(/^bytes=(\d+)-(\d*)$/);
   if (!match) return null;
 
@@ -23,7 +26,7 @@ const handler: APIRoute = async ({ params, request, locals }) => {
   }
 
   const key = params.path;
-  if (!key) return notFound();
+  if (!key || !key.endsWith(".pmtiles")) return notFound();
 
   const rangeHeader = request.headers.get("range");
 
@@ -36,6 +39,7 @@ const handler: APIRoute = async ({ params, request, locals }) => {
       headers: {
         "Content-Length": String(head.size),
         "Accept-Ranges": "bytes",
+        Vary: "Range",
         "Content-Type": "application/octet-stream",
         "Cache-Control": CACHE_HEADER,
       },
@@ -63,6 +67,7 @@ const handler: APIRoute = async ({ params, request, locals }) => {
         "Content-Length": String(range.length),
         "Content-Range": `bytes ${range.offset}-${range.offset + range.length - 1}/${head.size}`,
         "Accept-Ranges": "bytes",
+        Vary: "Range",
         "Content-Type": "application/octet-stream",
         "Cache-Control": CACHE_HEADER,
       },
@@ -77,6 +82,7 @@ const handler: APIRoute = async ({ params, request, locals }) => {
     headers: {
       "Content-Length": String(object.size),
       "Accept-Ranges": "bytes",
+      Vary: "Range",
       "Content-Type": "application/octet-stream",
       "Cache-Control": CACHE_HEADER,
     },
