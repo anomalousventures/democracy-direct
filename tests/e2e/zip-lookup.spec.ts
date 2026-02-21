@@ -91,6 +91,13 @@ test.describe("ZIP Lookup Component", () => {
   });
 
   test("shows disambiguation for split ZIP", async ({ page }) => {
+    await page.route("**/data/zip-manifest.json", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ file: "zip-districts.json" }),
+      });
+    });
     await page.route("**/data/zip-districts.json", async (route) => {
       await route.fulfill({
         status: 200,

@@ -8,7 +8,7 @@ This is the source code for [democracy-direct.com](https://democracy-direct.com)
 
 Elected officials are public servants. They represent _you_. But actually reaching them shouldn't require navigating five government websites, filling out invasive forms, or wondering if your message went into a void.
 
-Democracy Direct makes it simple: enter your ZIP code, see who represents you, and contact them directly through their official channels. Paste a letter into their contact form, print one to mail, or call their office with talking points in hand.
+Democracy Direct makes it simple: enter your ZIP code or find your district on the map, see who represents you, and contact them directly through their official channels. Paste a letter into their contact form, print one to mail, or call their office with talking points in hand.
 
 No account required. No app to download. No data harvested.
 
@@ -33,7 +33,9 @@ The code in this repository is the same code running on democracy-direct.com. An
 ```mermaid
 flowchart TD
     A[Enter your ZIP code] --> B[Lookup happens in your browser]
+    A2[Find your district on the map] --> B2[Location stays in your browser]
     B --> C[See your representatives]
+    B2 --> C
     C --> D[Browse community templates]
     C --> E[Write your own]
     D --> F[Customize]
@@ -47,7 +49,7 @@ The server provides representative data and templates, but everything else happe
 
 **Your email address is never stored.** Accounts use a one-way cryptographic hash. The original email cannot be recovered, even by someone with full database access. This isn't a policy; it's math.
 
-**Your searches stay in your browser.** When you enter a ZIP code, the lookup happens locally using data that's already loaded on the page. The server never sees what you searched for.
+**Your searches stay in your browser.** When you enter a ZIP code, the lookup happens locally using data that's already loaded on the page. The server never sees what you searched for. If you use the district map's "Use my location" feature, your coordinates are processed entirely in your browser to center the map. They are never sent to our servers.
 
 **Your messages never touch the server.** The text you write is copied to your clipboard, printed locally, or used as talking points. Democracy Direct never sees, stores, or transmits what you write.
 

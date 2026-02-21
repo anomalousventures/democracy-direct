@@ -11,26 +11,26 @@ Index of feature development tasks for Democracy Direct. Each document contains 
 
 ## Tasks
 
-| Task                                                        | Status   | Description                                     |
-| ----------------------------------------------------------- | -------- | ----------------------------------------------- |
-| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete | Post-deploy smoke tests + Discord alerts        |
-| [Data Refresh Optimization](./data-refresh-optimization.md) | Complete | Optimize import scripts + Discord notifications |
-| [Public Roadmap](./public-roadmap.md)                       | Complete | Public-facing feature roadmap page              |
-| [Saved District](./saved-district.md)                       | Complete | Save district to user profile                   |
-| [SEO & Social Sharing](./seo-social.md)                     | Complete | Optimize meta tags and social sharing           |
-| [Share Buttons](./share-buttons.md)                         | Complete | Add share functionality to pages                |
-| [Template Descriptions](./template-descriptions.md)         | Complete | Add short descriptions to templates             |
-| [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Complete | Add rep and template pages to sitemap           |
-| [Voting Records](./voting-records.md)                       | Complete | Integrate voting records (House + Senate)       |
-| [Bill Summaries](./bill-summaries.md)                       | Complete | Bill tracking, summaries, and UI                |
-| [Lighthouse Optimization](./lighthouse-optimization.md)     | Complete | Performance, a11y, SEO optimization             |
-| [Legislation Search](./legislation-search.md)               | Complete | Search bills, vote/amendment detail pages       |
-| [Template Bill Linking](./template-bill-linking.md)         | Complete | Link templates to specific legislation          |
-| [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow            |
-| [Campaign Finance](./campaign-finance.md)                   | Ready    | ProPublica Campaign Finance API integration     |
-| [District Map](./district-map.md)                           | Ready    | Map-based district picker via TIGERweb          |
-| [State Legislators](./state-legislators.md)                 | Research | Add state-level representatives                 |
-| [Local Officials](./local-officials.md)                     | Research | Add mayors, city council, school boards         |
+| Task                                                        | Status   | Description                                         |
+| ----------------------------------------------------------- | -------- | --------------------------------------------------- |
+| [Prod Smoke Tests](./prod-smoke-tests.md)                   | Complete | Post-deploy smoke tests + Discord alerts            |
+| [Data Refresh Optimization](./data-refresh-optimization.md) | Complete | Optimize import scripts + Discord notifications     |
+| [Public Roadmap](./public-roadmap.md)                       | Complete | Public-facing feature roadmap page                  |
+| [Saved District](./saved-district.md)                       | Complete | Save district to user profile                       |
+| [SEO & Social Sharing](./seo-social.md)                     | Complete | Optimize meta tags and social sharing               |
+| [Share Buttons](./share-buttons.md)                         | Complete | Add share functionality to pages                    |
+| [Template Descriptions](./template-descriptions.md)         | Complete | Add short descriptions to templates                 |
+| [Sitemap Dynamic Pages](./sitemap-dynamic-pages.md)         | Complete | Add rep and template pages to sitemap               |
+| [Voting Records](./voting-records.md)                       | Complete | Integrate voting records (House + Senate)           |
+| [Bill Summaries](./bill-summaries.md)                       | Complete | Bill tracking, summaries, and UI                    |
+| [Lighthouse Optimization](./lighthouse-optimization.md)     | Complete | Performance, a11y, SEO optimization                 |
+| [Legislation Search](./legislation-search.md)               | Complete | Search bills, vote/amendment detail pages           |
+| [Template Bill Linking](./template-bill-linking.md)         | Complete | Link templates to specific legislation              |
+| [Rep Page Editor](./rep-editor.md)                          | Research | Streamline editor/preview/print flow                |
+| [Campaign Finance](./campaign-finance.md)                   | Complete | ProPublica Campaign Finance API integration         |
+| [District Map](./district-map.md)                           | Complete | Interactive district map with PMTiles + geolocation |
+| [State Legislators](./state-legislators.md)                 | Research | Add state-level representatives                     |
+| [Local Officials](./local-officials.md)                     | Research | Add mayors, city council, school boards             |
 
 ## Suggested Implementation Order
 

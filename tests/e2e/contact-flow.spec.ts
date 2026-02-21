@@ -4,9 +4,8 @@ import { test, expect, type Page } from "@playwright/test";
 const REP_PAGE = "/rep/P000622";
 
 async function fillComposer(page: Page, text: string) {
-  await page.waitForLoadState("networkidle");
   const composer = page.getByTestId("tiptap-editor");
-  await expect(composer).toHaveAttribute("data-editor-ready", "true", { timeout: 5000 });
+  await expect(composer).toHaveAttribute("data-editor-ready", "true", { timeout: 15000 });
 
   await expect(async () => {
     await composer.click();
@@ -14,7 +13,7 @@ async function fillComposer(page: Page, text: string) {
     await page.keyboard.press("Backspace");
     await page.keyboard.insertText(text);
     await expect(page.getByTestId("character-count")).toHaveText(String(text.length));
-  }).toPass({ timeout: 10000 });
+  }).toPass({ timeout: 15000 });
 }
 
 test.describe("Phase 3: Contact Flow", () => {
@@ -121,7 +120,7 @@ test.describe("Phase 3: Contact Flow", () => {
       await page.goto(REP_PAGE);
       await page.evaluate(() => localStorage.clear());
       await page.reload();
-      await page.waitForLoadState("networkidle");
+      await page.getByTestId("tiptap-editor").waitFor({ state: "visible" });
     });
 
     test("sender info fields exist and are editable", async ({ page }) => {

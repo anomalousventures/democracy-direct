@@ -682,3 +682,10 @@
     margin-top: 1.25em;
   }
 }
+
+/* Astro islands don't inherit sizing from their parent container */
+.map-area astro-island {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}

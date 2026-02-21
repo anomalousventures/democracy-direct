@@ -98,6 +98,12 @@ test.describe("Production Smoke Tests", () => {
     await expect(page.getByRole("tab", { name: /amendments/i })).toBeVisible();
   });
 
+  test("map page loads", async ({ page }) => {
+    const response = await page.goto("/map");
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: /Congressional District Map/ })).toBeVisible();
+  });
+
   test("zip lookup resolves to district selection", async ({ page }) => {
     await page.goto("/");
     const zipInput = page.getByRole("textbox", { name: /zip/i });

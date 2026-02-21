@@ -20,6 +20,7 @@ import { toast } from "@/lib/toast";
 const publicNavLinks = [
   { href: "/about", label: "About" },
   { href: "/legislation", label: "Legislation" },
+  { href: "/map", label: "Map" },
   { href: "/templates", label: "Templates" },
 ];
 

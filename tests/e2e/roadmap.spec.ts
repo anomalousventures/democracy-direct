@@ -24,11 +24,10 @@ test.describe("Roadmap Page", () => {
     await expect(upNextHeading).not.toBeAttached();
   });
 
-  test("contains Planned section", async ({ page }) => {
+  test("Planned section removed (all features completed)", async ({ page }) => {
     await page.goto("/roadmap");
     const plannedHeading = page.locator("#planned-heading");
-    await expect(plannedHeading).toBeVisible();
-    await expect(plannedHeading).toContainText("Planned");
+    await expect(plannedHeading).not.toBeAttached();
   });
 
   test("has Suggest a Feature link to GitHub Discussions", async ({ page }) => {

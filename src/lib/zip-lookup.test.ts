@@ -15,9 +15,17 @@ const realZipData: ZipData = JSON.parse(readFileSync(zipDataPath, "utf-8"));
 describe("ZIP Lookup", () => {
   beforeEach(() => {
     clearCache();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(realZipData),
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === "/data/zip-manifest.json") {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ file: "zip-districts-abc12345.json" }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(realZipData),
+      });
     });
   });
 
@@ -26,7 +34,24 @@ describe("ZIP Lookup", () => {
   });
 
   describe("getZipData", () => {
-    it("fetches ZIP data from JSON file", async () => {
+    it("fetches manifest then hashed ZIP data file", async () => {
+      const data = await getZipData();
+      expect(global.fetch).toHaveBeenCalledWith("/data/zip-manifest.json");
+      expect(global.fetch).toHaveBeenCalledWith("/data/zip-districts-abc12345.json");
+      expect(data).toEqual(realZipData);
+    });
+
+    it("falls back to bare filename when manifest fails", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+        if (url === "/data/zip-manifest.json") {
+          return Promise.resolve({ ok: false, status: 404 });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(realZipData),
+        });
+      });
+
       const data = await getZipData();
       expect(global.fetch).toHaveBeenCalledWith("/data/zip-districts.json");
       expect(data).toEqual(realZipData);
@@ -36,14 +61,22 @@ describe("ZIP Lookup", () => {
       await getZipData();
       await getZipData();
       await getZipData();
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
-    it("throws error when fetch fails", async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: "Not Found",
+    it("throws error when data fetch fails", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+        if (url === "/data/zip-manifest.json") {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ file: "zip-districts-abc12345.json" }),
+          });
+        }
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        });
       });
 
       await expect(getZipData()).rejects.toThrow("Failed to load ZIP data");

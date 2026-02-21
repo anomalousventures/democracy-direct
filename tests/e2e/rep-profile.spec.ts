@@ -6,7 +6,7 @@ test.describe("Representative Profile Page", () => {
   test.describe("tabs navigation", () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(REP_PAGE);
-      await page.waitForLoadState("networkidle");
+      await page.getByRole("tab", { name: /Contact/i }).waitFor({ state: "visible" });
     });
 
     test("displays all three tabs", async ({ page }) => {
@@ -51,17 +51,17 @@ test.describe("Representative Profile Page", () => {
 
     test("preserves tab selection via URL hash", async ({ page }) => {
       await page.goto(`${REP_PAGE}#votes`);
-      await page.waitForLoadState("networkidle");
 
       const votesTab = page.getByRole("tab", { name: /Voting Record/i });
+      await expect(votesTab).toBeVisible();
       await expect(votesTab).toHaveAttribute("aria-selected", "true");
     });
 
     test("preserves bills tab selection via URL hash", async ({ page }) => {
       await page.goto(`${REP_PAGE}#bills`);
-      await page.waitForLoadState("networkidle");
 
       const billsTab = page.getByRole("tab", { name: /Sponsored Bills/i });
+      await expect(billsTab).toBeVisible();
       await expect(billsTab).toHaveAttribute("aria-selected", "true");
     });
   });

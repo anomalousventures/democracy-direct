@@ -6,6 +6,8 @@ export interface DistrictEntry {
 export interface ZipEntry {
   s: string;
   d: DistrictEntry[];
+  lat?: number;
+  lng?: number;
 }
 
 export type ZipData = Record<string, ZipEntry>;
@@ -15,6 +17,8 @@ export type ZipLookupResult =
   | {
       type: "ambiguous";
       options: Array<{ state: string; district: string; proportion: number }>;
+      lat?: number;
+      lng?: number;
     }
   | { type: "error"; message: string };
 
@@ -25,7 +29,20 @@ export async function getZipData(): Promise<ZipData> {
     return cachedData;
   }
 
-  const response = await fetch("/data/zip-districts.json");
+  const manifestRes = await fetch("/data/zip-manifest.json");
+  let dataUrl = "/data/zip-districts.json";
+  if (manifestRes.ok) {
+    try {
+      const manifest = (await manifestRes.json()) as { file: string };
+      if (manifest.file) {
+        dataUrl = `/data/${manifest.file}`;
+      }
+    } catch {
+      // Corrupted manifest — use fallback URL
+    }
+  }
+
+  const response = await fetch(dataUrl);
   if (!response.ok) {
     throw new Error(`Failed to load ZIP data: ${response.statusText}`);
   }
@@ -79,5 +96,6 @@ export async function lookupZip(zip: string): Promise<ZipLookupResult> {
       district: entry.d,
       proportion: entry.p,
     })),
+    ...(zipEntry.lat != null && zipEntry.lng != null && { lat: zipEntry.lat, lng: zipEntry.lng }),
   };
 }
