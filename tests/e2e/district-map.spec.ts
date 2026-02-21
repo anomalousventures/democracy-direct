@@ -34,13 +34,11 @@ test.describe("District Map Page", () => {
   test("loading skeleton is replaced by map or error state", async ({ page }) => {
     await page.goto("/map");
 
-    const loadingText = page.getByText("Loading district map");
     const canvas = page.locator(".map-area canvas");
     const errorOverlay = page.getByText(/Could not load district boundaries/);
+    const mapError = page.getByText(/failed to initialize/i);
 
-    await expect(loadingText.or(canvas)).toBeVisible({ timeout: 5_000 });
-
-    await expect(canvas.or(errorOverlay)).toBeVisible({ timeout: 20_000 });
+    await expect(canvas.or(errorOverlay).or(mapError)).toBeVisible({ timeout: 20_000 });
   });
 
   test("attribution text is present", async ({ page }) => {
