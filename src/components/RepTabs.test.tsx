@@ -47,6 +47,7 @@ const mockBills: Bill[] = [
     congress: 119,
     title: "Test Bill Title",
     summary: "Test summary",
+    summaryCheckedAt: null,
     status: "introduced",
     subjects: ["Economy"],
     introducedDate: new Date("2025-01-10"),

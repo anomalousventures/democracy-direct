@@ -1,0 +1,1 @@
+ALTER TABLE "bills" ADD COLUMN "summary_checked_at" timestamp;
