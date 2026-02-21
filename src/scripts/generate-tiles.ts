@@ -99,7 +99,13 @@ export async function generateTiles(): Promise<void> {
   await writeFile(OUTPUT_BOUNDS, JSON.stringify(bounds), "utf-8");
   console.log(`Wrote ${OUTPUT_BOUNDS}`);
 
+  if (!geojson.features?.length) {
+    throw new Error("TIGERweb returned no features — aborting tile generation");
+  }
+
   const tmpGeojson = join(dirname(OUTPUT_PMTILES), "districts-tmp.geojson");
+  // CodeQL[js/write-to-file]: geojson is fetched from Census TIGERweb (trusted gov source),
+  // validated above, and written to a temp file consumed by tippecanoe then deleted.
   await writeFile(tmpGeojson, JSON.stringify(geojson), "utf-8");
   console.log(
     `Wrote temp GeoJSON (${(Buffer.byteLength(JSON.stringify(geojson)) / 1024 / 1024).toFixed(1)} MB)`

@@ -29,9 +29,11 @@ const initialView =
 const validState = stateParam ? stateParam.toUpperCase() in STATE_TO_FIPS : false;
 const validDistrict = districtParam ? /^\d{1,2}$/.test(districtParam) : false;
 
+const normalizedDistrict = validDistrict ? String(parseInt(districtParam!, 10)) : undefined;
+
 const highlightDistrict =
-  validState && validDistrict
-    ? { state: stateParam!.toUpperCase(), district: districtParam! }
+  validState && normalizedDistrict
+    ? { state: stateParam!.toUpperCase(), district: normalizedDistrict }
     : undefined;
 ---
 

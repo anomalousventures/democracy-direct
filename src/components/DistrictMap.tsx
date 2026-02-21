@@ -182,7 +182,7 @@ export function DistrictMap({
       }
     });
 
-    map.on("click", DISTRICT_FILL_LAYER, handleMapClick);
+    map.on("click", handleMapClick);
 
     return () => {
       map.remove();

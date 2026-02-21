@@ -4,6 +4,9 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
+/map
+  Permissions-Policy: geolocation=(self), microphone=(), camera=()
+
 /
   Cache-Control: private, no-cache, no-store, must-revalidate
 
@@ -19,6 +22,9 @@
 /data/districts.pmtiles
   Cache-Control: public, max-age=604800, s-maxage=2592000, stale-while-revalidate=604800
   Accept-Ranges: bytes
+
+/data/zip-districts.json
+  Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600
 
 /data/district-bounds.json
   Cache-Control: public, max-age=604800, s-maxage=2592000, stale-while-revalidate=604800

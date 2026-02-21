@@ -32,8 +32,14 @@ export async function getZipData(): Promise<ZipData> {
   const manifestRes = await fetch("/data/zip-manifest.json");
   let dataUrl = "/data/zip-districts.json";
   if (manifestRes.ok) {
-    const manifest = (await manifestRes.json()) as { file: string };
-    dataUrl = `/data/${manifest.file}`;
+    try {
+      const manifest = (await manifestRes.json()) as { file: string };
+      if (manifest.file) {
+        dataUrl = `/data/${manifest.file}`;
+      }
+    } catch {
+      // Corrupted manifest — use fallback URL
+    }
   }
 
   const response = await fetch(dataUrl);

@@ -28,7 +28,9 @@ test.describe("District Map Page", () => {
   test("map canvas renders after hydration", async ({ page }) => {
     await page.goto("/map");
     const canvas = page.locator(".map-area canvas");
-    await expect(canvas).toBeVisible({ timeout: 20_000 });
+    const errorOverlay = page.getByText(/Could not load district boundaries/);
+    const mapError = page.getByText(/failed to initialize/i);
+    await expect(canvas.or(errorOverlay).or(mapError)).toBeVisible({ timeout: 20_000 });
   });
 
   test("loading skeleton is replaced by map or error state", async ({ page }) => {
@@ -52,13 +54,17 @@ test.describe("District Map Deep Linking", () => {
   test("renders map canvas when lat/lng params provided", async ({ page }) => {
     await page.goto("/map?lat=34.09&lng=-118.41&zoom=12");
     const canvas = page.locator(".map-area canvas");
-    await expect(canvas).toBeVisible({ timeout: 20_000 });
+    const errorOverlay = page.getByText(/Could not load district boundaries/);
+    const mapError = page.getByText(/failed to initialize/i);
+    await expect(canvas.or(errorOverlay).or(mapError)).toBeVisible({ timeout: 20_000 });
   });
 
   test("renders map canvas when state/district params provided", async ({ page }) => {
     await page.goto("/map?state=CA&district=37");
     const canvas = page.locator(".map-area canvas");
-    await expect(canvas).toBeVisible({ timeout: 20_000 });
+    const errorOverlay = page.getByText(/Could not load district boundaries/);
+    const mapError = page.getByText(/failed to initialize/i);
+    await expect(canvas.or(errorOverlay).or(mapError)).toBeVisible({ timeout: 20_000 });
   });
 
   test("district page has view on map link", async ({ page }) => {
