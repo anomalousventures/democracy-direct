@@ -1,12 +1,13 @@
 import "dotenv/config";
 import { createCongressClient } from "@/lib/congress-api";
 import { selectBestSummary, truncateSummary } from "@/lib/summary-utils";
-import { getBillsWithoutSummary, updateBillSummary } from "@/db/queries/bills";
+import { getBillsWithoutSummary, markSummaryChecked, updateBillSummary } from "@/db/queries/bills";
 
 export interface SyncSummariesResult {
   billsProcessed: number;
   summariesAdded: number;
   noSummaryAvailable: number;
+  billsMarkedChecked: number;
   errors: Array<{ billNumber: string; message: string }>;
   duration: string;
 }
@@ -46,6 +47,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
   const errors: SyncSummariesResult["errors"] = [];
   let summariesAdded = 0;
   let noSummaryAvailable = 0;
+  const checkedBillIds: string[] = [];
 
   console.log("=== SYNC SUMMARIES START ===");
   console.log(`Limit: ${limit}`);
@@ -62,6 +64,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
       billsProcessed: 0,
       summariesAdded: 0,
       noSummaryAvailable: 0,
+      billsMarkedChecked: 0,
       errors: [],
       duration,
     };
@@ -90,6 +93,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
         summariesAdded++;
       } else {
         noSummaryAvailable++;
+        checkedBillIds.push(bill.id);
       }
     } catch (err) {
       errors.push({
@@ -107,6 +111,11 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
     }
   }
 
+  if (checkedBillIds.length > 0) {
+    await markSummaryChecked(db, checkedBillIds);
+    console.log(`Marked ${checkedBillIds.length} bills as checked (no summary available)`);
+  }
+
   const duration = formatElapsed(startTime);
 
   console.log("\n=== SYNC SUMMARIES COMPLETE ===");
@@ -114,6 +123,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
   console.log(`Bills processed: ${billsToSync.length}`);
   console.log(`Summaries added: ${summariesAdded}`);
   console.log(`No summary available: ${noSummaryAvailable}`);
+  console.log(`Bills marked as checked: ${checkedBillIds.length}`);
   console.log(`Errors: ${errors.length}`);
 
   if (errors.length > 0) {
@@ -126,6 +136,7 @@ export async function syncSummaries(limit: number = 200): Promise<SyncSummariesR
     billsProcessed: billsToSync.length,
     summariesAdded,
     noSummaryAvailable,
+    billsMarkedChecked: checkedBillIds.length,
     errors,
     duration,
   };

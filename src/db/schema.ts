@@ -306,6 +306,7 @@ export const bills = pgTable(
     congress: integer("congress").notNull(),
     title: text("title").notNull(),
     summary: text("summary"),
+    summaryCheckedAt: timestamp("summary_checked_at"),
     status: varchar("status", { length: 30 }).$type<BillStatus>().notNull(),
     subjects: jsonb("subjects").$type<string[]>().default([]),
     introducedDate: timestamp("introduced_date").notNull(),

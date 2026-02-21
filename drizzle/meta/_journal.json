@@ -127,6 +127,13 @@
       "when": 1771429647325,
       "tag": "0017_chubby_fixer",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771707901560,
+      "tag": "0018_dry_chat",
+      "breakpoints": true
     }
   ]
 }
