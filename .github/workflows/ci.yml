@@ -86,7 +86,7 @@ jobs:
         run: pnpm test --coverage
 
       - name: Upload unit test coverage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-unit
           path: coverage/coverage-final.json
@@ -171,7 +171,7 @@ jobs:
         run: pnpm test:integration --coverage
 
       - name: Upload integration test coverage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-integration
           path: coverage-integration/coverage-final.json
@@ -197,7 +197,7 @@ jobs:
         run: pnpm test:e2e
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report

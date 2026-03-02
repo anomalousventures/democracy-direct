@@ -354,7 +354,7 @@ jobs:
 
       - name: Upload audit artifacts
         if: always() && steps.deployment.outputs.url != ''
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: audit-results
           path: |
