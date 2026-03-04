@@ -101,7 +101,7 @@
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "4.0.18",
     "drizzle-kit": "0.31.9",
-    "eslint": "9.39.2",
+    "eslint": "10.0.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-astro": "1.6.0",
     "husky": "9.1.7",
