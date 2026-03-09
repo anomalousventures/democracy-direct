@@ -111,7 +111,7 @@
     "playwright": "1.58.2",
     "prettier": "3.8.1",
     "prettier-plugin-astro": "0.14.1",
-    "shadcn": "^3.8.5",
+    "shadcn": "^4.0.2",
     "sharp": "^0.34.5",
     "tsx": "4.21.0",
     "typescript-eslint": "8.57.0",
