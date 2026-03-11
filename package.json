@@ -116,7 +116,7 @@
     "tsx": "4.21.0",
     "typescript-eslint": "8.57.0",
     "vitest": "4.0.18",
-    "wrangler": "4.71.0",
+    "wrangler": "4.72.0",
     "yaml": "2.8.2"
   }
 }
