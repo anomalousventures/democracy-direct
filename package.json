@@ -50,7 +50,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "12.6.12",
+    "@astrojs/cloudflare": "12.6.13",
     "@astrojs/preact": "^4.1.1",
     "@aws-sdk/client-sesv2": "^3.1004.0",
     "@nanostores/preact": "^1.0.0",
