@@ -61,7 +61,7 @@
     "@tiptap/markdown": "^3.20.1",
     "@tiptap/pm": "^3.20.1",
     "@tiptap/starter-kit": "^3.20.1",
-    "astro": "5.18.0",
+    "astro": "6.1.6",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "dotenv": "^17.3.1",
