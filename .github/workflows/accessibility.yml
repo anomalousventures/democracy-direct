@@ -36,7 +36,7 @@ jobs:
        github.event.check_run.app.slug == 'cloudflare-workers-and-pages' &&
        github.event.check_run.conclusion == 'success')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Get deployment URL and PR number
         id: deployment
