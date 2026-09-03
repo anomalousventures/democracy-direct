@@ -56,7 +56,7 @@
     "@nanostores/preact": "^1.0.0",
     "@neondatabase/serverless": "1.0.2",
     "@tailwindcss/vite": "4.2.1",
-    "@tiptap/core": "^3.20.1",
+    "@tiptap/core": "^3.30.4",
     "@tiptap/extension-placeholder": "^3.20.1",
     "@tiptap/markdown": "^3.20.1",
     "@tiptap/pm": "^3.20.1",
